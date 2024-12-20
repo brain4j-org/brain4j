@@ -1,5 +1,7 @@
 package net.echo.brain4j.training.data;
 
+import net.echo.brain4j.utils.Vector;
+
 import java.util.*;
 
 public class DataSet implements Iterable<DataRow> {
@@ -22,6 +24,14 @@ public class DataSet implements Iterable<DataRow> {
 
     public List<List<DataRow>> getPartitions() {
         return partitions;
+    }
+
+    public void add(DataRow row) {
+        dataRows.add(row);
+    }
+
+    public void add(Vector input, Vector output) {
+        dataRows.add(new DataRow(input, output));
     }
 
     public int getBatches() {
