@@ -11,14 +11,12 @@ import java.util.List;
 public class NormalUpdater extends Updater {
 
     protected Synapse[] synapses;
-    protected Double[] gradients;
+    protected double[] gradients;
 
     @Override
     public void postInitialize() {
         this.synapses = new Synapse[Synapse.ID_COUNTER];
-        this.gradients = new Double[Synapse.ID_COUNTER];
-
-        Arrays.fill(gradients, 0.0);
+        this.gradients = new double[Synapse.ID_COUNTER];
     }
 
     @Override
@@ -39,7 +37,7 @@ public class NormalUpdater extends Updater {
             }
         }
 
-        Arrays.fill(gradients, 0.0);
+        gradients = new double[Synapse.ID_COUNTER];
     }
 
     @Override

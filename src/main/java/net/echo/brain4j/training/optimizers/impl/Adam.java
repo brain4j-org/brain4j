@@ -19,7 +19,7 @@ public class Adam extends Optimizer {
     private double beta1;
     private double beta2;
     private double epsilon;
-    private int timestep = 1;
+    private int timestep = 0;
 
     public Adam(double learningRate) {
         this(learningRate, 0.9, 0.999, 1e-8);
@@ -61,7 +61,7 @@ public class Adam extends Optimizer {
 
     @Override
     public void postIteration(Updater updater, List<Layer> layers) {
-        timestep++;
+        this.timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
