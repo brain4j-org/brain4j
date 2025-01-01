@@ -3,7 +3,7 @@ package net.echo.brain4j.nlp.model;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.initialization.WeightInitialization;
+import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.nlp.model.layers.TransformerEncoder;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
@@ -22,7 +22,7 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void compile(WeightInitialization type, LossFunctions function, Optimizer optimizer, Updater updater) {
+    public void compile(WeightInit type, LossFunctions function, Optimizer optimizer, Updater updater) {
         super.compile(type, function, optimizer, updater);
 
         if (concatModel == null) return;

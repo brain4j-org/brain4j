@@ -11,7 +11,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
-import net.echo.brain4j.model.initialization.WeightInitialization;
+import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
@@ -21,7 +21,6 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
@@ -81,7 +80,7 @@ public class Model {
         return seed;
     }
 
-    private void connect(WeightInitialization type) {
+    private void connect(WeightInit type) {
         Layer lastNormalLayer = layers.getFirst();
 
         for (Layer layer : layers) {
@@ -113,7 +112,7 @@ public class Model {
      * @param optimizer optimization algorithm for training
      * @param updater weights updating algorithm for training
      */
-    public void compile(WeightInitialization type, LossFunctions function, Optimizer optimizer, Updater updater) {
+    public void compile(WeightInit type, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.generator = new Random(seed);
         this.function = function;
         this.optimizer = optimizer;
@@ -294,7 +293,7 @@ public class Model {
 
             this.layers = GSON.fromJson(parent.get("layers"), listType);
 
-            connect(WeightInitialization.NORMAL);
+            connect(WeightInit.NORMAL);
 
             double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);
 
