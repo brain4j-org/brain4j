@@ -31,7 +31,7 @@ Next, define the weight initialization method and the loss function for training
 
 ```java
 network.compile(
-        WeightInitialization.HE,
+        WeightInit.HE,
         LossFunctions.BINARY_CROSS_ENTROPY,
         new Adam(0.1),
         new StochasticUpdater()
@@ -53,6 +53,7 @@ DataRow third = new DataRow(Vector.of(1, 0), Vector.of(1));
 DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0));
 
 DataSet training = new DataSet(first, second, third, fourth);
+training.partition(1);
 ```
 
 ### Training the Model
