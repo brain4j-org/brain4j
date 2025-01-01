@@ -150,7 +150,7 @@ public class Model {
 
             Vector outputs = predict(inputs);
 
-            totalError += function.getFunction().calculate(targets.toArray(), outputs.toArray());
+            totalError += function.getFunction().calculate(targets, outputs);
         }
 
         return totalError;
