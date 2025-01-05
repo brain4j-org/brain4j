@@ -67,7 +67,7 @@ public class Vector {
         double length = lengthSquared();
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = data[i] / length;
+            data[i] /= length;
         }
 
         return this;
@@ -77,7 +77,7 @@ public class Vector {
         double length = length();
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = data[i] / length;
+            data[i] /= length;
         }
 
         return this;
@@ -91,7 +91,8 @@ public class Vector {
         double sum = 0;
 
         for (int i = 0; i < data.length; i++) {
-            sum += (data[i] - vector.data[i]) * (data[i] - vector.data[i]);
+            double difference = data[i] - vector.data[i];
+            sum += (difference) * (difference);
         }
 
         return sum;
