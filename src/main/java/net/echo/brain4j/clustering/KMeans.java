@@ -46,10 +46,10 @@ public class KMeans {
         while (centroidsChanged) {
             centroidsChanged = false;
 
-            for (Vector row : set.getData()) {
-                Cluster closestCluster = getClosest(row);
+            for (Vector vector : set.getData()) {
+                Cluster closestCluster = getClosest(vector);
 
-                closestCluster.addVector(row);
+                closestCluster.addVector(vector);
             }
 
             for (Cluster cluster : clusters) {
@@ -69,29 +69,29 @@ public class KMeans {
     }
 
     /**
-     * Evaluates the dataset and maps each data row to its corresponding cluster.
+     * Evaluates the dataset and maps each data point to its corresponding cluster.
      *
      * @param set the dataset to evaluate
-     * @return a map of data rows to their closest clusters
+     * @return a map of data points to their closest clusters
      */
     public Map<Vector, Cluster> evaluate(ClusterData set) {
         Map<Vector, Cluster> clusterMap = new HashMap<>();
 
-        for (Vector row : set.getData()) {
-            Cluster closestCluster = getClosest(row);
+        for (Vector vector : set.getData()) {
+            Cluster closestCluster = getClosest(vector);
 
-            clusterMap.put(row, closestCluster);
+            clusterMap.put(vector, closestCluster);
         }
 
         return clusterMap;
     }
 
-    private Cluster getClosest(Vector data) {
+    private Cluster getClosest(Vector point) {
         double minDistance = Double.MAX_VALUE;
         Cluster closestCluster = null;
 
         for (Cluster cluster : clusters) {
-            double distance = cluster.getCenter().distance(data);
+            double distance = cluster.getCenter().distance(point);
 
             if (distance < minDistance) {
                 minDistance = distance;

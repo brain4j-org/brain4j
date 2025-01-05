@@ -187,4 +187,13 @@ public class Vector {
     public String toString() {
         return Arrays.toString(data);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Vector vector) {
+            return Arrays.equals(data, vector.data);
+        } else {
+            return false;
+        }
+    }
 }
