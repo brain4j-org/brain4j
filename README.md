@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.xEcho1337:brain4j:2.4'
+    implementation 'com.github.xEcho1337:brain4j:2.5.1'
 }
 ```
 
