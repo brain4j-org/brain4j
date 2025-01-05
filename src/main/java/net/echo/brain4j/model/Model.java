@@ -143,13 +143,13 @@ public class Model {
     public double evaluate(DataSet set) {
         double totalError = 0.0;
 
-        for (DataRow row : set.getDataRows()) {
+        for (DataRow row : set.getData()) {
             Vector inputs = row.inputs();
             Vector targets = row.outputs();
 
             Vector outputs = predict(inputs);
 
-            totalError += function.getFunction().calculate(targets.toArray(), outputs.toArray());
+            totalError += function.getFunction().calculate(targets, outputs);
         }
 
         return totalError;

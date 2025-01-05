@@ -1,73 +1,21 @@
 package net.echo.brain4j.training.data;
 
-import java.util.*;
+import net.echo.brain4j.utils.GenericDataSet;
+import net.echo.brain4j.utils.Vector;
 
-public class DataSet implements Iterable<DataRow> {
+import java.util.List;
 
-    private final List<DataRow> dataRows;
-    private final List<List<DataRow>> partitions = new ArrayList<>();
-    private int batches;
+public class DataSet extends GenericDataSet<DataRow> {
 
-    public DataSet(List<DataRow> dataRows) {
-        this.dataRows = dataRows;
+    public DataSet(List<DataRow> data) {
+        super(data);
     }
 
     public DataSet(DataRow... rows) {
-        this.dataRows = new ArrayList<>(Arrays.asList(rows));
+        super(rows);
     }
 
-    public List<DataRow> getDataRows() {
-        return dataRows;
-    }
-
-    public List<List<DataRow>> getPartitions() {
-        return partitions;
-    }
-
-    public int getBatches() {
-        return batches;
-    }
-
-    public boolean isPartitioned() {
-        return !partitions.isEmpty();
-    }
-
-    private List<DataRow> subdivide(List<DataRow> rows, double batches, int offset) {
-        int start = (int) Math.min(offset * batches, rows.size());
-        int stop = (int) Math.min((offset + 1) * batches, rows.size());
-
-        return rows.subList(start, stop);
-    }
-
-    public void partition(int batches) {
-        this.batches = batches;
-        this.partitions.clear();
-
-        int rowsPerBatch = dataRows.size() / batches;
-
-        for (int i = 0; i < batches; i++) {
-            this.partitions.add(subdivide(dataRows, rowsPerBatch, i));
-        }
-    }
-
-    public void partitionWithSize(int batchSize) {
-        this.batches = dataRows.size() / batchSize;
-        this.partitions.clear();
-
-        for (int i = 0; i < batches; i++) {
-            this.partitions.add(subdivide(dataRows, batchSize, i));
-        }
-    }
-
-    /**
-     * Randomly shuffles the dataset, making the training more efficient.
-     */
-    public void shuffle() {
-        Collections.shuffle(dataRows);
-    }
-
-    @Override
-    public Iterator<DataRow> iterator() {
-        return dataRows.iterator();
+    public void add(Vector input, Vector output) {
+        getData().add(new DataRow(input, output));
     }
 }

@@ -27,6 +27,10 @@ public class Vector {
         return new Vector(size).fill(() -> Math.random() * (upperBound - lowerBound) + lowerBound);
     }
 
+    public static Vector zero(int size) {
+        return new Vector(size).fill(0.0);
+    }
+
     public void set(int index, double value) {
         data[index] = value;
     }
@@ -63,7 +67,7 @@ public class Vector {
         double length = lengthSquared();
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = data[i] / length;
+            data[i] /= length;
         }
 
         return this;
@@ -73,7 +77,7 @@ public class Vector {
         double length = length();
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = data[i] / length;
+            data[i] /= length;
         }
 
         return this;
@@ -87,7 +91,8 @@ public class Vector {
         double sum = 0;
 
         for (int i = 0; i < data.length; i++) {
-            sum += (data[i] - vector.data[i]) * (data[i] - vector.data[i]);
+            double difference = data[i] - vector.data[i];
+            sum += (difference) * (difference);
         }
 
         return sum;
@@ -120,6 +125,14 @@ public class Vector {
     public Vector scale(double value) {
         for (int i = 0; i < data.length; i++) {
             data[i] *= value;
+        }
+
+        return this;
+    }
+
+    public Vector divide(double value) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] /= value;
         }
 
         return this;
@@ -174,5 +187,14 @@ public class Vector {
     @Override
     public String toString() {
         return Arrays.toString(data);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Vector vector) {
+            return Arrays.equals(data, vector.data);
+        } else {
+            return false;
+        }
     }
 }

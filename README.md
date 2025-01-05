@@ -1,12 +1,27 @@
 # Brain4J
 
-[![Brain4J](https://img.shields.io/badge/Brain4J-2.4-blue.svg)](https://github.com/xEcho1337/Brain4J)
+[![Brain4J](https://img.shields.io/badge/Brain4J-2.5-blue.svg)](https://github.com/xEcho1337/Brain4J)
 
 **Brain4J** is a powerful, lightweight, and easy-to-use Machine Learning library written in Java, designed for speed and simplicity.
 
 Note: As of 2.2, Java 21 is required to make Brain4J work.
 
 ---
+
+## Importing the library
+
+As of 2.4, the library is now available to download on JitPack.
+
+```
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.github.xEcho1337:brain4j:2.4'
+}
+```
 
 ## Getting Started
 
