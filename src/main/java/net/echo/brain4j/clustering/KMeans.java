@@ -34,36 +34,48 @@ public class KMeans {
     }
 
     /**
-     * Fits the model to the given dataset using the K-Means clustering algorithm.
+     * Makes one step into the K-Means algorithm.
      *
-     * @param set the dataset to cluster
+     * @param data the data to cluster
+     * @return true if the centroids changed, false otherwise
+     */
+    public boolean step(ClusterData data) {
+        boolean centroidsChanged = false;
+
+        for (Vector vector : data.getData()) {
+            Cluster closestCluster = getClosest(vector);
+
+            closestCluster.addVector(vector);
+        }
+
+        for (Cluster cluster : clusters) {
+            boolean updated = cluster.updateCenter();
+
+            if (updated) {
+                centroidsChanged = true;
+            }
+        }
+
+        for (Cluster cluster : clusters) {
+            cluster.clearData();
+        }
+
+        return centroidsChanged;
+    }
+
+    /**
+     * Fits the model repetitively to the given dataset using the K-Means clustering algorithm.
+     *
+     * @param data the dataset to cluster
      * @return the number of iterations performed
      */
-    public int fit(ClusterData set, int maxIterations) {
+    public int fit(ClusterData data, int maxIterations) {
         boolean centroidsChanged = true;
 
         int i = 0;
 
         while (centroidsChanged) {
-            centroidsChanged = false;
-
-            for (Vector vector : set.getData()) {
-                Cluster closestCluster = getClosest(vector);
-
-                closestCluster.addVector(vector);
-            }
-
-            for (Cluster cluster : clusters) {
-                boolean updated = cluster.updateCenter();
-
-                if (updated) {
-                    centroidsChanged = true;
-                }
-            }
-
-            for (Cluster cluster : clusters) {
-                cluster.clearData();
-            }
+            centroidsChanged = step(data);
 
             if (i++ > maxIterations) break;
         }
