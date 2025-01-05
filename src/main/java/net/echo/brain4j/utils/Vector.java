@@ -27,6 +27,10 @@ public class Vector {
         return new Vector(size).fill(() -> Math.random() * (upperBound - lowerBound) + lowerBound);
     }
 
+    public static Vector zero(int size) {
+        return new Vector(size).fill(0.0);
+    }
+
     public void set(int index, double value) {
         data[index] = value;
     }
@@ -120,6 +124,14 @@ public class Vector {
     public Vector scale(double value) {
         for (int i = 0; i < data.length; i++) {
             data[i] *= value;
+        }
+
+        return this;
+    }
+
+    public Vector divide(double value) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] /= value;
         }
 
         return this;
