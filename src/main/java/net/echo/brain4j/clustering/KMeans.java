@@ -42,6 +42,10 @@ public class KMeans {
     public boolean step(ClusterData data) {
         boolean centroidsChanged = false;
 
+        for (Cluster cluster : clusters) {
+            cluster.clearData();
+        }
+
         for (Vector vector : data.getData()) {
             Cluster closestCluster = getClosest(vector);
 
@@ -54,10 +58,6 @@ public class KMeans {
             if (updated) {
                 centroidsChanged = true;
             }
-        }
-
-        for (Cluster cluster : clusters) {
-            cluster.clearData();
         }
 
         return centroidsChanged;
