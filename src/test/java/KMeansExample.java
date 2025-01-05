@@ -28,7 +28,11 @@ public class KMeansExample {
         kMeans.init(dimension);
 
         System.out.println("Training K-Means...");
+        long start = System.nanoTime();
         kMeans.fit(dataSet, 1);
+        double took = (System.nanoTime() - start) / 1e6;
+
+        System.out.println("Took " + took + " ms");
 
         System.out.println("\nCluster Assignments:");
         var clusterAssignments = kMeans.evaluate(dataSet);

@@ -14,4 +14,14 @@ public class ClusterData extends GenericDataSet<Vector> {
     public ClusterData(Vector... data) {
         super(data);
     }
+
+    @Override
+    public void partition(int batches) {
+        throw new UnsupportedOperationException("This method cannot be used on ClusterData");
+    }
+
+    @Override
+    public void partitionWithSize(int batchSize) {
+        throw new UnsupportedOperationException("This method cannot be used on ClusterData");
+    }
 }

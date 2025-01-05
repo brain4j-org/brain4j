@@ -8,6 +8,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.GenericUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
@@ -44,22 +45,12 @@ public class BackPropagation {
                 threads.add(thread);
             }
 
-            waitAll(threads);
+            GenericUtils.waitAll(threads);
 
             updater.postBatch(model.getLayers(), optimizer.getLearningRate());
         }
 
         updater.postFit(model.getLayers(), optimizer.getLearningRate());
-    }
-
-    private void waitAll(List<Thread> threads) {
-        for (Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace(System.err);
-            }
-        }
     }
 
     public void backpropagate(double[] targets, double[] outputs) {

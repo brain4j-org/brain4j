@@ -37,8 +37,9 @@ public class KMeans {
      * Fits the model to the given dataset using the K-Means clustering algorithm.
      *
      * @param set the dataset to cluster
+     * @return the number of iterations performed
      */
-    public void fit(ClusterData set, int maxIterations) {
+    public int fit(ClusterData set, int maxIterations) {
         boolean centroidsChanged = true;
 
         int i = 0;
@@ -66,6 +67,8 @@ public class KMeans {
 
             if (i++ > maxIterations) break;
         }
+
+        return i;
     }
 
     /**

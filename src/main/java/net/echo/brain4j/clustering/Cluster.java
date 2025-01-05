@@ -68,7 +68,7 @@ public class Cluster {
             return false;
         }
 
-        Vector newCenter = Vector.zero(center.size());
+        Vector newCenter = new Vector(center.size());
 
         for (Vector row : vectors) {
             newCenter.add(row);

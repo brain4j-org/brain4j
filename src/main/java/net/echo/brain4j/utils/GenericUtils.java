@@ -1,9 +1,11 @@
 package net.echo.brain4j.utils;
 
+import java.util.List;
+
 /**
  * Utility class for conversions and value matching.
  */
-public class ConversionUtils {
+public class GenericUtils {
 
     /**
      * Finds the best matching enum constant based on output values.
@@ -35,5 +37,20 @@ public class ConversionUtils {
         }
 
         return index;
+    }
+
+    /**
+     * Waits for all threads on a list to finish.
+     *
+     * @param threads list of threads
+     */
+    public static void waitAll(List<Thread> threads) {
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace(System.err);
+            }
+        }
     }
 }
