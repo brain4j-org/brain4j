@@ -1,18 +1,14 @@
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
-import net.echo.brain4j.model.initialization.WeightInitialization;
 import net.echo.brain4j.layer.impl.DenseLayer;
+import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.GradientDescent;
-import net.echo.brain4j.training.updater.impl.BatchedUpdater;
-import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
-
-import java.util.Random;
 
 public class XorTest {
 
@@ -20,15 +16,16 @@ public class XorTest {
         Model model = new Model(
                 new DenseLayer(2, Activations.LINEAR),
                 new DenseLayer(16, Activations.RELU),
+                new LayerNorm(),
                 new DenseLayer(16, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
         model.setSeed(123);
         model.compile(
-                WeightInitialization.HE,
+                WeightInit.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
-                new Adam(0.1),
+                new AdamW(0.01),
                 new StochasticUpdater()
         );
 
@@ -40,7 +37,7 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
         training.partition(1);
 
-        trainForBenchmark(model, training);
+        trainTillError(model, training);
     }
 
     private static void trainForBenchmark(Model model, DataSet data) {
@@ -52,7 +49,6 @@ public class XorTest {
 
             total += (System.nanoTime() - start) / 1e6;
         }
-
 
         double error = model.evaluate(data);
         double mean = total / 5000;

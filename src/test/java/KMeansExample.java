@@ -1,8 +1,6 @@
 import net.echo.brain4j.clustering.Cluster;
 import net.echo.brain4j.clustering.ClusterData;
 import net.echo.brain4j.clustering.KMeans;
-import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
