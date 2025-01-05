@@ -19,6 +19,10 @@ dependencies {
 }
 ```
 
+## Examples
+
+You can find some examples on how to use the library [here](https://github.com/xEcho1337/brain4j-examples).
+
 ## License
 
 Brain4J is distributed under the [Apache 2.0 License](https://github.com/xEcho1337/Brain4J/blob/main/LICENSE).
