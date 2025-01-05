@@ -15,7 +15,7 @@ import java.util.List;
 @JsonAdapter(OptimizerAdapter.class)
 public abstract class Optimizer {
 
-    private static final double GRADIENT_CLIP = 5.0;
+    private static final double GRADIENT_CLIP = 10.0;
     protected double learningRate;
 
     /**
