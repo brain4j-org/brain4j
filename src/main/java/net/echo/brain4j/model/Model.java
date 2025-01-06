@@ -51,10 +51,13 @@ public class Model {
             .create();
 
     protected List<Layer> layers;
+
     protected LossFunctions function;
     protected Optimizer optimizer;
     protected Updater updater;
     protected BackPropagation propagation;
+    protected WeightInit weightInit;
+
     protected Random generator;
     private int seed;
 
@@ -80,7 +83,7 @@ public class Model {
         return seed;
     }
 
-    private void connect(WeightInit type) {
+    private void connect(WeightInit weightInit) {
         Layer lastNormalLayer = layers.getFirst();
 
         for (Layer layer : layers) {
@@ -97,7 +100,7 @@ public class Model {
             int nIn = lastNormalLayer.getNeurons().size();
             int nOut = layer.getNeurons().size();
 
-            double bound = type.getInitializer().getBound(nIn, nOut);
+            double bound = weightInit.getInitializer().getBound(nIn, nOut);
 
             lastNormalLayer.connectAll(generator, layer, bound);
             lastNormalLayer = layer;
@@ -107,19 +110,20 @@ public class Model {
     /**
      * Initializes the model and layers.
      *
-     * @param type initialization method
+     * @param weightInit initialization method
      * @param function loss function for error assessment
      * @param optimizer optimization algorithm for training
      * @param updater weights updating algorithm for training
      */
-    public void compile(WeightInit type, LossFunctions function, Optimizer optimizer, Updater updater) {
+    public void compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
+        this.weightInit = weightInit;
         this.generator = new Random(seed);
         this.function = function;
         this.optimizer = optimizer;
         this.updater = updater;
         this.propagation = new BackPropagation(this, optimizer, updater);
 
-        connect(type);
+        connect(weightInit);
 
         this.optimizer.postInitialize();
         this.updater.postInitialize();
@@ -287,13 +291,16 @@ public class Model {
             JsonObject parent = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
 
             this.optimizer = GSON.fromJson(parent.get("optimizer"), Optimizer.class);
+            this.updater = GSON.fromJson(parent.get("updater"), Updater.class);
             this.function = LossFunctions.valueOf(parent.get("lossFunction").getAsString());
 
             Type listType = new TypeToken<ArrayList<Layer>>(){}.getType();
 
             this.layers = GSON.fromJson(parent.get("layers"), listType);
+            this.weightInit = WeightInit.valueOf(parent.get("weightInit").getAsString());
+            this.seed = parent.get("seed").getAsInt();
 
-            connect(WeightInit.NORMAL);
+            connect(weightInit);
 
             double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);
 
@@ -321,6 +328,8 @@ public class Model {
         JsonObject parent = new JsonObject();
         JsonObject optimizerObject = GSON.toJsonTree(optimizer).getAsJsonObject();
 
+        parent.addProperty("seed", seed);
+        parent.addProperty("weightInit", weightInit.name());
         parent.addProperty("lossFunction", function.name());
         parent.add("optimizer", optimizerObject);
 
