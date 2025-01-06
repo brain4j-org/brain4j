@@ -3,6 +3,7 @@ package net.echo.brain4j.adapters;
 import com.google.gson.*;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 
 import java.lang.reflect.Type;
@@ -25,6 +26,10 @@ public class OptimizerAdapter implements JsonSerializer<Optimizer>, JsonDeserial
             data.addProperty("epsilon", adam.getEpsilon());
         }
 
+        if (optimizer instanceof AdamW adamW) {
+            data.addProperty("weightDecay", adamW.getWeightDecay());
+        }
+
         object.add("data", data);
         return object;
     }
@@ -45,7 +50,18 @@ public class OptimizerAdapter implements JsonSerializer<Optimizer>, JsonDeserial
                 adam.setBeta1(data.get("beta1").getAsDouble());
                 adam.setBeta2(data.get("beta2").getAsDouble());
                 adam.setEpsilon(data.get("epsilon").getAsDouble());
+
                 yield adam;
+            }
+            case "AdamW" -> {
+                AdamW adamW = new AdamW(learningRate);
+
+                adamW.setBeta1(data.get("beta1").getAsDouble());
+                adamW.setBeta2(data.get("beta2").getAsDouble());
+                adamW.setEpsilon(data.get("epsilon").getAsDouble());
+                adamW.setWeightDecay(data.get("weightDecay").getAsDouble());
+
+                yield adamW;
             }
             default -> null;
         };
