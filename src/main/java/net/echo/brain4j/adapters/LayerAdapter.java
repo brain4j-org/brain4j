@@ -5,6 +5,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
+import net.echo.brain4j.layer.impl.LayerNorm;
 
 import java.lang.reflect.Type;
 
@@ -55,6 +56,7 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
                 double dropout = element.getAsJsonObject().get("rate").getAsDouble();
                 yield new DropoutLayer(dropout);
             }
+            case "LayerNorm" -> new LayerNorm();
             default -> throw new IllegalArgumentException("Unknown layer type: " + layerType);
         };
     }
