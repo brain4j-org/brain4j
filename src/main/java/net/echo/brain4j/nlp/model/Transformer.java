@@ -22,12 +22,12 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void compile(WeightInit type, LossFunctions function, Optimizer optimizer, Updater updater) {
-        super.compile(type, function, optimizer, updater);
+    public void compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
+        super.compile(weightInit, function, optimizer, updater);
 
         if (concatModel == null) return;
 
-        concatModel.compile(type, function, optimizer, updater);
+        concatModel.compile(weightInit, function, optimizer, updater);
     }
 
     public List<Vector> transform(List<Vector> embeddings) {
