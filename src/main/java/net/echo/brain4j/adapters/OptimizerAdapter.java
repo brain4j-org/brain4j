@@ -63,7 +63,7 @@ public class OptimizerAdapter implements JsonSerializer<Optimizer>, JsonDeserial
 
                 yield adamW;
             }
-            default -> null;
+            default -> throw new IllegalArgumentException("Unknown optimizer type: " + optimizerType);
         };
     }
 }
