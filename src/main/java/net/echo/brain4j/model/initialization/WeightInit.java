@@ -1,9 +1,6 @@
 package net.echo.brain4j.model.initialization;
 
-import net.echo.brain4j.model.initialization.impl.HeInit;
-import net.echo.brain4j.model.initialization.impl.LeCunInit;
-import net.echo.brain4j.model.initialization.impl.NormalInit;
-import net.echo.brain4j.model.initialization.impl.XavierInit;
+import net.echo.brain4j.model.initialization.impl.*;
 
 /**
  * Enum that defines the different types of weight initialization strategies used for neural networks.
@@ -24,10 +21,18 @@ public enum WeightInit {
     HE(new HeInit()),
 
     /**
-     * Xavier initialization (also known as Glorot initialization) is designed for layers with sigmoid or tanh activations.
-     * It initializes weights using a uniform distribution with a variance based on the number of input and output neurons.
+     * Uniform Xavier initialization is specifically designed for layers with sigmoid or tanh activations.
+     * It initializes weights using a uniform distribution,
+     * scaled by the square root of 6 divided by the sum of the number of input and output neurons.
      */
-    XAVIER(new XavierInit()),
+    UNIFORM_XAVIER(new UniformXavierInit()),
+
+    /**
+     * Normal Xavier initialization is specifically designed for layers with sigmoid or tanh activations.
+     * It initializes weights using a normal distribution,
+     * scaled by the square root of 2 divided by the number of input and output neurons.
+     */
+    NORMAL_XAVIER(new NormalXavierInit()),
 
     /**
      * LeCun initialization is specifically designed for layers with the sigmoid or tanh activation functions.
