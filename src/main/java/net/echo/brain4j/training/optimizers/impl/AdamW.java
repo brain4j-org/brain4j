@@ -10,8 +10,8 @@ import java.util.List;
 public class AdamW extends Optimizer {
 
     // Momentum vectors
-    private double[] firstMomentum;
-    private double[] secondMomentum;
+    private ThreadLocal<double[]> firstMomentum;
+    private ThreadLocal<double[]> secondMomentum;
 
     private double beta1Timestep;
     private double beta2Timestep;
@@ -40,12 +40,15 @@ public class AdamW extends Optimizer {
 
     @Override
     public void postInitialize() {
-        this.firstMomentum = new double[Synapse.ID_COUNTER];
-        this.secondMomentum = new double[Synapse.ID_COUNTER];
+        this.firstMomentum = ThreadLocal.withInitial(() -> new double[Synapse.ID_COUNTER]);
+        this.secondMomentum = ThreadLocal.withInitial(() -> new double[Synapse.ID_COUNTER]);
     }
 
     @Override
-    public double update(Synapse synapse) {
+    public double update(Synapse synapse, Object... params) {
+        double[] firstMomentum = (double[]) params[0];
+        double[] secondMomentum = (double[]) params[0];
+
         double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
 
         int synapseId = synapse.getSynapseId();
@@ -53,7 +56,6 @@ public class AdamW extends Optimizer {
         double currentFirstMomentum = firstMomentum[synapseId];
         double currentSecondMomentum = secondMomentum[synapseId];
 
-        // Calcolo dei momenti
         double m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
         double v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
 
@@ -74,9 +76,12 @@ public class AdamW extends Optimizer {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
+        double[] firstMomentum = this.firstMomentum.get();
+        double[] secondMomentum = this.secondMomentum.get();
+
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
-                double change = update(synapse);
+                double change = update(synapse, firstMomentum, secondMomentum);
                 updater.acknowledgeChange(synapse, change);
             }
         }

@@ -6,7 +6,9 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 
 public class XorTest {
@@ -22,8 +24,8 @@ public class XorTest {
         model.compile(
                 WeightInit.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
-                new Adam(0.1),
-                new NormalUpdater()
+                new AdamW(0.1),
+                new StochasticUpdater()
         );
 
         System.out.println(model.getStats());

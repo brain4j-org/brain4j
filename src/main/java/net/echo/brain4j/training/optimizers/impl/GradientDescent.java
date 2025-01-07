@@ -14,7 +14,7 @@ public class GradientDescent extends Optimizer {
     }
 
     @Override
-    public double update(Synapse synapse) {
+    public double update(Synapse synapse, Object... params) {
         return learningRate * synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
     }
 

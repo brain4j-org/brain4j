@@ -10,8 +10,8 @@ import java.util.List;
 public class Adam extends Optimizer {
 
     // Momentum vectors
-    private double[] firstMomentum;
-    private double[] secondMomentum;
+    private ThreadLocal<double[]> firstMomentum;
+    private ThreadLocal<double[]> secondMomentum;
 
     private double beta1Timestep;
     private double beta2Timestep;
@@ -34,12 +34,15 @@ public class Adam extends Optimizer {
 
     @Override
     public void postInitialize() {
-        this.firstMomentum = new double[Synapse.ID_COUNTER];
-        this.secondMomentum = new double[Synapse.ID_COUNTER];
+        this.firstMomentum = ThreadLocal.withInitial(() -> new double[Synapse.ID_COUNTER]);
+        this.secondMomentum = ThreadLocal.withInitial(() -> new double[Synapse.ID_COUNTER]);
     }
 
     @Override
-    public double update(Synapse synapse) {
+    public double update(Synapse synapse, Object... params) {
+        double[] firstMomentum = (double[]) params[0];
+        double[] secondMomentum = (double[]) params[0];
+
         double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
 
         int synapseId = synapse.getSynapseId();
