@@ -39,16 +39,13 @@ public class AdamW extends Adam {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        long start = System.nanoTime();
+        // This code takes 0.1 ms to run
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(synapse);
                 updater.acknowledgeChange(synapse, change);
             }
         }
-        long end = System.nanoTime();
-        double took = (end - start) / 1e6;
-        System.out.println("Took " + took + " ms");
     }
 
     public double getWeightDecay() {
