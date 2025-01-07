@@ -15,7 +15,7 @@ public class GenericUtils {
      * @param <T>     the type of the enum
      * @return the best matching enum constant
      */
-    public static <T extends Enum<T>> T findBestMatch(double[] outputs, Class<T> clazz) {
+    public static <T extends Enum<T>> T findBestMatch(Vector outputs, Class<T> clazz) {
         return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
     }
 
@@ -25,13 +25,13 @@ public class GenericUtils {
      * @param inputs array of input values
      * @return index of the maximum value
      */
-    public static int indexOfMaxValue(double[] inputs) {
+    public static int indexOfMaxValue(Vector inputs) {
         int index = 0;
-        double max = inputs[0];
+        double max = inputs.get(0);
 
-        for (int i = 1; i < inputs.length; i++) {
-            if (inputs[i] > max) {
-                max = inputs[i];
+        for (int i = 1; i < inputs.size(); i++) {
+            if (inputs.get(i) > max) {
+                max = inputs.get(i);
                 index = i;
             }
         }

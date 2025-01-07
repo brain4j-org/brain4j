@@ -25,7 +25,7 @@ public class XorTest {
                 WeightInit.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
                 new AdamW(0.1),
-                new StochasticUpdater()
+                new NormalUpdater()
         );
 
         System.out.println(model.getStats());
@@ -38,7 +38,7 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
         training.partition(1);
 
-        trainForBenchmark(model, training);
+        trainTillError(model, training);
     }
 
     private static void trainForBenchmark(Model model, DataSet data) {
