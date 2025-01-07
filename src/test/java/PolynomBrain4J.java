@@ -7,6 +7,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.updater.impl.BatchedUpdater;
+import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.Vector;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -42,17 +43,17 @@ public class PolynomBrain4J {
     public Model getModel() {
         Model model = new Model(
                 new DenseLayer(1, Activations.LINEAR),
-                new DenseLayer(64, Activations.RELU),
-                new DenseLayer(32, Activations.RELU),
-                new DenseLayer(16, Activations.RELU),
+                new DenseLayer(64, Activations.SIGMOID),
+                new DenseLayer(32, Activations.SIGMOID),
+                new DenseLayer(16, Activations.SIGMOID),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
         model.compile(
-                WeightInit.XAVIER,
+                WeightInit.UNIFORM_XAVIER,
                 LossFunctions.MEAN_SQUARED_ERROR,
-                new AdamW(0.01, 0.001),
-                new BatchedUpdater()
+                new AdamW(0.01, 0.0),
+                new NormalUpdater()
         );
 
         return model;
@@ -145,30 +146,6 @@ public class PolynomBrain4J {
 
                 System.out.println("Epoch #" + i + " Error: " + error + " Took: " + took + " ms");
             }
-        } while (error > 0.1);
-        /*for (int i = 0; i < 10000; i++) {
-            long start = System.nanoTime();
-            model.fit(dataSet);
-            double took = (System.nanoTime() - start) / 1_000_000.0;
-
-            if (i % 100 == 0) {
-                predictedSeries.clear();
-
-                for (DataRow row : dataSet.getDataRows()) {
-                    double x = row.inputs().get(0);
-                    double trueOutput = row.outputs().get(0);
-
-                    Vector prediction = model.predict(row.inputs());
-                    double predictedOutput = prediction.get(0);
-
-                    updateGraph(x, trueOutput, predictedOutput);
-                }
-
-                double error = model.evaluate(dataSet);
-                errorLabel.setText("Error: " + String.format("%.4f", error) + " Took: " + String.format("%.2f", took) + " ms Epoch: " + i);
-
-                System.out.println("Epoch #" + i + " Error: " + error + " Took: " + took + " ms");
-            }
-        }*/
+        } while (error > 0.05);
     }
 }

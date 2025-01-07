@@ -3,6 +3,7 @@ package net.echo.brain4j.layer.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.List;
@@ -21,17 +22,17 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public void applyFunction(Layer previous) {
+    public void applyFunction(NeuronCacheHolder cacheHolder, Layer previous) {
         List<Neuron> inputs = previous.getNeurons();
 
-        double mean = calculateMean(inputs);
-        double variance = calculateVariance(inputs, mean);
+        double mean = calculateMean(cacheHolder, inputs);
+        double variance = calculateVariance(cacheHolder, inputs, mean);
 
         for (Neuron input : inputs) {
-            double value = input.getValue();
+            double value = input.getValue(cacheHolder);
             double normalized = (value - mean) / Math.sqrt(variance + epsilon);
 
-            input.setValue(normalized);
+            input.setValue(cacheHolder, normalized);
         }
     }
 
@@ -51,21 +52,21 @@ public class LayerNorm extends Layer {
         return input;
     }
 
-    private double calculateMean(List<Neuron> inputs) {
+    private double calculateMean(NeuronCacheHolder cacheHolder, List<Neuron> inputs) {
         double sum = 0.0;
 
         for (Neuron value : inputs) {
-            sum += value.getValue();
+            sum += value.getValue(cacheHolder);
         }
 
         return sum / inputs.size();
     }
 
-    private double calculateVariance(List<Neuron> inputs, double mean) {
+    private double calculateVariance(NeuronCacheHolder cacheHolder, List<Neuron> inputs, double mean) {
         double sum = 0.0;
 
         for (Neuron value : inputs) {
-            sum += Math.pow(value.getValue() - mean, 2);
+            sum += Math.pow(value.getValue(cacheHolder) - mean, 2);
         }
 
         return sum / inputs.size();

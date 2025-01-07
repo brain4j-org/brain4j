@@ -2,6 +2,7 @@ package net.echo.brain4j.training.optimizers.impl;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 
@@ -25,15 +26,15 @@ public class AdamW extends Adam {
     }
 
     @Override
-    public double update(Synapse synapse, Object... params) {
-        double adamValue = super.update(synapse, params);
+    public double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params) {
+        double adamValue = super.update(cacheHolder, synapse, params);
         double weightDecayTerm = weightDecay * synapse.getWeight();
 
         return adamValue + weightDecayTerm;
     }
 
     @Override
-    public void postIteration(Updater updater, List<Layer> layers) {
+    public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
         this.timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);
@@ -42,7 +43,7 @@ public class AdamW extends Adam {
         // This code takes 0.1 ms to run
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
-                double change = update(synapse);
+                double change = update(cacheHolder, synapse);
                 updater.acknowledgeChange(synapse, change);
             }
         }

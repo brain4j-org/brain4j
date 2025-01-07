@@ -1,17 +1,27 @@
 package net.echo.brain4j.structure;
 
 import com.google.gson.annotations.Expose;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Neuron {
 
+    public static int NEURON_COUNTER = 0;
+
     private final List<Synapse> synapses = new ArrayList<>();
     private final ThreadLocal<Double> localValue = ThreadLocal.withInitial(() -> 0.0);
     private final ThreadLocal<Double> delta = ThreadLocal.withInitial(() -> 0.0);
+    private final int id;
+
+    @Expose
+    private double bias;
     private double totalDelta;
-    @Expose private double bias;
+
+    public Neuron() {
+        this.id = NEURON_COUNTER++;
+    }
 
     public List<Synapse> getSynapses() {
         return synapses;
@@ -29,21 +39,44 @@ public class Neuron {
         return totalDelta;
     }
 
-    public double getDelta() {
-        return delta.get();
+    public int getId() {
+        return id;
     }
 
-    public void setDelta(double delta) {
-        this.delta.set(this.delta.get() + delta);
+    public double getDelta(NeuronCacheHolder cacheHolder) {
+        if (cacheHolder == null) {
+            return delta.get();
+        }
+
+        return cacheHolder.getDelta(this);
+    }
+
+    public void setDelta(NeuronCacheHolder cacheHolder, double delta) {
         this.totalDelta += delta;
+
+        if (cacheHolder == null) {
+            this.delta.set(this.delta.get() + delta);
+            return;
+        }
+
+        cacheHolder.addDelta(this, delta);
     }
 
-    public double getValue() {
-        return localValue.get();
+    public double getValue(NeuronCacheHolder cacheHolder) {
+        if (cacheHolder == null) {
+            return localValue.get();
+        }
+
+        return cacheHolder.getValue(this);
     }
 
-    public void setValue(double value) {
-        this.localValue.set(value);
+    public void setValue(NeuronCacheHolder cacheHolder, double value) {
+        if (cacheHolder == null) {
+            localValue.set(value);
+            return;
+        }
+
+        cacheHolder.setValue(this, value);
     }
 
     public double getBias() {

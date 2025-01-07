@@ -5,6 +5,7 @@ import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.updater.Updater;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public abstract class Optimizer {
      *
      * @param synapse the synapse to update
      */
-    public abstract double update(Synapse synapse, Object... params);
+    public abstract double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params);
 
     /**
      * Called after the network has been compiled and all the synapses have been initialized.
@@ -64,39 +65,41 @@ public abstract class Optimizer {
      * @param updater the backpropagation updater
      * @param layers the layers of the model
      */
-    public void postIteration(Updater updater, List<Layer> layers) {
+    public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
     }
 
     /**
      * Updates the given synapse based on the optimization algorithm.
      *
-     * @param layer the layer of the neuron
-     * @param neuron the neuron connected to the synapse
-     * @param synapse the synapse involved
+     * @param cacheHolder
+     * @param layer       the layer of the neuron
+     * @param neuron      the neuron connected to the synapse
+     * @param synapse     the synapse involved
      */
-    public void applyGradientStep(Updater updater, Layer layer, Neuron neuron, Synapse synapse) {
-        double weightChange = calculateGradient(layer, neuron, synapse);
+    public void applyGradientStep(NeuronCacheHolder cacheHolder, Updater updater, Layer layer, Neuron neuron, Synapse synapse) {
+        double weightChange = calculateGradient(cacheHolder, layer, neuron, synapse);
         updater.acknowledgeChange(synapse, weightChange);
     }
 
     /**
      * Calculate the gradient for a synapse based on the delta and the value of the input.
      *
-     * @param synapse the synapse
-     * @param neuron  the neuron
+     * @param cacheHolder the cache holder for neuron values
+     * @param neuron      the neuron
+     * @param synapse     the synapse
      * @return the calculated gradient
      */
-    public double calculateGradient(Layer layer, Neuron neuron, Synapse synapse) {
-        double output = neuron.getValue();
+    public double calculateGradient(NeuronCacheHolder cacheHolder, Layer layer, Neuron neuron, Synapse synapse) {
+        double output = neuron.getValue(cacheHolder);
 
         double derivative = layer.getActivation().getFunction().getDerivative(output);
 
-        double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
+        double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta(cacheHolder));
         double delta = clipGradient(error * derivative);
 
-        neuron.setDelta(delta);
+        neuron.setDelta(cacheHolder, delta);
 
-        return clipGradient(delta * synapse.getInputNeuron().getValue());
+        return clipGradient(delta * synapse.getInputNeuron().getValue(cacheHolder));
     }
 
     /**

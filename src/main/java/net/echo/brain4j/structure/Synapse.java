@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class Synapse {
 
-    public static int ID_COUNTER;
+    public static int SYNAPSE_COUNTER = 0;
 
     private final Neuron inputNeuron;
     private final Neuron outputNeuron;
@@ -12,7 +12,7 @@ public class Synapse {
     private double weight;
 
     public Synapse(Random generator, Neuron inputNeuron, Neuron outputNeuron, double bound) {
-        this.synapseId = ID_COUNTER++;
+        this.synapseId = SYNAPSE_COUNTER++;
         this.inputNeuron = inputNeuron;
         this.outputNeuron = outputNeuron;
         this.weight = (generator.nextDouble() * 2 * bound) - bound;

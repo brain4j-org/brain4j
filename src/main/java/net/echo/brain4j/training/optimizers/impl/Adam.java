@@ -2,6 +2,7 @@ package net.echo.brain4j.training.optimizers.impl;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 
@@ -34,13 +35,13 @@ public class Adam extends Optimizer {
 
     @Override
     public void postInitialize() {
-        this.firstMomentum = new double[Synapse.ID_COUNTER];
-        this.secondMomentum = new double[Synapse.ID_COUNTER];
+        this.firstMomentum = new double[Synapse.SYNAPSE_COUNTER];
+        this.secondMomentum = new double[Synapse.SYNAPSE_COUNTER];
     }
 
     @Override
-    public double update(Synapse synapse, Object... params) {
-        double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
+    public double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params) {
+        double gradient = synapse.getOutputNeuron().getDelta(cacheHolder) * synapse.getInputNeuron().getValue(cacheHolder);
 
         int synapseId = synapse.getSynapseId();
 
@@ -60,7 +61,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void postIteration(Updater updater, List<Layer> layers) {
+    public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
         this.timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);
@@ -68,7 +69,7 @@ public class Adam extends Optimizer {
 
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
-                double change = update(synapse);
+                double change = update(cacheHolder, synapse);
                 updater.acknowledgeChange(synapse, change);
             }
         }

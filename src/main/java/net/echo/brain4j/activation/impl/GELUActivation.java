@@ -2,6 +2,7 @@ package net.echo.brain4j.activation.impl;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 
 import java.util.List;
 
@@ -24,9 +25,9 @@ public class GELUActivation implements Activation {
     }
 
     @Override
-    public void apply(List<Neuron> neurons) {
+    public void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            neuron.setValue(activate(neuron.getValue()));
+            neuron.setValue(cacheHolder, activate(neuron.getValue(cacheHolder)));
         }
     }
 }

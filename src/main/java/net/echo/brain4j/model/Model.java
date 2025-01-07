@@ -14,6 +14,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
@@ -138,13 +139,17 @@ public class Model {
         return totalError;
     }
 
+    public Vector predict(Vector input) {
+        return predict(new NeuronCacheHolder(), input);
+    }
+
     /**
      * Predicts output for given input.
      *
      * @param input input data
      * @return predicted outputs
      */
-    public Vector predict(Vector input) {
+    public Vector predict(NeuronCacheHolder cacheHolder, Vector input) {
         Layer inputLayer = layers.getFirst();
 
         if (input.toArray().length != inputLayer.getNeurons().size()) {
@@ -153,7 +158,7 @@ public class Model {
         }
 
         for (int i = 0; i < input.toArray().length; i++) {
-            inputLayer.getNeuronAt(i).setValue(input.get(i));
+            inputLayer.getNeuronAt(i).setValue(cacheHolder, input.get(i));
         }
 
         for (int l = 0; l < layers.size() - 1; l++) {
@@ -179,15 +184,15 @@ public class Model {
             Vector inputVector = new Vector(inSize);
 
             for (int i = 0; i < neurons.size(); i++) {
-                inputVector.set(i, neurons.get(i).getValue());
+                inputVector.set(i, neurons.get(i).getValue(cacheHolder));
             }
 
             for (int i = 0; i < outSize; i++) {
                 double value = synapseMatrix[i].weightedSum(inputVector);
-                nextNeurons.get(i).setValue(value);
+                nextNeurons.get(i).setValue(cacheHolder, value);
             }
 
-            nextLayer.applyFunction(layer);
+            nextLayer.applyFunction(cacheHolder, layer);
         }
 
         Layer outputLayer = layers.getLast();
@@ -195,7 +200,7 @@ public class Model {
         double[] output = new double[outputLayer.getNeurons().size()];
 
         for (int i = 0; i < output.length; i++) {
-            output[i] = outputLayer.getNeuronAt(i).getValue();
+            output[i] = outputLayer.getNeuronAt(i).getValue(cacheHolder);
         }
 
         return Vector.of(output);

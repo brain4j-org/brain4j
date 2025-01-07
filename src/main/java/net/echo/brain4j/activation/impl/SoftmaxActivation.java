@@ -2,6 +2,7 @@ package net.echo.brain4j.activation.impl;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 
 import java.util.List;
 
@@ -42,17 +43,17 @@ public class SoftmaxActivation implements Activation {
     }
 
     @Override
-    public void apply(List<Neuron> neurons) {
+    public void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         double[] values = new double[neurons.size()];
 
         for (int i = 0; i < neurons.size(); i++) {
-            values[i] = neurons.get(i).getValue() + neurons.get(i).getBias();
+            values[i] = neurons.get(i).getValue(cacheHolder) + neurons.get(i).getBias();
         }
 
         double[] activatedValues = activate(values);
 
         for (int i = 0; i < neurons.size(); i++) {
-            neurons.get(i).setValue(activatedValues[i]);
+            neurons.get(i).setValue(cacheHolder, activatedValues[i]);
         }
     }
 }

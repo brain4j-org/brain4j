@@ -6,6 +6,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
@@ -46,58 +47,37 @@ public class Layer {
         }
     }
 
-    public void applyFunction(Layer previous) {
+    public void applyFunction(NeuronCacheHolder cacheHolder, Layer previous) {
         Activation function = activation.getFunction();
 
-        function.apply(neurons);
+        function.apply(cacheHolder, neurons);
     }
 
-    public void setInput(Vector input) {
+    public void setInput(NeuronCacheHolder cacheHolder, Vector input) {
         if (input.size() != neurons.size()) {
             throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
                     input.size() + " != " + neurons.size());
         }
 
         for (int i = 0; i < input.size(); i++) {
-            neurons.get(i).setValue(input.get(i));
+            neurons.get(i).setValue(cacheHolder, input.get(i));
         }
     }
 
-    public void activate() {
-        for (Synapse synapse : synapses) {
-            Neuron inputNeuron = synapse.getInputNeuron();
-            Neuron outputNeuron = synapse.getOutputNeuron();
-
-            outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
-        }
-    }
-
-    public void activate(Vector input) {
-        for (int i = 0; i < neurons.size(); i++) {
-            Neuron inputNeuron = neurons.get(i);
-
-            for (Synapse synapse : inputNeuron.getSynapses()) {
-                Neuron outputNeuron = synapse.getOutputNeuron();
-
-                outputNeuron.setValue(outputNeuron.getValue() + input.get(i) * synapse.getWeight());
-            }
-        }
-    }
-
-    public Vector getVector() {
+    public Vector getVector(NeuronCacheHolder cacheHolder) {
         Vector values = new Vector(neurons.size());
 
         for (int i = 0; i < neurons.size(); i++) {
-            values.set(i, neurons.get(i).getValue());
+            values.set(i, neurons.get(i).getValue(cacheHolder));
         }
 
         return values;
     }
 
-    public void propagate(Updater updater, Optimizer optimizer) {
+    public void propagate(NeuronCacheHolder cacheHolder, Updater updater, Optimizer optimizer) {
         for (Synapse synapse : synapses) {
             Neuron inputNeuron = synapse.getInputNeuron();
-            optimizer.applyGradientStep(updater, this, inputNeuron, synapse);
+            optimizer.applyGradientStep(cacheHolder, updater, this, inputNeuron, synapse);
         }
     }
 

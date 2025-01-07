@@ -2,6 +2,7 @@ package net.echo.brain4j.activation.impl;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 
 import java.util.List;
 
@@ -27,10 +28,10 @@ public class TanhActivation implements Activation {
     }
 
     @Override
-    public void apply(List<Neuron> neurons) {
+    public void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            double value = neuron.getValue() + neuron.getBias();
-            neuron.setValue(activate(value));
+            double value = neuron.getValue(cacheHolder) + neuron.getBias();
+            neuron.setValue(cacheHolder, activate(value));
         }
     }
 }

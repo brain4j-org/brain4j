@@ -4,6 +4,7 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
@@ -36,10 +37,12 @@ public class BackPropagation {
 
             for (DataRow row : partition) {
                 Thread thread = Thread.startVirtualThread(() -> {
-                    Vector output = model.predict(row.inputs());
+                    NeuronCacheHolder cacheHolder = new NeuronCacheHolder();
+
+                    Vector output = model.predict(cacheHolder, row.inputs());
                     Vector target = row.outputs();
 
-                    backpropagate(target.toArray(), output.toArray());
+                    backpropagate(cacheHolder, target.toArray(), output.toArray());
                 });
 
                 threads.add(thread);
@@ -53,27 +56,27 @@ public class BackPropagation {
         updater.postFit(model.getLayers(), optimizer.getLearningRate());
     }
 
-    public void backpropagate(double[] targets, double[] outputs) {
+    public void backpropagate(NeuronCacheHolder cacheHolder, double[] targets, double[] outputs) {
         List<Layer> layers = model.getLayers();
-        initialDelta(layers, targets, outputs);
+        initialDelta(cacheHolder, layers, targets, outputs);
 
         for (int l = layers.size() - 2; l > 0; l--) {
             Layer layer = layers.get(l);
 
             if (layer instanceof DropoutLayer dropoutLayer) {
                 Layer previous = layers.get(l - 1);
-                dropoutLayer.backward(previous.getNeurons());
+                dropoutLayer.backward(cacheHolder, previous.getNeurons());
                 continue;
             }
 
-            layer.propagate(updater, optimizer);
+            layer.propagate(cacheHolder, updater, optimizer);
         }
 
-        optimizer.postIteration(updater, layers);
+        optimizer.postIteration(cacheHolder, updater, layers);
         updater.postIteration(layers, optimizer.getLearningRate());
     }
 
-    private void initialDelta(List<Layer> layers, double[] targets, double[] outputs) {
+    private void initialDelta(NeuronCacheHolder cacheHolder, List<Layer> layers, double[] targets, double[] outputs) {
         Layer outputLayer = layers.getLast();
 
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
@@ -83,7 +86,7 @@ public class BackPropagation {
             double error = targets[i] - output;
 
             double delta = error * outputLayer.getActivation().getFunction().getDerivative(output);
-            neuron.setDelta(delta);
+            neuron.setDelta(cacheHolder, delta);
         }
     }
 }

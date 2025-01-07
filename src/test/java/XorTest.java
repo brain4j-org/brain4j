@@ -7,6 +7,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
+import net.echo.brain4j.training.updater.impl.BatchedUpdater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
@@ -16,16 +17,16 @@ public class XorTest {
     public static void main(String[] args) {
         Model model = new Model(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(32, Activations.RELU),
-                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(128, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
         model.compile(
                 WeightInit.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
-                new AdamW(0.1),
-                new NormalUpdater()
+                new AdamW(0.01, 0.01),
+                new StochasticUpdater()
         );
 
         System.out.println(model.getStats());
@@ -38,7 +39,7 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
         training.partition(1);
 
-        trainTillError(model, training);
+        trainForBenchmark(model, training);
     }
 
     private static void trainForBenchmark(Model model, DataSet data) {

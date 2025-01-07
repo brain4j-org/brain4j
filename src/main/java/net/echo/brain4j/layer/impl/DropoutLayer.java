@@ -3,6 +3,7 @@ package net.echo.brain4j.layer.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 
 import java.util.List;
 
@@ -33,17 +34,17 @@ public class DropoutLayer extends Layer {
         this.dropout = dropout;
     }
 
-    public void process(List<Neuron> neurons) {
+    public void process(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
             if (Math.random() < dropout) {
-                neuron.setValue(0);
+                neuron.setValue(cacheHolder, 0);
             }
         }
     }
 
-    public void backward(List<Neuron> neurons) {
+    public void backward(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            neuron.setValue(neuron.getValue() * (1.0 - dropout));
+            neuron.setValue(cacheHolder, neuron.getValue(cacheHolder) * (1.0 - dropout));
         }
     }
 

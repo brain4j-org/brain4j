@@ -5,7 +5,6 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.updater.Updater;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class NormalUpdater extends Updater {
@@ -15,8 +14,8 @@ public class NormalUpdater extends Updater {
 
     @Override
     public void postInitialize() {
-        this.synapses = new Synapse[Synapse.ID_COUNTER];
-        this.gradients = new double[Synapse.ID_COUNTER];
+        this.synapses = new Synapse[Synapse.SYNAPSE_COUNTER];
+        this.gradients = new double[Synapse.SYNAPSE_COUNTER];
     }
 
     @Override
@@ -37,7 +36,7 @@ public class NormalUpdater extends Updater {
             }
         }
 
-        gradients = new double[Synapse.ID_COUNTER];
+        gradients = new double[Synapse.SYNAPSE_COUNTER];
     }
 
     @Override
