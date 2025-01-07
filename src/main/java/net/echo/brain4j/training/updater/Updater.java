@@ -1,7 +1,6 @@
 package net.echo.brain4j.training.updater;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.adapters.UpdaterAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Synapse;

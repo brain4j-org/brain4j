@@ -6,7 +6,6 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
-import net.echo.brain4j.training.updater.impl.BatchedUpdater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.Vector;
 import org.jfree.chart.ChartFactory;
