@@ -8,8 +8,8 @@ import java.util.List;
 public class Neuron {
 
     private final List<Synapse> synapses = new ArrayList<>();
-    private final ThreadLocal<Double> localValue = new ThreadLocal<>();
-    private final ThreadLocal<Double> delta = new ThreadLocal<>();
+    private final ThreadLocal<Double> localValue = ThreadLocal.withInitial(() -> 0.0);
+    private final ThreadLocal<Double> delta = ThreadLocal.withInitial(() -> 0.0);
     private double totalDelta;
     @Expose private double bias;
 
@@ -34,7 +34,7 @@ public class Neuron {
     }
 
     public void setDelta(double delta) {
-        this.delta.set(delta);
+        this.delta.set(this.delta.get() + delta);
         this.totalDelta += delta;
     }
 
