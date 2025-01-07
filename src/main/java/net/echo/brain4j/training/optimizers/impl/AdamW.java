@@ -39,15 +39,16 @@ public class AdamW extends Adam {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        double[] firstMomentum = this.firstMomentum.get();
-        double[] secondMomentum = this.secondMomentum.get();
-
+        long start = System.nanoTime();
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
-                double change = update(synapse, firstMomentum, secondMomentum);
+                double change = update(synapse);
                 updater.acknowledgeChange(synapse, change);
             }
         }
+        long end = System.nanoTime();
+        double took = (end - start) / 1e6;
+        System.out.println("Took " + took + " ms");
     }
 
     public double getWeightDecay() {
