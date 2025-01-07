@@ -62,24 +62,6 @@ public class Model {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
-    /**
-     * Sets the seed for the weights generation.
-     *
-     * @param seed the seed, may be any value
-     */
-    public void setSeed(int seed) {
-        this.seed = seed;
-    }
-
-    /**
-     * Returns the seed for the weights generation.
-     *
-     * @return the seed, generated randomly at first
-     */
-    public int getSeed() {
-        return seed;
-    }
-
     private void connect(WeightInit weightInit) {
         Layer lastNormalLayer = layers.getFirst();
 
@@ -193,26 +175,16 @@ public class Model {
             int inSize = neurons.size();
             int outSize = nextNeurons.size();
 
-            Vector[] synapseMatrix = new Vector[outSize];
-
-            for (int i = 0; i < outSize; i++) {
-                synapseMatrix[i] = new Vector(inSize);
-
-                for (int j = 0; j < inSize; j++) {
-                    Synapse synapse = synapses.get(j * outSize + i);
-                    synapseMatrix[i].set(j, synapse.getWeight());
-                }
-            }
-
-            Vector inputVec = new Vector(inSize);
+            Vector[] synapseMatrix = recalculateSynapseMatrix(synapses, inSize, outSize);
+            Vector inputVector = new Vector(inSize);
 
             for (int i = 0; i < neurons.size(); i++) {
-                inputVec.set(i, neurons.get(i).getValue());
+                inputVector.set(i, neurons.get(i).getValue());
             }
 
             for (int i = 0; i < outSize; i++) {
-                double value = synapseMatrix[i].weightedSum(inputVec);
-                neurons.get(i).setValue(value);
+                double value = synapseMatrix[i].weightedSum(inputVector);
+                nextNeurons.get(i).setValue(value);
             }
 
             nextLayer.applyFunction(layer);
@@ -227,66 +199,6 @@ public class Model {
         }
 
         return Vector.of(output);
-    }
-
-    /**
-     * Gets the model's loss function.
-     *
-     * @return loss function
-     */
-    public LossFunction getLossFunction() {
-        return function.getFunction();
-    }
-
-    /**
-     * Retrieves layers of the network.
-     *
-     * @return list of layers
-     */
-    public List<Layer> getLayers() {
-        return layers;
-    }
-
-    /**
-     * Generates model statistics.
-     *
-     * @return model stats
-     */
-    public String getStats() {
-        StringBuilder stats = new StringBuilder();
-        stats.append(String.format("%-7s %-15s %-10s %-12s\n", "Index", "Layer name", "nIn, nOut", "TotalParams"));
-        stats.append("================================================\n");
-
-        int params = 0;
-
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
-            Layer next = layers.get(Math.min(i, layers.size() - 1));
-
-            if (next instanceof DropoutLayer) {
-                next = layers.get(Math.min(i + 1, layers.size() - 1));
-            }
-
-            String layerType = layer.getClass().getSimpleName();
-
-            int nIn = layer.getNeurons().size();
-            int nOut = i == layers.size() - 1 ? 0 : next.getNeurons().size();
-
-            int totalParams = layer.getTotalParams();
-
-            String formatNin = layer instanceof DropoutLayer ? "-" : String.valueOf(nIn);
-            String formatNout = layer instanceof DropoutLayer ? "-" : String.valueOf(nOut);
-
-            stats.append(String.format("%-7d %-15s %-10s %-12d\n",
-                    i, layerType, formatNin + ", " + formatNout, totalParams));
-
-            params += totalParams;
-        }
-
-        stats.append("================================================\n");
-        stats.append("Total parameters: ").append(params).append("\n");
-        stats.append("================================================\n");
-        return stats.toString();
     }
 
     /**
@@ -384,5 +296,98 @@ public class Model {
      */
     public void add(Layer... layers) {
         this.layers.addAll(Arrays.asList(layers));
+    }
+
+    public Vector[] recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {
+        Vector[] synapseMatrix = new Vector[outSize];
+
+        for (int i = 0; i < outSize; i++) {
+            synapseMatrix[i] = new Vector(inSize);
+
+            for (int j = 0; j < inSize; j++) {
+                Synapse synapse = synapses.get(j * outSize + i);
+                synapseMatrix[i].set(j, synapse.getWeight());
+            }
+        }
+
+        return synapseMatrix;
+    }
+
+    /**
+     * Gets the model's loss function.
+     *
+     * @return loss function
+     */
+    public LossFunction getLossFunction() {
+        return function.getFunction();
+    }
+
+    /**
+     * Retrieves layers of the network.
+     *
+     * @return list of layers
+     */
+    public List<Layer> getLayers() {
+        return layers;
+    }
+
+    /**
+     * Generates model statistics.
+     *
+     * @return model stats
+     */
+    public String getStats() {
+        StringBuilder stats = new StringBuilder();
+        stats.append(String.format("%-7s %-15s %-10s %-12s\n", "Index", "Layer name", "nIn, nOut", "TotalParams"));
+        stats.append("================================================\n");
+
+        int params = 0;
+
+        for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+            Layer next = layers.get(Math.min(i, layers.size() - 1));
+
+            if (next instanceof DropoutLayer) {
+                next = layers.get(Math.min(i + 1, layers.size() - 1));
+            }
+
+            String layerType = layer.getClass().getSimpleName();
+
+            int nIn = layer.getNeurons().size();
+            int nOut = i == layers.size() - 1 ? 0 : next.getNeurons().size();
+
+            int totalParams = layer.getTotalParams();
+
+            String formatNin = layer instanceof DropoutLayer ? "-" : String.valueOf(nIn);
+            String formatNout = layer instanceof DropoutLayer ? "-" : String.valueOf(nOut);
+
+            stats.append(String.format("%-7d %-15s %-10s %-12d\n",
+                    i, layerType, formatNin + ", " + formatNout, totalParams));
+
+            params += totalParams;
+        }
+
+        stats.append("================================================\n");
+        stats.append("Total parameters: ").append(params).append("\n");
+        stats.append("================================================\n");
+        return stats.toString();
+    }
+
+    /**
+     * Sets the seed for the weights generation.
+     *
+     * @param seed the seed, may be any value
+     */
+    public void setSeed(int seed) {
+        this.seed = seed;
+    }
+
+    /**
+     * Returns the seed for the weights generation.
+     *
+     * @return the seed, generated randomly at first
+     */
+    public int getSeed() {
+        return seed;
     }
 }
