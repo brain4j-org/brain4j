@@ -28,10 +28,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Represents a generic neural network model.
@@ -173,12 +170,6 @@ public class Model {
                     input.toArray().length + " != " + inputLayer.getNeurons().size());
         }
 
-        for (Layer layer : layers) {
-            for (Neuron neuron : layer.getNeurons()) {
-                neuron.setValue(0);
-            }
-        }
-
         for (int i = 0; i < input.toArray().length; i++) {
             inputLayer.getNeuronAt(i).setValue(input.get(i));
         }
@@ -190,15 +181,38 @@ public class Model {
 
             Layer nextLayer = layers.get(l + 1);
 
-            if (nextLayer instanceof DropoutLayer) {
-                nextLayer = layers.get(l + 2);
+            for (int i = 2; nextLayer instanceof DropoutLayer; i++) {
+                nextLayer = layers.get(l + i);
             }
 
-            for (Synapse synapse : layer.getSynapses()) {
-                Neuron inputNeuron = synapse.getInputNeuron();
-                Neuron outputNeuron = synapse.getOutputNeuron();
+            List<Synapse> synapses = layer.getSynapses();
 
-                outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
+            List<Neuron> neurons = layer.getNeurons();
+            List<Neuron> nextNeurons = nextLayer.getNeurons();
+
+            int inSize = neurons.size();
+            int outSize = nextNeurons.size();
+
+            Vector[] synapseMatrix = new Vector[outSize];
+
+            for (int i = 0; i < outSize; i++) {
+                synapseMatrix[i] = new Vector(inSize);
+
+                for (int j = 0; j < inSize; j++) {
+                    Synapse synapse = synapses.get(j * outSize + i);
+                    synapseMatrix[i].set(j, synapse.getWeight());
+                }
+            }
+
+            Vector inputVec = new Vector(inSize);
+
+            for (int i = 0; i < neurons.size(); i++) {
+                inputVec.set(i, neurons.get(i).getValue());
+            }
+
+            for (int i = 0; i < outSize; i++) {
+                double value = synapseMatrix[i].weightedSum(inputVec);
+                neurons.get(i).setValue(value);
             }
 
             nextLayer.applyFunction(layer);

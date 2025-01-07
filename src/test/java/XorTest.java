@@ -1,6 +1,5 @@
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
-import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -15,9 +14,8 @@ public class XorTest {
     public static void main(String[] args) {
         Model model = new Model(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(16, Activations.RELU),
-                new LayerNorm(),
-                new DenseLayer(16, Activations.RELU),
+                new DenseLayer(64, Activations.RELU),
+                new DenseLayer(64, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -37,7 +35,7 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
         training.partition(1);
 
-        trainTillError(model, training);
+        trainForBenchmark(model, training);
     }
 
     private static void trainForBenchmark(Model model, DataSet data) {

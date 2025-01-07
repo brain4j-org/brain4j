@@ -138,6 +138,28 @@ public class Vector {
         return this;
     }
 
+    public Vector multiply(Vector vector) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] *= vector.data[i];
+        }
+
+        return this;
+    }
+
+    public double weightedSum(Vector vector) {
+        double sum = 0.0;
+
+        for (int i = 0; i < data.length; i++) {
+            double value = data[i] * vector.data[i];
+
+            sum += value;
+
+            data[i] = value;
+        }
+
+        return sum;
+    }
+
     public Vector fill(double value) {
         Arrays.fill(data, value);
         return this;
