@@ -17,8 +17,8 @@ public class XorTest {
     public static void main(String[] args) {
         Model model = new Model(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(128, Activations.RELU),
-                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
