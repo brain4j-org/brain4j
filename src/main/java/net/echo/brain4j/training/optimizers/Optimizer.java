@@ -11,7 +11,7 @@ import net.echo.brain4j.training.updater.Updater;
 import java.util.List;
 
 /**
- * Abstract class for optimization algorithms.
+ * Interface providing various methods to optimize training.
  */
 @JsonAdapter(OptimizerAdapter.class)
 public abstract class Optimizer {
@@ -71,9 +71,9 @@ public abstract class Optimizer {
     /**
      * Updates the given synapse based on the optimization algorithm.
      *
-     * @param cacheHolder
+     * @param cacheHolder holds the neuron values for the current thread
      * @param layer       the layer of the neuron
-     * @param neuron      the neuron connected to the synapse
+     * @param neuron      the input neuron connected to the synapse
      * @param synapse     the synapse involved
      */
     public void applyGradientStep(NeuronCacheHolder cacheHolder, Updater updater, Layer layer, Neuron neuron, Synapse synapse) {
@@ -87,6 +87,7 @@ public abstract class Optimizer {
      * @param cacheHolder the cache holder for neuron values
      * @param neuron      the neuron
      * @param synapse     the synapse
+     *
      * @return the calculated gradient
      */
     public double calculateGradient(NeuronCacheHolder cacheHolder, Layer layer, Neuron neuron, Synapse synapse) {

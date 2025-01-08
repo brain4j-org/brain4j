@@ -260,12 +260,16 @@ public class Model {
         File file = new File(path);
 
         JsonObject parent = new JsonObject();
+
         JsonObject optimizerObject = GSON.toJsonTree(optimizer).getAsJsonObject();
+        JsonObject updaterObject = GSON.toJsonTree(updater).getAsJsonObject();
 
         parent.addProperty("seed", seed);
         parent.addProperty("weightInit", weightInit.name());
         parent.addProperty("lossFunction", function.name());
+
         parent.add("optimizer", optimizerObject);
+        parent.add("updater", updaterObject);
 
         List<JsonObject> layerObjects = new ArrayList<>();
 
@@ -300,7 +304,7 @@ public class Model {
     /**
      * Adds a layers to the network.
      *
-     * @param layers the layers to add
+     * @param layers a list of layers to add
      */
     public void add(Layer... layers) {
         this.layers.addAll(Arrays.asList(layers));
@@ -323,11 +327,34 @@ public class Model {
 
     /**
      * Gets the model's loss function.
-     *
-     * @return loss function
      */
     public LossFunction getLossFunction() {
         return function.getFunction();
+    }
+
+    /**
+     * Gets the model's optimizer.
+     */
+    public Optimizer getOptimizer() {
+        return optimizer;
+    }
+
+    /**
+     * Gets the model's weights updater.
+     */
+    public Updater getUpdater() {
+        return updater;
+    }
+
+    /**
+     * Gets the weight initialization technique used.
+     */
+    public WeightInit getWeightInit() {
+        return weightInit;
+    }
+
+    public Random getGenerator() {
+        return generator;
     }
 
     /**
