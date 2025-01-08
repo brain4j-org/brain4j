@@ -3,7 +3,7 @@ package net.echo.brain4j.utils;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-public class Vector {
+public class Vector implements Cloneable {
 
     private final double[] data;
 
@@ -217,6 +217,15 @@ public class Vector {
             return Arrays.equals(data, vector.data);
         } else {
             return false;
+        }
+    }
+
+    @Override
+    public Vector clone() {
+        try {
+            return (Vector) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
         }
     }
 }
