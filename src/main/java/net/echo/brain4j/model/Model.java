@@ -314,11 +314,12 @@ public class Model {
         Vector[] synapseMatrix = new Vector[outSize];
 
         for (int i = 0; i < outSize; i++) {
-            synapseMatrix[i] = new Vector(inSize);
+            Vector vector = new Vector(inSize);
+            synapseMatrix[i] = vector;
 
             for (int j = 0; j < inSize; j++) {
                 Synapse synapse = synapses.get(j * outSize + i);
-                synapseMatrix[i].set(j, synapse.getWeight());
+                vector.set(j, synapse.getWeight());
             }
         }
 
