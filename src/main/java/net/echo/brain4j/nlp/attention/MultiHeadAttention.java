@@ -30,24 +30,20 @@ public class MultiHeadAttention extends Layer {
         initializeHeads();
     }
 
-    public Vector attend(double[] input) {
-        List<double[]> attendedChanges = new ArrayList<>();
+    public Vector attend(Vector input) {
+        List<Vector> attendedChanges = new ArrayList<>();
 
-        heads.parallelStream().forEach(head -> {
-            double[] result = head.attend(input);
-
-            attendedChanges.add(result);
-        });
-
-        double[] result = input.clone();
-
-        for (double[] changes : attendedChanges) {
-            for (int i = 0; i < result.length; i++) {
-                result[i] = result[i] + changes[i];
-            }
+        for (AttentionHead head : heads) {
+            attendedChanges.add(head.attend(input));
         }
 
-        return Vector.of(result);
+        Vector result = input.clone();
+
+        for (Vector changes : attendedChanges) {
+            result = result.add(changes);
+        }
+
+        return result;
     }
 
     private void initializeHeads() {

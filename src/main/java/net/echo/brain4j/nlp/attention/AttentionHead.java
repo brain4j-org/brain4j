@@ -1,5 +1,7 @@
 package net.echo.brain4j.nlp.attention;
 
+import net.echo.brain4j.utils.Vector;
+
 import java.util.Random;
 
 public class AttentionHead {
@@ -27,17 +29,17 @@ public class AttentionHead {
      * @param input the input vector or embedding
      * @return the attention vector, or so the required change fpr the embedding.
      */
-    public double[] attend(double[] input) {
+    public Vector attend(Vector input) {
         double[] key = projectVector(input, keyWeights);
         double[] query = projectVector(input, queryWeights);
 
         double[] scores = computeScores(query, key);
 
         double[] values = projectVector(input, valueWeights);
-        double[] output = new double[values.length];
+        Vector output = new Vector(values.length);
 
         for (int i = 0; i < values.length; i++) {
-            output[i] = scores[i] * values[i];
+            output.set(i, scores[i] * values[i]);
         }
 
         return output;
@@ -46,14 +48,14 @@ public class AttentionHead {
     /**
      * Performs a matrix multiplication.
      */
-    public double[] projectVector(double[] embedding, double[][] weights) {
+    public double[] projectVector(Vector embedding, double[][] weights) {
         double[] result = new double[dimension];
 
         for (int i = 0; i < dimension; i++) {
             double sum = 0;
 
-            for (int j = 0; j < embedding.length; j++) {
-                sum += weights[j][i] * embedding[j];
+            for (int j = 0; j < embedding.size(); j++) {
+                sum += weights[j][i] * embedding.get(j);
             }
 
             result[i] = sum;

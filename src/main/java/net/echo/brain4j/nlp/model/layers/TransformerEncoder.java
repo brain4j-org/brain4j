@@ -49,7 +49,7 @@ public class TransformerEncoder extends Layer {
             Vector embedding = Vector.of(vector.toArray());
             embedding = normalizer.normalize(embedding);
 
-            Vector attended = attention.attend(embedding.toArray());
+            Vector attended = attention.attend(embedding);
             attended = normalizer.normalize(attended);
 
             System.out.println("Attended");
