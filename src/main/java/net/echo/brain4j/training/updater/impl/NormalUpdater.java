@@ -1,11 +1,10 @@
 package net.echo.brain4j.training.updater.impl;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.updater.Updater;
-
-import java.util.List;
 
 public class NormalUpdater extends Updater {
 
@@ -19,7 +18,7 @@ public class NormalUpdater extends Updater {
     }
 
     @Override
-    public void postFit(List<Layer> layers, double learningRate) {
+    public void postFit(Model model, double learningRate) {
         for (int i = 0; i < gradients.length; i++) {
             Synapse synapse = synapses[i];
             double gradient = gradients[i];
@@ -27,7 +26,9 @@ public class NormalUpdater extends Updater {
             synapse.setWeight(synapse.getWeight() + learningRate * gradient);
         }
 
-        for (Layer layer : layers) {
+        model.reloadMatrices();
+
+        for (Layer layer : model.getLayers()) {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 

@@ -1,6 +1,7 @@
 package net.echo.brain4j.training.updater.impl;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.updater.Updater;
@@ -19,7 +20,7 @@ public class StochasticUpdater extends Updater {
     }
 
     @Override
-    public void postIteration(List<Layer> layers, double learningRate) {
+    public void postIteration(Model model, double learningRate) {
         for (int i = 0; i < synapses.length; i++) {
             Synapse synapse = synapses[i];
             double gradient = gradients[i];
@@ -27,9 +28,11 @@ public class StochasticUpdater extends Updater {
             synapse.setWeight(synapse.getWeight() + learningRate * gradient);
         }
 
+        model.reloadMatrices();
+
         this.gradients = new double[Synapse.SYNAPSE_COUNTER];
 
-        for (Layer layer : layers) {
+        for (Layer layer : model.getLayers()) {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 

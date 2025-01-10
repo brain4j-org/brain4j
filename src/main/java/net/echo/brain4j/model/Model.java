@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Represents a generic neural network model.
+ * Represents a feed forward neural network.
  */
 public class Model {
 
@@ -54,7 +54,7 @@ public class Model {
     protected List<Layer> layers;
     protected List<Vector[]> synapsesMatrices;
 
-    protected LossFunctions function;
+    protected LossFunctions lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
     protected BackPropagation propagation;
@@ -103,7 +103,7 @@ public class Model {
     public void compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.weightInit = weightInit;
         this.generator = new Random(seed);
-        this.function = function;
+        this.lossFunction = function;
         this.optimizer = optimizer;
         this.updater = updater;
         this.propagation = new BackPropagation(this, optimizer, updater);
@@ -134,31 +134,51 @@ public class Model {
     public double evaluate(DataSet set) {
         double totalError = 0.0;
 
+        reloadMatrices();
+
         for (DataRow row : set.getData()) {
             Vector inputs = row.inputs();
             Vector targets = row.outputs();
 
-            Vector outputs = predict(inputs);
+            Vector outputs = predict(new NeuronCacheHolder(), inputs);
 
-            totalError += function.getFunction().calculate(targets, outputs);
+            totalError += lossFunction.getFunction().calculate(targets, outputs);
         }
 
         return totalError;
     }
 
+    /**
+     * Finds the next layer used for computations given the initial index
+     *
+     * @param index starting layer index
+     * @return the next computation layer
+     */
+    public Layer getNextComputationLayer(int index) {
+        Layer nextLayer = layers.get(index + 1);
+
+        for (int j = 2; j < layers.size() && nextLayer instanceof DropoutLayer; j++) {
+            nextLayer = layers.get(index + j);
+        }
+
+        return nextLayer;
+    }
+
+    /**
+     * Reloads the synapse matrix for each layer.
+     */
     public void reloadMatrices() {
         synapsesMatrices.clear();
 
         for (int i = 0; i < layers.size() - 1; i++) {
             Layer layer = layers.get(i);
 
-            if (layer instanceof DropoutLayer) continue;
-
-            Layer nextLayer = layers.get(i + 1);
-
-            for (int j = 2; j < layers.size() && nextLayer instanceof DropoutLayer; j++) {
-                nextLayer = layers.get(i + j);
+            if (layer instanceof DropoutLayer) {
+                synapsesMatrices.add(new Vector[]{});
+                continue;
             }
+
+            Layer nextLayer = getNextComputationLayer(i);
 
             List<Neuron> neurons = layer.getNeurons();
             List<Neuron> nextNeurons = nextLayer.getNeurons();
@@ -169,6 +189,12 @@ public class Model {
         }
     }
 
+    /**
+     * Predicts the output for the given input.
+     *
+     * @param input input data as a vector, must have dimension equal to the model's input dimension
+     * @return predicted outputs as a vector
+     */
     public Vector predict(Vector input) {
         return predict(new NeuronCacheHolder(), input);
     }
@@ -176,8 +202,8 @@ public class Model {
     /**
      * Predicts output for given input.
      *
-     * @param input input data
-     * @return predicted outputs
+     * @param input input data as a vector, must have dimension equal to the model's input dimension
+     * @return predicted outputs as a vector
      */
     public Vector predict(NeuronCacheHolder cacheHolder, Vector input) {
         Layer inputLayer = layers.getFirst();
@@ -196,11 +222,7 @@ public class Model {
 
             if (layer instanceof DropoutLayer) continue;
 
-            Layer nextLayer = layers.get(l + 1);
-
-            for (int i = 2; i < layers.size() && nextLayer instanceof DropoutLayer; i++) {
-                nextLayer = layers.get(l + i);
-            }
+            Layer nextLayer = getNextComputationLayer(l);
 
             List<Neuron> neurons = layer.getNeurons();
             List<Neuron> nextNeurons = nextLayer.getNeurons();
@@ -208,9 +230,8 @@ public class Model {
             int inSize = neurons.size();
             int outSize = nextNeurons.size();
 
-            Vector[] synapseMatrix = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
-            // Vector[] synapseMatrix = synapsesMatrices.get(l);
             Vector inputVector = new Vector(inSize);
+            Vector[] synapseMatrix = synapsesMatrices.get(l);
 
             for (int i = 0; i < neurons.size(); i++) {
                 inputVector.set(i, neurons.get(i).getValue(cacheHolder));
@@ -252,7 +273,7 @@ public class Model {
 
             this.optimizer = GSON.fromJson(parent.get("optimizer"), Optimizer.class);
             this.updater = GSON.fromJson(parent.get("updater"), Updater.class);
-            this.function = LossFunctions.valueOf(parent.get("lossFunction").getAsString());
+            this.lossFunction = LossFunctions.valueOf(parent.get("lossFunction").getAsString());
 
             Type listType = new TypeToken<ArrayList<Layer>>(){}.getType();
 
@@ -292,7 +313,7 @@ public class Model {
 
         parent.addProperty("seed", seed);
         parent.addProperty("weightInit", weightInit.name());
-        parent.addProperty("lossFunction", function.name());
+        parent.addProperty("lossFunction", lossFunction.name());
 
         parent.add("optimizer", optimizerObject);
         parent.add("updater", updaterObject);
@@ -336,6 +357,15 @@ public class Model {
         this.layers.addAll(Arrays.asList(layers));
     }
 
+    /**
+     * Recalculates the synapse matrix, used to cache the synapse weights for faster computation.
+     *
+     * @param synapses list of synapses to cache
+     * @param inSize input size of the vector
+     * @param outSize output size of the vector
+     *
+     * @return the synapse matrix
+     */
     public Vector[] recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {
         Vector[] synapseMatrix = new Vector[outSize];
 
@@ -356,7 +386,7 @@ public class Model {
      * Gets the model's loss function.
      */
     public LossFunction getLossFunction() {
-        return function.getFunction();
+        return lossFunction.getFunction();
     }
 
     /**
@@ -380,6 +410,9 @@ public class Model {
         return weightInit;
     }
 
+    /**
+     * Gets the random generator used by the model.
+     */
     public Random getGenerator() {
         return generator;
     }
@@ -394,9 +427,14 @@ public class Model {
     }
 
     /**
+     * Gets the synapse weights as a matrix, this is used by the model to cache weights for faster computation.
+     */
+    public List<Vector[]> getSynapsesMatrices() {
+        return synapsesMatrices;
+    }
+
+    /**
      * Generates model statistics.
-     *
-     * @return model stats
      */
     public String getStats() {
         StringBuilder stats = new StringBuilder();

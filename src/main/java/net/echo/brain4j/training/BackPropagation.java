@@ -50,12 +50,10 @@ public class BackPropagation {
 
             GenericUtils.waitAll(threads);
 
-            updater.postBatch(model.getLayers(), optimizer.getLearningRate());
-            // model.reloadMatrices();
+            updater.postBatch(model, optimizer.getLearningRate());
         }
 
-        updater.postFit(model.getLayers(), optimizer.getLearningRate());
-        // model.reloadMatrices();
+        updater.postFit(model, optimizer.getLearningRate());
     }
 
     public void backpropagate(NeuronCacheHolder cacheHolder, double[] targets, double[] outputs) {
@@ -75,7 +73,7 @@ public class BackPropagation {
         }
 
         optimizer.postIteration(cacheHolder, updater, layers);
-        updater.postIteration(layers, optimizer.getLearningRate());
+        updater.postIteration(model, optimizer.getLearningRate());
     }
 
     private void initialDelta(NeuronCacheHolder cacheHolder, List<Layer> layers, double[] targets, double[] outputs) {

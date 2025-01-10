@@ -153,8 +153,6 @@ public class Vector implements Cloneable {
             double value = data[i] * vector.data[i];
 
             sum += value;
-
-            data[i] = value;
         }
 
         return sum;
