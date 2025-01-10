@@ -39,7 +39,6 @@ public class AdamW extends Adam {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        // This code takes 0.1 ms to run
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(cacheHolder, synapse);

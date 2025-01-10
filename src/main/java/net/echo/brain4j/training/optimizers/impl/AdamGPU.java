@@ -102,14 +102,15 @@ public class AdamGPU extends Optimizer {
         DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new double[Synapse.SYNAPSE_COUNTER]);
 
         this.maxWorkGroupSize = DeviceUtils.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        System.out.println(maxWorkGroupSize);
     }
 
     @Override
     public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
         this.timestep++;
 
-        this.beta1Timestep = Math.pow(beta1, timestep);
-        this.beta2Timestep = Math.pow(beta2, timestep);
+        this.beta1Timestep = 1.0 - Math.pow(beta1, timestep);
+        this.beta2Timestep = 1.0 - Math.pow(beta2, timestep);
 
         double[] gradients = new double[Synapse.SYNAPSE_COUNTER];
         double[] updates = new double[Synapse.SYNAPSE_COUNTER];
@@ -152,11 +153,11 @@ public class AdamGPU extends Optimizer {
         clSetKernelArg(kernel, 10, Sizeof.cl_int, DeviceUtils.to(Synapse.SYNAPSE_COUNTER));
 
         long[] globalWorkSize = new long[]{(long) Synapse.SYNAPSE_COUNTER};
-        long[] localWorkSize = new long[]{maxWorkGroupSize / 4};
+        long[] localWorkSize = new long[]{maxWorkGroupSize};
 
         // Launch kernel
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
-                globalWorkSize, localWorkSize, 0, null, null);
+        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, globalWorkSize, localWorkSize,
+                0, null, null);
 
         clFinish(commandQueue);
         DeviceUtils.readBuffer(commandQueue, dUpdates, size, updates);
