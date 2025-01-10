@@ -9,8 +9,26 @@ import java.util.List;
 
 public class StochasticUpdater extends Updater {
 
+    private Synapse[] synapses;
+    private double[] gradients;
+
+    @Override
+    public void postInitialize() {
+        this.synapses = new Synapse[Synapse.SYNAPSE_COUNTER];
+        this.gradients = new double[Synapse.SYNAPSE_COUNTER];
+    }
+
     @Override
     public void postIteration(List<Layer> layers, double learningRate) {
+        for (int i = 0; i < synapses.length; i++) {
+            Synapse synapse = synapses[i];
+            double gradient = gradients[i];
+
+            synapse.setWeight(synapse.getWeight() + learningRate * gradient);
+        }
+
+        this.gradients = new double[Synapse.SYNAPSE_COUNTER];
+
         for (Layer layer : layers) {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
@@ -23,6 +41,7 @@ public class StochasticUpdater extends Updater {
 
     @Override
     public void acknowledgeChange(Synapse synapse, double change) {
-        synapse.setWeight(synapse.getWeight() + change);
+        gradients[synapse.getSynapseId()] += change;
+        synapses[synapse.getSynapseId()] = synapse;
     }
 }

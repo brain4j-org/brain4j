@@ -28,7 +28,7 @@ public class Neuron {
     }
 
     public void addSynapse(Synapse synapse) {
-        this.synapses.add(synapse);
+        synapses.add(synapse);
     }
 
     public void setTotalDelta(double totalDelta) {
