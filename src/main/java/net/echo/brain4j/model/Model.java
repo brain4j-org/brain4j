@@ -52,6 +52,7 @@ public class Model {
             .create();
 
     protected List<Layer> layers;
+    protected List<Vector[]> synapsesMatrices;
 
     protected LossFunctions function;
     protected Optimizer optimizer;
@@ -64,6 +65,7 @@ public class Model {
 
     public Model(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
+        this.synapsesMatrices = new ArrayList<>();
     }
 
     private void connect(WeightInit weightInit) {
@@ -110,6 +112,8 @@ public class Model {
 
         this.optimizer.postInitialize();
         this.updater.postInitialize();
+
+        reloadMatrices();
     }
 
     /**
@@ -142,6 +146,29 @@ public class Model {
         return totalError;
     }
 
+    public void reloadMatrices() {
+        synapsesMatrices.clear();
+
+        for (int i = 0; i < layers.size() - 1; i++) {
+            Layer layer = layers.get(i);
+
+            if (layer instanceof DropoutLayer) continue;
+
+            Layer nextLayer = layers.get(i + 1);
+
+            for (int j = 2; j < layers.size() && nextLayer instanceof DropoutLayer; j++) {
+                nextLayer = layers.get(i + j);
+            }
+
+            List<Neuron> neurons = layer.getNeurons();
+            List<Neuron> nextNeurons = nextLayer.getNeurons();
+
+            Vector[] synapseMatrixLayer = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
+
+            synapsesMatrices.add(synapseMatrixLayer);
+        }
+    }
+
     public Vector predict(Vector input) {
         return predict(new NeuronCacheHolder(), input);
     }
@@ -171,11 +198,9 @@ public class Model {
 
             Layer nextLayer = layers.get(l + 1);
 
-            for (int i = 2; nextLayer instanceof DropoutLayer; i++) {
+            for (int i = 2; i < layers.size() && nextLayer instanceof DropoutLayer; i++) {
                 nextLayer = layers.get(l + i);
             }
-
-            List<Synapse> synapses = layer.getSynapses();
 
             List<Neuron> neurons = layer.getNeurons();
             List<Neuron> nextNeurons = nextLayer.getNeurons();
@@ -183,7 +208,8 @@ public class Model {
             int inSize = neurons.size();
             int outSize = nextNeurons.size();
 
-            Vector[] synapseMatrix = recalculateSynapseMatrix(synapses, inSize, outSize);
+            Vector[] synapseMatrix = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
+            // Vector[] synapseMatrix = synapsesMatrices.get(l);
             Vector inputVector = new Vector(inSize);
 
             for (int i = 0; i < neurons.size(); i++) {

@@ -51,9 +51,11 @@ public class BackPropagation {
             GenericUtils.waitAll(threads);
 
             updater.postBatch(model.getLayers(), optimizer.getLearningRate());
+            // model.reloadMatrices();
         }
 
         updater.postFit(model.getLayers(), optimizer.getLearningRate());
+        // model.reloadMatrices();
     }
 
     public void backpropagate(NeuronCacheHolder cacheHolder, double[] targets, double[] outputs) {
