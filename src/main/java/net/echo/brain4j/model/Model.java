@@ -374,17 +374,18 @@ public class Model {
      */
     public String getStats() {
         StringBuilder stats = new StringBuilder();
-        stats.append(String.format("%-7s %-15s %-10s %-12s\n", "Index", "Layer name", "nIn, nOut", "TotalParams"));
+
+        stats.append(String.format("%-7s %-15s %-10s %-12s\n", "Index", "Layer name", "In, Out", "Total params"));
         stats.append("================================================\n");
 
         int params = 0;
 
-        for (int i = 0; i < layers.size(); i++) {
+        for (int i = 0; i < layers.size() - 1; i++) {
             Layer layer = layers.get(i);
-            Layer next = layers.get(Math.min(i, layers.size() - 1));
+            Layer next = layers.get(Math.min(i + 1, layers.size() - 1));
 
-            if (next instanceof DropoutLayer) {
-                next = layers.get(Math.min(i + 1, layers.size() - 1));
+            for (int j = 1; j < layers.size() && next instanceof DropoutLayer; j++) {
+                next = layers.get(Math.min(i + j, layers.size() - 1));
             }
 
             String layerType = layer.getClass().getSimpleName();
