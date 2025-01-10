@@ -12,9 +12,15 @@ public class NormalUpdater extends Updater {
     protected double[] gradients;
 
     @Override
-    public void postInitialize() {
+    public void postInitialize(Model model) {
         this.synapses = new Synapse[Synapse.SYNAPSE_COUNTER];
         this.gradients = new double[Synapse.SYNAPSE_COUNTER];
+
+        for (Layer layer : model.getLayers()) {
+            for (Synapse synapse : layer.getSynapses()) {
+                synapses[synapse.getSynapseId()] = synapse;
+            }
+        }
     }
 
     @Override
@@ -42,9 +48,6 @@ public class NormalUpdater extends Updater {
 
     @Override
     public void acknowledgeChange(Synapse synapse, double change) {
-        int id = synapse.getSynapseId();
-
-        synapses[id] = synapse;
-        gradients[id] += change;
+        gradients[synapse.getSynapseId()] += change;
     }
 }

@@ -110,8 +110,8 @@ public class Model {
 
         connect(weightInit);
 
-        this.optimizer.postInitialize();
-        this.updater.postInitialize();
+        this.optimizer.postInitialize(this);
+        this.updater.postInitialize(this);
 
         reloadMatrices();
     }
