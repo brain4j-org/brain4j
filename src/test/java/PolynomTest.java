@@ -5,7 +5,9 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.training.optimizers.impl.AdamGPU;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
+import net.echo.brain4j.training.optimizers.impl.AdamWGPU;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.Vector;
 import org.jfree.chart.ChartFactory;
@@ -19,7 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Function;
 
-public class PolynomBrain4J {
+public class PolynomTest {
 
     public static final Function<Double, Double> FUNCTION = x -> Math.pow(x, 4) - 5 * Math.pow(x, 2) - x + 10;
     public static final double BOUND = 3;
@@ -28,14 +30,14 @@ public class PolynomBrain4J {
     private final XYSeries predictedSeries;
     private final JLabel errorLabel;
 
-    public PolynomBrain4J() {
+    public PolynomTest() {
         this.trueSeries = new XYSeries("True Output");
         this.predictedSeries = new XYSeries("Predicted Output");
         this.errorLabel = new JLabel("Error: 0.0");
     }
 
     public static void main(String[] args) {
-        PolynomBrain4J app = new PolynomBrain4J();
+        PolynomTest app = new PolynomTest();
         app.trainAndVisualize();
     }
 
@@ -51,7 +53,7 @@ public class PolynomBrain4J {
         model.compile(
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.MEAN_SQUARED_ERROR,
-                new AdamW(0.01, 0.0),
+                new AdamGPU(0.01),
                 new NormalUpdater()
         );
 
@@ -118,17 +120,17 @@ public class PolynomBrain4J {
         frame.setVisible(true);
 
         int i = 0;
-        double error = Double.MAX_VALUE;
 
-        do {
-            i++;
+        long start = System.nanoTime();
+        long lastFit = System.nanoTime();
 
-            long start = System.nanoTime();
+        for (int j = 0; j <= 100; j++) {
             model.fit(dataSet);
-            double took = (System.nanoTime() - start) / 1_000_000.0;
 
-            if (i % 100 == 0) {
+            if (j % 100 == 0) {
+                double took = (System.nanoTime() - lastFit) / 1e8;
                 predictedSeries.clear();
+                lastFit = System.nanoTime();
 
                 for (DataRow row : dataSet.getData()) {
                     double x = row.inputs().get(0);
@@ -140,11 +142,13 @@ public class PolynomBrain4J {
                     updateGraph(x, trueOutput, predictedOutput);
                 }
 
-                error = model.evaluate(dataSet);
+                double error = model.evaluate(dataSet);
                 errorLabel.setText("Error: " + String.format("%.4f", error) + " Took: " + String.format("%.2f", took) + " ms Epoch: " + i);
-
-                System.out.println("Epoch #" + i + " Error: " + error + " Took: " + took + " ms");
+                System.out.println("Epoch #" + j + " Error: " + error + " Took: " + took + " ms");
             }
-        } while (error > 0.05);
+        }
+
+        double took = (System.nanoTime() - start) / 1e6;
+        System.out.println("In total took: " + took + " ms");
     }
 }

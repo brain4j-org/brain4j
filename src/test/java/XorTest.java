@@ -5,7 +5,10 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.AdamGPU;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
+import net.echo.brain4j.training.optimizers.impl.AdamWGPU;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.Vector;
 
@@ -15,8 +18,8 @@ public class XorTest {
         Model model = new Model(
                 new DenseLayer(2, Activations.RELU),
                 new DenseLayer(256, Activations.RELU),
-                new DenseLayer(256 , Activations.RELU),
-                new DenseLayer(256 , Activations.RELU),
+                new DenseLayer(256, Activations.RELU),
+                new DenseLayer(256, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -43,7 +46,7 @@ public class XorTest {
     private static void trainForBenchmark(Model model, DataSet data) {
         long start = System.nanoTime();
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             model.fit(data);
 
             if (i % 100 == 0) {
