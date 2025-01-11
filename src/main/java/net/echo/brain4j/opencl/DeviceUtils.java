@@ -1,6 +1,5 @@
 package net.echo.brain4j.opencl;
 
-import net.echo.brain4j.structure.Synapse;
 import org.jocl.*;
 
 import static org.jocl.CL.*;
@@ -80,6 +79,21 @@ public class DeviceUtils {
         clGetDeviceInfo(device, flag, Sizeof.size_t, Pointer.to(memory), null);
 
         return memory[0];
+    }
+
+    public static void awaitAndRunKernel(cl_command_queue commandQueue, cl_kernel kernel, int workDimension, long[] globalWorkSize) {
+        clEnqueueNDRangeKernel(
+                commandQueue,
+                kernel,
+                1,
+                null,
+                globalWorkSize,
+                null,
+                0,
+                null,
+                null
+        );
+        clFinish(commandQueue);
     }
 
     public enum DeviceType {

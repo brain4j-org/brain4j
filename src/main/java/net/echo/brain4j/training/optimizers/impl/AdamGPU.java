@@ -23,7 +23,6 @@ public class AdamGPU extends Optimizer {
     protected double beta2Timestep;
 
     private long size;
-    private long maxWorkGroupSize;
 
     protected double beta1;
     protected double beta2;
@@ -101,8 +100,15 @@ public class AdamGPU extends Optimizer {
         DeviceUtils.writeBuffer(commandQueue, dFirstMomentum, size, new double[Synapse.SYNAPSE_COUNTER]);
         DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new double[Synapse.SYNAPSE_COUNTER]);
 
-        this.maxWorkGroupSize = DeviceUtils.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE);
-        System.out.println(maxWorkGroupSize);
+        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dFirstMomentum));
+        clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(dSecondMomentum));
+        clSetKernelArg(kernel, 4, Sizeof.cl_double, DeviceUtils.to(beta1));
+        clSetKernelArg(kernel, 5, Sizeof.cl_double, DeviceUtils.to(beta2));
+        clSetKernelArg(kernel, 6, Sizeof.cl_double, DeviceUtils.to(1.0 - beta1));
+        clSetKernelArg(kernel, 7, Sizeof.cl_double, DeviceUtils.to(1.0 - beta2));
+        clSetKernelArg(kernel, 10, Sizeof.cl_double, DeviceUtils.to(epsilon));
+        clSetKernelArg(kernel, 11, Sizeof.cl_double, DeviceUtils.to(learningRate));
+        clSetKernelArg(kernel, 12, Sizeof.cl_int, DeviceUtils.to(Synapse.SYNAPSE_COUNTER));
     }
 
     @Override
@@ -140,26 +146,15 @@ public class AdamGPU extends Optimizer {
         DeviceUtils.writeBuffer(commandQueue, dGradients, size, gradients);
 
         // Set kernel arguments
-        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dFirstMomentum));
-        clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(dSecondMomentum));
         clSetKernelArg(kernel, 2, Sizeof.cl_mem, Pointer.to(dGradients));
         clSetKernelArg(kernel, 3, Sizeof.cl_mem, Pointer.to(dUpdates));
-        clSetKernelArg(kernel, 4, Sizeof.cl_double, DeviceUtils.to(beta1));
-        clSetKernelArg(kernel, 5, Sizeof.cl_double, DeviceUtils.to(beta2));
-        clSetKernelArg(kernel, 6, Sizeof.cl_double, DeviceUtils.to(beta1Timestep));
-        clSetKernelArg(kernel, 7, Sizeof.cl_double, DeviceUtils.to(beta2Timestep));
-        clSetKernelArg(kernel, 8, Sizeof.cl_double, DeviceUtils.to(epsilon));
-        clSetKernelArg(kernel, 9, Sizeof.cl_double, DeviceUtils.to(learningRate));
-        clSetKernelArg(kernel, 10, Sizeof.cl_int, DeviceUtils.to(Synapse.SYNAPSE_COUNTER));
+        clSetKernelArg(kernel, 8, Sizeof.cl_double, DeviceUtils.to(beta1Timestep));
+        clSetKernelArg(kernel, 9, Sizeof.cl_double, DeviceUtils.to(beta2Timestep));
 
         long[] globalWorkSize = new long[]{(long) Synapse.SYNAPSE_COUNTER};
-        long[] localWorkSize = new long[]{maxWorkGroupSize};
 
         // Launch kernel
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, globalWorkSize, localWorkSize,
-                0, null, null);
-
-        clFinish(commandQueue);
+        DeviceUtils.awaitAndRunKernel(commandQueue, kernel, 1, globalWorkSize);
         DeviceUtils.readBuffer(commandQueue, dUpdates, size, updates);
     }
 
@@ -170,5 +165,11 @@ public class AdamGPU extends Optimizer {
 
             updater.acknowledgeChange(synapse, update);
         }
+    }
+
+    @Override
+    public void setLearningRate(double learningRate) {
+        super.setLearningRate(learningRate);
+        clSetKernelArg(kernel, 11, Sizeof.cl_double, DeviceUtils.to(learningRate));
     }
 }

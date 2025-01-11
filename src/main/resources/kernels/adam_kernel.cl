@@ -4,6 +4,7 @@ __kernel void adam_update(
     __global double* gradients, // Gradient vector
     __global double* updates, // Update vector
     double beta1, double beta2,
+    double oneMinusBeta1, double oneMinusBeta2,
     double beta1Timestep, double beta2Timestep,
     double epsilon, double learningRate,
     int count) {
@@ -12,8 +13,8 @@ __kernel void adam_update(
     if (i < count) {
         double gradient = gradients[i];
 
-        double m = beta1 * firstMomentum[i] + (1.0 - beta1) * gradient;
-        double v = beta2 * secondMomentum[i] + (1.0 - beta2) * gradient * gradient;
+        double m = beta1 * firstMomentum[i] + oneMinusBeta1 * gradient;
+        double v = beta2 * secondMomentum[i] + oneMinusBeta2 * gradient * gradient;
 
         firstMomentum[i] = m;
         secondMomentum[i] = v;
