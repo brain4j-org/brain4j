@@ -34,8 +34,6 @@ public class AdamGPU extends Optimizer {
     private cl_command_queue commandQueue;
     private cl_kernel kernel;
 
-    private cl_mem dFirstMomentum;
-    private cl_mem dSecondMomentum;
     private cl_mem dUpdates;
     private cl_mem dGradients;
 
@@ -55,10 +53,15 @@ public class AdamGPU extends Optimizer {
     private void initialize() {
         cl_device_id device = DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU);
 
-        System.out.println("Using " + DeviceUtils.getDeviceName());
+        System.out.println("Using Device: " + DeviceUtils.getDeviceName());
+
+        cl_platform_id[] platforms = new cl_platform_id[1];
+        CL.clGetPlatformIDs(1, platforms, null);
+
+        System.out.println("OpenCL Version: " + DeviceUtils.getOpenCLVersion());
 
         context = clCreateContext(null, 1, new cl_device_id[]{device}, null, null, null);
-        commandQueue = clCreateCommandQueueWithProperties(context, device, null, null);
+        commandQueue = clCreateCommandQueue(context, device, 0, null);
 
         String kernelSource = loadKernelSource();
 
@@ -92,8 +95,9 @@ public class AdamGPU extends Optimizer {
 
         this.size = (long) Synapse.SYNAPSE_COUNTER * Sizeof.cl_double;
 
-        this.dFirstMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
-        this.dSecondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        cl_mem dFirstMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        cl_mem dSecondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+
         this.dUpdates = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
         this.dGradients = DeviceUtils.createBuffer(context, CL_MEM_READ_ONLY, size);
 

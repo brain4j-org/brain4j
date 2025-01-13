@@ -68,49 +68,4 @@ public abstract class Optimizer {
      */
     public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
     }
-
-    /**
-     * Updates the given synapse based on the optimization algorithm.
-     *
-     * @param cacheHolder holds the neuron values for the current thread
-     * @param layer       the layer of the neuron
-     * @param neuron      the input neuron connected to the synapse
-     * @param synapse     the synapse involved
-     */
-    public void applyGradientStep(NeuronCacheHolder cacheHolder, Updater updater, Layer layer, Neuron neuron, Synapse synapse) {
-        double weightChange = calculateGradient(cacheHolder, layer, neuron, synapse);
-        updater.acknowledgeChange(synapse, weightChange);
-    }
-
-    /**
-     * Calculate the gradient for a synapse based on the delta and the value of the input.
-     *
-     * @param cacheHolder the cache holder for neuron values
-     * @param neuron      the neuron
-     * @param synapse     the synapse
-     *
-     * @return the calculated gradient
-     */
-    public double calculateGradient(NeuronCacheHolder cacheHolder, Layer layer, Neuron neuron, Synapse synapse) {
-        double output = neuron.getValue(cacheHolder);
-
-        double derivative = layer.getActivation().getFunction().getDerivative(output);
-
-        double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta(cacheHolder));
-        double delta = clipGradient(error * derivative);
-
-        neuron.setDelta(cacheHolder, delta);
-
-        return clipGradient(delta * synapse.getInputNeuron().getValue(cacheHolder));
-    }
-
-    /**
-     * Clips the gradient to avoid gradient explosion.
-     *
-     * @param gradient the gradient
-     * @return the clipped gradient
-     */
-    public double clipGradient(double gradient) {
-        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
-    }
 }

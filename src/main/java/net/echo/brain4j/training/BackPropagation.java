@@ -9,7 +9,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.utils.GenericUtils;
+import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class BackPropagation {
                 threads.add(thread);
             }
 
-            GenericUtils.waitAll(threads);
+            MLUtils.waitAll(threads);
 
             updater.postBatch(model, optimizer.getLearningRate());
         }

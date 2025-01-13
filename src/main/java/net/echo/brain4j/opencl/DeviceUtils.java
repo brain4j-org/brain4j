@@ -73,12 +73,24 @@ public class DeviceUtils {
                 null, null);
     }
 
-    public static long getInfo(int flag) {
-        long[] memory = new long[1];
+    public static long getInfoLong(int flag, int arraySize, int size) {
+        long[] memory = new long[arraySize];
 
-        clGetDeviceInfo(device, flag, Sizeof.size_t, Pointer.to(memory), null);
+        clGetDeviceInfo(device, flag, size, Pointer.to(memory), null);
 
         return memory[0];
+    }
+
+    public static String getOpenCLVersion(){
+        cl_platform_id[] platforms = new cl_platform_id[1];
+
+        CL.clGetPlatformIDs(1, platforms, null);
+        cl_platform_id platform = platforms[0];
+
+        byte[] version = new byte[1024];
+        CL.clGetPlatformInfo(platform, CL.CL_PLATFORM_VERSION, 1024, Pointer.to(version), null);
+
+        return new String(version).trim();
     }
 
     public static void awaitAndRunKernel(cl_command_queue commandQueue, cl_kernel kernel, int workDimension, long[] globalWorkSize) {

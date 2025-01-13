@@ -9,6 +9,7 @@ import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
@@ -77,8 +78,32 @@ public class Layer {
     public void propagate(NeuronCacheHolder cacheHolder, Updater updater, Optimizer optimizer) {
         for (Synapse synapse : synapses) {
             Neuron inputNeuron = synapse.getInputNeuron();
-            optimizer.applyGradientStep(cacheHolder, updater, this, inputNeuron, synapse);
+
+            double weightChange = calculateGradient(cacheHolder, this, synapse);
+            updater.acknowledgeChange(synapse, weightChange);
         }
+    }
+
+    /**
+     * Calculate the gradient for a synapse based on the delta and the value of the input.
+     *
+     * @param cacheHolder the cache holder for neuron values
+     * @param synapse     the synapse
+     *
+     * @return the calculated gradient
+     */
+    public double calculateGradient(NeuronCacheHolder cacheHolder, Layer layer, Synapse synapse) {
+        Neuron neuron = synapse.getInputNeuron();
+        double output = neuron.getValue(cacheHolder);
+
+        double derivative = layer.getActivation().getFunction().getDerivative(output);
+
+        double error = MLUtils.clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta(cacheHolder));
+        double delta = MLUtils.clipGradient(error * derivative);
+
+        neuron.setDelta(cacheHolder, delta);
+
+        return MLUtils.clipGradient(delta * synapse.getInputNeuron().getValue(cacheHolder));
     }
 
     public List<Neuron> getNeurons() {

@@ -23,8 +23,6 @@ public class AdamWGPU extends Optimizer {
     protected double beta2Timestep;
 
     private long size;
-    private long maxWorkGroupSize;
-
     protected double beta1;
     protected double beta2;
     protected double epsilon;
@@ -108,8 +106,6 @@ public class AdamWGPU extends Optimizer {
 
         DeviceUtils.writeBuffer(commandQueue, dFirstMomentum, size, new double[Synapse.SYNAPSE_COUNTER]);
         DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new double[Synapse.SYNAPSE_COUNTER]);
-
-        this.maxWorkGroupSize = DeviceUtils.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE);
     }
 
     @Override

@@ -51,14 +51,14 @@ public class AttentionHead {
     public double[] projectVector(Vector embedding, double[][] weights) {
         double[] result = new double[dimension];
 
-        for (int i = 0; i < dimension; i++) {
+        for (int d = 0; d < dimension; d++) {
             double sum = 0;
 
-            for (int j = 0; j < embedding.size(); j++) {
-                sum += weights[j][i] * embedding.get(j);
+            for (int e = 0; e < embedding.size(); e++) {
+                sum += weights[e][d] * embedding.get(e);
             }
 
-            result[i] = sum;
+            result[d] = sum;
         }
 
         return result;
