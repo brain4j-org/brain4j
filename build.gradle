@@ -14,7 +14,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'commons-io:commons-io:2.18.0'
     implementation 'org.jfree:jfreechart:1.5.3'
-    implementation 'org.jocl:jocl:2.0.4'
+    implementation 'org.jocl:jocl:2.0.5'
 }
 
 java {
