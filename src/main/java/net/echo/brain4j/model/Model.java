@@ -296,6 +296,7 @@ public class Model {
             this.layers = GSON.fromJson(parent.get("layers"), listType);
             this.weightInit = WeightInit.valueOf(parent.get("weightInit").getAsString());
             this.seed = parent.get("seed").getAsInt();
+            this.generator = new Random(seed);
 
             connect(weightInit);
 
