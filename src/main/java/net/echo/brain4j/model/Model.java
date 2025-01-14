@@ -6,9 +6,11 @@ import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
+import net.echo.brain4j.adapters.UpdaterAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
+import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -20,8 +22,12 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.training.updater.impl.BatchedUpdater;
+import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
@@ -40,15 +46,25 @@ import java.util.Random;
 public class Model {
 
     private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
+    private static final UpdaterAdapter UPDATER_ADAPTER = new UpdaterAdapter();
     private static final LayerAdapter LAYER_ADAPTER = new LayerAdapter();
     private static final Gson GSON = new Gson()
             .newBuilder()
             .setPrettyPrinting()
             .excludeFieldsWithoutExposeAnnotation()
+
             .registerTypeAdapter(DenseLayer.class, LAYER_ADAPTER)
+            .registerTypeAdapter(LayerNorm.class, LAYER_ADAPTER)
             .registerTypeAdapter(DropoutLayer.class, LAYER_ADAPTER)
+
             .registerTypeAdapter(Adam.class, OPTIMIZER_ADAPTER)
+            .registerTypeAdapter(AdamW.class, OPTIMIZER_ADAPTER)
             .registerTypeAdapter(GradientDescent.class, OPTIMIZER_ADAPTER)
+
+            .registerTypeAdapter(NormalUpdater.class, UPDATER_ADAPTER)
+            .registerTypeAdapter(BatchedUpdater.class, UPDATER_ADAPTER)
+            .registerTypeAdapter(StochasticUpdater.class, UPDATER_ADAPTER)
+
             .create();
 
     protected List<Layer> layers;
