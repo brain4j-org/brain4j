@@ -1,13 +1,13 @@
-package net.echo.brain4j.training.optimizers.impl;
+package net.echo.brain4j.training.optimizers.impl.gpu;
 
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.opencl.DeviceUtils;
-import org.jocl.*;
-import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import org.jocl.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.jocl.CL.*;
 
-public class AdamGPU extends Optimizer {
+public class AdamWGPU extends Optimizer {
 
     protected Synapse[] synapses;
 
@@ -23,10 +23,10 @@ public class AdamGPU extends Optimizer {
     protected double beta2Timestep;
 
     private long size;
-
     protected double beta1;
     protected double beta2;
     protected double epsilon;
+    protected double weightDecay;
     protected int timestep = 0;
 
     // OpenCL-related fields
@@ -34,18 +34,26 @@ public class AdamGPU extends Optimizer {
     private cl_command_queue commandQueue;
     private cl_kernel kernel;
 
+    private cl_mem dFirstMomentum;
+    private cl_mem dSecondMomentum;
     private cl_mem dUpdates;
     private cl_mem dGradients;
+    private cl_mem dWeights;
 
-    public AdamGPU(double learningRate) {
-        this(learningRate, 0.9, 0.999, 1e-8);
+    public AdamWGPU(double learningRate) {
+        this(learningRate, 0.001);
     }
 
-    public AdamGPU(double learningRate, double beta1, double beta2, double epsilon) {
+    public AdamWGPU(double learningRate, double weightDecay) {
+        this(learningRate, 0.9, 0.999, 1e-8, weightDecay);
+    }
+
+    public AdamWGPU(double learningRate, double beta1, double beta2, double epsilon, double weightDecay) {
         super(learningRate);
         this.beta1 = beta1;
         this.beta2 = beta2;
         this.epsilon = epsilon;
+        this.weightDecay = weightDecay;
 
         initialize();
     }
@@ -53,26 +61,21 @@ public class AdamGPU extends Optimizer {
     private void initialize() {
         cl_device_id device = DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU);
 
-        System.out.println("Using Device: " + DeviceUtils.getDeviceName());
+        System.out.println("Using " + DeviceUtils.getDeviceName());
 
-        cl_platform_id[] platforms = new cl_platform_id[1];
-        CL.clGetPlatformIDs(1, platforms, null);
-
-        System.out.println("OpenCL Version: " + DeviceUtils.getOpenCLVersion());
-
-        context = clCreateContext(null, 1, new cl_device_id[]{device}, null, null, null);
-        commandQueue = clCreateCommandQueue(context, device, 0, null);
+        this.context = clCreateContext(null, 1, new cl_device_id[]{device}, null, null, null);
+        this.commandQueue = clCreateCommandQueueWithProperties(context, device, null, null);
 
         String kernelSource = loadKernelSource();
 
         cl_program program = clCreateProgramWithSource(context, 1, new String[]{kernelSource}, null, null);
         clBuildProgram(program, 0, null, null, null, null);
 
-        kernel = clCreateKernel(program, "adam_update", null);
+        this.kernel = clCreateKernel(program, "adam_update", null);
     }
 
     private String loadKernelSource() {
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("kernels/adam_kernel.cl")) {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("kernels/adamw_kernel.cl")) {
             if (inputStream == null) {
                 throw new RuntimeException("Kernel file not found: kernels/adam_update_kernel.cl");
             }
@@ -95,35 +98,26 @@ public class AdamGPU extends Optimizer {
 
         this.size = (long) Synapse.SYNAPSE_COUNTER * Sizeof.cl_double;
 
-        cl_mem dFirstMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
-        cl_mem dSecondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
-
+        this.dFirstMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        this.dSecondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
         this.dUpdates = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        this.dWeights = DeviceUtils.createBuffer(context, CL_MEM_READ_ONLY, size);
         this.dGradients = DeviceUtils.createBuffer(context, CL_MEM_READ_ONLY, size);
 
         DeviceUtils.writeBuffer(commandQueue, dFirstMomentum, size, new double[Synapse.SYNAPSE_COUNTER]);
         DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new double[Synapse.SYNAPSE_COUNTER]);
-
-        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dFirstMomentum));
-        clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(dSecondMomentum));
-        clSetKernelArg(kernel, 4, Sizeof.cl_double, DeviceUtils.to(beta1));
-        clSetKernelArg(kernel, 5, Sizeof.cl_double, DeviceUtils.to(beta2));
-        clSetKernelArg(kernel, 6, Sizeof.cl_double, DeviceUtils.to(1.0 - beta1));
-        clSetKernelArg(kernel, 7, Sizeof.cl_double, DeviceUtils.to(1.0 - beta2));
-        clSetKernelArg(kernel, 10, Sizeof.cl_double, DeviceUtils.to(epsilon));
-        clSetKernelArg(kernel, 11, Sizeof.cl_double, DeviceUtils.to(learningRate));
-        clSetKernelArg(kernel, 12, Sizeof.cl_int, DeviceUtils.to(Synapse.SYNAPSE_COUNTER));
     }
 
     @Override
     public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
         this.timestep++;
 
-        this.beta1Timestep = 1.0 - Math.pow(beta1, timestep);
-        this.beta2Timestep = 1.0 - Math.pow(beta2, timestep);
+        this.beta1Timestep = Math.pow(beta1, timestep);
+        this.beta2Timestep = Math.pow(beta2, timestep);
 
         double[] gradients = new double[Synapse.SYNAPSE_COUNTER];
         double[] updates = new double[Synapse.SYNAPSE_COUNTER];
+        double[] weights = new double[Synapse.SYNAPSE_COUNTER];
 
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
@@ -133,10 +127,11 @@ public class AdamGPU extends Optimizer {
                 double value = synapse.getInputNeuron().getValue(cacheHolder);
 
                 gradients[synapseId] = delta * value;
+                weights[synapseId] = synapse.getWeight();
             }
         }
 
-        executeKernel(updates, gradients);
+        executeKernel(weights, updates, gradients);
         applyChanges(updater, updates);
     }
 
@@ -146,14 +141,24 @@ public class AdamGPU extends Optimizer {
         return 0; // Not used when GPU is enabled
     }
 
-    private void executeKernel(double[] updates, double[] gradients) {
+    private void executeKernel(double[] weights, double[] updates, double[] gradients) {
+        DeviceUtils.writeBuffer(commandQueue, dWeights, size, weights);
         DeviceUtils.writeBuffer(commandQueue, dGradients, size, gradients);
 
         // Set kernel arguments
+        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dFirstMomentum));
+        clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(dSecondMomentum));
         clSetKernelArg(kernel, 2, Sizeof.cl_mem, Pointer.to(dGradients));
         clSetKernelArg(kernel, 3, Sizeof.cl_mem, Pointer.to(dUpdates));
+        clSetKernelArg(kernel, 4, Sizeof.cl_mem, Pointer.to(dWeights));
+        clSetKernelArg(kernel, 5, Sizeof.cl_double, DeviceUtils.to(weightDecay));
+        clSetKernelArg(kernel, 6, Sizeof.cl_double, DeviceUtils.to(beta1));
+        clSetKernelArg(kernel, 7, Sizeof.cl_double, DeviceUtils.to(beta2));
         clSetKernelArg(kernel, 8, Sizeof.cl_double, DeviceUtils.to(beta1Timestep));
         clSetKernelArg(kernel, 9, Sizeof.cl_double, DeviceUtils.to(beta2Timestep));
+        clSetKernelArg(kernel, 10, Sizeof.cl_double, DeviceUtils.to(epsilon));
+        clSetKernelArg(kernel, 11, Sizeof.cl_double, DeviceUtils.to(learningRate));
+        clSetKernelArg(kernel, 12, Sizeof.cl_int, DeviceUtils.to(Synapse.SYNAPSE_COUNTER));
 
         long[] globalWorkSize = new long[]{(long) Synapse.SYNAPSE_COUNTER};
 
@@ -169,11 +174,5 @@ public class AdamGPU extends Optimizer {
 
             updater.acknowledgeChange(synapse, update);
         }
-    }
-
-    @Override
-    public void setLearningRate(double learningRate) {
-        super.setLearningRate(learningRate);
-        clSetKernelArg(kernel, 11, Sizeof.cl_double, DeviceUtils.to(learningRate));
     }
 }
