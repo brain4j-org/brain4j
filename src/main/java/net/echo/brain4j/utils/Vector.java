@@ -63,6 +63,26 @@ public class Vector implements Cloneable {
         return sum;
     }
 
+    public double max() {
+        double max = Double.NEGATIVE_INFINITY;
+
+        for (double value : data) {
+            max = Math.max(max, value);
+        }
+
+        return max;
+    }
+
+    public double min() {
+        double min = Double.POSITIVE_INFINITY;
+
+        for (double value : data) {
+            min = Math.min(min, value);
+        }
+
+        return min;
+    }
+
     public Vector normalizeSquared() {
         double length = lengthSquared();
 
@@ -71,6 +91,19 @@ public class Vector implements Cloneable {
         }
 
         return this;
+    }
+
+    public Vector normalizeMinMax() {
+        double min = min();
+        double max = max();
+
+        Vector normalized = new Vector(this.size());
+
+        for (int i = 0; i < this.size(); i++) {
+            normalized.set(i, (this.get(i) - min) / (max - min));
+        }
+
+        return normalized;
     }
 
     public Vector normalize() {

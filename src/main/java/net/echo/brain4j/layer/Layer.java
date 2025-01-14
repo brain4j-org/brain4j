@@ -7,7 +7,6 @@ import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.threading.NeuronCacheHolder;
-import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
@@ -75,12 +74,23 @@ public class Layer {
         return values;
     }
 
-    public void propagate(NeuronCacheHolder cacheHolder, Updater updater, Optimizer optimizer) {
-        for (Synapse synapse : synapses) {
-            Neuron inputNeuron = synapse.getInputNeuron();
+    public void propagate(NeuronCacheHolder cacheHolder, Updater updater) {
+        Vector neuronsVector = new Vector(neurons.size());
 
-            double weightChange = calculateGradient(cacheHolder, this, synapse);
-            updater.acknowledgeChange(synapse, weightChange);
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron neuron = neurons.get(i);
+            neuronsVector.set(i, neuron.getValue(cacheHolder));
+        }
+
+        Vector derivatives = activation.getFunction().getDerivative(neuronsVector);
+
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron neuron = neurons.get(i);
+
+            for (Synapse synapse : neuron.getSynapses()) {
+                double weightChange = calculateGradient(cacheHolder, synapse, derivatives, i);
+                updater.acknowledgeChange(synapse, weightChange);
+            }
         }
     }
 
@@ -89,14 +99,14 @@ public class Layer {
      *
      * @param cacheHolder the cache holder for neuron values
      * @param synapse     the synapse
+     * @param derivatives a collection of derivatives for this layer
+     * @param index       the index of the derivative
      *
      * @return the calculated gradient
      */
-    public double calculateGradient(NeuronCacheHolder cacheHolder, Layer layer, Synapse synapse) {
+    public double calculateGradient(NeuronCacheHolder cacheHolder, Synapse synapse, Vector derivatives, int index) {
         Neuron neuron = synapse.getInputNeuron();
-        double output = neuron.getValue(cacheHolder);
-
-        double derivative = layer.getActivation().getFunction().getDerivative(output);
+        double derivative = derivatives.get(index);
 
         double error = MLUtils.clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta(cacheHolder));
         double delta = MLUtils.clipGradient(error * derivative);

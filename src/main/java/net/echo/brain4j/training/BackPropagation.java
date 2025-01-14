@@ -69,7 +69,7 @@ public class BackPropagation {
                 continue;
             }
 
-            layer.propagate(cacheHolder, updater, optimizer);
+            layer.propagate(cacheHolder, updater);
         }
 
         optimizer.postIteration(cacheHolder, updater, layers);
@@ -79,13 +79,22 @@ public class BackPropagation {
     private void initialDelta(NeuronCacheHolder cacheHolder, List<Layer> layers, double[] targets, double[] outputs) {
         Layer outputLayer = layers.getLast();
 
-        for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
-            Neuron neuron = outputLayer.getNeuronAt(i);
+        List<Neuron> neurons = outputLayer.getNeurons();
+        Vector result = new Vector(outputs.length);
+
+        for (int i = 0; i < outputs.length; i++) {
+            result.set(i, outputs[i]);
+        }
+
+        Vector derivatives = outputLayer.getActivation().getFunction().getDerivative(result);
+
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron neuron = neurons.get(i);
 
             double output = outputs[i];
             double error = targets[i] - output;
 
-            double delta = error * outputLayer.getActivation().getFunction().getDerivative(output);
+            double delta = error * derivatives.get(i);
             neuron.setDelta(cacheHolder, delta);
         }
     }

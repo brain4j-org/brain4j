@@ -18,9 +18,7 @@ public class SoftmaxActivation implements Activation {
         double maxInput = Double.NEGATIVE_INFINITY;
 
         for (double input : inputs) {
-            if (input > maxInput) {
-                maxInput = input;
-            }
+            maxInput = Math.max(maxInput, input);
         }
 
         double[] expValues = new double[inputs.length];
@@ -31,7 +29,7 @@ public class SoftmaxActivation implements Activation {
         }
 
         for (int i = 0; i < expValues.length; i++) {
-            expValues[i] = expValues[i] / sum;
+            expValues[i] /= sum;
         }
 
         return expValues;
