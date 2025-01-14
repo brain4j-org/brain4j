@@ -4,8 +4,12 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
+import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.nlp.attention.MultiHeadAttention;
+import net.echo.brain4j.training.optimizers.impl.GradientDescent;
+import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
@@ -28,6 +32,7 @@ public class TransformerDecoder extends Layer {
                 new DenseLayer(4 * dimension, Activations.RELU),
                 new DenseLayer(dimension, Activations.LINEAR)
         );
+        this.feedForward.compile(WeightInit.NORMAL, LossFunctions.MEAN_SQUARED_ERROR, new GradientDescent(0.001), new NormalUpdater());
     }
 
     public List<Vector> transform(List<Vector> embeddings) {
@@ -41,17 +46,14 @@ public class TransformerDecoder extends Layer {
             attended.add(vector);
             attended = normalizer.normalize(attended);
 
-            attended = secondAttention.attend(embedding);
+            attended = secondAttention.attend(attended);
             attended.add(vector);
+
             attended = normalizer.normalize(attended);
 
-            System.out.println("Attended");
-            System.out.println(attended);
             Vector result = feedForward.predict(attended);
-            // result = normalizer.normalize(result);
+            result = normalizer.normalize(result);
 
-            System.out.println("Result");
-            System.out.println(result);
             resulting.add(result);
         }
 
