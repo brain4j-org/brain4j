@@ -259,4 +259,21 @@ public class Vector implements Cloneable {
             throw new AssertionError();
         }
     }
+
+    public String toString(String format) {
+        int iMax = data.length - 1;
+
+        if (iMax == -1) return "[]";
+
+        StringBuilder builder = new StringBuilder();
+        builder.append('[');
+
+        for (int i = 0; ; i++) {
+            builder.append(String.format(format, data[i]));
+
+            if (i == iMax) return builder.append(']').toString();
+
+            builder.append(", ");
+        }
+    }
 }

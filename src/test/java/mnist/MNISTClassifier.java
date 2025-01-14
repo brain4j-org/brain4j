@@ -51,6 +51,8 @@ public class MNISTClassifier {
             } else {
                 incorrectlyClassified++;
                 result.set(1, result.get(1) + 1);
+
+                System.out.println(expected + " is incorrect. Vector: " + output.toString("%.3f"));
             }
         }
 
