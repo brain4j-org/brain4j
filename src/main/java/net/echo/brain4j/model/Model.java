@@ -298,6 +298,8 @@ public class Model {
             this.seed = parent.get("seed").getAsInt();
             this.generator = new Random(seed);
 
+            Synapse.SYNAPSE_COUNTER = 0;
+
             connect(weightInit);
 
             double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);

@@ -31,7 +31,7 @@ public class StochasticUpdater extends Updater {
             Synapse synapse = synapses[i];
             double gradient = gradients[i];
 
-            synapse.setWeight(synapse.getWeight() + learningRate * gradient);
+            synapse.setWeight(synapse.getWeight() + gradient);
         }
 
         model.reloadMatrices();
