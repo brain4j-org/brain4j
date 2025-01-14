@@ -48,6 +48,8 @@ public class MNISTClassifier {
             if (prediction == expected) {
                 correctlyClassified++;
                 result.set(0, result.get(0) + 1);
+
+                System.out.println(expected + " is correct. Vector: " + output.toString("%.3f"));
             } else {
                 incorrectlyClassified++;
                 result.set(1, result.get(1) + 1);
@@ -56,7 +58,7 @@ public class MNISTClassifier {
             }
         }
 
-        printEvaluationResults(results, correctlyClassified, incorrectlyClassified);
+        printEvaluationResults(results, model.evaluate(set), correctlyClassified, incorrectlyClassified);
     }
 
     private static Map<Integer, Vector> initializeResults(DataSet set) {
@@ -70,7 +72,7 @@ public class MNISTClassifier {
         return results;
     }
 
-    private static void printEvaluationResults(Map<Integer, Vector> results, int correctlyClassified, int incorrectlyClassified) {
+    private static void printEvaluationResults(Map<Integer, Vector> results, double loss, int correctlyClassified, int incorrectlyClassified) {
         for (Map.Entry<Integer, Vector> entry : results.entrySet()) {
             System.out.println("Label: " + entry.getKey() + " -> (Correct, Incorrect) " + entry.getValue());
         }
@@ -81,6 +83,7 @@ public class MNISTClassifier {
         System.out.println("Correctly classified: " + correctlyClassified);
         System.out.println("Incorrectly classified: " + incorrectlyClassified);
         System.out.printf("Accuracy: %.4f (%.4f%%)%n", accuracy, accuracy * 100);
+        System.out.printf("Loss: %.6f", loss);
     }
 
     public static void train(Model model, DataSet set) {

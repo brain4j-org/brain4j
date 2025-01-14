@@ -161,7 +161,7 @@ public class Model {
             totalError += lossFunction.getFunction().calculate(targets, outputs);
         }
 
-        return totalError;
+        return totalError / set.getData().size();
     }
 
     /**
