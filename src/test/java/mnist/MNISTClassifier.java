@@ -28,7 +28,7 @@ public class MNISTClassifier {
     }
 
     public static void evaluateModel(Model model) {
-        model.load("mnist-56.json");
+        model.load("mnist.json");
         model.reloadMatrices();
 
         DataSet set = getData();
@@ -99,7 +99,7 @@ public class MNISTClassifier {
             }
 
             if (i % 100 == 0) {
-                model.save("mnist-56.json");
+                model.save("mnist.json");
             }
         }
     }
