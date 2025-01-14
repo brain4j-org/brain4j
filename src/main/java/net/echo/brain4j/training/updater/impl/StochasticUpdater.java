@@ -36,7 +36,8 @@ public class StochasticUpdater extends Updater {
             Synapse synapse = synapses[i];
             double gradient = gradients[i];
 
-            synapse.setWeight(synapse.getWeight() + gradient);
+            // FOR FUTURE ECHO: DO NOT TOUCH THIS!!!!! MULTIPLYING FOR THE LEARNING RATE IS IMPORTANT AND IDK WHY
+            synapse.setWeight(synapse.getWeight() + learningRate * gradient);
         }
 
         this.gradients = new double[Synapse.SYNAPSE_COUNTER];
