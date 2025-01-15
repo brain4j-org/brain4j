@@ -28,6 +28,14 @@ public interface Activation {
      */
     double getDerivative(double input);
 
+    default Vector getDerivative(Vector input) {
+        Vector result = new Vector(input.size());
+        for (int i = 0; i < input.size(); i++) {
+            result.set(i, getDerivative(input.get(i)));
+        }
+        return result;
+    }
+
     /**
      * Get the full Jacobian matrix (n x n) of the activation for a
      * vector of outputs. Some activations require
