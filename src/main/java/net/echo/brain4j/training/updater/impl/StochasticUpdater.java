@@ -14,9 +14,20 @@ public class StochasticUpdater extends Updater {
     private double[] gradients;
 
     @Override
-    public void postInitialize() {
+    public void postInitialize(Model model) {
         this.synapses = new Synapse[Synapse.SYNAPSE_COUNTER];
         this.gradients = new double[Synapse.SYNAPSE_COUNTER];
+
+        for (Layer layer : model.getLayers()) {
+            for (Synapse synapse : layer.getSynapses()) {
+                synapses[synapse.getSynapseId()] = synapse;
+            }
+        }
+    }
+
+    @Override
+    public void postBatch(Model model, double learningRate) {
+        model.reloadMatrices();
     }
 
     @Override
@@ -25,10 +36,9 @@ public class StochasticUpdater extends Updater {
             Synapse synapse = synapses[i];
             double gradient = gradients[i];
 
+            // FOR FUTURE ECHO: DO NOT TOUCH THIS!!!!! MULTIPLYING FOR THE LEARNING RATE IS IMPORTANT AND IDK WHY
             synapse.setWeight(synapse.getWeight() + learningRate * gradient);
         }
-
-        model.reloadMatrices();
 
         this.gradients = new double[Synapse.SYNAPSE_COUNTER];
 
@@ -45,6 +55,5 @@ public class StochasticUpdater extends Updater {
     @Override
     public void acknowledgeChange(Synapse synapse, double change) {
         gradients[synapse.getSynapseId()] += change;
-        synapses[synapse.getSynapseId()] = synapse;
     }
 }

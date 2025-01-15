@@ -4,6 +4,7 @@ import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.threading.NeuronCacheHolder;
@@ -39,7 +40,7 @@ public abstract class Optimizer {
     /**
      * Called after the network has been compiled and all the synapses have been initialized.
      */
-    public void postInitialize() {
+    public void postInitialize(Model model) {
     }
 
     /**

@@ -11,7 +11,7 @@ import java.util.List;
 @JsonAdapter(UpdaterAdapter.class)
 public abstract class Updater {
 
-    public void postInitialize() {
+    public void postInitialize(Model model) {
     }
 
     public void postIteration(Model model, double learningRate) {

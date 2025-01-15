@@ -6,7 +6,7 @@ import net.echo.brain4j.utils.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-public class KMeansExample {
+public class KMeansTest {
 
     public static void main(String[] args) {
         int numClusters = 2;

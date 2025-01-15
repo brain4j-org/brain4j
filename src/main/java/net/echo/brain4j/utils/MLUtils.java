@@ -5,7 +5,9 @@ import java.util.List;
 /**
  * Utility class for conversions and value matching.
  */
-public class GenericUtils {
+public class MLUtils {
+
+    private static final double GRADIENT_CLIP = 10.0;
 
     /**
      * Finds the best matching enum constant based on output values.
@@ -52,5 +54,15 @@ public class GenericUtils {
                 e.printStackTrace(System.err);
             }
         }
+    }
+
+    /**
+     * Clips the gradient to avoid gradient explosion.
+     *
+     * @param gradient the gradient
+     * @return the clipped gradient
+     */
+    public static double clipGradient(double gradient) {
+        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }
 }

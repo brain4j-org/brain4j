@@ -1,6 +1,7 @@
 package net.echo.brain4j.training.optimizers.impl;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.optimizers.Optimizer;
@@ -33,8 +34,7 @@ public class Adam extends Optimizer {
         this.epsilon = epsilon;
     }
 
-    @Override
-    public void postInitialize() {
+    public void postInitialize(Model model) {
         this.firstMomentum = new double[Synapse.SYNAPSE_COUNTER];
         this.secondMomentum = new double[Synapse.SYNAPSE_COUNTER];
     }
