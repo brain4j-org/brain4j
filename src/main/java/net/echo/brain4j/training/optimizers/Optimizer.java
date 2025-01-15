@@ -1,6 +1,7 @@
 package net.echo.brain4j.training.optimizers;
 
 import com.google.gson.annotations.JsonAdapter;
+import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
@@ -93,14 +94,42 @@ public abstract class Optimizer {
     public double calculateGradient(NeuronCacheHolder cacheHolder, Layer layer, Neuron neuron, Synapse synapse) {
         double output = neuron.getValue(cacheHolder);
 
-        double derivative = layer.getActivation().getFunction().getDerivative(output);
+        Activation activationFunction = layer.getActivation().getFunction();
 
-        double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta(cacheHolder));
+        double derivative;
+        try {
+            derivative = activationFunction.getDerivative(output);
+        } catch (UnsupportedOperationException e) {
+
+            List<Neuron> layerNeurons = layer.getNeurons();
+            double[] layerOutputs = new double[layerNeurons.size()];
+
+            for (int i = 0; i < layerNeurons.size(); i++) {
+                layerOutputs[i] = layerNeurons.get(i).getValue(cacheHolder);
+            }
+
+            double[][] jacobian = activationFunction.getDerivativeMatrix(layerOutputs);
+
+            int neuronIndex = layerNeurons.indexOf(neuron);
+            if (neuronIndex < 0) {
+                throw new IllegalStateException("Neuron not found in layer!");
+            }
+
+            derivative = jacobian[neuronIndex][neuronIndex];
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to calculate gradient for neuron " + neuron.getId(), e);
+        }
+
+        double error = clipGradient(
+                synapse.getWeight() * synapse.getOutputNeuron().getDelta(cacheHolder)
+        );
+
         double delta = clipGradient(error * derivative);
 
         neuron.setDelta(cacheHolder, delta);
 
-        return clipGradient(delta * synapse.getInputNeuron().getValue(cacheHolder));
+        double inputVal = synapse.getInputNeuron().getValue(cacheHolder);
+        return clipGradient(delta * inputVal);
     }
 
     /**

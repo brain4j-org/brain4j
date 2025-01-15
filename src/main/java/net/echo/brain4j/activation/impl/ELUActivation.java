@@ -34,6 +34,11 @@ public class ELUActivation implements Activation {
     }
 
     @Override
+    public double[][] getDerivativeMatrix(double[] outputs) {
+        throw new UnsupportedOperationException("ELU derivative is not supported for multiple outputs.");
+    }
+
+    @Override
     public void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
             neuron.setValue(cacheHolder, activate(neuron.getValue(cacheHolder)));

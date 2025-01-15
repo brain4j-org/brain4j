@@ -28,6 +28,11 @@ public class TanhActivation implements Activation {
     }
 
     @Override
+    public double[][] getDerivativeMatrix(double[] outputs) {
+        throw new UnsupportedOperationException("Tanh activation function is not supported for multiple inputs");
+    }
+
+    @Override
     public void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
             double value = neuron.getValue(cacheHolder) + neuron.getBias();

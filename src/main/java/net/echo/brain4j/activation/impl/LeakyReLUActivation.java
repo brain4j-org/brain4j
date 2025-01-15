@@ -24,6 +24,11 @@ public class LeakyReLUActivation implements Activation {
     }
 
     @Override
+    public double[][] getDerivativeMatrix(double[] outputs) {
+        throw new UnsupportedOperationException("Leaky ReLU activation function is not supported for multiple inputs");
+    }
+
+    @Override
     public void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
             double output = activate(neuron.getValue(cacheHolder) + neuron.getBias());
