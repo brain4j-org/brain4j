@@ -1,6 +1,7 @@
 package net.echo.brain4j.utils;
 
 import java.util.Arrays;
+import java.util.Random;
 import java.util.function.Supplier;
 
 public class Vector implements Cloneable {
@@ -21,6 +22,12 @@ public class Vector implements Cloneable {
 
     public static Vector random(int size) {
         return new Vector(size).fill(Math::random);
+    }
+
+    public static Vector random(int seed, int size) {
+        Random random = new Random(seed);
+
+        return new Vector(size).fill(random::nextDouble);
     }
 
     public static Vector uniform(double lowerBound, double upperBound, int size) {

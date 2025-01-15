@@ -87,20 +87,8 @@ public class BackPropagation {
             result.set(i, outputs[i]);
         }
 
-        Activation activationFunction = outputLayer.getActivation().getFunction();
-
-        double[][] jacobian;
-        try {
-            jacobian = activationFunction.getDerivativeMatrix(result.toArray());
-        } catch (UnsupportedOperationException e) {
-            jacobian = new double[outputs.length][outputs.length];
-            double[] scalarDerivatives = activationFunction.getDerivative(Vector.of(result.toArray())).toArray();
-            for (int i = 0; i < outputs.length; i++) {
-                jacobian[i][i] = scalarDerivatives[i];
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Activation function = outputLayer.getActivation().getFunction();
+        Vector changes = function.getDerivative(result);
 
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
@@ -108,11 +96,7 @@ public class BackPropagation {
             double output = outputs[i];
             double error = targets[i] - output;
 
-            double delta = 0.0;
-            for (int j = 0; j < outputs.length; j++) {
-                delta += error * jacobian[i][j];
-            }
-
+            double delta = changes.get(i) * error;
             neuron.setDelta(cacheHolder, delta);
         }
     }

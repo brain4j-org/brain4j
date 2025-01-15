@@ -36,8 +36,7 @@ public class SoftmaxActivation implements Activation {
 
     @Override
     public double getDerivative(double input) {
-        throw new UnsupportedOperationException(
-                "Softmax derivative is multi-dimensional; use getDerivativeMatrix(double[]).");
+        return input * (1.0 - input);
     }
 
     @Override

@@ -30,9 +30,11 @@ public interface Activation {
 
     default Vector getDerivative(Vector input) {
         Vector result = new Vector(input.size());
+
         for (int i = 0; i < input.size(); i++) {
             result.set(i, getDerivative(input.get(i)));
         }
+
         return result;
     }
 
