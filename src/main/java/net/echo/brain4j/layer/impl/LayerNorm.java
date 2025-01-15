@@ -22,6 +22,11 @@ public class LayerNorm extends Layer {
     }
 
     @Override
+    public boolean canPropagate() {
+        return false;
+    }
+
+    @Override
     public void applyFunction(NeuronCacheHolder cacheHolder, Layer previous) {
         List<Neuron> inputs = previous.getNeurons();
 

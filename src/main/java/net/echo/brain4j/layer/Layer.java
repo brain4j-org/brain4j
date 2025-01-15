@@ -18,9 +18,9 @@ import java.util.Random;
 @JsonAdapter(LayerAdapter.class)
 public class Layer {
 
-    private final List<Neuron> neurons = new ArrayList<>();
-    private final List<Synapse> synapses = new ArrayList<>();
-    private final Activations activation;
+    protected final List<Neuron> neurons = new ArrayList<>();
+    protected final List<Synapse> synapses = new ArrayList<>();
+    protected final Activations activation;
 
     public Layer(int input, Activations activation) {
         for (int i = 0; i < input; i++) {
@@ -28,6 +28,10 @@ public class Layer {
         }
 
         this.activation = activation;
+    }
+
+    public boolean canPropagate() {
+        return true;
     }
 
     public void init(Random generator) {
@@ -74,7 +78,7 @@ public class Layer {
         return values;
     }
 
-    public void propagate(NeuronCacheHolder cacheHolder, Updater updater) {
+    public void propagate(NeuronCacheHolder cacheHolder, Layer previous, Updater updater) {
         Vector neuronsVector = new Vector(neurons.size());
 
         for (int i = 0; i < neurons.size(); i++) {

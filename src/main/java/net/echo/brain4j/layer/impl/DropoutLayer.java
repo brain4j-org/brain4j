@@ -4,8 +4,10 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.training.updater.Updater;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a Dropout layer for regularization in a neural network.
@@ -34,16 +36,11 @@ public class DropoutLayer extends Layer {
         this.dropout = dropout;
     }
 
-    public void process(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
-        for (Neuron neuron : neurons) {
-            if (Math.random() < dropout) {
-                neuron.setValue(cacheHolder, 0);
-            }
-        }
-    }
+    @Override
+    public void propagate(NeuronCacheHolder cacheHolder, Layer previous, Updater updater) {
+        Objects.requireNonNull(previous, "Previous layer is null, is the drop out layer the first layer?");
 
-    public void backward(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
-        for (Neuron neuron : neurons) {
+        for (Neuron neuron : previous.getNeurons()) {
             neuron.setValue(cacheHolder, neuron.getValue(cacheHolder) * (1.0 - dropout));
         }
     }

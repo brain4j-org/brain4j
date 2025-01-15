@@ -61,16 +61,15 @@ public class BackPropagation {
         List<Layer> layers = model.getLayers();
         initialDelta(cacheHolder, layers, targets, outputs);
 
+        Layer previous = null;
+
         for (int l = layers.size() - 2; l > 0; l--) {
             Layer layer = layers.get(l);
 
-            if (layer instanceof DropoutLayer dropoutLayer) {
-                Layer previous = layers.get(l - 1);
-                dropoutLayer.backward(cacheHolder, previous.getNeurons());
-                continue;
-            }
+            if (!layer.canPropagate()) continue;
 
-            layer.propagate(cacheHolder, updater);
+            layer.propagate(cacheHolder, previous, updater);
+            previous = layer;
         }
 
         optimizer.postIteration(cacheHolder, updater, layers);
