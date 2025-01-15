@@ -1,5 +1,6 @@
 package net.echo.brain4j.training;
 
+import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.model.Model;
@@ -86,7 +87,20 @@ public class BackPropagation {
             result.set(i, outputs[i]);
         }
 
-        Vector derivatives = outputLayer.getActivation().getFunction().getDerivative(result);
+        Activation activationFunction = outputLayer.getActivation().getFunction();
+
+        double[][] jacobian;
+        try {
+            jacobian = activationFunction.getDerivativeMatrix(result.toArray());
+        } catch (UnsupportedOperationException e) {
+            jacobian = new double[outputs.length][outputs.length];
+            double[] scalarDerivatives = activationFunction.getDerivative(Vector.of(result.toArray())).toArray();
+            for (int i = 0; i < outputs.length; i++) {
+                jacobian[i][i] = scalarDerivatives[i];
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
@@ -94,7 +108,11 @@ public class BackPropagation {
             double output = outputs[i];
             double error = targets[i] - output;
 
-            double delta = error * derivatives.get(i);
+            double delta = 0.0;
+            for (int j = 0; j < outputs.length; j++) {
+                delta += error * jacobian[i][j];
+            }
+
             neuron.setDelta(cacheHolder, delta);
         }
     }
