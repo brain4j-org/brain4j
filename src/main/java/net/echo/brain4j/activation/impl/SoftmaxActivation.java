@@ -4,28 +4,27 @@ import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.threading.NeuronCacheHolder;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SoftmaxActivation implements Activation {
 
     @Override
     public double activate(double input) {
-        throw new UnsupportedOperationException("Softmax activation function is not supported for single value");
+        throw new UnsupportedOperationException(
+                "Softmax is a vector-based activation; use activate(double[]).");
     }
 
     @Override
     public double[] activate(double[] inputs) {
-        double maxInput = Double.NEGATIVE_INFINITY;
-
-        for (double input : inputs) {
-            maxInput = Math.max(maxInput, input);
-        }
+        double maxInput = Arrays.stream(inputs).max().orElse(0.0);
 
         double[] expValues = new double[inputs.length];
         double sum = 0.0;
 
         for (int i = 0; i < inputs.length; i++) {
-            sum += (expValues[i] = Math.exp(inputs[i] - maxInput));
+            expValues[i] = Math.exp(inputs[i] - maxInput);
+            sum += expValues[i];
         }
 
         for (int i = 0; i < expValues.length; i++) {
@@ -37,7 +36,25 @@ public class SoftmaxActivation implements Activation {
 
     @Override
     public double getDerivative(double input) {
-        return input * (1.0 - input);
+        throw new UnsupportedOperationException(
+                "Softmax derivative is multi-dimensional; use getDerivativeMatrix(double[]).");
+    }
+
+    @Override
+    public double[][] getDerivativeMatrix(double[] outputs) {
+        int n = outputs.length;
+        double[][] jacobian = new double[n][n];
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == j) {
+                    jacobian[i][j] = outputs[i] * (1.0 - outputs[i]);
+                } else {
+                    jacobian[i][j] = -outputs[i] * outputs[j];
+                }
+            }
+        }
+        return jacobian;
     }
 
     @Override
