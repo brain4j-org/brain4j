@@ -15,6 +15,8 @@ public class SmartTrainer {
 
     private int epoches;
     private boolean running;
+    private double previousLoss = Double.MAX_VALUE;
+    private double loss = Double.MAX_VALUE;
 
     public SmartTrainer(double learningRateDecay, int evaluateEvery) {
         this.learningRateDecay = learningRateDecay;
@@ -29,30 +31,26 @@ public class SmartTrainer {
         this.running = false;
     }
 
-    public void start(Model model, DataSet dataSet, double lossThreshold) {
+    public void start(Model model, DataSet dataSet, double lossThreshold, double lossTolerance) {
         this.running = true;
         this.epoches = 0;
 
         this.listeners.forEach(listener -> listener.register(model));
 
-        double loss = Double.MAX_VALUE;
-        double lastLoss = Double.MAX_VALUE;
-
         while (running && loss > lossThreshold) {
             step(model, dataSet);
 
             if (epoches++ % evaluateEvery == 0) {
-                loss = model.evaluate(dataSet);
+                this.loss = model.evaluate(dataSet);
+                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss));
 
-                double finalLoss = loss;
-                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
-
-                if (loss >= lastLoss) {
+                if ((loss - previousLoss) > lossTolerance) {
                     // Loss increased, so decrease the learning rate
                     model.getOptimizer().setLearningRate(model.getOptimizer().getLearningRate() * learningRateDecay);
+                    this.listeners.forEach(listener -> listener.onLossIncreased(loss, previousLoss));
                 }
 
-                lastLoss = loss;
+                previousLoss = loss;
             }
         }
 
@@ -71,27 +69,23 @@ public class SmartTrainer {
 
         this.listeners.forEach(listener -> listener.register(model));
 
-        double loss;
-        double lastLoss = Double.MAX_VALUE;
-
         for (int i = 0; i < epochesAmount; i++) {
             step(model, dataSet);
 
-            if (epoches++ % evaluateEvery == 0) {
-                loss = model.evaluate(dataSet);
+            this.epoches++;
 
-                double finalLoss = loss;
-                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
+            if (epoches % evaluateEvery == 0) {
+                this.loss = model.evaluate(dataSet);
 
-                if (loss >= lastLoss) {
-                    double finalLastLoss = lastLoss;
+                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss));
 
+                if (loss >= previousLoss) {
                     // Loss increased, so decrease the learning rate
                     model.getOptimizer().setLearningRate(model.getOptimizer().getLearningRate() * learningRateDecay);
-                    this.listeners.forEach(listener -> listener.onLossIncreased(finalLoss, finalLastLoss));
+                    this.listeners.forEach(listener -> listener.onLossIncreased(loss, previousLoss));
                 }
 
-                lastLoss = loss;
+                previousLoss = loss;
             }
         }
 
@@ -100,5 +94,29 @@ public class SmartTrainer {
 
     public int getEpoches() {
         return epoches;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public double getLoss() {
+        return loss;
+    }
+
+    public double getPreviousLoss() {
+        return previousLoss;
+    }
+
+    public double getLearningRateDecay() {
+        return learningRateDecay;
+    }
+
+    public int getEvaluateEvery() {
+        return evaluateEvery;
+    }
+
+    public List<TrainListener> getListeners() {
+        return listeners;
     }
 }
