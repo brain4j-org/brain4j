@@ -8,6 +8,9 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
+import net.echo.brain4j.training.techniques.SmartTrainer;
+import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
@@ -16,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MNISTClassifier {
 
@@ -24,7 +28,7 @@ public class MNISTClassifier {
         Model model = getModel();
 
         set.partition(32);
-        evaluateModel(model);
+        train(model, set);
     }
 
     public static void evaluateModel(Model model) {
@@ -87,21 +91,29 @@ public class MNISTClassifier {
     }
 
     public static void train(Model model, DataSet set) {
-        for (int i = 0; i < 1000; i++) {
-            long start = System.nanoTime();
-            model.fit(set);
+        SmartTrainer trainer = new SmartTrainer(0.7, 10);
+        AtomicLong start = new AtomicLong(System.nanoTime());
 
-            if (i % 10 == 0) {
-                double took = (System.nanoTime() - start) / 1e6;
-                double error = model.evaluate(set);
+        trainer.addListener(new TrainListener() {
+            @Override
+            public void onEvaluated(DataSet dataSet, int epoch, double loss) {
+                double took = (System.nanoTime() - start.get()) / 1e6;
 
-                System.out.println("Epoch " + i + " took " + took + " ms and has " + error + " loss");
+                System.out.println("Epoch " + epoch + " loss: " + loss + " took " + took + " ms");
+
+                start.set(System.nanoTime());
+
+                if (loss < 1) {
+                    model.save("mnist-2.json");
+                }
             }
 
-            if (i % 100 == 0) {
-                model.save("mnist.json");
+            @Override
+            public void onLossIncreased(double loss, double previousLoss) {
+                System.out.println("Loss increased from " + previousLoss + " to " + loss);
             }
-        }
+        });
+        trainer.startFor(model, set, 1000);
     }
 
     public static Model getModel() {
@@ -112,9 +124,9 @@ public class MNISTClassifier {
         );
 
         model.compile(
-                WeightInit.UNIFORM_XAVIER,
+                WeightInit.NORMAL_XAVIER,
                 LossFunctions.CATEGORICAL_CROSS_ENTROPY,
-                new Adam(0.001),
+                new AdamW(0.0002, 0.0001),
                 new NormalUpdater()
         );
 

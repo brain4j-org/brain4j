@@ -34,6 +34,11 @@ public class Vector implements Cloneable {
         return new Vector(size).fill(() -> Math.random() * (upperBound - lowerBound) + lowerBound);
     }
 
+    public static Vector uniform(int seed, double lowerBound, double upperBound, int size) {
+        Random random = new Random(seed);
+        return new Vector(size).fill(() -> random.nextDouble() * (upperBound - lowerBound) + lowerBound);
+    }
+
     public static Vector zero(int size) {
         return new Vector(size).fill(0.0);
     }
@@ -162,6 +167,14 @@ public class Vector implements Cloneable {
         return this;
     }
 
+    public Vector add(double value) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] += value;
+        }
+
+        return this;
+    }
+
     public Vector scale(double value) {
         for (int i = 0; i < data.length; i++) {
             data[i] *= value;
@@ -179,6 +192,10 @@ public class Vector implements Cloneable {
     }
 
     public Vector multiply(Vector vector) {
+        if (data.length != vector.data.length) {
+            throw new IllegalArgumentException("Vectors must be of the same length.");
+        }
+
         for (int i = 0; i < data.length; i++) {
             data[i] *= vector.data[i];
         }
