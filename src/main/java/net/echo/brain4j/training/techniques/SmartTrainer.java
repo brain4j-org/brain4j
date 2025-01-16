@@ -45,7 +45,7 @@ public class SmartTrainer {
                 double finalLoss = loss;
                 listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
 
-                if (loss > lastLoss) {
+                if (loss >= lastLoss) {
                     // Loss increased, so decrease the learning rate
                     model.getOptimizer().setLearningRate(model.getOptimizer().getLearningRate() * learningRateDecay);
                 }
@@ -79,7 +79,7 @@ public class SmartTrainer {
                 double finalLoss = loss;
                 listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
 
-                if (loss > lastLoss) {
+                if (loss >= lastLoss) {
                     double finalLastLoss = lastLoss;
 
                     // Loss increased, so decrease the learning rate
