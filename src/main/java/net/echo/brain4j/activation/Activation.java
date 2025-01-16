@@ -16,10 +16,24 @@ public interface Activation {
     double activate(double input);
 
     /**
-     * Activate a vector of values (e.g. for Softmax).
+     * Activate a vector of values.
      * Return a new array containing the activated values.
      */
     double[] activate(double[] input);
+
+    /**
+     * Activate a vector of values.
+     * Return a new vector containing the activated values.
+     */
+    default Vector activate(Vector input) {
+        Vector output = new Vector(input.size());
+
+        for (int i = 0; i < input.size(); i++) {
+            output.set(i, activate(input.get(i)));
+        }
+
+        return output;
+    }
 
     /**
      * Get the derivative (scalar) of the activation at a single value.
@@ -28,6 +42,12 @@ public interface Activation {
      */
     double getDerivative(double input);
 
+    /**
+     * Get the derivative (vector) of the activation at a vector of values.
+     * For purely vector-based activations like Softmax.
+     *
+     * @throws UnsupportedOperationException if the activation does not support this operation
+     */
     default Vector getDerivative(Vector input) {
         Vector result = new Vector(input.size());
 

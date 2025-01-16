@@ -2,6 +2,7 @@ package mnist;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
+import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -14,10 +15,12 @@ import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -27,8 +30,31 @@ public class MNISTClassifier {
         DataSet set = getData();
         Model model = getModel();
 
+        System.out.println(model.getStats());
         set.partition(32);
         train(model, set);
+        // evaluateModel(model);
+        test(model);
+    }
+
+    public static void test(Model model) {
+        try {
+            String data = FileUtils.readFileToString(new File("example.csv"), StandardCharsets.UTF_8);
+            String[] pixels = data.split(",");
+
+            Vector vector = new Vector(pixels.length);
+
+            for (int i = 0; i < pixels.length; i++) {
+                vector.set(i, Double.parseDouble(pixels[i]));
+            }
+
+            Vector output = model.predict(vector);
+            int prediction = MLUtils.indexOfMaxValue(output);
+
+            System.out.println("Predicted a " + prediction + " vector: " + output.toString("%.3f"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void evaluateModel(Model model) {
@@ -53,7 +79,7 @@ public class MNISTClassifier {
                 correctlyClassified++;
                 result.set(0, result.get(0) + 1);
 
-                System.out.println(expected + " is correct. Vector: " + output.toString("%.3f"));
+                // System.out.println(expected + " is correct. Vector: " + output.toString("%.3f"));
             } else {
                 incorrectlyClassified++;
                 result.set(1, result.get(1) + 1);
@@ -87,7 +113,8 @@ public class MNISTClassifier {
         System.out.println("Correctly classified: " + correctlyClassified);
         System.out.println("Incorrectly classified: " + incorrectlyClassified);
         System.out.printf("Accuracy: %.4f (%.4f%%)%n", accuracy, accuracy * 100);
-        System.out.printf("Loss: %.6f", loss);
+        System.out.printf("Loss: %.6f\n", loss);
+        System.out.println("----------- Finished Evaluation -----------");
     }
 
     public static void train(Model model, DataSet set) {
@@ -110,7 +137,8 @@ public class MNISTClassifier {
 
             @Override
             public void onLossIncreased(double loss, double previousLoss) {
-                System.out.println("Loss increased from " + previousLoss + " to " + loss);
+                //System.out.println("Loss increased from " + previousLoss + " to " + loss);
+                //System.out.println("New learning rate: " + model.getOptimizer().getLearningRate());
             }
         });
         trainer.startFor(model, set, 1000);
@@ -119,14 +147,18 @@ public class MNISTClassifier {
     public static Model getModel() {
         Model model = new Model(
                 new DenseLayer(784, Activations.LINEAR),
+                new LayerNorm(),
                 new DenseLayer(32, Activations.RELU),
+                new LayerNorm(),
+                new DenseLayer(32, Activations.RELU),
+                new LayerNorm(),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
         model.compile(
-                WeightInit.NORMAL_XAVIER,
+                WeightInit.UNIFORM_XAVIER,
                 LossFunctions.CATEGORICAL_CROSS_ENTROPY,
-                new AdamW(0.0002, 0.0001),
+                new Adam(0.0001),
                 new NormalUpdater()
         );
 

@@ -40,7 +40,7 @@ public class MultiHeadAttention extends Layer {
         Vector result = input.clone();
 
         for (Vector changes : attendedChanges) {
-            result = result.add(changes);
+             result.add(changes);
         }
 
         return result;

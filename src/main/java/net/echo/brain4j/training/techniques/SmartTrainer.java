@@ -33,6 +33,8 @@ public class SmartTrainer {
         this.running = true;
         this.epoches = 0;
 
+        this.listeners.forEach(listener -> listener.register(model));
+
         double loss = Double.MAX_VALUE;
         double lastLoss = Double.MAX_VALUE;
 
@@ -43,7 +45,7 @@ public class SmartTrainer {
                 loss = model.evaluate(dataSet);
 
                 double finalLoss = loss;
-                listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
+                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
 
                 if (loss >= lastLoss) {
                     // Loss increased, so decrease the learning rate
@@ -58,16 +60,18 @@ public class SmartTrainer {
     }
 
     public void step(Model model, DataSet dataSet) {
-        listeners.forEach(listener -> listener.onEpochStarted(epoches));
+        this.listeners.forEach(listener -> listener.onEpochStarted(epoches));
         model.fit(dataSet);
-        listeners.forEach(listener -> listener.onEpochCompleted(epoches));
+        this.listeners.forEach(listener -> listener.onEpochCompleted(epoches));
     }
 
     public void startFor(Model model, DataSet dataSet, int epochesAmount) {
         this.running = true;
         this.epoches = 0;
 
-        double loss = Double.MAX_VALUE;
+        this.listeners.forEach(listener -> listener.register(model));
+
+        double loss;
         double lastLoss = Double.MAX_VALUE;
 
         for (int i = 0; i < epochesAmount; i++) {
@@ -77,14 +81,14 @@ public class SmartTrainer {
                 loss = model.evaluate(dataSet);
 
                 double finalLoss = loss;
-                listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
+                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, finalLoss));
 
                 if (loss >= lastLoss) {
                     double finalLastLoss = lastLoss;
 
                     // Loss increased, so decrease the learning rate
                     model.getOptimizer().setLearningRate(model.getOptimizer().getLearningRate() * learningRateDecay);
-                    listeners.forEach(listener -> listener.onLossIncreased(finalLoss, finalLastLoss));
+                    this.listeners.forEach(listener -> listener.onLossIncreased(finalLoss, finalLastLoss));
                 }
 
                 lastLoss = loss;

@@ -1,10 +1,11 @@
 package net.echo.brain4j.utils;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.function.Supplier;
 
-public class Vector implements Cloneable {
+public class Vector implements Cloneable, Iterable<Double> {
 
     private final double[] data;
 
@@ -39,7 +40,7 @@ public class Vector implements Cloneable {
         return new Vector(size).fill(() -> random.nextDouble() * (upperBound - lowerBound) + lowerBound);
     }
 
-    public static Vector zero(int size) {
+    public static Vector zeros(int size) {
         return new Vector(size).fill(0.0);
     }
 
@@ -165,6 +166,12 @@ public class Vector implements Cloneable {
         }
 
         return this;
+    }
+
+    public void subtract(Vector vector) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] -= vector.data[i];
+        }
     }
 
     public Vector add(double value) {
@@ -299,5 +306,10 @@ public class Vector implements Cloneable {
 
             builder.append(", ");
         }
+    }
+
+    @Override
+    public Iterator<Double> iterator() {
+        return Arrays.stream(data).iterator();
     }
 }
