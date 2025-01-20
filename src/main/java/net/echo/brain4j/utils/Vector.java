@@ -131,7 +131,7 @@ public class Vector implements Cloneable, Iterable<Double> {
 
     public double distanceSquared(Vector vector) {
         if (data.length != vector.data.length) {
-            throw new IllegalArgumentException("Vectors must be of the same length.");
+            throw new IllegalArgumentException("Vectors must be of the same length. (" + data.length + " != " + vector.data.length + ")");
         }
 
         double sum = 0;
