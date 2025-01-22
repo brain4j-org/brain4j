@@ -140,12 +140,6 @@ public class AdamGPU extends Optimizer {
         executeKernel(cacheHolder, updater, gradients);
     }
 
-    @Override
-    public double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params) {
-        // CPU-based update fallback
-        return 0; // Not used when GPU is enabled
-    }
-
     private void executeKernel(NeuronCacheHolder cacheHolder, Updater updater, float[] gradients) {
         float[] updates = new float[Synapse.SYNAPSE_COUNTER];
         cl_event kernelEvent = new cl_event();
@@ -169,6 +163,12 @@ public class AdamGPU extends Optimizer {
 
             applyChanges(cacheHolder, updater, updates1);
         }, updates);
+    }
+
+    @Override
+    public double update(NeuronCacheHolder cacheHolder, Synapse synapse) {
+        // CPU-based update fallback
+        return 0; // Not used when GPU is enabled
     }
 
     private void applyChanges(NeuronCacheHolder cacheHolder, Updater updater, float[] updates) {

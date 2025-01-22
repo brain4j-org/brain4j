@@ -40,7 +40,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params) {
+    public double update(NeuronCacheHolder cacheHolder, Synapse synapse) {
         double gradient = synapse.getOutputNeuron().getDelta(cacheHolder) * synapse.getInputNeuron().getValue(cacheHolder);
 
         int synapseId = synapse.getSynapseId();
