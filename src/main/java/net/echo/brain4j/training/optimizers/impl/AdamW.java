@@ -42,7 +42,7 @@ public class AdamW extends Adam {
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(cacheHolder, synapse);
-                updater.acknowledgeChange(synapse, change);
+                updater.acknowledgeChange(cacheHolder, synapse, change);
             }
         }
     }

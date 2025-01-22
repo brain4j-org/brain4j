@@ -12,6 +12,7 @@ import net.echo.brain4j.training.updater.Updater;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.jocl.CL.*;
@@ -136,7 +137,7 @@ public class AdamGPU extends Optimizer {
             }
         }
 
-        executeKernel(updater, gradients);
+        executeKernel(cacheHolder, updater, gradients);
     }
 
     @Override
@@ -145,7 +146,7 @@ public class AdamGPU extends Optimizer {
         return 0; // Not used when GPU is enabled
     }
 
-    private void executeKernel(Updater updater, float[] gradients) {
+    private void executeKernel(NeuronCacheHolder cacheHolder, Updater updater, float[] gradients) {
         float[] updates = new float[Synapse.SYNAPSE_COUNTER];
         cl_event kernelEvent = new cl_event();
 
@@ -160,20 +161,22 @@ public class AdamGPU extends Optimizer {
 
         // Launch kernel async
         clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, globalWorkSize, null, 0, null, kernelEvent);
-        clSetEventCallback(kernelEvent, CL_COMPLETE, (event, status, userData) -> {
-            float[] updates1 = (float[]) userData;
+
+        clSetEventCallback(kernelEvent, CL_SUBMITTED, (event1, status1, userData1) -> {
+            float[] updates1 = (float[]) userData1;
 
             DeviceUtils.readBuffer(commandQueue, dUpdates, size, updates1);
 
-            applyChanges(updater, updates1);
+            applyChanges(cacheHolder, updater, updates1);
         }, updates);
     }
-    private void applyChanges(Updater updater, float[] updates) {
+
+    private void applyChanges(NeuronCacheHolder cacheHolder, Updater updater, float[] updates) {
         for (int i = 0; i < updates.length; i++) {
             Synapse synapse = synapses[i];
             float update = updates[i];
 
-            updater.acknowledgeChange(synapse, update);
+            updater.acknowledgeChange(cacheHolder, synapse, update);
         }
     }
 

@@ -25,7 +25,6 @@ import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.training.updater.impl.BatchedUpdater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
@@ -62,7 +61,6 @@ public class Model {
             .registerTypeAdapter(GradientDescent.class, OPTIMIZER_ADAPTER)
 
             .registerTypeAdapter(NormalUpdater.class, UPDATER_ADAPTER)
-            .registerTypeAdapter(BatchedUpdater.class, UPDATER_ADAPTER)
             .registerTypeAdapter(StochasticUpdater.class, UPDATER_ADAPTER)
 
             .create();
@@ -184,13 +182,13 @@ public class Model {
      * Reloads the synapse matrix for each layer.
      */
     public void reloadMatrices() {
-        synapsesMatrices.clear();
+        List<Vector[]> matrices = new ArrayList<>();
 
         for (int i = 0; i < layers.size() - 1; i++) {
             Layer layer = layers.get(i);
 
             if (layer instanceof DropoutLayer) {
-                synapsesMatrices.add(new Vector[]{});
+                matrices.add(new Vector[]{});
                 continue;
             }
 
@@ -201,8 +199,10 @@ public class Model {
 
             Vector[] synapseMatrixLayer = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
 
-            synapsesMatrices.add(synapseMatrixLayer);
+            matrices.add(synapseMatrixLayer);
         }
+
+        synapsesMatrices = matrices;
     }
 
     /**

@@ -2,7 +2,6 @@ package net.echo.brain4j.adapters;
 
 import com.google.gson.*;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.training.updater.impl.BatchedUpdater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 
@@ -25,7 +24,6 @@ public class UpdaterAdapter implements JsonSerializer<Updater>, JsonDeserializer
         String optimizerType = object.get("type").getAsString();
 
         return switch (optimizerType) {
-            case "BatchedUpdater" -> new BatchedUpdater();
             case "StochasticUpdater" -> new StochasticUpdater();
             case "NormalUpdater" -> new NormalUpdater();
             default -> throw new IllegalArgumentException("Unknown updater type: " + optimizerType);

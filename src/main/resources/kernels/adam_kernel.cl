@@ -10,6 +10,7 @@ __kernel void adam_update(
     int count) {
 
     int i = get_global_id(0);
+
     if (i < count) {
         float gradient = gradients[i];
 
