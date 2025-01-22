@@ -6,7 +6,6 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.updater.Updater;
 
-import java.util.List;
 import java.util.Objects;
 
 /**

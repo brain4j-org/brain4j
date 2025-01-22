@@ -3,7 +3,6 @@ package net.echo.brain4j.opencl;
 import org.jocl.*;
 
 import static org.jocl.CL.*;
-import static org.jocl.CL.clGetDeviceInfo;
 
 public class DeviceUtils {
 

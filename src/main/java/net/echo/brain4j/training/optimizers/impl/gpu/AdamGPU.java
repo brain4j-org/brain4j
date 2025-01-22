@@ -1,18 +1,16 @@
 package net.echo.brain4j.training.optimizers.impl.gpu;
 
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.opencl.DeviceUtils;
-import org.jocl.*;
-import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import org.jocl.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.jocl.CL.*;

@@ -2,7 +2,6 @@ package net.echo.brain4j.training;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.threading.NeuronCacheHolder;
