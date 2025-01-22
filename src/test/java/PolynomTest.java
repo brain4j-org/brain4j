@@ -8,6 +8,7 @@ import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -53,7 +54,7 @@ public class PolynomTest {
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.MEAN_SQUARED_ERROR,
                 new Adam(0.01),
-                new NormalUpdater()
+                new StochasticUpdater()
         );
 
         return model;
