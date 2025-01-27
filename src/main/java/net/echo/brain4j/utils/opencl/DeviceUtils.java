@@ -1,4 +1,4 @@
-package net.echo.brain4j.opencl;
+package net.echo.brain4j.utils.opencl;
 
 import org.jocl.*;
 

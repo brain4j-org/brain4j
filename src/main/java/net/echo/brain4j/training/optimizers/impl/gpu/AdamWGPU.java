@@ -2,9 +2,9 @@ package net.echo.brain4j.training.optimizers.impl.gpu;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.opencl.DeviceUtils;
+import net.echo.brain4j.utils.opencl.DeviceUtils;
 import net.echo.brain4j.structure.Synapse;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import org.jocl.*;
@@ -109,7 +109,7 @@ public class AdamWGPU extends Optimizer {
     }
 
     @Override
-    public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
         this.timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);
@@ -136,7 +136,7 @@ public class AdamWGPU extends Optimizer {
     }
 
     @Override
-    public double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params) {
+    public double update(StatesCache cacheHolder, Synapse synapse, Object... params) {
         // CPU-based update fallback
         return 0; // Not used when GPU is enabled
     }

@@ -16,7 +16,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
@@ -156,7 +156,7 @@ public class Model {
             Vector inputs = row.inputs();
             Vector targets = row.outputs();
 
-            Vector outputs = predict(new NeuronCacheHolder(), inputs);
+            Vector outputs = predict(new StatesCache(), inputs);
 
             totalError += lossFunction.getFunction().calculate(targets, outputs);
         }
@@ -212,7 +212,7 @@ public class Model {
      * @return predicted outputs as a vector
      */
     public Vector predict(Vector input) {
-        return predict(new NeuronCacheHolder(), input);
+        return predict(new StatesCache(), input);
     }
 
     /**
@@ -221,7 +221,7 @@ public class Model {
      * @param input input data as a vector, must have dimension equal to the model's input dimension
      * @return predicted outputs as a vector
      */
-    public Vector predict(NeuronCacheHolder cacheHolder, Vector input) {
+    public Vector predict(StatesCache cacheHolder, Vector input) {
         Layer inputLayer = layers.getFirst();
 
         if (input.toArray().length != inputLayer.getNeurons().size()) {

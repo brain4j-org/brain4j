@@ -3,10 +3,9 @@ package net.echo.brain4j.layer.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -37,7 +36,7 @@ public class DropoutLayer extends Layer {
     }
 
     @Override
-    public void propagate(NeuronCacheHolder cacheHolder, Layer previous, Updater updater) {
+    public void propagate(StatesCache cacheHolder, Layer previous, Updater updater) {
         Objects.requireNonNull(previous, "Previous layer is null, is the drop out layer the first layer?");
 
         for (Neuron neuron : previous.getNeurons()) {

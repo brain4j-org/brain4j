@@ -3,7 +3,7 @@ package net.echo.brain4j.layer.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public void applyFunction(NeuronCacheHolder cacheHolder, Layer previous) {
+    public void applyFunction(StatesCache cacheHolder, Layer previous) {
         List<Neuron> inputs = previous.getNeurons();
 
         double mean = calculateMean(cacheHolder, inputs);
@@ -57,7 +57,7 @@ public class LayerNorm extends Layer {
         return input;
     }
 
-    private double calculateMean(NeuronCacheHolder cacheHolder, List<Neuron> inputs) {
+    private double calculateMean(StatesCache cacheHolder, List<Neuron> inputs) {
         double sum = 0.0;
 
         for (Neuron value : inputs) {
@@ -67,7 +67,7 @@ public class LayerNorm extends Layer {
         return sum / inputs.size();
     }
 
-    private double calculateVariance(NeuronCacheHolder cacheHolder, List<Neuron> inputs, double mean) {
+    private double calculateVariance(StatesCache cacheHolder, List<Neuron> inputs, double mean) {
         double sum = 0.0;
 
         for (Neuron value : inputs) {

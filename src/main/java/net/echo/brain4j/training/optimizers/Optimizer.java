@@ -1,13 +1,11 @@
 package net.echo.brain4j.training.optimizers;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 
 import java.util.List;
@@ -34,7 +32,7 @@ public abstract class Optimizer {
      *
      * @param synapse the synapse to update
      */
-    public abstract double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params);
+    public abstract double update(StatesCache cacheHolder, Synapse synapse, Object... params);
 
     /**
      * Called after the network has been compiled and all the synapses have been initialized.
@@ -66,6 +64,6 @@ public abstract class Optimizer {
      * @param updater the backpropagation updater
      * @param layers the layers of the model
      */
-    public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
     }
 }

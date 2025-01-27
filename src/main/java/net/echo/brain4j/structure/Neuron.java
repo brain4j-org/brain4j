@@ -1,7 +1,6 @@
 package net.echo.brain4j.structure;
 
 import com.google.gson.annotations.Expose;
-import net.echo.brain4j.threading.NeuronCacheHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +42,7 @@ public class Neuron {
         return id;
     }
 
-    public double getDelta(NeuronCacheHolder cacheHolder) {
+    public double getDelta(StatesCache cacheHolder) {
         if (cacheHolder == null) {
             return delta.get();
         }
@@ -51,7 +50,7 @@ public class Neuron {
         return cacheHolder.getDelta(this);
     }
 
-    public void setDelta(NeuronCacheHolder cacheHolder, double delta) {
+    public void setDelta(StatesCache cacheHolder, double delta) {
         this.totalDelta += delta;
 
         if (cacheHolder == null) {
@@ -62,7 +61,7 @@ public class Neuron {
         cacheHolder.addDelta(this, delta);
     }
 
-    public double getValue(NeuronCacheHolder cacheHolder) {
+    public double getValue(StatesCache cacheHolder) {
         if (cacheHolder == null) {
             return localValue.get();
         }
@@ -70,7 +69,7 @@ public class Neuron {
         return cacheHolder.getValue(this);
     }
 
-    public void setValue(NeuronCacheHolder cacheHolder, double value) {
+    public void setValue(StatesCache cacheHolder, double value) {
         if (cacheHolder == null) {
             localValue.set(value);
             return;

@@ -6,7 +6,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
@@ -24,7 +24,7 @@ public class Layer {
 
     public Layer(int input, Activations activation) {
         for (int i = 0; i < input; i++) {
-            neurons.add(new Neuron());
+            this.neurons.add(new Neuron());
         }
 
         this.activation = activation;
@@ -51,13 +51,13 @@ public class Layer {
         }
     }
 
-    public void applyFunction(NeuronCacheHolder cacheHolder, Layer previous) {
+    public void applyFunction(StatesCache cacheHolder, Layer previous) {
         Activation function = activation.getFunction();
 
         function.apply(cacheHolder, neurons);
     }
 
-    public void setInput(NeuronCacheHolder cacheHolder, Vector input) {
+    public void setInput(StatesCache cacheHolder, Vector input) {
         if (input.size() != neurons.size()) {
             throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
                     input.size() + " != " + neurons.size());
@@ -68,7 +68,7 @@ public class Layer {
         }
     }
 
-    public Vector getVector(NeuronCacheHolder cacheHolder) {
+    public Vector getVector(StatesCache cacheHolder) {
         Vector values = new Vector(neurons.size());
 
         for (int i = 0; i < neurons.size(); i++) {
@@ -78,15 +78,9 @@ public class Layer {
         return values;
     }
 
-    public void propagate(NeuronCacheHolder cacheHolder, Layer previous, Updater updater) {
-        Vector neuronsVector = new Vector(neurons.size());
-
-        for (int i = 0; i < neurons.size(); i++) {
-            Neuron neuron = neurons.get(i);
-            neuronsVector.set(i, neuron.getValue(cacheHolder));
-        }
-
-        Vector derivatives = activation.getFunction().getDerivative(neuronsVector);
+    public void propagate(StatesCache cacheHolder, Layer previous, Updater updater) {
+        Vector neuronValues = getVector(cacheHolder);
+        Vector derivatives = activation.getFunction().getDerivative(neuronValues);
 
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
@@ -98,17 +92,7 @@ public class Layer {
         }
     }
 
-    /**
-     * Calculate the gradient for a synapse based on the delta and the value of the input.
-     *
-     * @param cacheHolder the cache holder for neuron values
-     * @param synapse     the synapse
-     * @param derivatives a collection of derivatives for this layer
-     * @param index       the index of the derivative
-     *
-     * @return the calculated gradient
-     */
-    public double calculateGradient(NeuronCacheHolder cacheHolder, Synapse synapse, Vector derivatives, int index) {
+    public double calculateGradient(StatesCache cacheHolder, Synapse synapse, Vector derivatives, int index) {
         Neuron neuron = synapse.getInputNeuron();
         double derivative = derivatives.get(index);
 

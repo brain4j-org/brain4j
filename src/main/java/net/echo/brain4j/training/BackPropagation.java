@@ -2,10 +2,9 @@ package net.echo.brain4j.training;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
@@ -38,7 +37,7 @@ public class BackPropagation {
 
             for (DataRow row : partition) {
                 Thread thread = Thread.startVirtualThread(() -> {
-                    NeuronCacheHolder cacheHolder = new NeuronCacheHolder();
+                    StatesCache cacheHolder = new StatesCache();
 
                     Vector output = model.predict(cacheHolder, row.inputs());
                     Vector target = row.outputs();
@@ -57,7 +56,7 @@ public class BackPropagation {
         updater.postFit(model, optimizer.getLearningRate());
     }
 
-    public void backpropagate(NeuronCacheHolder cacheHolder, double[] targets, double[] outputs) {
+    public void backpropagate(StatesCache cacheHolder, double[] targets, double[] outputs) {
         List<Layer> layers = model.getLayers();
         initialDelta(cacheHolder, layers, targets, outputs);
 
@@ -76,7 +75,7 @@ public class BackPropagation {
         updater.postIteration(model, optimizer.getLearningRate());
     }
 
-    private void initialDelta(NeuronCacheHolder cacheHolder, List<Layer> layers, double[] targets, double[] outputs) {
+    private void initialDelta(StatesCache cacheHolder, List<Layer> layers, double[] targets, double[] outputs) {
         Layer outputLayer = layers.getLast();
 
         List<Neuron> neurons = outputLayer.getNeurons();

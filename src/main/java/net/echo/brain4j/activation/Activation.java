@@ -1,7 +1,7 @@
 package net.echo.brain4j.activation;
 
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.List;
@@ -73,5 +73,5 @@ public interface Activation {
     /**
      * Caller applies this activation function to the values of a list of Neurons.
      */
-    void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons);
+    void apply(StatesCache cacheHolder, List<Neuron> neurons);
 }

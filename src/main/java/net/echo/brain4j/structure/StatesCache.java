@@ -1,13 +1,11 @@
-package net.echo.brain4j.threading;
+package net.echo.brain4j.structure;
 
-import net.echo.brain4j.structure.Neuron;
-
-public class NeuronCacheHolder {
+public class StatesCache {
 
     public double[] valuesCache;
     public double[] deltasCache;
 
-    public NeuronCacheHolder() {
+    public StatesCache() {
         valuesCache = new double[Neuron.NEURON_COUNTER];
         deltasCache = new double[Neuron.NEURON_COUNTER];
     }

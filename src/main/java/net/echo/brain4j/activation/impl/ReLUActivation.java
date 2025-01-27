@@ -2,7 +2,7 @@ package net.echo.brain4j.activation.impl;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class ReLUActivation implements Activation {
     }
 
     @Override
-    public void apply(NeuronCacheHolder cacheHolder, List<Neuron> neurons) {
+    public void apply(StatesCache cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
             double output = activate(neuron.getValue(cacheHolder) + neuron.getBias());
 

@@ -3,7 +3,7 @@ package net.echo.brain4j.training.optimizers.impl;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Synapse;
-import net.echo.brain4j.threading.NeuronCacheHolder;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 
@@ -40,7 +40,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public double update(NeuronCacheHolder cacheHolder, Synapse synapse, Object... params) {
+    public double update(StatesCache cacheHolder, Synapse synapse, Object... params) {
         double gradient = synapse.getOutputNeuron().getDelta(cacheHolder) * synapse.getInputNeuron().getValue(cacheHolder);
 
         int synapseId = synapse.getSynapseId();
@@ -61,7 +61,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void postIteration(NeuronCacheHolder cacheHolder, Updater updater, List<Layer> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
         this.timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);
