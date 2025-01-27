@@ -10,7 +10,7 @@ public class CrossEntropy implements LossFunction {
         double loss = 0.0;
 
         for (int i = 0; i < actual.size(); i++) {
-            loss -= actual.get(i) * Math.log(predicted.get(i) + 1e-12);
+            loss -= actual.get(i) * Math.log(predicted.get(i) + 1e-15);
         }
 
         return loss / actual.size();
