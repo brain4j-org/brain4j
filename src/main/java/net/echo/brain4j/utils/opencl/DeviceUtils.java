@@ -3,7 +3,6 @@ package net.echo.brain4j.utils.opencl;
 import org.jocl.*;
 
 import static org.jocl.CL.*;
-import static org.jocl.CL.clGetDeviceInfo;
 
 public class DeviceUtils {
 
@@ -52,7 +51,15 @@ public class DeviceUtils {
         clEnqueueWriteBuffer(commandQueue, memory, CL_TRUE, 0, size, Pointer.to(target), 0, null, null);
     }
 
+    public static void writeBuffer(cl_command_queue commandQueue, cl_mem memory, long size, float[] target) {
+        clEnqueueWriteBuffer(commandQueue, memory, CL_TRUE, 0, size, Pointer.to(target), 0, null, null);
+    }
+
     public static Pointer to(double... values) {
+        return Pointer.to(values);
+    }
+
+    public static Pointer to(float... values) {
         return Pointer.to(values);
     }
 
@@ -69,6 +76,11 @@ public class DeviceUtils {
     }
 
     public static void readBuffer(cl_command_queue commandQueue, cl_mem memory, long size, double[] target) {
+        clEnqueueReadBuffer(commandQueue, memory, CL_TRUE, 0, size, Pointer.to(target), 0,
+                null, null);
+    }
+
+    public static void readBuffer(cl_command_queue commandQueue, cl_mem memory, long size, float[] target) {
         clEnqueueReadBuffer(commandQueue, memory, CL_TRUE, 0, size, Pointer.to(target), 0,
                 null, null);
     }
@@ -106,6 +118,16 @@ public class DeviceUtils {
                 null
         );
         clFinish(commandQueue);
+    }
+
+    public static String getExtensions() {
+        long[] size = new long[1];
+        clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, 0, null, size);
+
+        byte[] buffer = new byte[(int) size[0]];
+        clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, buffer.length, Pointer.to(buffer), null);
+
+        return new String(buffer);
     }
 
     public enum DeviceType {

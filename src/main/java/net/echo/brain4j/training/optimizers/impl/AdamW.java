@@ -25,8 +25,8 @@ public class AdamW extends Adam {
     }
 
     @Override
-    public double update(StatesCache cacheHolder, Synapse synapse, Object... params) {
-        double adamValue = super.update(cacheHolder, synapse, params);
+    public double update(StatesCache cacheHolder, Synapse synapse) {
+        double adamValue = super.update(cacheHolder, synapse);
         double weightDecayTerm = weightDecay * synapse.getWeight();
 
         return adamValue + weightDecayTerm;
@@ -42,7 +42,7 @@ public class AdamW extends Adam {
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(cacheHolder, synapse);
-                updater.acknowledgeChange(synapse, change);
+                updater.acknowledgeChange(cacheHolder, synapse, change);
             }
         }
     }

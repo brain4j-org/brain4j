@@ -13,14 +13,18 @@ public class PoolingLayer extends Layer {
     protected int padding;
 
     public PoolingLayer(PoolingType poolingType, int kernelWidth, int kernelHeight) {
-        super(kernelWidth * kernelHeight, Activations.LINEAR);
-        this.kernelHeight = kernelHeight;
-        this.kernelWidth = kernelWidth;
-        this.poolingType = poolingType;
+        this(poolingType, kernelWidth, kernelHeight, 1, 0);
+    }
+
+    public PoolingLayer(PoolingType poolingType, int kernelWidth, int kernelHeight, int stride) {
+        this(poolingType, kernelWidth, kernelHeight, stride, 0);
     }
 
     public PoolingLayer(PoolingType poolingType, int kernelWidth, int kernelHeight, int stride, int padding) {
-        this(poolingType, kernelWidth, kernelHeight);
+        super(kernelWidth * kernelHeight, Activations.LINEAR);
+        this.poolingType = poolingType;
+        this.kernelHeight = kernelHeight;
+        this.kernelWidth = kernelWidth;
         this.stride = stride;
         this.padding = padding;
     }

@@ -87,7 +87,7 @@ public class Layer {
 
             for (Synapse synapse : neuron.getSynapses()) {
                 double weightChange = calculateGradient(cacheHolder, synapse, derivatives, i);
-                updater.acknowledgeChange(synapse, weightChange);
+                updater.acknowledgeChange(cacheHolder, synapse, weightChange);
             }
         }
     }

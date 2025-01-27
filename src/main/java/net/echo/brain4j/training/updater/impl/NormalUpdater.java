@@ -4,6 +4,7 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.updater.Updater;
 
 public class NormalUpdater extends Updater {
@@ -44,11 +45,11 @@ public class NormalUpdater extends Updater {
             }
         }
 
-        gradients = new double[Synapse.SYNAPSE_COUNTER];
+        this.gradients = new double[Synapse.SYNAPSE_COUNTER];
     }
 
     @Override
-    public void acknowledgeChange(Synapse synapse, double change) {
-        gradients[synapse.getSynapseId()] += change;
+    public void acknowledgeChange(NeuronCacheHolder cacheHolder, Synapse synapse, double change) {
+        this.gradients[synapse.getSynapseId()] += change;
     }
 }

@@ -10,16 +10,16 @@ import java.util.Map;
 public class KMeans {
 
     private final List<Cluster> clusters;
-    private final int clustersSize;
+    private final int clustersAmount;
 
     /**
      * Constructs a new KMeans object with a specified amount of clusters.
      *
-     * @param clustersSize the amount of clusters
+     * @param clusters the amount of clusters
      */
-    public KMeans(int clustersSize) {
+    public KMeans(int clusters) {
         this.clusters = new ArrayList<>();
-        this.clustersSize = clustersSize;
+        this.clustersAmount = clusters;
     }
 
     /**
@@ -28,7 +28,7 @@ public class KMeans {
      * @param dimension the dimension for each cluster, must be the same as the dimension of the data
      */
     public void init(int dimension) {
-        for (int i = 0; i < clustersSize; i++) {
+        for (int i = 0; i < clustersAmount; i++) {
             clusters.add(new Cluster(dimension, i));
         }
     }
@@ -101,7 +101,7 @@ public class KMeans {
         return clusterMap;
     }
 
-    private Cluster getClosest(Vector point) {
+    public Cluster getClosest(Vector point) {
         double minDistance = Double.MAX_VALUE;
         Cluster closestCluster = null;
 

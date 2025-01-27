@@ -4,9 +4,8 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.threading.NeuronCacheHolder;
 import net.echo.brain4j.training.updater.Updater;
-
-import java.util.List;
 
 public class StochasticUpdater extends Updater {
 
@@ -26,7 +25,7 @@ public class StochasticUpdater extends Updater {
     }
 
     @Override
-    public void postBatch(Model model, double learningRate) {
+    public void postBatch(NeuronCacheHolder cacheHolder, Model model, double learningRate) {
         model.reloadMatrices();
     }
 
@@ -53,7 +52,7 @@ public class StochasticUpdater extends Updater {
     }
 
     @Override
-    public void acknowledgeChange(Synapse synapse, double change) {
+    public void acknowledgeChange(NeuronCacheHolder cacheHolder, Synapse synapse, double change) {
         gradients[synapse.getSynapseId()] += change;
     }
 }

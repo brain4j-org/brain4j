@@ -2,12 +2,22 @@ package net.echo.brain4j.structure;
 
 public class StatesCache {
 
-    public double[] valuesCache;
-    public double[] deltasCache;
+    private final double[] gradients;
+    private final double[] valuesCache;
+    private final double[] deltasCache;
 
     public StatesCache() {
-        valuesCache = new double[Neuron.NEURON_COUNTER];
-        deltasCache = new double[Neuron.NEURON_COUNTER];
+        this.gradients = new double[Synapse.SYNAPSE_COUNTER];
+        this.valuesCache = new double[Neuron.NEURON_COUNTER];
+        this.deltasCache = new double[Neuron.NEURON_COUNTER];
+    }
+
+    public double[] getGradients() {
+        return gradients;
+    }
+
+    public double getGradient(int index) {
+        return gradients[index];
     }
 
     public double getValue(Neuron neuron) {
@@ -26,7 +36,15 @@ public class StatesCache {
         deltasCache[neuron.getId()] = delta;
     }
 
+    public void setGradient(int index, double gradient) {
+        gradients[index] = gradient;
+    }
+
     public void addDelta(Neuron neuron, double delta) {
         deltasCache[neuron.getId()] += delta;
+    }
+
+    public void addGradient(int index, double change) {
+        gradients[index] += change;
     }
 }

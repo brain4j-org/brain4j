@@ -32,27 +32,28 @@ public class BackPropagation {
             throw new RuntimeException("Dataset must be partitioned, use DataSet#partition(batches) before training.");
         }
 
-        for (List<DataRow> partition : dataSet.getPartitions()) {
-            List<Thread> threads = new ArrayList<>();
+        List<Thread> threads = new ArrayList<>();
 
-            for (DataRow row : partition) {
-                Thread thread = Thread.startVirtualThread(() -> {
-                    StatesCache cacheHolder = new StatesCache();
+        for (List<DataRow> partition : dataSet.getPartitions()) {
+            Thread thread = Thread.startVirtualThread(() -> {
+                StatesCache batchHolder = new NeuronCacheHolder();
+
+                for (DataRow row : partition) {
+                    StatesCache cacheHolder = new NeuronCacheHolder();
 
                     Vector output = model.predict(cacheHolder, row.inputs());
                     Vector target = row.outputs();
 
                     backpropagate(cacheHolder, target.toArray(), output.toArray());
-                });
+                }
 
-                threads.add(thread);
-            }
+                updater.postBatch(batchHolder, model, optimizer.getLearningRate());
+            });
 
-            MLUtils.waitAll(threads);
-
-            updater.postBatch(model, optimizer.getLearningRate());
+            threads.add(thread);
         }
 
+        MLUtils.waitAll(threads);
         updater.postFit(model, optimizer.getLearningRate());
     }
 

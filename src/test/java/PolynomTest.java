@@ -5,8 +5,10 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -51,8 +53,8 @@ public class PolynomTest {
         model.compile(
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.MEAN_SQUARED_ERROR,
-                new AdamGPU(0.01),
-                new NormalUpdater()
+                new Adam(0.01),
+                new StochasticUpdater()
         );
 
         return model;
@@ -122,7 +124,7 @@ public class PolynomTest {
         long start = System.nanoTime();
         long lastFit = System.nanoTime();
 
-        for (int j = 0; j <= 100; j++) {
+        for (int j = 0; j <= 2000; j++) {
             model.fit(dataSet);
 
             if (j % 100 == 0) {

@@ -1,26 +1,27 @@
 __kernel void adam_update(
-    __global double* firstMomentum, // First momentum vector
-    __global double* secondMomentum, // Second momentum vector
-    __global double* gradients, // Gradient vector
-    __global double* updates, // Update vector
-    double beta1, double beta2,
-    double oneMinusBeta1, double oneMinusBeta2,
-    double beta1Timestep, double beta2Timestep,
-    double epsilon, double learningRate,
+    __global float* firstMomentum, // First momentum vector
+    __global float* secondMomentum, // Second momentum vector
+    __global float* gradients, // Gradient vector
+    __global float* updates, // Update vector
+    float beta1, float beta2,
+    float oneMinusBeta1, float oneMinusBeta2,
+    float beta1Timestep, float beta2Timestep,
+    float epsilon, float learningRate,
     int count) {
 
     int i = get_global_id(0);
-    if (i < count) {
-        double gradient = gradients[i];
 
-        double m = beta1 * firstMomentum[i] + oneMinusBeta1 * gradient;
-        double v = beta2 * secondMomentum[i] + oneMinusBeta2 * gradient * gradient;
+    if (i < count) {
+        float gradient = gradients[i];
+
+        float m = beta1 * firstMomentum[i] + oneMinusBeta1 * gradient;
+        float v = beta2 * secondMomentum[i] + oneMinusBeta2 * gradient * gradient;
 
         firstMomentum[i] = m;
         secondMomentum[i] = v;
 
-        double mHat = m / beta1Timestep;
-        double vHat = v / beta2Timestep;
+        float mHat = m / beta1Timestep;
+        float vHat = v / beta2Timestep;
 
         updates[i] = (learningRate * mHat) / (native_sqrt(vHat) + epsilon);
     }
