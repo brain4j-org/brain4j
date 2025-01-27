@@ -40,7 +40,9 @@ public class SmartTrainer {
         while (running && loss > lossThreshold) {
             step(model, dataSet);
 
-            if (epoches++ % evaluateEvery == 0) {
+            this.epoches++;
+
+            if (epoches % evaluateEvery == 0) {
                 this.loss = model.evaluate(dataSet);
                 this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss));
 
