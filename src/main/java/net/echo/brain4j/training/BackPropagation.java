@@ -36,10 +36,10 @@ public class BackPropagation {
 
         for (List<DataRow> partition : dataSet.getPartitions()) {
             Thread thread = Thread.startVirtualThread(() -> {
-                StatesCache batchHolder = new NeuronCacheHolder();
+                StatesCache batchHolder = new StatesCache();
 
                 for (DataRow row : partition) {
-                    StatesCache cacheHolder = new NeuronCacheHolder();
+                    StatesCache cacheHolder = new StatesCache();
 
                     Vector output = model.predict(cacheHolder, row.inputs());
                     Vector target = row.outputs();
