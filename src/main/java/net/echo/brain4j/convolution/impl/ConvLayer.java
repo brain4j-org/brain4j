@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ConvolutionalLayer extends Layer {
+public class ConvLayer extends Layer {
 
     protected final List<Kernel> kernels = new ArrayList<>();
 
@@ -19,15 +19,15 @@ public class ConvolutionalLayer extends Layer {
     protected int padding;
     protected int stride;
 
-    public ConvolutionalLayer(int filters, int kernelWidth, int kernelHeight, Activations activation) {
+    public ConvLayer(int filters, int kernelWidth, int kernelHeight, Activations activation) {
         this(filters, kernelWidth, kernelHeight, 1, 0, activation);
     }
 
-    public ConvolutionalLayer(int filters, int kernelWidth, int kernelHeight, int stride, Activations activation) {
+    public ConvLayer(int filters, int kernelWidth, int kernelHeight, int stride, Activations activation) {
         this(filters, kernelWidth, kernelHeight, stride, 0, activation);
     }
 
-    public ConvolutionalLayer(int filters, int kernelWidth, int kernelHeight, int stride, int padding, Activations activation) {
+    public ConvLayer(int filters, int kernelWidth, int kernelHeight, int stride, int padding, Activations activation) {
         super(0, activation);
         this.filters = filters;
         this.kernelWidth = kernelWidth;

@@ -36,7 +36,7 @@ public class StochasticUpdater extends Updater {
             double gradient = gradients[i];
 
             // FOR FUTURE ECHO: DO NOT TOUCH THIS!!!!! MULTIPLYING FOR THE LEARNING RATE IS IMPORTANT AND IDK WHY
-            synapse.setWeight(synapse.getWeight() + learningRate * gradient);
+            synapse.setWeight(synapse.getWeight() - learningRate * gradient);
         }
 
         this.gradients = new double[Synapse.SYNAPSE_COUNTER];
@@ -45,7 +45,7 @@ public class StochasticUpdater extends Updater {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 
-                neuron.setBias(neuron.getBias() + deltaBias);
+                neuron.setBias(neuron.getBias() - deltaBias);
                 neuron.setTotalDelta(0);
             }
         }
@@ -53,6 +53,6 @@ public class StochasticUpdater extends Updater {
 
     @Override
     public void acknowledgeChange(StatesCache cacheHolder, Synapse synapse, double change) {
-        gradients[synapse.getSynapseId()] += change;
+        this.gradients[synapse.getSynapseId()] += change;
     }
 }

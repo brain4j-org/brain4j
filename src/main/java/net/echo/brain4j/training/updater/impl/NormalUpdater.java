@@ -31,7 +31,7 @@ public class NormalUpdater extends Updater {
             double gradient = gradients[i];
 
             // FOR FUTURE ECHO: DO NOT TOUCH THIS!!!!! MULTIPLYING FOR THE LEARNING RATE IS IMPORTANT AND IDK WHY
-            synapse.setWeight(synapse.getWeight() + learningRate * gradient);
+            synapse.setWeight(synapse.getWeight() - learningRate * gradient);
         }
 
         model.reloadMatrices();
@@ -40,7 +40,7 @@ public class NormalUpdater extends Updater {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 
-                neuron.setBias(neuron.getBias() + deltaBias);
+                neuron.setBias(neuron.getBias() - deltaBias);
                 neuron.setTotalDelta(0.0);
             }
         }

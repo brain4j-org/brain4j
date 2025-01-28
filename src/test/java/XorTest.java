@@ -5,8 +5,11 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 
 public class XorTest {
@@ -23,8 +26,8 @@ public class XorTest {
         model.compile(
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.BINARY_CROSS_ENTROPY,
-                new AdamGPU(0.01),
-                new NormalUpdater()
+                new Adam(0.01),
+                new StochasticUpdater()
         );
 
         System.out.println(model.getStats());
@@ -35,7 +38,7 @@ public class XorTest {
         DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0));
 
         DataSet training = new DataSet(first, second, third, fourth);
-        training.partition(1);
+        training.partition(4);
 
         trainForBenchmark(model, training);
     }
@@ -43,7 +46,7 @@ public class XorTest {
     private static void trainForBenchmark(Model model, DataSet data) {
         long start = System.nanoTime();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 2500; i++) {
             model.fit(data);
 
             if (i % 100 == 0) {
@@ -56,7 +59,7 @@ public class XorTest {
         double took = (end - start) / 1e6;
 
         double error = model.evaluate(data);
-        double mean = took / 5000;
+        double mean = took / 1000;
 
         System.out.println("Completed 5000 epoches in " + took + " ms with error: " + error + " and an average of " + mean + " ms per epoch");
     }

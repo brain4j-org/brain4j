@@ -7,12 +7,12 @@ public class MeanSquaredError implements LossFunction {
 
     @Override
     public double calculate(Vector actual, Vector predicted) {
-        double error = 0.0;
+        double loss = 0.0;
 
         for (int i = 0; i < actual.size(); i++) {
-            error += Math.pow(actual.get(i) - predicted.get(i), 2);
+            loss += Math.pow(actual.get(i) - predicted.get(i), 2);
         }
 
-        return error / actual.size();
+        return loss / actual.size();
     }
 }

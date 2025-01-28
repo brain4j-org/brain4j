@@ -1,6 +1,11 @@
 package mnist;
 
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.convolution.impl.ConvLayer;
+import net.echo.brain4j.convolution.impl.FlattenLayer;
+import net.echo.brain4j.convolution.impl.InputLayer;
+import net.echo.brain4j.convolution.impl.PoolingLayer;
+import net.echo.brain4j.convolution.pooling.PoolingType;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
@@ -15,7 +20,6 @@ import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -32,9 +36,10 @@ public class MNISTClassifier {
 
         System.out.println(model.getStats());
         set.partition(32);
+        // model.load("mnist-99.json");
         train(model, set);
-        // evaluateModel(model);
-        test(model);
+
+        evaluateModel(model);
     }
 
     public static void test(Model model) {
@@ -58,7 +63,6 @@ public class MNISTClassifier {
     }
 
     public static void evaluateModel(Model model) {
-        model.load("mnist.json");
         model.reloadMatrices();
 
         DataSet set = getData();
@@ -156,8 +160,32 @@ public class MNISTClassifier {
         );
 
         model.compile(
-                WeightInit.UNIFORM_XAVIER,
-                LossFunctions.CATEGORICAL_CROSS_ENTROPY,
+                WeightInit.HE,
+                LossFunctions.CROSS_ENTROPY,
+                new Adam(0.0005),
+                new NormalUpdater()
+        );
+
+        return model;
+    }
+
+    public static Model getConvModel() {
+        Model model = new Model(
+                new InputLayer(28, 28),
+                new ConvLayer(32, 7, 7, Activations.RELU),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                new ConvLayer(48, 5, 5, Activations.RELU),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                new ConvLayer(64, 3, 3, Activations.RELU),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                new FlattenLayer(),
+                new DenseLayer(64, Activations.RELU),
+                new DenseLayer(10, Activations.SOFTMAX)
+        );
+
+        model.compile(
+                WeightInit.HE,
+                LossFunctions.CROSS_ENTROPY,
                 new Adam(0.0001),
                 new NormalUpdater()
         );

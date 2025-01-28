@@ -92,8 +92,7 @@ public class BackPropagation {
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
 
-            double output = outputs[i];
-            double error = targets[i] - output;
+            double error = outputs[i] - targets[i];
 
             double delta = changes.get(i) * error;
             neuron.setDelta(cacheHolder, delta);
