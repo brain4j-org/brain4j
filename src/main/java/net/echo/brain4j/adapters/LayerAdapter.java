@@ -18,15 +18,11 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
         object.addProperty("type", layer.getClass().getSimpleName());
         object.addProperty("activation", layer.getActivation().name());
 
-        if (layer instanceof DenseLayer) {
-            double[] biases = new double[layer.getNeurons().size()];
+        if (layer instanceof DenseLayer denseLayer) {
+            object.addProperty("neurons", denseLayer.getNeurons().size());
+        }
 
-            for (int i = 0; i < biases.length; i++) {
-                biases[i] = layer.getNeuronAt(i).getBias();
-            }
-
-            object.add("biases", context.serialize(biases));
-        } else if (layer instanceof DropoutLayer dropoutLayer) {
+        if (layer instanceof DropoutLayer dropoutLayer) {
             object.addProperty("rate", dropoutLayer.getDropout());
         }
 
@@ -38,19 +34,12 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
         String layerType = element.getAsJsonObject().get("type").getAsString();
         String activationType = element.getAsJsonObject().get("activation").getAsString();
 
-        Activations activations = Activations.valueOf(activationType);
+        Activations activation = Activations.valueOf(activationType);
 
         return switch (layerType) {
             case "DenseLayer" -> {
-                double[] biases = context.deserialize(element.getAsJsonObject().get("biases"), double[].class);
-
-                DenseLayer layer = new DenseLayer(biases.length, activations);
-
-                for (int i = 0; i < layer.getNeurons().size(); i++) {
-                    layer.getNeuronAt(i).setBias(biases[i]);
-                }
-
-                yield layer;
+                int neurons = element.getAsJsonObject().get("neurons").getAsInt();
+                yield new DenseLayer(neurons, activation);
             }
             case "DropoutLayer" -> {
                 double dropout = element.getAsJsonObject().get("rate").getAsDouble();

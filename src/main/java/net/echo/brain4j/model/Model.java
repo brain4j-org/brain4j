@@ -296,12 +296,21 @@ public class Model {
             this.weightInit = WeightInit.valueOf(parent.get("weightInit").getAsString());
             this.seed = parent.get("seed").getAsInt();
             this.generator = new Random(seed);
-            // TODO: Migrate biases into it's own thing
             this.layers = GSON.fromJson(parent.get("layers"), listType);
 
+            Synapse.SYNAPSE_COUNTER = 0;
             connect(weightInit, false);
 
-            Synapse.SYNAPSE_COUNTER = 0;
+            double[][] biases = GSON.fromJson(parent.get("biases"), double[][].class);
+
+            for (int i = 0; i < biases.length; i++) {
+                double[] layerBiases = biases[i];
+                Layer layer = layers.get(i);
+
+                for (int j = 0; j < layerBiases.length; j++) {
+                    layer.getNeuronAt(j).setBias(layerBiases[j]);
+                }
+            }
 
             double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);
 
@@ -345,6 +354,19 @@ public class Model {
         }
 
         parent.add("layers", GSON.toJsonTree(layerObjects).getAsJsonArray());
+
+        double[][] biases = new double[layers.size()][];
+
+        for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+            biases[i] = new double[layer.getNeurons().size()];
+
+            for (int j = 0; j < biases[i].length; j++) {
+                biases[i][j] = layer.getNeuronAt(j).getBias();
+            }
+        }
+
+        parent.add("biases", GSON.toJsonTree(biases));
 
         double[][] weights = new double[layers.size()][];
 
