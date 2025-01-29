@@ -29,7 +29,8 @@ public class BackPropagation {
 
     public void iterate(DataSet dataSet) {
         if (!dataSet.isPartitioned()) {
-            throw new RuntimeException("Dataset must be partitioned, use DataSet#partition(batches) before training.");
+            int threads = Runtime.getRuntime().availableProcessors();
+            dataSet.partition(threads);
         }
 
         List<Thread> threads = new ArrayList<>();
