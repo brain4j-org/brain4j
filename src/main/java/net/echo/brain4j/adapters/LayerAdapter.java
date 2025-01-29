@@ -22,7 +22,7 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
             double[] biases = new double[layer.getNeurons().size()];
 
             for (int i = 0; i < biases.length; i++) {
-                biases[i] = layer.getNeurons().get(i).getBias();
+                biases[i] = layer.getNeuronAt(i).getBias();
             }
 
             object.add("biases", context.serialize(biases));

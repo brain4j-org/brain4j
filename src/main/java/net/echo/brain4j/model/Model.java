@@ -82,11 +82,11 @@ public class Model {
         this.synapsesMatrices = new ArrayList<>();
     }
 
-    private void connect(WeightInit weightInit) {
+    private void connect(WeightInit weightInit, boolean update) {
         Layer lastNormalLayer = layers.getFirst();
 
         for (Layer layer : layers) {
-            if (layer instanceof DenseLayer denseLayer) {
+            if (layer instanceof DenseLayer denseLayer && !update) {
                 denseLayer.init(generator);
             }
         }
@@ -122,7 +122,7 @@ public class Model {
         this.updater = updater;
         this.propagation = new BackPropagation(this, optimizer, updater);
 
-        connect(weightInit);
+        connect(weightInit, true);
 
         this.optimizer.postInitialize(this);
         this.updater.postInitialize(this);
@@ -293,14 +293,15 @@ public class Model {
 
             Type listType = new TypeToken<ArrayList<Layer>>(){}.getType();
 
-            this.layers = GSON.fromJson(parent.get("layers"), listType);
             this.weightInit = WeightInit.valueOf(parent.get("weightInit").getAsString());
             this.seed = parent.get("seed").getAsInt();
             this.generator = new Random(seed);
+            // TODO: Migrate biases into it's own thing
+            this.layers = GSON.fromJson(parent.get("layers"), listType);
+
+            connect(weightInit, false);
 
             Synapse.SYNAPSE_COUNTER = 0;
-
-            connect(weightInit);
 
             double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);
 
