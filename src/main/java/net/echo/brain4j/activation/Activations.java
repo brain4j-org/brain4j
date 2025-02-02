@@ -11,7 +11,9 @@ public enum Activations {
     LEAKY_RELU(new LeakyReLUActivation()),
     SIGMOID(new SigmoidActivation()),
     SOFTMAX(new SoftmaxActivation()),
-    TANH(new TanhActivation());
+    TANH(new TanhActivation()),
+    MISH(new MishActivation()),
+    SWISH(new SwishActivation());
 
     private final Activation function;
 

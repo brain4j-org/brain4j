@@ -20,28 +20,11 @@ public class ELUActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] input) {
-        throw new UnsupportedOperationException("ELU activation function is not supported for multiple inputs.");
-    }
-
-    @Override
     public double getDerivative(double input) {
         if (input > 0) {
             return 1;
         } else {
             return alpha * Math.exp(input);
-        }
-    }
-
-    @Override
-    public double[][] getDerivativeMatrix(double[] outputs) {
-        throw new UnsupportedOperationException("ELU derivative is not supported for multiple outputs.");
-    }
-
-    @Override
-    public void apply(StatesCache cacheHolder, List<Neuron> neurons) {
-        for (Neuron neuron : neurons) {
-            neuron.setValue(cacheHolder, activate(neuron.getValue(cacheHolder)));
         }
     }
 }

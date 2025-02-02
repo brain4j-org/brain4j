@@ -3,6 +3,7 @@ package net.echo.brain4j.activation.impl;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,19 +17,19 @@ public class SoftmaxActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] inputs) {
-        double maxInput = Arrays.stream(inputs).max().orElse(0.0);
+    public Vector activate(Vector input) {
+        double maxInput = Arrays.stream(input.toArray()).max().orElse(0.0);
 
-        double[] expValues = new double[inputs.length];
+        Vector expValues = new Vector(input.size());
         double sum = 0.0;
 
-        for (int i = 0; i < inputs.length; i++) {
-            expValues[i] = Math.exp(inputs[i] - maxInput);
-            sum += expValues[i];
+        for (int i = 0; i < input.size(); i++) {
+            expValues.set(i, Math.exp(input.get(i) - maxInput));
+            sum += expValues.get(i);
         }
 
-        for (int i = 0; i < expValues.length; i++) {
-            expValues[i] /= sum;
+        for (int i = 0; i < expValues.size(); i++) {
+            expValues.set(i, expValues.get(i) / sum);
         }
 
         return expValues;
@@ -40,34 +41,17 @@ public class SoftmaxActivation implements Activation {
     }
 
     @Override
-    public double[][] getDerivativeMatrix(double[] outputs) {
-        int n = outputs.length;
-        double[][] jacobian = new double[n][n];
-
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (i == j) {
-                    jacobian[i][j] = outputs[i] * (1.0 - outputs[i]);
-                } else {
-                    jacobian[i][j] = -outputs[i] * outputs[j];
-                }
-            }
-        }
-        return jacobian;
-    }
-
-    @Override
     public void apply(StatesCache cacheHolder, List<Neuron> neurons) {
-        double[] values = new double[neurons.size()];
+        Vector vector = new Vector(neurons.size());
 
         for (int i = 0; i < neurons.size(); i++) {
-            values[i] = neurons.get(i).getValue(cacheHolder) + neurons.get(i).getBias();
+            vector.set(i, neurons.get(i).getValue(cacheHolder) + neurons.get(i).getBias());
         }
 
-        double[] activatedValues = activate(values);
+        Vector activatedValues = activate(vector);
 
         for (int i = 0; i < neurons.size(); i++) {
-            neurons.get(i).setValue(cacheHolder, activatedValues[i]);
+            neurons.get(i).setValue(cacheHolder, activatedValues.get(i));
         }
     }
 }
