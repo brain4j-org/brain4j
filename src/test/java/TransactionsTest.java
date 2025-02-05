@@ -125,9 +125,10 @@ public class TransactionsTest {
     }
 
     static class TestListener extends TrainListener {
+
         @Override
-        public void onEvaluated(DataSet dataSet, int epoch, double loss) {
-            System.out.println("Epoch " + epoch + " has loss: " + loss);
+        public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
+            System.out.println("Epoch " + epoch + " has loss: " + loss + " in " + took + " ms");
         }
     }
 }
