@@ -43,8 +43,11 @@ public class SmartTrainer {
             this.epoches++;
 
             if (epoches % evaluateEvery == 0) {
+                long start = System.nanoTime();
                 this.loss = model.evaluate(dataSet);
-                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss));
+                long took = System.nanoTime() - start;
+
+                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss, took));
 
                 if ((loss - previousLoss) > lossTolerance) {
                     // Loss increased, so decrease the learning rate
@@ -77,9 +80,11 @@ public class SmartTrainer {
             this.epoches++;
 
             if (epoches % evaluateEvery == 0) {
+                long start = System.nanoTime();
                 this.loss = model.evaluate(dataSet);
+                long took = System.nanoTime() - start;
 
-                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss));
+                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss, took));
 
                 if (loss >= previousLoss) {
                     // Loss increased, so decrease the learning rate
