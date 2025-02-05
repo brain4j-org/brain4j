@@ -123,26 +123,15 @@ public class MNISTClassifier {
 
     public static void train(Model model, DataSet set) {
         SmartTrainer trainer = new SmartTrainer(0.7, 10);
-        AtomicLong start = new AtomicLong(System.nanoTime());
 
         trainer.addListener(new TrainListener() {
             @Override
-            public void onEvaluated(DataSet dataSet, int epoch, double loss) {
-                double took = (System.nanoTime() - start.get()) / 1e6;
-
+            public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
                 System.out.println("Epoch " + epoch + " loss: " + loss + " took " + took + " ms");
-
-                start.set(System.nanoTime());
 
                 if (loss < 1) {
                     model.save("mnist-2.json");
                 }
-            }
-
-            @Override
-            public void onLossIncreased(double loss, double previousLoss) {
-                //System.out.println("Loss increased from " + previousLoss + " to " + loss);
-                //System.out.println("New learning rate: " + model.getOptimizer().getLearningRate());
             }
         });
         trainer.startFor(model, set, 1000);
