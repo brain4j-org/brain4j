@@ -81,13 +81,9 @@ public class MNISTClassifier {
             if (prediction == expected) {
                 correctlyClassified++;
                 result.set(0, result.get(0) + 1);
-
-                // System.out.println(expected + " is correct. Vector: " + output.toString("%.3f"));
             } else {
                 incorrectlyClassified++;
                 result.set(1, result.get(1) + 1);
-
-                System.out.println(expected + " is incorrect. Vector: " + output.toString("%.3f"));
             }
         }
 
@@ -126,19 +122,14 @@ public class MNISTClassifier {
         trainer.addListener(new TrainListener() {
             @Override
             public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
-                System.out.println("Epoch " + epoch + " loss: " + loss + " took " + (took / 1e6) + " ms");
-
-                if (loss < 1) {
-                    model.save("mnist-2.json");
-                }
-
-                long memoryUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024;
-                long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
-
-                System.out.println("Memory used: " + memoryUsed + " MB / " + maxMemory + " MB");
+                System.out.print("\rEpoch " + epoch + " loss: " + loss + " took " + (took / 1e6) + " ms");
             }
         });
         trainer.startFor(model, set, 1000);
+
+        double loss = model.evaluate(set);
+
+        model.save("mnist_" + loss + ".json");
     }
 
     public static Model getModel() {
