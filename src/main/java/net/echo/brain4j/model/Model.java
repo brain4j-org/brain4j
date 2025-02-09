@@ -27,6 +27,7 @@ import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents a feed forward neural network.
@@ -146,20 +148,27 @@ public class Model {
      * @return the error of the model
      */
     public double evaluate(DataSet set) {
-        double totalError = 0.0;
-
         reloadMatrices();
 
+        AtomicReference<Double> totalError = new AtomicReference<>(0.0);
+        List<Thread> threads = new ArrayList<>();
+
         for (DataRow row : set.getData()) {
-            Vector inputs = row.inputs();
-            Vector targets = row.outputs();
+            Thread thread = Thread.startVirtualThread(() -> {
+                Vector inputs = row.inputs();
+                Vector targets = row.outputs();
 
-            Vector outputs = predict(new StatesCache(), inputs);
+                Vector outputs = predict(new StatesCache(), inputs);
 
-            totalError += lossFunction.getFunction().calculate(targets, outputs);
+                double loss = lossFunction.getFunction().calculate(targets, outputs);
+                totalError.updateAndGet(v -> v + loss);
+            });
+
+            threads.add(thread);
         }
 
-        return totalError / set.getData().size();
+        MLUtils.waitAll(threads);
+        return totalError.get() / set.getData().size();
     }
 
     /**
