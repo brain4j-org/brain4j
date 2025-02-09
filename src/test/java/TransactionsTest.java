@@ -8,7 +8,7 @@ import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
-import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
@@ -22,12 +22,11 @@ public class TransactionsTest {
         Model model = getModel();
 
         DataSet dataSet = new DataSet(getKarhu(), getPolar(), getGrim(), getVulcan(), getMatrix(), getIntave());
-        dataSet.partition(1);
 
-        SmartTrainer trainer = new SmartTrainer(1, 10_000);
+        SmartTrainer trainer = new SmartTrainer(1, 1_000);
 
         trainer.addListener(new TestListener());
-        trainer.start(model, dataSet, 0.01, 0.0001);
+        trainer.startFor(model, dataSet, 20000);
 
         for (DataRow row : dataSet) {
             Vector output = model.predict(row.inputs());
@@ -42,13 +41,13 @@ public class TransactionsTest {
 
     public static Model getModel() {
         Model model = new Model(
-                new DenseLayer(INPUT_DIMENSION, Activations.LINEAR),
-                new DenseLayer(32, Activations.SIGMOID),
+                new DenseLayer(INPUT_DIMENSION, Activations.RELU),
+                new DenseLayer(64, Activations.SIGMOID),
                 new DenseLayer(32, Activations.SIGMOID),
                 new DenseLayer(6, Activations.SOFTMAX)
         );
 
-        model.compile(WeightInit.UNIFORM_XAVIER, LossFunctions.CROSS_ENTROPY, new AdamW(0.001), new NormalUpdater());
+        model.compile(WeightInit.UNIFORM_XAVIER, LossFunctions.CROSS_ENTROPY, new AdamW(0.01), new StochasticUpdater());
 
         return model;
     }

@@ -127,10 +127,13 @@ public class PolynomTest {
         for (int j = 0; j <= 2000; j++) {
             model.fit(dataSet);
 
-            if (j % 100 == 0) {
+            if (j % 10 == 0) {
                 double took = (System.nanoTime() - lastFit) / 1e8;
                 predictedSeries.clear();
                 lastFit = System.nanoTime();
+
+                trueSeries.clear();
+                predictedSeries.clear();
 
                 for (DataRow row : dataSet.getData()) {
                     double x = row.inputs().get(0);
@@ -144,11 +147,11 @@ public class PolynomTest {
 
                 double error = model.evaluate(dataSet);
                 errorLabel.setText("Error: " + String.format("%.4f", error) + " Took: " + String.format("%.2f", took) + " ms Epoch: " + i);
-                System.out.println("Epoch #" + j + " Error: " + error + " Took: " + took + " ms");
+                System.out.print("\rEpoch #" + j + " Error: " + error + " Took: " + took + " ms");
             }
         }
 
         double took = (System.nanoTime() - start) / 1e6;
-        System.out.println("In total took: " + took + " ms");
+        System.out.println("\nIn total took: " + took + " ms");
     }
 }

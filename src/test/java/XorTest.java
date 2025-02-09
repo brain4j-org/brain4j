@@ -17,9 +17,9 @@ public class XorTest {
     public static void main(String[] args) {
         Model model = new Model(
                 new DenseLayer(2, Activations.RELU),
-                new DenseLayer(256, Activations.RELU),
-                new DenseLayer(256, Activations.RELU),
-                new DenseLayer(256, Activations.RELU),
+                new DenseLayer(16, Activations.RELU),
+                new DenseLayer(16, Activations.RELU),
+                new DenseLayer(16, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -41,6 +41,17 @@ public class XorTest {
         training.partition(4);
 
         trainForBenchmark(model, training);
+
+        model.save("model.json");
+
+        double loss = model.evaluate(training);
+
+        System.out.println("Final loss: " + loss);
+
+        model.load("model.json");
+        loss = model.evaluate(training);
+
+        System.out.println("Final loss 2: " + loss);
     }
 
     private static void trainForBenchmark(Model model, DataSet data) {
