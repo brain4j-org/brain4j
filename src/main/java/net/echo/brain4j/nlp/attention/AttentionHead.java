@@ -1,5 +1,7 @@
 package net.echo.brain4j.nlp.attention;
 
+import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.Random;
@@ -12,7 +14,7 @@ public class AttentionHead {
     private final double[][] queryWeights; // A query is a question for the embedding (ex. "Are adjectives in front of me?")
     private final double[][] valueWeights;
 
-    public AttentionHead(int contextSize, int dimension, double temperature) {
+    public AttentionHead(WeightInit weightInit, int contextSize, int dimension, double temperature) {
         this.dimension = dimension;
         this.temperature = temperature;
 
@@ -20,7 +22,7 @@ public class AttentionHead {
         this.valueWeights = new double[contextSize][dimension];
         this.queryWeights = new double[contextSize][dimension];
 
-        this.initializeWeights();
+        this.initializeWeights(weightInit);
     }
 
     /**
@@ -64,14 +66,17 @@ public class AttentionHead {
         return result;
     }
 
-    private void initializeWeights() {
-        Random random = new Random();
+    private void initializeWeights(WeightInit weightInit) {
+        Random rng = new Random();
+        WeightInitializer initializer = weightInit.getInitializer();
+
+        double bound = initializer.getBound(dimension, dimension);
 
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {
-                queryWeights[i][j] = random.nextGaussian() * 0.02;
-                keyWeights[i][j] = random.nextGaussian() * 0.02;
-                valueWeights[i][j] = random.nextGaussian() * 0.02;
+                queryWeights[i][j] = (rng.nextDouble() * 2 * bound) - bound;
+                keyWeights[i][j] = (rng.nextDouble() * 2 * bound) - bound;
+                valueWeights[i][j] = (rng.nextDouble() * 2 * bound) - bound;
             }
         }
     }

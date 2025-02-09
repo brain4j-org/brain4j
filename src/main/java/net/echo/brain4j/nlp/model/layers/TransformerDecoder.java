@@ -8,31 +8,50 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.nlp.attention.MultiHeadAttention;
+import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.optimizers.impl.GradientDescent;
+import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.utils.Vector;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
-public class TransformerDecoder extends Layer {
+public class TransformerDecoder {
+
+    private final int heads;
+    private final int contextSize;
+    private final int dimension;
+    private final double temperature;
 
     private final Model feedForward;
     private final LayerNorm normalizer;
-    private final MultiHeadAttention firstAttention;
-    private final MultiHeadAttention secondAttention;
+
+    private MultiHeadAttention firstAttention;
+    private MultiHeadAttention secondAttention;
 
     public TransformerDecoder(int numHeads, int contextSize, int dimension, double temperature) {
-        super(0, Activations.LINEAR);
+        this.heads = numHeads;
+        this.contextSize = contextSize;
+        this.dimension = dimension;
+        this.temperature = temperature;
+
         this.normalizer = new LayerNorm();
-        this.firstAttention = new MultiHeadAttention(numHeads, contextSize, dimension, temperature);
-        this.secondAttention = new MultiHeadAttention(numHeads, contextSize, dimension, temperature);
         this.feedForward = new Model(
                 new DenseLayer(dimension, Activations.LINEAR),
-                new DenseLayer(4 * dimension, Activations.RELU),
+                new DenseLayer(4 * dimension, Activations.GELU),
                 new DenseLayer(dimension, Activations.LINEAR)
         );
-        this.feedForward.compile(WeightInit.NORMAL, LossFunctions.MEAN_SQUARED_ERROR, new GradientDescent(0.001), new NormalUpdater());
+    }
+
+    public void compile(WeightInit weightInit, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+        this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
+        this.firstAttention = new MultiHeadAttention(weightInit, heads, contextSize, dimension, temperature);
+        this.secondAttention = new MultiHeadAttention(weightInit, heads, contextSize, dimension, temperature);
     }
 
     public List<Vector> transform(List<Vector> embeddings) {
@@ -42,17 +61,25 @@ public class TransformerDecoder extends Layer {
             Vector embedding = Vector.of(vector.toArray());
 
             Vector attended = firstAttention.attend(embedding);
+            System.out.println("FIRST ATTENTION: " + attended);
 
             attended.add(vector);
+            System.out.println("FIRST ADD: " + attended);
             attended = normalizer.normalize(attended);
+            System.out.println("FIRST NORMALIZE: " + attended);
 
             attended = secondAttention.attend(attended);
+            System.out.println("SECOND ATTENTION: " + attended);
             attended.add(vector);
+            System.out.println("SECOND ADD: " + attended);
 
             attended = normalizer.normalize(attended);
+            System.out.println("SECOND NORMALIZE: " + attended);
 
             Vector result = feedForward.predict(attended);
+            System.out.println("FEED FORWARD: " + result);
             result = normalizer.normalize(result);
+            System.out.println("NORMALIZE: " + result);
 
             resulting.add(result);
         }

@@ -33,11 +33,11 @@ public class Transformer extends Model {
     public List<Vector> transform(List<Vector> embeddings) {
         List<Vector> resulting = new ArrayList<>(embeddings);
 
-        for (Layer layer : layers) {
+        /*for (Layer layer : layers) {
             if (layer instanceof TransformerEncoder encoder) {
                 resulting = encoder.transform(resulting);
             }
-        }
+        }*/
 
         for (Vector vector : resulting) {
             System.out.println("Resulting");

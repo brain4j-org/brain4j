@@ -2,6 +2,7 @@ package net.echo.brain4j.nlp.attention;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 public class MultiHeadAttention extends Layer {
 
     private final List<AttentionHead> heads;
+    private final WeightInit weightInit;
     private final double temperature;
     private final int headCount;
     private final int contextSize;
@@ -18,10 +20,11 @@ public class MultiHeadAttention extends Layer {
     private Vector input;
     private Vector output;
 
-    public MultiHeadAttention(int headCount, int contextSize, int dimension, double temperature) {
+    public MultiHeadAttention(WeightInit weightInit, int headCount, int contextSize, int dimension, double temperature) {
         super(0, Activations.LINEAR);
 
         this.heads = new ArrayList<>();
+        this.weightInit = weightInit;
         this.headCount = headCount;
         this.contextSize = contextSize;
         this.dimension = dimension;
@@ -48,7 +51,7 @@ public class MultiHeadAttention extends Layer {
 
     private void initializeHeads() {
         for (int i = 0; i < headCount; i++) {
-            heads.add(new AttentionHead(contextSize, dimension, temperature));
+            heads.add(new AttentionHead(weightInit, contextSize, dimension, temperature));
         }
     }
 }
