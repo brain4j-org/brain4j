@@ -1,35 +1,20 @@
-# Brain4J
+<h2 align="center">Brain4J</h2>
 
-**Brain4J** is a powerful, lightweight, and easy-to-use machine learning framework written in Java.
+<p align="center">
+    Powerful, lightweight, and easy-to-use machine learning framework written in Java.
+    <br><br>
+    <a href="https://github.com/xEcho1337/brain4j-examples">Examples</a>
+    ·
+    <a href="https://github.com/xEcho1337/Brain4J/blob/main/LICENSE">License</a>
+    ·
+    <a href="https://github.com/xEcho1337/brain4j/issues/new?template=Blank+issue">Report an issue</a>
+    ·
+    <a href="https://github.com/xEcho1337/brain4j/wiki">Wiki</a>
+</p>
 
----
-
-## Importing the library
-
-You can import Brain4J from JitPack by adding the following to your build.gradle file:
-
-```
-repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
-}
-
-dependencies {
-    implementation 'com.github.xEcho1337:brain4j:2.5.3-pre3'
-}
-```
-
-## Examples
-
-You can find some examples on how to use the library [here](https://github.com/xEcho1337/brain4j-examples).
-
-## License
-
-Brain4J is distributed under the [Apache 2.0 License](https://github.com/xEcho1337/Brain4J/blob/main/LICENSE).
-
-## Contributing & Contact
-
-Contributions are always welcome via pull requests or issue reports.
-
-- Telegram: @xecho1338
-- Discord: @xecho1337
+<h3 align="center">Contacts</h3>
+<p align="center">
+    Discord: @xecho1337
+    ·
+    Telegram: @xecho1338
+</p>
