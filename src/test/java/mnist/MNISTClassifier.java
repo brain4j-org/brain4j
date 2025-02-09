@@ -36,9 +36,8 @@ public class MNISTClassifier {
 
         System.out.println(model.getStats());
         set.partition(32);
-        // model.load("mnist-99.json");
-        train(model, set);
 
+        train(model, set);
         evaluateModel(model);
     }
 
@@ -127,11 +126,16 @@ public class MNISTClassifier {
         trainer.addListener(new TrainListener() {
             @Override
             public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
-                System.out.println("Epoch " + epoch + " loss: " + loss + " took " + took + " ms");
+                System.out.println("Epoch " + epoch + " loss: " + loss + " took " + (took / 1e6) + " ms");
 
                 if (loss < 1) {
                     model.save("mnist-2.json");
                 }
+
+                long memoryUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024;
+                long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
+
+                System.out.println("Memory used: " + memoryUsed + " MB / " + maxMemory + " MB");
             }
         });
         trainer.startFor(model, set, 1000);
@@ -140,18 +144,14 @@ public class MNISTClassifier {
     public static Model getModel() {
         Model model = new Model(
                 new DenseLayer(784, Activations.LINEAR),
-                new LayerNorm(),
-                new DenseLayer(32, Activations.RELU),
-                new LayerNorm(),
-                new DenseLayer(32, Activations.RELU),
-                new LayerNorm(),
+                new DenseLayer(32, Activations.SIGMOID),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
         model.compile(
-                WeightInit.HE,
+                WeightInit.UNIFORM_XAVIER,
                 LossFunctions.CROSS_ENTROPY,
-                new Adam(0.0005),
+                new Adam(0.01),
                 new NormalUpdater()
         );
 

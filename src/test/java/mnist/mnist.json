@@ -1,7 +1,7 @@
 {
   "seed": 0,
   "weightInit": "UNIFORM_XAVIER",
-  "lossFunction": "CATEGORICAL_CROSS_ENTROPY",
+  "lossFunction": "CROSS_ENTROPY",
   "optimizer": {
     "type": "Adam",
     "data": {
