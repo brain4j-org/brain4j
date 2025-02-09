@@ -25,7 +25,7 @@ public class StochasticUpdater extends Updater {
     }
 
     @Override
-    public void postBatch(StatesCache cacheHolder, Model model, double learningRate) {
+    public void postBatch(Model model, double learningRate) {
         model.reloadMatrices();
     }
 

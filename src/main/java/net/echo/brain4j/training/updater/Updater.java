@@ -18,7 +18,7 @@ public abstract class Updater {
     public void postFit(Model model, double learningRate) {
     }
 
-    public void postBatch(StatesCache cacheHolder, Model model, double learningRate) {
+    public void postBatch(Model model, double learningRate) {
     }
 
     public abstract void acknowledgeChange(StatesCache cacheHolder, Synapse synapse, double change);

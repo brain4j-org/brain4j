@@ -37,8 +37,6 @@ public class BackPropagation {
 
         for (List<DataRow> partition : dataSet.getPartitions()) {
             Thread thread = Thread.startVirtualThread(() -> {
-                StatesCache batchHolder = new StatesCache();
-
                 for (DataRow row : partition) {
                     StatesCache cacheHolder = new StatesCache();
 
@@ -48,7 +46,7 @@ public class BackPropagation {
                     backpropagate(cacheHolder, target.toArray(), output.toArray());
                 }
 
-                updater.postBatch(batchHolder, model, optimizer.getLearningRate());
+                updater.postBatch(model, optimizer.getLearningRate());
             });
 
             threads.add(thread);
@@ -94,8 +92,8 @@ public class BackPropagation {
             Neuron neuron = neurons.get(i);
 
             double error = outputs[i] - targets[i];
-
             double delta = changes.get(i) * error;
+
             neuron.setDelta(cacheHolder, delta);
         }
     }
