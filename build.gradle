@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'net.echo'
-version = '2.5.3-pre3'
+version = '2.5.3'
 
 repositories {
     mavenCentral()
