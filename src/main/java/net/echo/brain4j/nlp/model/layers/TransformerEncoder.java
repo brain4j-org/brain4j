@@ -1,7 +1,6 @@
 package net.echo.brain4j.nlp.model.layers;
 
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;

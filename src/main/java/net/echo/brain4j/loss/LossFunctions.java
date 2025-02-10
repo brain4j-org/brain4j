@@ -1,6 +1,9 @@
 package net.echo.brain4j.loss;
 
-import net.echo.brain4j.loss.impl.*;
+import net.echo.brain4j.loss.impl.BinaryCrossEntropy;
+import net.echo.brain4j.loss.impl.CrossEntropy;
+import net.echo.brain4j.loss.impl.MeanAbsoluteError;
+import net.echo.brain4j.loss.impl.MeanSquaredError;
 
 /**
  * Enum representing common loss functions used in neural networks.

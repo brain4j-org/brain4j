@@ -1,20 +1,13 @@
 package mnist;
 
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.convolution.impl.ConvLayer;
-import net.echo.brain4j.convolution.impl.FlattenLayer;
-import net.echo.brain4j.convolution.impl.InputLayer;
-import net.echo.brain4j.convolution.impl.PoolingLayer;
-import net.echo.brain4j.convolution.pooling.PoolingType;
 import net.echo.brain4j.layer.impl.DenseLayer;
-import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
@@ -25,8 +18,10 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MNISTClassifier {
 

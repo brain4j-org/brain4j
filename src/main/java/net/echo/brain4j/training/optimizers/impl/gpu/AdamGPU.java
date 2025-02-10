@@ -2,12 +2,11 @@ package net.echo.brain4j.training.optimizers.impl.gpu;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.utils.opencl.DeviceUtils;
-import org.jocl.*;
-import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.opencl.DeviceUtils;
 import org.jocl.*;
 
 import java.io.IOException;

@@ -6,8 +6,6 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
-import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 import org.jfree.chart.ChartFactory;
@@ -21,7 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Function;
 
-public class PolynomTest {
+public class ApproxExample {
 
     public static final Function<Double, Double> FUNCTION = x -> Math.pow(x, 4) - 5 * Math.pow(x, 2) - x + 10;
     public static final double BOUND = 3;
@@ -30,14 +28,14 @@ public class PolynomTest {
     private final XYSeries predictedSeries;
     private final JLabel errorLabel;
 
-    public PolynomTest() {
+    public ApproxExample() {
         this.trueSeries = new XYSeries("True Output");
         this.predictedSeries = new XYSeries("Predicted Output");
         this.errorLabel = new JLabel("Error: 0.0");
     }
 
     public static void main(String[] args) {
-        PolynomTest app = new PolynomTest();
+        ApproxExample app = new ApproxExample();
         app.trainAndVisualize();
     }
 
