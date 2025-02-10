@@ -4,7 +4,6 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
-import net.echo.brain4j.nlp.model.layers.TransformerEncoder;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -22,12 +21,13 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
+    public Model compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
         super.compile(weightInit, function, optimizer, updater);
 
-        if (concatModel == null) return;
+        if (concatModel == null) return null;
 
         concatModel.compile(weightInit, function, optimizer, updater);
+        return this;
     }
 
     public List<Vector> transform(List<Vector> embeddings) {

@@ -139,7 +139,7 @@ public class Model {
      * @param optimizer optimization algorithm for training
      * @param updater weights updating algorithm for training
      */
-    public void compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
+    public Model compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.weightInit = weightInit;
         this.generator = new Random(seed);
         this.lossFunction = function;
@@ -153,6 +153,8 @@ public class Model {
         this.updater.postInitialize(this);
 
         reloadMatrices();
+
+        return this;
     }
 
     /**
