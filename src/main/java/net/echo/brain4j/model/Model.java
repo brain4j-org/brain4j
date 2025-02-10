@@ -7,6 +7,11 @@ import com.google.gson.reflect.TypeToken;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.adapters.UpdaterAdapter;
+import net.echo.brain4j.convolution.Kernel;
+import net.echo.brain4j.convolution.impl.ConvLayer;
+import net.echo.brain4j.convolution.impl.FlattenLayer;
+import net.echo.brain4j.convolution.impl.InputLayer;
+import net.echo.brain4j.convolution.impl.PoolingLayer;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
@@ -44,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Represents a feed forward neural network.
  */
-public class Model {
+public abstract class Model {
 
     private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
     private static final UpdaterAdapter UPDATER_ADAPTER = new UpdaterAdapter();
@@ -238,9 +243,7 @@ public class Model {
                     input.toArray().length + " != " + inputLayer.getNeurons().size());
         }
 
-        for (int i = 0; i < input.toArray().length; i++) {
-            inputLayer.getNeuronAt(i).setValue(cacheHolder, input.get(i));
-        }
+        inputLayer.setInput(cacheHolder, input);
 
         for (int l = 0; l < layers.size() - 1; l++) {
             Layer layer = layers.get(l);
@@ -541,5 +544,118 @@ public class Model {
      */
     public int getSeed() {
         return seed;
+    }
+
+    public static class Sequential extends Model {
+
+        public Sequential(Layer... layers) {
+            super(layers);
+        }
+    }
+
+    public static class Convolutional extends Model {
+
+        public Convolutional(Layer... layers) {
+            super(layers);
+
+            if (!(layers[0] instanceof InputLayer)) {
+                throw new IllegalArgumentException("The first layer of a convolutional model should be an InputLayer!");
+            }
+        }
+
+        @Override
+        public Vector predict(StatesCache cacheHolder, Vector input) {
+            Layer firstLayer = layers.getFirst();
+
+            if (input.toArray().length != firstLayer.getSize()) {
+                throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
+                        input.toArray().length + " != " + firstLayer.getNeurons().size());
+            }
+
+            if (!(firstLayer instanceof InputLayer inputLayer)) {
+                throw new IllegalArgumentException("The first layer of a convolutional model should be an InputLayer!");
+            }
+
+            inputLayer.setInput(cacheHolder, input);
+
+            int width = inputLayer.getWidth();
+            int height = inputLayer.getHeight();
+
+            Layer lastLayer = inputLayer;
+
+            for (int l = 0; l < layers.size(); l++) {
+                Layer layer = layers.get(l);
+
+                if (layer instanceof DropoutLayer) continue;
+
+                if (layer instanceof DenseLayer) {
+                    Layer nextLayer = getNextComputationLayer(l);
+
+                    List<Neuron> neurons = layer.getNeurons();
+                    List<Neuron> nextNeurons = nextLayer.getNeurons();
+
+                    int inSize = neurons.size();
+                    int outSize = nextNeurons.size();
+
+                    Vector inputVector = new Vector(inSize);
+                    Vector[] synapseMatrix = synapsesMatrices.get(l);
+
+                    for (int i = 0; i < neurons.size(); i++) {
+                        inputVector.set(i, neurons.get(i).getValue(cacheHolder));
+                    }
+
+                    for (int i = 0; i < outSize; i++) {
+                        double value = synapseMatrix[i].weightedSum(inputVector);
+                        nextNeurons.get(i).setValue(cacheHolder, value);
+                    }
+
+                    nextLayer.applyFunction(cacheHolder, layer);
+                }
+
+                if (layer instanceof ConvLayer convLayer) {
+                    convLayer.getFeatureMap().clear();
+
+                    Kernel convInput = new Kernel(width, height);
+
+                    for (int w = 0; w < width; w++) {
+                        for (int h = 0; h < height; h++) {
+                            // TODO: Sum the feature map for conv layers
+                            double value = lastLayer.getValue(cacheHolder, w * h);
+                            convInput.setValue(w, h, value);
+                        }
+                    }
+
+                    List<Kernel> kernels = convLayer.getKernels();
+
+                    for (Kernel kernel : kernels) {
+                        Kernel result = convInput.convolute(kernel);
+
+                        convLayer.getFeatureMap().add(result);
+                    }
+
+                    convLayer.postProcess();
+                }
+
+                if (layer instanceof PoolingLayer poolingLayer) {
+                    // TODO: Implement pooling layer
+                }
+
+                if (layer instanceof FlattenLayer flattenLayer && lastLayer.isConvolutional()) {
+                    // TODO: Flatten layer
+                }
+
+                lastLayer = layer;
+            }
+
+            Layer outputLayer = layers.getLast();
+
+            double[] output = new double[outputLayer.getNeurons().size()];
+
+            for (int i = 0; i < output.length; i++) {
+                output[i] = outputLayer.getNeuronAt(i).getValue(cacheHolder);
+            }
+
+            return Vector.of(output);
+        }
     }
 }

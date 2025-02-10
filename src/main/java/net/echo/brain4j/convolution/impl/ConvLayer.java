@@ -3,6 +3,7 @@ package net.echo.brain4j.convolution.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.StatesCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,11 +12,13 @@ import java.util.Random;
 public class ConvLayer extends Layer {
 
     protected final List<Kernel> kernels = new ArrayList<>();
+    protected final List<Kernel> featureMap = new ArrayList<>();
 
     protected final int kernelWidth;
     protected final int kernelHeight;
     protected final int filters;
 
+    protected Kernel output;
     protected int padding;
     protected int stride;
 
@@ -37,10 +40,38 @@ public class ConvLayer extends Layer {
     }
 
     @Override
+    public boolean isConvolutional() {
+        return true;
+    }
+
+    @Override
     public void connectAll(Random generator, Layer nextLayer, double bound) {
         for (int i = 0; i < filters; i++) {
-            this.kernels.add(new Kernel(generator, bound, kernelWidth, kernelHeight));
+            Kernel kernel = new Kernel(kernelWidth, kernelHeight);
+            kernel.setValues(generator, bound);
+
+            this.kernels.add(kernel);
         }
+    }
+
+    @Override
+    public double getValue(StatesCache cache, int index) {
+        return output.getValue(index / kernelWidth, index / kernelHeight);
+    }
+
+    public void postProcess() {
+        Kernel first = featureMap.getFirst();
+        Kernel result = new Kernel(first.getWidth(), first.getHeight());
+
+        for (Kernel feature : featureMap) {
+            result.add(feature);
+        }
+
+        this.output = result;
+    }
+
+    public List<Kernel> getFeatureMap() {
+        return featureMap;
     }
 
     public List<Kernel> getKernels() {

@@ -28,4 +28,9 @@ public class PoolingLayer extends Layer {
         this.stride = stride;
         this.padding = padding;
     }
+
+    @Override
+    public boolean isConvolutional() {
+        return true;
+    }
 }

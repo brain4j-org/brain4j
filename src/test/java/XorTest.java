@@ -15,7 +15,7 @@ import net.echo.brain4j.utils.Vector;
 public class XorTest {
 
     public static void main(String[] args) {
-        Model model = new Model(
+        Model model = new Model.Sequential(
                 new DenseLayer(2, Activations.RELU),
                 new DenseLayer(16, Activations.RELU),
                 new DenseLayer(16, Activations.RELU),

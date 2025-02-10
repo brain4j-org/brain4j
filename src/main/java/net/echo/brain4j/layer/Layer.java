@@ -34,6 +34,10 @@ public class Layer {
         return true;
     }
 
+    public boolean isConvolutional() {
+        return false;
+    }
+
     public void init(Random generator) {
         for (Neuron neuron : neurons) {
             neuron.setBias(2 * generator.nextDouble() - 1);
@@ -122,5 +126,13 @@ public class Layer {
 
     public int getTotalParams() {
         return synapses.size();
+    }
+
+    public int getSize() {
+        return neurons.size();
+    }
+
+    public double getValue(StatesCache cache, int index) {
+        return neurons.get(index).getValue(cache);
     }
 }

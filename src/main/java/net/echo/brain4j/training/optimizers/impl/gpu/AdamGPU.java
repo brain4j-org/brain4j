@@ -39,7 +39,7 @@ public class AdamGPU extends Optimizer {
     private cl_mem dGradients;
 
     public AdamGPU(double learningRate) {
-        this(learningRate, 0.9f, 0.999f, 1e-6f); // Anything below 1e-6 is 0
+        this(learningRate, 0.9f, 0.999f, 0.000001f); // Anything below 1e-6 is 0
     }
 
     public AdamGPU(double learningRate, float beta1, float beta2, float epsilon) {

@@ -133,7 +133,7 @@ public class MNISTClassifier {
     }
 
     public static Model getModel() {
-        Model model = new Model(
+        Model model = new Model.Sequential(
                 new DenseLayer(784, Activations.LINEAR),
                 new DenseLayer(32, Activations.SIGMOID),
                 new DenseLayer(10, Activations.SOFTMAX)
@@ -150,7 +150,7 @@ public class MNISTClassifier {
     }
 
     public static Model getConvModel() {
-        Model model = new Model(
+        Model model = new Model.Sequential(
                 new InputLayer(28, 28),
                 new ConvLayer(32, 7, 7, Activations.RELU),
                 new PoolingLayer(PoolingType.MAX, 2, 2, 2),

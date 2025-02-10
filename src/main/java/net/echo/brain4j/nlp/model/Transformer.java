@@ -59,11 +59,12 @@ public class Transformer extends Model {
     }
 
     @Override
-    public Vector predict(Vector input) {
-        throw new UnsupportedOperationException("Transformer model is not supported for single input.");
+    public Layer getNextComputationLayer(int index) {
+        return null;
     }
 
-    public void concat(Layer... layers) {
-        this.concatModel = new Model(layers);
+    @Override
+    public Vector predict(Vector input) {
+        throw new UnsupportedOperationException("Transformer model is not supported for single input.");
     }
 }
