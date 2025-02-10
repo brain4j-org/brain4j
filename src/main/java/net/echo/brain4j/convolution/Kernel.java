@@ -1,5 +1,6 @@
 package net.echo.brain4j.convolution;
 
+import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.Random;
@@ -29,24 +30,11 @@ public class Kernel {
 
     public void setValues(Random generator, double bound) {
         for (int i = 0; i < height; i++) {
-            Vector vector = values[i];
-
             for (int j = 0; j < width; j++) {
-                vector.set(j, (generator.nextDouble() * 2 * bound) - bound);
+                double value = generator.nextDouble() * 2 * bound - bound;
+                this.values[i].set(j, value);
             }
         }
-    }
-
-    public Vector[] getValues() {
-        return values;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
     }
 
     public Kernel convolute(Kernel kernel) {
@@ -71,6 +59,7 @@ public class Kernel {
                         sum += image * filter;
                     }
                 }
+
                 result.getValues()[i].set(j, sum);
             }
         }
@@ -92,6 +81,13 @@ public class Kernel {
         return paddedKernel;
     }
 
+    public void add(Kernel feature) {
+        for (int h = 0; h < this.height; h++) {
+            Vector add = feature.getValues()[h];
+            this.values[h].add(add);
+        }
+    }
+
     public double getValue(int x, int y) {
         return this.values[y].get(x);
     }
@@ -100,10 +96,33 @@ public class Kernel {
         this.values[height].set(width, value);
     }
 
-    public void add(Kernel feature) {
-        for (int h = 0; h < this.height; h++) {
-            Vector add = feature.getValues()[h];
-            this.values[h].add(add);
+    public Vector[] getValues() {
+        return values;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public int size() {
+        return width * height;
+    }
+
+    public void apply(Activation activation) {
+        for (int h = 0; h < height; h++) {
+            Vector row = this.values[h];
+
+            this.values[h] = activation.activate(row);
+        }
+    }
+
+    public void print() {
+        for (int h = 0; h < height; h++) {
+            System.out.println(values[h]);
         }
     }
 }

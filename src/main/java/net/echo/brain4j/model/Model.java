@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Represents a feed forward neural network.
  */
-public abstract class Model {
+public class Model {
 
     private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
     private static final UpdaterAdapter UPDATER_ADAPTER = new UpdaterAdapter();
@@ -87,6 +87,24 @@ public abstract class Model {
     public Model(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
         this.synapsesMatrices = new ArrayList<>();
+
+        boolean isInput = layers[0] instanceof InputLayer;
+        boolean hasConv = false;
+
+        for (Layer layer : layers) {
+            if (layer instanceof ConvLayer || layer instanceof PoolingLayer || layer instanceof FlattenLayer) {
+                hasConv = true;
+                break;
+            }
+        }
+
+        if (isInput && !hasConv) {
+            throw new IllegalArgumentException("Cannot use the InputLayer outside of a convolutional model!");
+        }
+
+        if (!isInput && hasConv) {
+            throw new IllegalArgumentException("Cannot use a convolutional layer without an InputLayer!");
+        }
     }
 
     private void connect(WeightInit weightInit, boolean update) {
@@ -101,10 +119,10 @@ public abstract class Model {
         for (int i = 1; i < layers.size(); i++) {
             Layer layer = layers.get(i);
 
-            if (layer.getNeurons().isEmpty()) continue;
+            if (layer.getNeurons().isEmpty() && !layer.isConvolutional()) continue;
 
-            int nIn = lastNormalLayer.getNeurons().size();
-            int nOut = layer.getNeurons().size();
+            int nIn = lastNormalLayer.size();
+            int nOut = layer.size();
 
             double bound = weightInit.getInitializer().getBound(nIn, nOut);
 
@@ -202,7 +220,7 @@ public abstract class Model {
             Layer layer = layers.get(i);
 
             if (layer instanceof DropoutLayer) {
-                matrices.add(new Vector[]{});
+                matrices.add(new Vector[0]);
                 continue;
             }
 
@@ -236,41 +254,102 @@ public abstract class Model {
      * @return predicted outputs as a vector
      */
     public Vector predict(StatesCache cacheHolder, Vector input) {
-        Layer inputLayer = layers.getFirst();
+        Layer firstLayer = layers.getFirst();
 
-        if (input.toArray().length != inputLayer.getNeurons().size()) {
+        if (input.size() != firstLayer.size()) {
             throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
-                    input.toArray().length + " != " + inputLayer.getNeurons().size());
+                    input.size() + " != " + firstLayer.getNeurons().size());
         }
 
-        inputLayer.setInput(cacheHolder, input);
+        int width = 0;
+        int height = 0;
+
+        if (firstLayer instanceof InputLayer inputLayer) {
+            width = inputLayer.getWidth();
+            height = inputLayer.getHeight();
+        }
+
+        firstLayer.setInput(cacheHolder, input);
+
+        Layer lastLayer = firstLayer;
 
         for (int l = 0; l < layers.size() - 1; l++) {
             Layer layer = layers.get(l);
 
             if (layer instanceof DropoutLayer) continue;
 
-            Layer nextLayer = getNextComputationLayer(l);
+            if (layer instanceof ConvLayer convLayer) {
+                convLayer.getFeatureMap().clear();
 
-            List<Neuron> neurons = layer.getNeurons();
-            List<Neuron> nextNeurons = nextLayer.getNeurons();
+                Kernel convInput = new Kernel(width, height);
 
-            int inSize = neurons.size();
-            int outSize = nextNeurons.size();
+                for (int w = 0; w < width; w++) {
+                    for (int h = 0; h < height; h++) {
+                        double value = lastLayer.getValue(cacheHolder, w, h);
+                        convInput.setValue(w, h, value);
+                    }
+                }
 
-            Vector inputVector = new Vector(inSize);
-            Vector[] synapseMatrix = synapsesMatrices.get(l);
+                List<Kernel> kernels = convLayer.getKernels();
 
-            for (int i = 0; i < neurons.size(); i++) {
-                inputVector.set(i, neurons.get(i).getValue(cacheHolder));
+                for (Kernel kernel : kernels) {
+                    Kernel result = convInput.convolute(kernel);
+
+                    convLayer.getFeatureMap().add(result);
+                }
+
+                convLayer.postProcess();
+
+                width = convLayer.getOutput().getWidth();
+                height = convLayer.getOutput().getHeight();
             }
 
-            for (int i = 0; i < outSize; i++) {
-                double value = synapseMatrix[i].weightedSum(inputVector);
-                nextNeurons.get(i).setValue(cacheHolder, value);
+            if (layer instanceof PoolingLayer poolingLayer) {
+                // TODO: Implement pooling layer
             }
 
-            nextLayer.applyFunction(cacheHolder, layer);
+            if (layer instanceof FlattenLayer flattenLayer && lastLayer instanceof ConvLayer convLayer) {
+                Kernel map = convLayer.getOutput();
+
+                if (flattenLayer.size() != map.size()) {
+                    throw new IllegalArgumentException("Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
+                            + flattenLayer.size() + " != " + map.size());
+                }
+
+                for (int h = 0; h < map.getHeight(); h++) {
+                    for (int w = 0; w < map.getWidth(); w++) {
+                        double value = map.getValue(w, h);
+
+                        flattenLayer.getNeuronAt(h * w).setValue(cacheHolder, value);
+                    }
+                }
+            }
+
+            if (layer instanceof DenseLayer || layer instanceof FlattenLayer) {
+                Layer nextLayer = getNextComputationLayer(l);
+
+                List<Neuron> neurons = layer.getNeurons();
+                List<Neuron> nextNeurons = nextLayer.getNeurons();
+
+                int inSize = neurons.size();
+                int outSize = nextNeurons.size();
+
+                Vector inputVector = new Vector(inSize);
+                Vector[] synapseMatrix = synapsesMatrices.get(l);
+
+                for (int i = 0; i < inSize; i++) {
+                    inputVector.set(i, neurons.get(i).getValue(cacheHolder));
+                }
+
+                for (int i = 0; i < outSize; i++) {
+                    double value = synapseMatrix[i].weightedSum(inputVector);
+                    nextNeurons.get(i).setValue(cacheHolder, value);
+                }
+
+                nextLayer.applyFunction(cacheHolder, lastLayer);
+            }
+
+            lastLayer = layer;
         }
 
         Layer outputLayer = layers.getLast();
@@ -544,118 +623,5 @@ public abstract class Model {
      */
     public int getSeed() {
         return seed;
-    }
-
-    public static class Sequential extends Model {
-
-        public Sequential(Layer... layers) {
-            super(layers);
-        }
-    }
-
-    public static class Convolutional extends Model {
-
-        public Convolutional(Layer... layers) {
-            super(layers);
-
-            if (!(layers[0] instanceof InputLayer)) {
-                throw new IllegalArgumentException("The first layer of a convolutional model should be an InputLayer!");
-            }
-        }
-
-        @Override
-        public Vector predict(StatesCache cacheHolder, Vector input) {
-            Layer firstLayer = layers.getFirst();
-
-            if (input.toArray().length != firstLayer.getSize()) {
-                throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
-                        input.toArray().length + " != " + firstLayer.getNeurons().size());
-            }
-
-            if (!(firstLayer instanceof InputLayer inputLayer)) {
-                throw new IllegalArgumentException("The first layer of a convolutional model should be an InputLayer!");
-            }
-
-            inputLayer.setInput(cacheHolder, input);
-
-            int width = inputLayer.getWidth();
-            int height = inputLayer.getHeight();
-
-            Layer lastLayer = inputLayer;
-
-            for (int l = 0; l < layers.size(); l++) {
-                Layer layer = layers.get(l);
-
-                if (layer instanceof DropoutLayer) continue;
-
-                if (layer instanceof DenseLayer) {
-                    Layer nextLayer = getNextComputationLayer(l);
-
-                    List<Neuron> neurons = layer.getNeurons();
-                    List<Neuron> nextNeurons = nextLayer.getNeurons();
-
-                    int inSize = neurons.size();
-                    int outSize = nextNeurons.size();
-
-                    Vector inputVector = new Vector(inSize);
-                    Vector[] synapseMatrix = synapsesMatrices.get(l);
-
-                    for (int i = 0; i < neurons.size(); i++) {
-                        inputVector.set(i, neurons.get(i).getValue(cacheHolder));
-                    }
-
-                    for (int i = 0; i < outSize; i++) {
-                        double value = synapseMatrix[i].weightedSum(inputVector);
-                        nextNeurons.get(i).setValue(cacheHolder, value);
-                    }
-
-                    nextLayer.applyFunction(cacheHolder, layer);
-                }
-
-                if (layer instanceof ConvLayer convLayer) {
-                    convLayer.getFeatureMap().clear();
-
-                    Kernel convInput = new Kernel(width, height);
-
-                    for (int w = 0; w < width; w++) {
-                        for (int h = 0; h < height; h++) {
-                            // TODO: Sum the feature map for conv layers
-                            double value = lastLayer.getValue(cacheHolder, w * h);
-                            convInput.setValue(w, h, value);
-                        }
-                    }
-
-                    List<Kernel> kernels = convLayer.getKernels();
-
-                    for (Kernel kernel : kernels) {
-                        Kernel result = convInput.convolute(kernel);
-
-                        convLayer.getFeatureMap().add(result);
-                    }
-
-                    convLayer.postProcess();
-                }
-
-                if (layer instanceof PoolingLayer poolingLayer) {
-                    // TODO: Implement pooling layer
-                }
-
-                if (layer instanceof FlattenLayer flattenLayer && lastLayer.isConvolutional()) {
-                    // TODO: Flatten layer
-                }
-
-                lastLayer = layer;
-            }
-
-            Layer outputLayer = layers.getLast();
-
-            double[] output = new double[outputLayer.getNeurons().size()];
-
-            for (int i = 0; i < output.length; i++) {
-                output[i] = outputLayer.getNeuronAt(i).getValue(cacheHolder);
-            }
-
-            return Vector.of(output);
-        }
     }
 }

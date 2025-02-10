@@ -34,7 +34,7 @@ public class TransformerEncoder {
         this.temperature = temperature;
 
         this.normalizer = new LayerNorm();
-        this.feedForward = new Model.Sequential(
+        this.feedForward = new Model(
                 new DenseLayer(dimension, Activations.LINEAR),
                 new DenseLayer(4 * dimension, Activations.GELU),
                 new DenseLayer(dimension, Activations.LINEAR)

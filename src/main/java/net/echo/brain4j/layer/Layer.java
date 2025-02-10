@@ -128,11 +128,11 @@ public class Layer {
         return synapses.size();
     }
 
-    public int getSize() {
+    public int size() {
         return neurons.size();
     }
 
-    public double getValue(StatesCache cache, int index) {
-        return neurons.get(index).getValue(cache);
+    public double getValue(StatesCache cache, int x, int y) {
+        return neurons.get(x * y).getValue(cache);
     }
 }

@@ -55,8 +55,13 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public double getValue(StatesCache cache, int index) {
-        return output.getValue(index / kernelWidth, index / kernelHeight);
+    public int size() {
+        return filters;
+    }
+
+    @Override
+    public double getValue(StatesCache cache, int x, int y) {
+        return output.getValue(x, y);
     }
 
     public void postProcess() {
@@ -68,6 +73,10 @@ public class ConvLayer extends Layer {
         }
 
         this.output = result;
+    }
+
+    public Kernel getOutput() {
+        return output;
     }
 
     public List<Kernel> getFeatureMap() {

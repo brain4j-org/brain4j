@@ -31,7 +31,7 @@ public class InputLayer extends Layer {
     }
 
     @Override
-    public int getSize() {
+    public int size() {
         return width * height;
     }
 }

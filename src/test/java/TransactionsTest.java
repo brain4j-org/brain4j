@@ -40,7 +40,7 @@ public class TransactionsTest {
     }
 
     public static Model getModel() {
-        Model model = new Model.Sequential(
+        Model model = new Model(
                 new DenseLayer(INPUT_DIMENSION, Activations.RELU),
                 new DenseLayer(64, Activations.SIGMOID),
                 new DenseLayer(32, Activations.SIGMOID),

@@ -42,7 +42,7 @@ public class PolynomTest {
     }
 
     public Model getModel() {
-        Model model = new Model.Sequential(
+        Model model = new Model(
                 new DenseLayer(1, Activations.LINEAR),
                 new DenseLayer(64, Activations.SIGMOID),
                 new DenseLayer(32, Activations.SIGMOID),
