@@ -10,8 +10,6 @@ public class Neuron {
     public static int NEURON_COUNTER = 0;
 
     private final List<Synapse> synapses = new ArrayList<>();
-    private final ThreadLocal<Double> localValue = ThreadLocal.withInitial(() -> 0.0);
-    private final ThreadLocal<Double> delta = ThreadLocal.withInitial(() -> 0.0);
     private final int id;
 
     @Expose
@@ -43,38 +41,20 @@ public class Neuron {
     }
 
     public double getDelta(StatesCache cacheHolder) {
-        if (cacheHolder == null) {
-            return delta.get();
-        }
-
         return cacheHolder.getDelta(this);
     }
 
     public void setDelta(StatesCache cacheHolder, double delta) {
         this.totalDelta += delta;
 
-        if (cacheHolder == null) {
-            this.delta.set(this.delta.get() + delta);
-            return;
-        }
-
         cacheHolder.addDelta(this, delta);
     }
 
     public double getValue(StatesCache cacheHolder) {
-        if (cacheHolder == null) {
-            return localValue.get();
-        }
-
         return cacheHolder.getValue(this);
     }
 
     public void setValue(StatesCache cacheHolder, double value) {
-        if (cacheHolder == null) {
-            localValue.set(value);
-            return;
-        }
-
         cacheHolder.setValue(this, value);
     }
 
