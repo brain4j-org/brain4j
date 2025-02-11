@@ -179,7 +179,7 @@ public class Model {
         List<Thread> threads = new ArrayList<>();
 
         for (DataRow row : set.getData()) {
-            Thread thread = Thread.startVirtualThread(() -> {
+            // Thread thread = Thread.startVirtualThread(() -> {
                 Vector inputs = row.inputs();
                 Vector targets = row.outputs();
 
@@ -187,12 +187,12 @@ public class Model {
 
                 double loss = lossFunction.getFunction().calculate(targets, outputs);
                 totalError.updateAndGet(v -> v + loss);
-            });
+            // });
 
-            threads.add(thread);
+            // threads.add(thread);
         }
 
-        MLUtils.waitAll(threads);
+        // MLUtils.waitAll(threads);
         return totalError.get() / set.getData().size();
     }
 
@@ -287,13 +287,13 @@ public class Model {
                 List<Kernel> kernels = convLayer.getKernels();
 
                 for (Kernel kernel : kernels) {
-                    Kernel result = lastConvolutionalInput.convolute(kernel);
+                    Kernel result = lastConvolutionalInput.convolute(kernel, convLayer.getStride());
 
                     convLayer.getFeatureMap().add(result);
                 }
 
-                convLayer.postProcess();
-                lastConvolutionalInput = convLayer.getOutput();
+                convLayer.postProcess(cacheHolder);
+                lastConvolutionalInput = convLayer.getOutput().padding(convLayer.getPadding());
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
@@ -308,18 +308,13 @@ public class Model {
                             + flattenLayer.size() + " != " + map.size());
                 }
 
-                Vector vector = new Vector(map.getHeight() * map.getWidth());
                 for (int h = 0; h < map.getHeight(); h++) {
                     for (int w = 0; w < map.getWidth(); w++) {
                         double value = map.getValue(w, h);
 
-                        vector.set(h * map.getWidth() + w, value);
-
                         flattenLayer.getNeuronAt(h * map.getWidth() + w).setValue(cacheHolder, value);
                     }
                 }
-
-                System.out.println(vector.toString("%.2f"));
             }
 
             if (layer instanceof DenseLayer || layer instanceof FlattenLayer) {
@@ -569,38 +564,34 @@ public class Model {
     public String getStats() {
         StringBuilder stats = new StringBuilder();
 
-        stats.append(String.format("%-7s %-15s %-10s %-12s\n", "Index", "Layer name", "In, Out", "Total params"));
-        stats.append("================================================\n");
+        String header = "==========================================================\n";
+
+        stats.append(String.format("%-7s %-15s %-10s %-12s %-15s\n", "Index", "Layer name", "In", "Params", "Activation"));
+        stats.append(header);
 
         int params = 0;
 
-        for (int i = 0; i < layers.size() - 1; i++) {
+        for (int i = 0; i < layers.size(); i++) {
             Layer layer = layers.get(i);
-            Layer next = layers.get(Math.min(i + 1, layers.size() - 1));
-
-            for (int j = 1; j < layers.size() && next instanceof DropoutLayer; j++) {
-                next = layers.get(Math.min(i + j, layers.size() - 1));
-            }
 
             String layerType = layer.getClass().getSimpleName();
 
-            int nIn = layer.getNeurons().size();
-            int nOut = i == layers.size() - 1 ? 0 : next.getNeurons().size();
-
+            int nIn = layer.size();
             int totalParams = layer.getTotalParams();
 
             String formatNin = layer instanceof DropoutLayer ? "-" : String.valueOf(nIn);
-            String formatNout = layer instanceof DropoutLayer ? "-" : String.valueOf(nOut);
 
-            stats.append(String.format("%-7d %-15s %-10s %-12d\n",
-                    i, layerType, formatNin + ", " + formatNout, totalParams));
+            stats.append(String.format("%-7d %-15s %-10s %-12d %-15s\n",
+                    i, layerType, formatNin, totalParams, layer.getActivation().name()));
 
             params += totalParams;
         }
 
-        stats.append("================================================\n");
+        stats.append(header);
+        stats.append("Optimizer: ").append(optimizer.getClass().getSimpleName()).append("\n");
         stats.append("Total parameters: ").append(params).append("\n");
-        stats.append("================================================\n");
+        stats.append(header);
+
         return stats.toString();
     }
 

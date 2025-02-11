@@ -45,6 +45,11 @@ public class ConvLayer extends Layer {
     }
 
     @Override
+    public int getTotalParams() {
+        return filters * kernelWidth * kernelHeight;
+    }
+
+    @Override
     public void connectAll(Random generator, Layer nextLayer, double bound) {
         for (int i = 0; i < filters; i++) {
             Kernel kernel = new Kernel(kernelWidth, kernelHeight);
@@ -59,7 +64,7 @@ public class ConvLayer extends Layer {
         return filters;
     }
 
-    public void postProcess() {
+    public void postProcess(StatesCache cache) {
         Kernel first = featureMap.getFirst();
         Kernel result = new Kernel(first.getWidth(), first.getHeight());
 

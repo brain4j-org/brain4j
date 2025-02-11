@@ -1,5 +1,9 @@
 package net.echo.brain4j.structure;
 
+import net.echo.brain4j.convolution.Kernel;
+import net.echo.brain4j.convolution.impl.ConvLayer;
+import net.echo.brain4j.layer.Layer;
+
 public class StatesCache {
 
     private final double[] gradients;
@@ -13,38 +17,38 @@ public class StatesCache {
     }
 
     public double[] getGradients() {
-        return gradients;
+        return this.gradients;
     }
 
     public double getGradient(int index) {
-        return gradients[index];
+        return this.gradients[index];
     }
 
     public double getValue(Neuron neuron) {
-        return valuesCache[neuron.getId()];
+        return this.valuesCache[neuron.getId()];
     }
 
     public double getDelta(Neuron neuron) {
-        return deltasCache[neuron.getId()];
+        return this.deltasCache[neuron.getId()];
     }
 
     public void setValue(Neuron neuron, double value) {
-        valuesCache[neuron.getId()] = value;
+        this.valuesCache[neuron.getId()] = value;
     }
 
     public void setDelta(Neuron neuron, double delta) {
-        deltasCache[neuron.getId()] = delta;
+        this.deltasCache[neuron.getId()] = delta;
     }
 
     public void setGradient(int index, double gradient) {
-        gradients[index] = gradient;
+        this.gradients[index] = gradient;
     }
 
     public void addDelta(Neuron neuron, double delta) {
-        deltasCache[neuron.getId()] += delta;
+        this.deltasCache[neuron.getId()] += delta;
     }
 
     public void addGradient(int index, double change) {
-        gradients[index] += change;
+        this.gradients[index] += change;
     }
 }

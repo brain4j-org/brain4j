@@ -37,7 +37,7 @@ public class Kernel {
         }
     }
 
-    public Kernel convolute(Kernel kernel) {
+    public Kernel convolute(Kernel kernel, int stride) {
         int outputWidth = this.width - kernel.getWidth() + 1;
         int outputHeight = this.height - kernel.getHeight() + 1;
 
@@ -47,8 +47,8 @@ public class Kernel {
 
         Kernel result = new Kernel(outputWidth, outputHeight);
 
-        for (int i = 0; i < outputHeight; i++) {
-            for (int j = 0; j < outputWidth; j++) {
+        for (int i = 0; i < outputHeight; i += stride) {
+            for (int j = 0; j < outputWidth; j += stride) {
                 double sum = 0.0;
 
                 for (int ki = 0; ki < kernel.getHeight(); ki++) {

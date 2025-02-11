@@ -148,18 +148,6 @@ public class Vector implements Cloneable, Iterable<Double> {
         return Math.sqrt(distanceSquared(vector));
     }
 
-    public Vector convoluted(Vector other) {
-        double[] result = new double[data.length + other.data.length - 1];
-
-        for (int i = 0; i < data.length; i++) {
-            for (int j = 0; j < other.data.length; j++) {
-                result[i + j] += data[i] * other.data[j];
-            }
-        }
-
-        return new Vector(result);
-    }
-
     public Vector add(Vector other) {
         for (int i = 0; i < data.length; i++) {
             data[i] += other.data[i];
