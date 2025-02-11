@@ -8,9 +8,11 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 import org.apache.commons.io.FileUtils;
@@ -31,6 +33,9 @@ public class MNISTClassifier {
 
         System.out.println(model.getStats());
         set.partition(32);
+
+        double loss = model.evaluate(set);
+        System.out.println("Initial loss: " + loss);
 
         train(model, set);
         evaluateModel(model);
@@ -130,7 +135,7 @@ public class MNISTClassifier {
     public static Model getModel() {
         Model model = new Model(
                 new DenseLayer(784, Activations.LINEAR),
-                new DenseLayer(32, Activations.SIGMOID),
+                new DenseLayer(64, Activations.SIGMOID),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
@@ -138,7 +143,7 @@ public class MNISTClassifier {
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.CROSS_ENTROPY,
                 new Adam(0.01),
-                new NormalUpdater()
+                new StochasticUpdater()
         );
 
         return model;
