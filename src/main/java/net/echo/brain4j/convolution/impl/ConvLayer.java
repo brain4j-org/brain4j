@@ -59,11 +59,6 @@ public class ConvLayer extends Layer {
         return filters;
     }
 
-    @Override
-    public double getValue(StatesCache cache, int x, int y) {
-        return output.getValue(x, y);
-    }
-
     public void postProcess() {
         Kernel first = featureMap.getFirst();
         Kernel result = new Kernel(first.getWidth(), first.getHeight());

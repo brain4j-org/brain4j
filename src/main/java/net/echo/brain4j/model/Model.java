@@ -263,17 +263,14 @@ public class Model {
                     input.size() + " != " + firstLayer.getNeurons().size());
         }
 
-        int width = 0;
-        int height = 0;
-
-        if (firstLayer instanceof InputLayer inputLayer) {
-            width = inputLayer.getWidth();
-            height = inputLayer.getHeight();
-        }
+        Layer lastLayer = firstLayer;
+        Kernel lastConvolutionalInput = null;
 
         firstLayer.setInput(cacheHolder, input);
 
-        Layer lastLayer = firstLayer;
+        if (firstLayer instanceof InputLayer inputLayer) {
+            lastConvolutionalInput = inputLayer.getImage(cacheHolder);
+        }
 
         for (int l = 0; l < layers.size() - 1; l++) {
             Layer layer = layers.get(l);
@@ -281,29 +278,22 @@ public class Model {
             if (layer instanceof DropoutLayer) continue;
 
             if (layer instanceof ConvLayer convLayer) {
-                convLayer.getFeatureMap().clear();
-
-                Kernel convInput = new Kernel(width, height);
-
-                for (int w = 0; w < width; w++) {
-                    for (int h = 0; h < height; h++) {
-                        double value = lastLayer.getValue(cacheHolder, w, h);
-                        convInput.setValue(w, h, value);
-                    }
+                if (lastConvolutionalInput == null) {
+                    throw new IllegalStateException("The last convolutional input is null! Missing an input layer.");
                 }
+
+                convLayer.getFeatureMap().clear();
 
                 List<Kernel> kernels = convLayer.getKernels();
 
                 for (Kernel kernel : kernels) {
-                    Kernel result = convInput.convolute(kernel);
+                    Kernel result = lastConvolutionalInput.convolute(kernel);
 
                     convLayer.getFeatureMap().add(result);
                 }
 
                 convLayer.postProcess();
-
-                width = convLayer.getOutput().getWidth();
-                height = convLayer.getOutput().getHeight();
+                lastConvolutionalInput = convLayer.getOutput();
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
@@ -318,13 +308,18 @@ public class Model {
                             + flattenLayer.size() + " != " + map.size());
                 }
 
+                Vector vector = new Vector(map.getHeight() * map.getWidth());
                 for (int h = 0; h < map.getHeight(); h++) {
                     for (int w = 0; w < map.getWidth(); w++) {
                         double value = map.getValue(w, h);
 
-                        flattenLayer.getNeuronAt(h * w).setValue(cacheHolder, value);
+                        vector.set(h * map.getWidth() + w, value);
+
+                        flattenLayer.getNeuronAt(h * map.getWidth() + w).setValue(cacheHolder, value);
                     }
                 }
+
+                System.out.println(vector.toString("%.2f"));
             }
 
             if (layer instanceof DenseLayer || layer instanceof FlattenLayer) {
@@ -348,7 +343,7 @@ public class Model {
                     nextNeurons.get(i).setValue(cacheHolder, value);
                 }
 
-                nextLayer.applyFunction(cacheHolder, lastLayer);
+                nextLayer.applyFunction(cacheHolder, layer);
             }
 
             lastLayer = layer;

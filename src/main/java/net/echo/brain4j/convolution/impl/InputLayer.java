@@ -1,7 +1,10 @@
 package net.echo.brain4j.convolution.impl;
 
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.structure.StatesCache;
 
 public class InputLayer extends Layer {
 
@@ -30,5 +33,19 @@ public class InputLayer extends Layer {
     @Override
     public int size() {
         return width * height;
+    }
+
+    public Kernel getImage(StatesCache cache) {
+        Kernel result = new Kernel(width, height);
+
+        for (int x = 0; x < width; x++) {
+            for (int h = 0; h < height; h++) {
+                Neuron neuron = getNeurons().get(h * width + x);
+
+                result.getValues()[h].set(x, neuron.getValue(cache));
+            }
+        }
+
+        return result;
     }
 }

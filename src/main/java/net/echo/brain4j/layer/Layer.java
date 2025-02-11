@@ -131,8 +131,4 @@ public class Layer {
     public int size() {
         return neurons.size();
     }
-
-    public double getValue(StatesCache cache, int x, int y) {
-        return neurons.get(x * y).getValue(cache);
-    }
 }
