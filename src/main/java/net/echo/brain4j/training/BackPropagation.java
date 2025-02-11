@@ -43,7 +43,7 @@ public class BackPropagation {
                     Vector output = model.predict(cacheHolder, row.inputs());
                     Vector target = row.outputs();
 
-                    backpropagate(cacheHolder, target.toArray(), output.toArray());
+                    backpropagate(cacheHolder, target, output);
                 }
 
                 updater.postBatch(model, optimizer.getLearningRate());
@@ -56,7 +56,7 @@ public class BackPropagation {
         updater.postFit(model, optimizer.getLearningRate());
     }
 
-    public void backpropagate(StatesCache cacheHolder, double[] targets, double[] outputs) {
+    public void backpropagate(StatesCache cacheHolder, Vector targets, Vector outputs) {
         List<Layer> layers = model.getLayers();
         initialDelta(cacheHolder, layers, targets, outputs);
 
@@ -75,23 +75,18 @@ public class BackPropagation {
         updater.postIteration(model, optimizer.getLearningRate());
     }
 
-    private void initialDelta(StatesCache cacheHolder, List<Layer> layers, double[] targets, double[] outputs) {
+    private void initialDelta(StatesCache cacheHolder, List<Layer> layers, Vector targets, Vector outputs) {
         Layer outputLayer = layers.getLast();
 
         List<Neuron> neurons = outputLayer.getNeurons();
-        Vector result = new Vector(outputs.length);
-
-        for (int i = 0; i < outputs.length; i++) {
-            result.set(i, outputs[i]);
-        }
 
         Activation function = outputLayer.getActivation().getFunction();
-        Vector changes = function.getDerivative(result);
+        Vector changes = function.getDerivative(outputs);
 
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
 
-            double error = outputs[i] - targets[i];
+            double error = outputs.get(i) - targets.get(i);
             double delta = changes.get(i) * error;
 
             neuron.setDelta(cacheHolder, delta);

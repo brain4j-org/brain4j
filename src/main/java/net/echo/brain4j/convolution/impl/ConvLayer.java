@@ -12,13 +12,11 @@ import java.util.Random;
 public class ConvLayer extends Layer {
 
     protected final List<Kernel> kernels = new ArrayList<>();
-    protected final List<Kernel> featureMap = new ArrayList<>();
 
     protected final int kernelWidth;
     protected final int kernelHeight;
     protected final int filters;
 
-    protected Kernel output;
     protected int padding;
     protected int stride;
 
@@ -64,7 +62,7 @@ public class ConvLayer extends Layer {
         return filters;
     }
 
-    public void postProcess(StatesCache cache) {
+    public Kernel postProcess(List<Kernel> featureMap) {
         Kernel first = featureMap.getFirst();
         Kernel result = new Kernel(first.getWidth(), first.getHeight());
 
@@ -72,15 +70,7 @@ public class ConvLayer extends Layer {
             result.add(feature);
         }
 
-        this.output = result;
-    }
-
-    public Kernel getOutput() {
-        return output;
-    }
-
-    public List<Kernel> getFeatureMap() {
-        return featureMap;
+        return result;
     }
 
     public List<Kernel> getKernels() {

@@ -88,6 +88,8 @@ public class Model {
         this.layers = new ArrayList<>(Arrays.asList(layers));
         this.synapsesMatrices = new ArrayList<>();
 
+        if (this.layers.isEmpty()) return;
+
         boolean isInput = layers[0] instanceof InputLayer;
         boolean hasConv = false;
 
@@ -179,7 +181,7 @@ public class Model {
         List<Thread> threads = new ArrayList<>();
 
         for (DataRow row : set.getData()) {
-            // Thread thread = Thread.startVirtualThread(() -> {
+            Thread thread = Thread.startVirtualThread(() -> {
                 Vector inputs = row.inputs();
                 Vector targets = row.outputs();
 
@@ -187,9 +189,9 @@ public class Model {
 
                 double loss = lossFunction.getFunction().calculate(targets, outputs);
                 totalError.updateAndGet(v -> v + loss);
-            // });
+            });
 
-            // threads.add(thread);
+            threads.add(thread);
         }
 
         // MLUtils.waitAll(threads);
@@ -282,37 +284,38 @@ public class Model {
                     throw new IllegalStateException("The last convolutional input is null! Missing an input layer.");
                 }
 
-                convLayer.getFeatureMap().clear();
-
                 List<Kernel> kernels = convLayer.getKernels();
+                List<Kernel> featureMap = new ArrayList<>();
 
                 for (Kernel kernel : kernels) {
                     Kernel result = lastConvolutionalInput.convolute(kernel, convLayer.getStride());
 
-                    convLayer.getFeatureMap().add(result);
+                    featureMap.add(result);
                 }
 
-                convLayer.postProcess(cacheHolder);
-                lastConvolutionalInput = convLayer.getOutput().padding(convLayer.getPadding());
+                Kernel kernel = convLayer.postProcess(featureMap);
+                lastConvolutionalInput = kernel.padding(convLayer.getPadding());
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
                 // TODO: Implement pooling layer
             }
 
-            if (layer instanceof FlattenLayer flattenLayer && lastLayer instanceof ConvLayer convLayer) {
-                Kernel map = convLayer.getOutput();
-
-                if (flattenLayer.size() != map.size()) {
-                    throw new IllegalArgumentException("Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
-                            + flattenLayer.size() + " != " + map.size());
+            if (layer instanceof FlattenLayer flattenLayer && lastLayer instanceof ConvLayer) {
+                if (lastConvolutionalInput == null) {
+                    throw new NullPointerException("Last convolutional input is null!");
                 }
 
-                for (int h = 0; h < map.getHeight(); h++) {
-                    for (int w = 0; w < map.getWidth(); w++) {
-                        double value = map.getValue(w, h);
+                if (flattenLayer.size() != lastConvolutionalInput.size()) {
+                    throw new IllegalArgumentException("Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
+                            + flattenLayer.size() + " != " + lastConvolutionalInput.size());
+                }
 
-                        flattenLayer.getNeuronAt(h * map.getWidth() + w).setValue(cacheHolder, value);
+                for (int h = 0; h < lastConvolutionalInput.getHeight(); h++) {
+                    for (int w = 0; w < lastConvolutionalInput.getWidth(); w++) {
+                        double value = lastConvolutionalInput.getValue(w, h);
+
+                        flattenLayer.getNeuronAt(h * lastConvolutionalInput.getWidth() + w).setValue(cacheHolder, value);
                     }
                 }
             }
