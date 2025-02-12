@@ -3,6 +3,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.techniques.SmartTrainer;
@@ -26,7 +27,15 @@ public class XorExample {
         SmartTrainer trainer = new SmartTrainer(0.7, 100);
 
         trainer.addListener(new ExampleListener());
-        trainer.startFor(model, dataSet, 10_000);
+        trainer.startFor(model, dataSet, 1_000);
+
+        System.out.println();
+
+        for (DataRow row : dataSet) {
+            Vector prediction = model.predict(row.inputs());
+
+            System.out.println("Expected: " + row.outputs() + " -> Predicted: " + prediction);
+        }
     }
 
     private Model getModel() {

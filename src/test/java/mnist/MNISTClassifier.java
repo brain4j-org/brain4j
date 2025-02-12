@@ -8,7 +8,6 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
@@ -125,7 +124,7 @@ public class MNISTClassifier {
                 System.out.print("\rEpoch " + epoch + " loss: " + loss + " took " + (took / 1e6) + " ms");
             }
         });
-        trainer.startFor(model, set, 1000);
+        trainer.startFor(model, set, 150);
 
         double loss = model.evaluate(set);
 
