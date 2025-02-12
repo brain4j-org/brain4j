@@ -2,6 +2,8 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.impl.ConvLayer;
 import net.echo.brain4j.convolution.impl.FlattenLayer;
 import net.echo.brain4j.convolution.impl.InputLayer;
+import net.echo.brain4j.convolution.impl.PoolingLayer;
+import net.echo.brain4j.convolution.pooling.PoolingType;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
@@ -31,10 +33,10 @@ public class ConvExample {
 
         System.out.println(model.getStats());
         long start = System.nanoTime();
-        Vector prediction = model.predict(dataSet.getData().getFirst().inputs());
+        double loss = model.evaluate(dataSet);
         double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.println(took + " -> " + prediction.toString("%.3f"));
+        System.out.println(took + " -> " + loss);
     }
 
     private Model getModel() {
@@ -44,15 +46,14 @@ public class ConvExample {
 
                 // #1 convolutional block
                 new ConvLayer(32, 3, 3, Activations.RELU),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // #2 convolutional block
                 new ConvLayer(64, 5, 5, Activations.RELU),
-
-                // #3 convolutional block
-                new ConvLayer(128, 7, 7, Activations.RELU),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // Flattens the feature map to a 1D vector
-                new FlattenLayer(256), // You must find the right size by trial and error
+                new FlattenLayer(16), // You must find the right size by trial and error
 
                 // Classifiers
                 new DenseLayer(32, Activations.RELU),

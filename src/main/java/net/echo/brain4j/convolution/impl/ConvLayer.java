@@ -63,6 +63,10 @@ public class ConvLayer extends Layer {
     }
 
     public Kernel postProcess(List<Kernel> featureMap) {
+        if (featureMap.isEmpty()) {
+            throw new IllegalArgumentException("Feature map is empty!");
+        }
+
         Kernel first = featureMap.getFirst();
         Kernel result = new Kernel(first.getWidth(), first.getHeight());
 
@@ -70,8 +74,11 @@ public class ConvLayer extends Layer {
             result.add(feature);
         }
 
+        result.apply(this.activation.getFunction());
+
         return result;
     }
+
 
     public List<Kernel> getKernels() {
         return kernels;

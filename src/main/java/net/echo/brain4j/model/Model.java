@@ -266,12 +266,12 @@ public class Model {
         }
 
         Layer lastLayer = firstLayer;
-        Kernel lastConvolutionalInput = null;
+        Kernel convInput = null;
 
         firstLayer.setInput(cacheHolder, input);
 
         if (firstLayer instanceof InputLayer inputLayer) {
-            lastConvolutionalInput = inputLayer.getImage(cacheHolder);
+            convInput = inputLayer.getImage(cacheHolder);
         }
 
         for (int l = 0; l < layers.size() - 1; l++) {
@@ -280,7 +280,7 @@ public class Model {
             if (layer instanceof DropoutLayer) continue;
 
             if (layer instanceof ConvLayer convLayer) {
-                if (lastConvolutionalInput == null) {
+                if (convInput == null) {
                     throw new IllegalStateException("The last convolutional input is null! Missing an input layer.");
                 }
 
@@ -288,34 +288,38 @@ public class Model {
                 List<Kernel> featureMap = new ArrayList<>();
 
                 for (Kernel kernel : kernels) {
-                    Kernel result = lastConvolutionalInput.convolute(kernel, convLayer.getStride());
+                    Kernel result = convInput.convolute(kernel, convLayer.getStride());
 
                     featureMap.add(result);
                 }
 
                 Kernel kernel = convLayer.postProcess(featureMap);
-                lastConvolutionalInput = kernel.padding(convLayer.getPadding());
+                convInput = kernel.padding(convLayer.getPadding());
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
-                // TODO: Implement pooling layer
+                if (convInput == null) {
+                    throw new IllegalStateException("The last convolutional input is null! Missing a layer before.");
+                }
+
+                convInput = poolingLayer.applcyPooling(convInput);
             }
 
-            if (layer instanceof FlattenLayer flattenLayer && lastLayer instanceof ConvLayer) {
-                if (lastConvolutionalInput == null) {
+            if (layer instanceof FlattenLayer flattenLayer && (lastLayer instanceof ConvLayer || lastLayer instanceof PoolingLayer)) {
+                if (convInput == null) {
                     throw new NullPointerException("Last convolutional input is null!");
                 }
 
-                if (flattenLayer.size() != lastConvolutionalInput.size()) {
+                if (flattenLayer.size() != convInput.size()) {
                     throw new IllegalArgumentException("Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
-                            + flattenLayer.size() + " != " + lastConvolutionalInput.size());
+                            + flattenLayer.size() + " != " + convInput.size());
                 }
 
-                for (int h = 0; h < lastConvolutionalInput.getHeight(); h++) {
-                    for (int w = 0; w < lastConvolutionalInput.getWidth(); w++) {
-                        double value = lastConvolutionalInput.getValue(w, h);
+                for (int h = 0; h < convInput.getHeight(); h++) {
+                    for (int w = 0; w < convInput.getWidth(); w++) {
+                        double value = convInput.getValue(w, h);
 
-                        flattenLayer.getNeuronAt(h * lastConvolutionalInput.getWidth() + w).setValue(cacheHolder, value);
+                        flattenLayer.getNeuronAt(h * convInput.getWidth() + w).setValue(cacheHolder, value);
                     }
                 }
             }
