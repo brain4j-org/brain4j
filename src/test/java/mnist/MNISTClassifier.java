@@ -118,17 +118,13 @@ public class MNISTClassifier {
     public static void train(Model model, DataSet set) {
         SmartTrainer trainer = new SmartTrainer(0.7, 10);
 
-        trainer.addListener(new TrainListener() {
-            @Override
-            public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
-                System.out.print("\rEpoch " + epoch + " loss: " + loss + " took " + (took / 1e6) + " ms");
-            }
-        });
+        trainer.addListener(new ExampleListener());
         trainer.startFor(model, set, 150);
 
         double loss = model.evaluate(set);
-
         model.save("mnist_" + loss + ".json");
+
+        System.out.println();
     }
 
     public static Model getModel() {
@@ -170,5 +166,13 @@ public class MNISTClassifier {
         }
 
         return set;
+    }
+
+    private static class ExampleListener extends TrainListener {
+
+        @Override
+        public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
+            System.out.print("\rEpoch " + epoch + " loss: " + loss + " took " + (took / 1e6) + " ms");
+        }
     }
 }
