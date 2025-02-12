@@ -194,7 +194,7 @@ public class Model {
             threads.add(thread);
         }
 
-        // MLUtils.waitAll(threads);
+        MLUtils.waitAll(threads);
         return totalError.get() / set.getData().size();
     }
 
