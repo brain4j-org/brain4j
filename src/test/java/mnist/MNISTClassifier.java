@@ -11,7 +11,6 @@ import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
-import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 import org.apache.commons.io.FileUtils;
@@ -138,7 +137,7 @@ public class MNISTClassifier {
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.CROSS_ENTROPY,
                 new Adam(0.01),
-                new StochasticUpdater()
+                new NormalUpdater()
         );
 
         return model;
