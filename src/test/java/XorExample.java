@@ -6,6 +6,7 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
@@ -29,7 +30,7 @@ public class XorExample {
         trainer.addListener(new ExampleListener());
         trainer.startFor(model, dataSet, 1_000);
 
-        System.out.println();
+        System.out.println("Took: " + trainer.getTook() / 1e6 + " ms");
 
         for (DataRow row : dataSet) {
             Vector prediction = model.predict(row.inputs());
@@ -46,7 +47,7 @@ public class XorExample {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.1), new StochasticUpdater());
+        return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new AdamGPU(0.1), new StochasticUpdater());
     }
 
     private DataSet getDataSet() {

@@ -17,15 +17,15 @@ public class StatesCache {
     }
 
     public double[] getGradients() {
-        return this.gradients;
+        return gradients;
     }
 
     public double getGradient(int index) {
-        return this.gradients[index];
+        return gradients[index];
     }
 
     public double getValue(Neuron neuron) {
-        return this.valuesCache[neuron.getId()];
+        return valuesCache[neuron.getId()];
     }
 
     public double getDelta(Neuron neuron) {

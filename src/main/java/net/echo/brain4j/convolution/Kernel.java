@@ -24,7 +24,7 @@ public class Kernel {
         this.values = new Vector[height];
 
         for (int i = 0; i < height; i++) {
-            this.values[i] = new Vector(width);
+            values[i] = new Vector(width);
         }
     }
 
@@ -32,14 +32,14 @@ public class Kernel {
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 double value = generator.nextDouble() * 2 * bound - bound;
-                this.values[i].set(j, value);
+                values[i].set(j, value);
             }
         }
     }
 
     public Kernel convolute(Kernel kernel, int stride) {
-        int outputWidth = this.width - kernel.getWidth() + 1;
-        int outputHeight = this.height - kernel.getHeight() + 1;
+        int outputWidth = width - kernel.getWidth() + 1;
+        int outputHeight = height - kernel.getHeight() + 1;
 
         if (outputWidth <= 0 || outputHeight <= 0) {
             throw new IllegalArgumentException("Kernel dimensions must be smaller than or equal to the input dimensions");
@@ -53,7 +53,7 @@ public class Kernel {
 
                 for (int ki = 0; ki < kernel.getHeight(); ki++) {
                     for (int kj = 0; kj < kernel.getWidth(); kj++) {
-                        double image = this.values[i + ki].get(j + kj);
+                        double image = values[i + ki].get(j + kj);
                         double filter = kernel.getValues()[ki].get(kj);
 
                         sum += image * filter;
@@ -68,13 +68,13 @@ public class Kernel {
     }
 
     public Kernel padding(int padding) {
-        int newWidth = this.width + 2 * padding;
-        int newHeight = this.height + 2 * padding;
+        int newWidth = width + 2 * padding;
+        int newHeight = height + 2 * padding;
         Kernel paddedKernel = new Kernel(newWidth, newHeight);
 
-        for (int i = 0; i < this.height; i++) {
-            for (int j = 0; j < this.width; j++) {
-                paddedKernel.getValues()[i + padding].set(j + padding, this.values[i].get(j));
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                paddedKernel.getValues()[i + padding].set(j + padding, values[i].get(j));
             }
         }
 
@@ -82,18 +82,18 @@ public class Kernel {
     }
 
     public void add(Kernel feature) {
-        for (int h = 0; h < this.height; h++) {
+        for (int h = 0; h < height; h++) {
             Vector add = feature.getValues()[h];
-            this.values[h].add(add);
+            values[h].add(add);
         }
     }
 
     public double getValue(int x, int y) {
-        return this.values[y].get(x);
+        return values[y].get(x);
     }
 
     public void setValue(int width, int height, double value) {
-        this.values[height].set(width, value);
+        values[height].set(width, value);
     }
 
     public Vector[] getValues() {
@@ -114,9 +114,9 @@ public class Kernel {
 
     public void apply(Activation activation) {
         for (int h = 0; h < height; h++) {
-            Vector row = this.values[h];
+            Vector row = values[h];
 
-            this.values[h] = activation.activate(row);
+            values[h] = activation.activate(row);
         }
     }
 

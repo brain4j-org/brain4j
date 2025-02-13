@@ -17,11 +17,11 @@ __kernel void adam_update(
         float m = beta1 * firstMomentum[i] + oneMinusBeta1 * gradient;
         float v = beta2 * secondMomentum[i] + oneMinusBeta2 * gradient * gradient;
 
-        firstMomentum[i] = m;
-        secondMomentum[i] = v;
-
         float mHat = m / beta1Timestep;
         float vHat = v / beta2Timestep;
+
+        firstMomentum[i] = m;
+        secondMomentum[i] = v;
 
         updates[i] = (learningRate * mHat) / (native_sqrt(vHat) + epsilon);
     }

@@ -8,6 +8,7 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;

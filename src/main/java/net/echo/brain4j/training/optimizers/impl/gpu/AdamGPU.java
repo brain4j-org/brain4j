@@ -11,6 +11,7 @@ import org.jocl.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.jocl.CL.*;
@@ -38,7 +39,7 @@ public class AdamGPU extends Optimizer {
     private cl_mem dGradients;
 
     public AdamGPU(double learningRate) {
-        this(learningRate, 0.9f, 0.999f, 0.000001f); // Anything below 1e-6 is 0
+        this(learningRate, 0.9f, 0.999f, 0.00001f); // Anything below 1e-6 is 0
     }
 
     public AdamGPU(double learningRate, float beta1, float beta2, float epsilon) {
@@ -51,24 +52,20 @@ public class AdamGPU extends Optimizer {
     }
 
     private void initialize() {
-        cl_device_id device = DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU);
+        cl_device_id[] devices = { DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU) };
 
         System.out.println("Using Device: " + DeviceUtils.getDeviceName());
-
-        cl_platform_id[] platforms = new cl_platform_id[1];
-        CL.clGetPlatformIDs(1, platforms, null);
-
         System.out.println("OpenCL Version: " + DeviceUtils.getOpenCLVersion());
 
-        context = clCreateContext(null, 1, new cl_device_id[]{device}, null, null, null);
-        commandQueue = clCreateCommandQueue(context, device, 0, null);
+        this.context = clCreateContext(null, 1, devices, null, null, null);
+        this.commandQueue = clCreateCommandQueue(context, devices[0], 0, null);
 
-        String kernelSource = loadKernelSource();
+        String[] kernelSource = { loadKernelSource() };
 
-        cl_program program = clCreateProgramWithSource(context, 1, new String[]{kernelSource}, null, null);
+        cl_program program = clCreateProgramWithSource(context, 1, kernelSource, null, null);
         clBuildProgram(program, 0, null, null, null, null);
 
-        kernel = clCreateKernel(program, "adam_update", null);
+        this.kernel = clCreateKernel(program, "adam_update", null);
     }
 
     private String loadKernelSource() {
@@ -99,7 +96,7 @@ public class AdamGPU extends Optimizer {
         cl_mem dSecondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
 
         this.dUpdates = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
-        this.dGradients = DeviceUtils.createBuffer(context, CL_MEM_READ_ONLY, size);
+        this.dGradients = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
 
         DeviceUtils.writeBuffer(commandQueue, dFirstMomentum, size, new float[Synapse.SYNAPSE_COUNTER]);
         DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new float[Synapse.SYNAPSE_COUNTER]);
@@ -108,8 +105,8 @@ public class AdamGPU extends Optimizer {
         clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(dSecondMomentum));
         clSetKernelArg(kernel, 4, Sizeof.cl_float, DeviceUtils.to(beta1));
         clSetKernelArg(kernel, 5, Sizeof.cl_float, DeviceUtils.to(beta2));
-        clSetKernelArg(kernel, 6, Sizeof.cl_float, DeviceUtils.to(1.0 - beta1));
-        clSetKernelArg(kernel, 7, Sizeof.cl_float, DeviceUtils.to(1.0 - beta2));
+        clSetKernelArg(kernel, 6, Sizeof.cl_float, DeviceUtils.to(1f - beta1));
+        clSetKernelArg(kernel, 7, Sizeof.cl_float, DeviceUtils.to(1f - beta2));
         clSetKernelArg(kernel, 10, Sizeof.cl_float, DeviceUtils.to(epsilon));
         clSetKernelArg(kernel, 11, Sizeof.cl_float, DeviceUtils.to((float) learningRate));
         clSetKernelArg(kernel, 12, Sizeof.cl_int, DeviceUtils.to(Synapse.SYNAPSE_COUNTER));

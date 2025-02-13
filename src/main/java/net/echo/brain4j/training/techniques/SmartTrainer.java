@@ -8,17 +8,20 @@ import java.util.List;
 
 public class SmartTrainer {
 
-    private final List<TrainListener> listeners = new ArrayList<>();
-
+    private final List<TrainListener> listeners;
     private final double learningRateDecay;
     private final int evaluateEvery;
 
-    private int epoches;
-    private boolean running;
     private double previousLoss = Double.MAX_VALUE;
     private double loss = Double.MAX_VALUE;
+    private boolean running;
+    private int epoches;
+
+    private long start;
+    private long end;
 
     public SmartTrainer(double learningRateDecay, int evaluateEvery) {
+        this.listeners = new ArrayList<>();
         this.learningRateDecay = learningRateDecay;
         this.evaluateEvery = evaluateEvery;
     }
@@ -32,6 +35,7 @@ public class SmartTrainer {
     }
 
     public void start(Model model, DataSet dataSet, double lossThreshold, double lossTolerance) {
+        this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
 
@@ -60,6 +64,7 @@ public class SmartTrainer {
         }
 
         this.running = false;
+        this.end = System.nanoTime();
     }
 
     public void step(Model model, DataSet dataSet) {
@@ -69,6 +74,7 @@ public class SmartTrainer {
     }
 
     public void startFor(Model model, DataSet dataSet, int epochesAmount) {
+        this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
 
@@ -97,6 +103,7 @@ public class SmartTrainer {
         }
 
         this.running = false;
+        this.end = System.nanoTime();
     }
 
     public int getEpoches() {
@@ -125,5 +132,17 @@ public class SmartTrainer {
 
     public List<TrainListener> getListeners() {
         return listeners;
+    }
+
+    public long getStart() {
+        return start;
+    }
+
+    public long getEnd() {
+        return end;
+    }
+
+    public long getTook() {
+        return end - start;
     }
 }
