@@ -3,7 +3,8 @@ package net.echo.brain4j.training.updater.impl;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.cache.Parameters;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.updater.Updater;
 
@@ -14,8 +15,8 @@ public class NormalUpdater extends Updater {
 
     @Override
     public void postInitialize(Model model) {
-        this.synapses = new Synapse[Synapse.SYNAPSE_COUNTER];
-        this.gradients = new double[Synapse.SYNAPSE_COUNTER];
+        this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
+        this.gradients = new double[Parameters.TOTAL_SYNAPSES];
 
         for (Layer layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {
@@ -45,7 +46,7 @@ public class NormalUpdater extends Updater {
             }
         }
 
-        this.gradients = new double[Synapse.SYNAPSE_COUNTER];
+        this.gradients = new double[Parameters.TOTAL_SYNAPSES];
     }
 
     @Override

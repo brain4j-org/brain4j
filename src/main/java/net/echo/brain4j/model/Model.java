@@ -20,7 +20,8 @@ import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.cache.Parameters;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
@@ -388,7 +389,7 @@ public class Model {
             this.generator = new Random(seed);
             this.layers = GSON.fromJson(parent.get("layers"), listType);
 
-            Synapse.SYNAPSE_COUNTER = 0;
+            Parameters.TOTAL_SYNAPSES = 0;
             connect(weightInit, false);
 
             double[][] biases = GSON.fromJson(parent.get("biases"), double[][].class);

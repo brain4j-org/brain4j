@@ -2,7 +2,7 @@ package net.echo.brain4j.activation.impl;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.Arrays;

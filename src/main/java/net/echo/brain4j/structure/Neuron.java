@@ -1,13 +1,13 @@
 package net.echo.brain4j.structure;
 
 import com.google.gson.annotations.Expose;
+import net.echo.brain4j.structure.cache.Parameters;
+import net.echo.brain4j.structure.cache.StatesCache;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Neuron {
-
-    public static int NEURON_COUNTER = 0;
 
     private final List<Synapse> synapses = new ArrayList<>();
     private final int id;
@@ -17,7 +17,7 @@ public class Neuron {
     private double totalDelta;
 
     public Neuron() {
-        this.id = NEURON_COUNTER++;
+        this.id = Parameters.TOTAL_NEURONS++;
     }
 
     public List<Synapse> getSynapses() {

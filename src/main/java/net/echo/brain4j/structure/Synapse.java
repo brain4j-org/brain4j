@@ -1,10 +1,10 @@
 package net.echo.brain4j.structure;
 
+import net.echo.brain4j.structure.cache.Parameters;
+
 import java.util.Random;
 
 public class Synapse {
-
-    public static int SYNAPSE_COUNTER = 0;
 
     private final Neuron inputNeuron;
     private final Neuron outputNeuron;
@@ -12,7 +12,7 @@ public class Synapse {
     private double weight;
 
     public Synapse(Random generator, Neuron inputNeuron, Neuron outputNeuron, double bound) {
-        this.synapseId = SYNAPSE_COUNTER++;
+        this.synapseId = Parameters.TOTAL_SYNAPSES++;
         this.inputNeuron = inputNeuron;
         this.outputNeuron = outputNeuron;
         this.weight = (generator.nextDouble() * 2 * bound) - bound;

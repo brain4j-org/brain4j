@@ -2,7 +2,8 @@ package net.echo.brain4j.training.optimizers.impl.gpu;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.cache.Parameters;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -11,7 +12,6 @@ import org.jocl.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.jocl.CL.*;
@@ -82,7 +82,7 @@ public class AdamGPU extends Optimizer {
 
     @Override
     public void postInitialize(Model model) {
-        this.synapses = new Synapse[Synapse.SYNAPSE_COUNTER];
+        this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
 
         for (Layer layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {
@@ -90,16 +90,16 @@ public class AdamGPU extends Optimizer {
             }
         }
 
-        this.size = (long) Synapse.SYNAPSE_COUNTER * Sizeof.cl_float;
+        this.size = (long) Parameters.TOTAL_SYNAPSES * Sizeof.cl_float;
 
         cl_mem dFirstMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
         cl_mem dSecondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
 
-        this.dUpdates = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        this.dUpdates = DeviceUtils.createBuffer(context, CL_MEM_READ_ONLY, size);
         this.dGradients = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
 
-        DeviceUtils.writeBuffer(commandQueue, dFirstMomentum, size, new float[Synapse.SYNAPSE_COUNTER]);
-        DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new float[Synapse.SYNAPSE_COUNTER]);
+        DeviceUtils.writeBuffer(commandQueue, dFirstMomentum, size, new float[Parameters.TOTAL_SYNAPSES]);
+        DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new float[Parameters.TOTAL_SYNAPSES]);
 
         clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dFirstMomentum));
         clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(dSecondMomentum));
@@ -109,7 +109,7 @@ public class AdamGPU extends Optimizer {
         clSetKernelArg(kernel, 7, Sizeof.cl_float, DeviceUtils.to(1f - beta2));
         clSetKernelArg(kernel, 10, Sizeof.cl_float, DeviceUtils.to(epsilon));
         clSetKernelArg(kernel, 11, Sizeof.cl_float, DeviceUtils.to((float) learningRate));
-        clSetKernelArg(kernel, 12, Sizeof.cl_int, DeviceUtils.to(Synapse.SYNAPSE_COUNTER));
+        clSetKernelArg(kernel, 12, Sizeof.cl_int, DeviceUtils.to(Parameters.TOTAL_SYNAPSES));
     }
 
     @Override
@@ -119,7 +119,7 @@ public class AdamGPU extends Optimizer {
         this.beta1Timestep = (float) (1.0 - Math.pow(beta1, timestep));
         this.beta2Timestep = (float) (1.0 - Math.pow(beta2, timestep));
 
-        float[] gradients = new float[Synapse.SYNAPSE_COUNTER];
+        float[] gradients = new float[Parameters.TOTAL_SYNAPSES];
 
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
@@ -136,7 +136,7 @@ public class AdamGPU extends Optimizer {
     }
     
     private void executeKernel(StatesCache cacheHolder, Updater updater, float[] gradients) {
-        float[] updates = new float[Synapse.SYNAPSE_COUNTER];
+        float[] updates = new float[Parameters.TOTAL_SYNAPSES];
         cl_event kernelEvent = new cl_event();
 
         clEnqueueWriteBuffer(commandQueue, dGradients, CL_TRUE, 0, size, Pointer.to(gradients), 0, null, null);
@@ -146,7 +146,7 @@ public class AdamGPU extends Optimizer {
         clSetKernelArg(kernel, 8, Sizeof.cl_float, DeviceUtils.to(beta1Timestep));
         clSetKernelArg(kernel, 9, Sizeof.cl_float, DeviceUtils.to(beta2Timestep));
 
-        long[] globalWorkSize = new long[]{(long) Synapse.SYNAPSE_COUNTER};
+        long[] globalWorkSize = new long[]{(long) Parameters.TOTAL_SYNAPSES};
 
         // Launch kernel async
         clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, globalWorkSize, null, 0, null, kernelEvent);

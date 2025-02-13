@@ -4,7 +4,7 @@ import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.updater.Updater;
 

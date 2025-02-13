@@ -4,7 +4,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.cache.StatesCache;
 
 public class InputLayer extends Layer {
 

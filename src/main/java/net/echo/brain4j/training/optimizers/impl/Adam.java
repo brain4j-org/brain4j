@@ -2,7 +2,8 @@ package net.echo.brain4j.training.optimizers.impl;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.structure.cache.Parameters;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -35,8 +36,8 @@ public class Adam extends Optimizer {
     }
 
     public void postInitialize(Model model) {
-        this.firstMomentum = new double[Synapse.SYNAPSE_COUNTER];
-        this.secondMomentum = new double[Synapse.SYNAPSE_COUNTER];
+        this.firstMomentum = new double[Parameters.TOTAL_SYNAPSES];
+        this.secondMomentum = new double[Parameters.TOTAL_SYNAPSES];
     }
 
     @Override
