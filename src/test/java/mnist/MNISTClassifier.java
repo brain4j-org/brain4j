@@ -124,7 +124,7 @@ public class MNISTClassifier {
         double loss = model.evaluate(set);
         model.save("mnist_" + loss + ".json");
 
-        System.out.println();
+        System.out.println("Took: " + trainer.getTook() / 1e6);
     }
 
     public static Model getModel() {
@@ -134,14 +134,12 @@ public class MNISTClassifier {
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        model.compile(
+        return model.compile(
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.CROSS_ENTROPY,
                 new Adam(0.01),
                 new NormalUpdater()
         );
-
-        return model;
     }
 
     public static DataSet getData() {
