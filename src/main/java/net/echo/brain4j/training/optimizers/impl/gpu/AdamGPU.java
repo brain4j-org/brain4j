@@ -23,8 +23,6 @@ public class AdamGPU extends Optimizer {
     protected float beta1Timestep;
     protected float beta2Timestep;
 
-    private long size;
-
     protected float beta1;
     protected float beta2;
     protected float epsilon;
@@ -34,9 +32,10 @@ public class AdamGPU extends Optimizer {
     private cl_context context;
     private cl_command_queue commandQueue;
     private cl_kernel kernel;
-
-    private cl_mem dUpdates;
-    private cl_mem dGradients;
+    private cl_mem updatesMemory;
+    private cl_mem gradientsMemory;
+    private long size;
+    private long localWorkSize;
 
     public AdamGPU(double learningRate) {
         this(learningRate, 0.9f, 0.999f, 0.00001f); // Anything below 1e-6 is 0
@@ -54,9 +53,7 @@ public class AdamGPU extends Optimizer {
     private void initialize() {
         cl_device_id[] devices = { DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU) };
 
-        System.out.println("Using Device: " + DeviceUtils.getDeviceName());
-        System.out.println("OpenCL Version: " + DeviceUtils.getOpenCLVersion());
-
+        this.localWorkSize = DeviceUtils.getMaxLocalWorkSize();
         this.context = clCreateContext(null, 1, devices, null, null, null);
         this.commandQueue = clCreateCommandQueue(context, devices[0], 0, null);
 
@@ -92,17 +89,17 @@ public class AdamGPU extends Optimizer {
 
         this.size = (long) Parameters.TOTAL_SYNAPSES * Sizeof.cl_float;
 
-        cl_mem dFirstMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
-        cl_mem dSecondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        cl_mem firstMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        cl_mem secondMomentum = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
 
-        this.dUpdates = DeviceUtils.createBuffer(context, CL_MEM_READ_ONLY, size);
-        this.dGradients = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE, size);
+        this.updatesMemory = DeviceUtils.createBuffer(context, CL_MEM_READ_ONLY, size);
+        this.gradientsMemory = DeviceUtils.createBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, size);
 
-        DeviceUtils.writeBuffer(commandQueue, dFirstMomentum, size, new float[Parameters.TOTAL_SYNAPSES]);
-        DeviceUtils.writeBuffer(commandQueue, dSecondMomentum, size, new float[Parameters.TOTAL_SYNAPSES]);
+        DeviceUtils.writeBuffer(commandQueue, firstMomentum, size, new float[Parameters.TOTAL_SYNAPSES]);
+        DeviceUtils.writeBuffer(commandQueue, secondMomentum, size, new float[Parameters.TOTAL_SYNAPSES]);
 
-        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dFirstMomentum));
-        clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(dSecondMomentum));
+        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(firstMomentum));
+        clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(secondMomentum));
         clSetKernelArg(kernel, 4, Sizeof.cl_float, DeviceUtils.to(beta1));
         clSetKernelArg(kernel, 5, Sizeof.cl_float, DeviceUtils.to(beta2));
         clSetKernelArg(kernel, 6, Sizeof.cl_float, DeviceUtils.to(1f - beta1));
@@ -139,24 +136,20 @@ public class AdamGPU extends Optimizer {
         float[] updates = new float[Parameters.TOTAL_SYNAPSES];
         cl_event kernelEvent = new cl_event();
 
-        clEnqueueWriteBuffer(commandQueue, dGradients, CL_TRUE, 0, size, Pointer.to(gradients), 0, null, null);
+        clEnqueueWriteBuffer(commandQueue, gradientsMemory, CL_TRUE, 0, size, Pointer.to(gradients), 0, null, null);
 
-        clSetKernelArg(kernel, 2, Sizeof.cl_mem, Pointer.to(dGradients));
-        clSetKernelArg(kernel, 3, Sizeof.cl_mem, Pointer.to(dUpdates));
+        clSetKernelArg(kernel, 2, Sizeof.cl_mem, Pointer.to(gradientsMemory));
+        clSetKernelArg(kernel, 3, Sizeof.cl_mem, Pointer.to(updatesMemory));
         clSetKernelArg(kernel, 8, Sizeof.cl_float, DeviceUtils.to(beta1Timestep));
         clSetKernelArg(kernel, 9, Sizeof.cl_float, DeviceUtils.to(beta2Timestep));
 
-        long[] globalWorkSize = new long[]{(long) Parameters.TOTAL_SYNAPSES};
-
         // Launch kernel async
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null, globalWorkSize, null, 0, null, kernelEvent);
+        DeviceUtils.runKernel(commandQueue, kernel, localWorkSize, Parameters.TOTAL_SYNAPSES, kernelEvent);
 
         clSetEventCallback(kernelEvent, CL_SUBMITTED, (event1, status1, userData1) -> {
-            float[] updates1 = (float[]) userData1;
+            DeviceUtils.readBuffer(commandQueue, updatesMemory, size, updates);
 
-            DeviceUtils.readBuffer(commandQueue, dUpdates, size, updates1);
-
-            applyChanges(cacheHolder, updater, updates1);
+            applyChanges(cacheHolder, updater, updates);
         }, updates);
     }
 

@@ -105,19 +105,19 @@ public class DeviceUtils {
         return new String(version).trim();
     }
 
-    public static void awaitAndRunKernel(cl_command_queue commandQueue, cl_kernel kernel, int workDimension, long[] globalWorkSize) {
+    public static void runKernel(cl_command_queue commandQueue, cl_kernel kernel, long localWorkSize, long globalWorkSize,
+                                 cl_event event) {
         clEnqueueNDRangeKernel(
                 commandQueue,
                 kernel,
                 1,
                 null,
-                globalWorkSize,
-                null,
+                new long[]{globalWorkSize},
+                new long[]{localWorkSize},
                 0,
                 null,
-                null
+                event
         );
-        clFinish(commandQueue);
     }
 
     public static String getExtensions() {
@@ -128,6 +128,15 @@ public class DeviceUtils {
         clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, buffer.length, Pointer.to(buffer), null);
 
         return new String(buffer);
+    }
+
+    public static long getMaxLocalWorkSize() {
+        long[] maxLocalWorkSize = new long[1];
+
+        clGetDeviceInfo(DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU), CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                Sizeof.cl_long, Pointer.to(maxLocalWorkSize), null);
+
+        return maxLocalWorkSize[0];
     }
 
     public enum DeviceType {
