@@ -2,6 +2,7 @@ package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.training.data.DataSet;
 
 /**
  * Represents a fully connected (dense) layer in a neural network.

@@ -30,7 +30,7 @@ public class BackPropagation {
     public void iterate(DataSet dataSet) {
         if (!dataSet.isPartitioned()) {
             int threads = Runtime.getRuntime().availableProcessors();
-            dataSet.partition(threads);
+            dataSet.partition(Math.min(threads, dataSet.getData().size()));
         }
 
         List<Thread> threads = new ArrayList<>();
@@ -79,8 +79,8 @@ public class BackPropagation {
         Layer outputLayer = layers.getLast();
 
         List<Neuron> neurons = outputLayer.getNeurons();
-
         Activation function = outputLayer.getActivation().getFunction();
+
         Vector changes = function.getDerivative(outputs);
 
         for (int i = 0; i < neurons.size(); i++) {
