@@ -6,9 +6,6 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
-import net.echo.brain4j.training.techniques.SmartTrainer;
-import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 
@@ -23,14 +20,12 @@ public class XorExample {
         Model model = getModel();
         DataSet dataSet = getDataSet();
 
-        dataSet.partition(1);
+        System.out.println(model.getStats());
 
-        SmartTrainer trainer = new SmartTrainer(0.7, 100);
-
-        trainer.addListener(new ExampleListener());
-        trainer.startFor(model, dataSet, 1_000);
-
-        System.out.println("Took: " + trainer.getTook() / 1e6 + " ms");
+        // Fit the model for 1000 epoches
+        for (int i = 0; i < 1000; i++) {
+            model.fit(dataSet);
+        }
 
         for (DataRow row : dataSet) {
             Vector prediction = model.predict(row.inputs());
@@ -41,13 +36,13 @@ public class XorExample {
 
     private Model getModel() {
         Model model = new Model(
-                new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(32, Activations.MISH),
-                new DenseLayer(32, Activations.MISH),
-                new DenseLayer(1, Activations.SIGMOID)
+            new DenseLayer(2, Activations.LINEAR), // 2 Input neurons
+            new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
+            new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
+            new DenseLayer(1, Activations.SIGMOID) // 1 Output neuron for classification
         );
 
-        return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new AdamGPU(0.1), new StochasticUpdater());
+        return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.1), new StochasticUpdater());
     }
 
     private DataSet getDataSet() {
@@ -62,13 +57,5 @@ public class XorExample {
         }
 
         return set;
-    }
-
-    private static class ExampleListener extends TrainListener {
-
-        @Override
-        public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
-            System.out.print("\rEpoch #" + epoch + " Loss " + loss);
-        }
     }
 }
