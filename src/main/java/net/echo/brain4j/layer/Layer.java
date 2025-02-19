@@ -83,29 +83,27 @@ public class Layer {
     }
 
     public void propagate(StatesCache cacheHolder, Layer previous, Updater updater) {
-        Vector neuronValues = getVector(cacheHolder);
-        Vector derivatives = activation.getFunction().getDerivative(neuronValues);
-
-        for (int i = 0; i < neurons.size(); i++) {
-            Neuron neuron = neurons.get(i);
+        for (Neuron neuron : neurons) {
+            double value = neuron.getValue(cacheHolder);
+            double derivative = activation.getFunction().getDerivative(value);
 
             for (Synapse synapse : neuron.getSynapses()) {
-                double weightChange = calculateGradient(cacheHolder, synapse, derivatives, i);
+                double weightChange = calculateGradient(cacheHolder, synapse, derivative);
                 updater.acknowledgeChange(cacheHolder, synapse, weightChange);
             }
         }
     }
 
-    public double calculateGradient(StatesCache cacheHolder, Synapse synapse, Vector derivatives, int index) {
-        Neuron neuron = synapse.getInputNeuron();
-        double derivative = derivatives.get(index);
+    public double calculateGradient(StatesCache cacheHolder, Synapse synapse, double derivative) {
+        Neuron input = synapse.getInputNeuron();
+        Neuron output = synapse.getOutputNeuron();
 
-        double error = MLUtils.clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta(cacheHolder));
+        double error = MLUtils.clipGradient(synapse.getWeight() * output.getDelta(cacheHolder));
         double delta = MLUtils.clipGradient(error * derivative);
 
-        neuron.setDelta(cacheHolder, delta);
+        input.setDelta(cacheHolder, delta);
 
-        return MLUtils.clipGradient(delta * synapse.getInputNeuron().getValue(cacheHolder));
+        return MLUtils.clipGradient(delta * input.getValue(cacheHolder));
     }
 
     public List<Neuron> getNeurons() {
