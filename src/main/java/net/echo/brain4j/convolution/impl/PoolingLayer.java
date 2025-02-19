@@ -35,7 +35,7 @@ public class PoolingLayer extends Layer {
         return true;
     }
 
-    public Kernel applcyPooling(Kernel input) {
+    public Kernel applyPooling(Kernel input) {
         int outputWidth = (input.getWidth() - kernelWidth + 2 * padding) / stride + 1;
         int outputHeight = (input.getHeight() - kernelHeight + 2 * padding) / stride + 1;
 

@@ -303,7 +303,7 @@ public class Model {
                     throw new IllegalStateException("The last convolutional input is null! Missing a layer before.");
                 }
 
-                convInput = poolingLayer.applcyPooling(convInput);
+                convInput = poolingLayer.applyPooling(convInput);
             }
 
             if (layer instanceof FlattenLayer flattenLayer && (lastLayer instanceof ConvLayer || lastLayer instanceof PoolingLayer)) {
