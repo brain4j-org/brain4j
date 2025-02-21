@@ -1,5 +1,6 @@
 package net.echo.brain4j.layer;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Random;
 
 @JsonAdapter(LayerAdapter.class)
-public class Layer {
+public abstract class Layer {
 
     protected final List<Neuron> neurons = new ArrayList<>();
     protected final List<Synapse> synapses = new ArrayList<>();
@@ -39,14 +40,14 @@ public class Layer {
     }
 
     public void init(Random generator) {
-        for (Neuron neuron : neurons) {
+        for (Neuron neuron : this.neurons) {
             neuron.setBias(2 * generator.nextDouble() - 1);
         }
     }
 
     public void connectAll(Random generator, Layer nextLayer, double bound) {
-        for (Neuron neuron : neurons) {
-            for (Neuron nextNeuron : nextLayer.neurons) {
+        for (Neuron neuron : this.neurons) {
+            for (Neuron nextNeuron : nextLayer.getNeurons()) {
                 Synapse synapse = new Synapse(generator, neuron, nextNeuron, bound);
                 neuron.addSynapse(synapse);
 
@@ -56,36 +57,23 @@ public class Layer {
     }
 
     public void applyFunction(StatesCache cacheHolder, Layer previous) {
-        Activation function = activation.getFunction();
-
-        function.apply(cacheHolder, neurons);
+        Activation function = this.activation.getFunction();
+        function.apply(cacheHolder, this.neurons);
     }
 
     public void setInput(StatesCache cacheHolder, Vector input) {
-        if (input.size() != neurons.size()) {
-            throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
-                    input.size() + " != " + neurons.size());
-        }
+        Preconditions.checkState(input.size() == this.neurons.size(), "Input size does not match!" +
+                " (Input != Expected) " + input.size() + " != " + this.neurons.size());
 
         for (int i = 0; i < input.size(); i++) {
-            neurons.get(i).setValue(cacheHolder, input.get(i));
+            this.neurons.get(i).setValue(cacheHolder, input.get(i));
         }
-    }
-
-    public Vector getVector(StatesCache cacheHolder) {
-        Vector values = new Vector(neurons.size());
-
-        for (int i = 0; i < neurons.size(); i++) {
-            values.set(i, neurons.get(i).getValue(cacheHolder));
-        }
-
-        return values;
     }
 
     public void propagate(StatesCache cacheHolder, Layer previous, Updater updater) {
-        for (Neuron neuron : neurons) {
+        for (Neuron neuron : this.neurons) {
             double value = neuron.getValue(cacheHolder);
-            double derivative = activation.getFunction().getDerivative(value);
+            double derivative = this.activation.getFunction().getDerivative(value);
 
             for (Synapse synapse : neuron.getSynapses()) {
                 double weightChange = calculateGradient(cacheHolder, synapse, derivative);
@@ -128,5 +116,25 @@ public class Layer {
 
     public int size() {
         return neurons.size();
+    }
+
+    public void forward(StatesCache cache, Vector[] synapseMatrix, Layer nextLayer) {
+        List<Neuron> nextNeurons = nextLayer.getNeurons();
+
+        int inSize = this.neurons.size();
+        int outSize = nextNeurons.size();
+
+        Vector inputVector = new Vector(inSize);
+
+        for (int i = 0; i < inSize; i++) {
+            inputVector.set(i, neurons.get(i).getValue(cache));
+        }
+
+        for (int i = 0; i < outSize; i++) {
+            double value = synapseMatrix[i].weightedSum(inputVector);
+            nextNeurons.get(i).setValue(cache, value);
+        }
+
+        nextLayer.applyFunction(cache, this);
     }
 }

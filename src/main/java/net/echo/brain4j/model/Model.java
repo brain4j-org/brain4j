@@ -255,7 +255,7 @@ public class Model {
      * @param input input data as a vector, must have dimension equal to the model's input dimension
      * @return predicted outputs as a vector
      */
-    public Vector predict(StatesCache cacheHolder, Vector input) {
+    public Vector predict(StatesCache cache, Vector input) {
         Layer firstLayer = this.layers.getFirst();
 
         Preconditions.checkState(input.size() == firstLayer.size(), "Input dimension does not " +
@@ -264,10 +264,10 @@ public class Model {
         Layer lastLayer = firstLayer;
         Kernel convInput = null;
 
-        firstLayer.setInput(cacheHolder, input);
+        firstLayer.setInput(cache, input);
 
         if (firstLayer instanceof InputLayer inputLayer) {
-            convInput = inputLayer.getImage(cacheHolder);
+            convInput = inputLayer.getImage(cache);
         }
 
         for (int l = 0; l < this.layers.size() - 1; l++) {
@@ -276,28 +276,17 @@ public class Model {
             if (layer instanceof DropoutLayer) continue;
 
             if (layer instanceof ConvLayer convLayer) {
-                Preconditions.checkNotNull(convInput, "Last convolutional input is null! Missing an input layer?");
-
-                List<Kernel> kernels = convLayer.getKernels();
-                List<Kernel> featureMap = new ArrayList<>();
-
-                for (Kernel kernel : kernels) {
-                    Kernel result = convInput.convolute(kernel, convLayer.getStride());
-
-                    featureMap.add(result);
-                }
-
-                convInput = convLayer.postProcess(featureMap).padding(convLayer.getPadding());
+                convInput = convLayer.forward(convInput);
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
-                Preconditions.checkNotNull(convInput, "Last convolutional input is null! Missing a convolutional layer?");
-
                 convInput = poolingLayer.applyPooling(convInput);
             }
 
-            if (layer instanceof FlattenLayer flattenLayer && (lastLayer instanceof ConvLayer || lastLayer instanceof PoolingLayer)) {
-                Preconditions.checkNotNull(convInput, "Last convolutional input is null!");
+            if (layer instanceof FlattenLayer flattenLayer) {
+                boolean isConvolutional = convInput != null && (lastLayer instanceof ConvLayer || lastLayer instanceof PoolingLayer);
+
+                Preconditions.checkState(isConvolutional, "Flatten layer is not preceded by convolutional layer!");
                 Preconditions.checkState(flattenLayer.size() == convInput.size(),
                         "Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
                         + flattenLayer.size() + " != " + convInput.size());
@@ -306,33 +295,16 @@ public class Model {
                     for (int w = 0; w < convInput.getWidth(); w++) {
                         double value = convInput.getValue(w, h);
 
-                        flattenLayer.getNeuronAt(h * convInput.getWidth() + w).setValue(cacheHolder, value);
+                        flattenLayer.getNeuronAt(h * convInput.getWidth() + w).setValue(cache, value);
                     }
                 }
             }
 
             if (layer instanceof DenseLayer || layer instanceof FlattenLayer) {
                 Layer nextLayer = getNextComputationLayer(l);
+                Vector[] synapseMatrix = synapsesMatrices.get(l);
 
-                List<Neuron> neurons = layer.getNeurons();
-                List<Neuron> nextNeurons = nextLayer.getNeurons();
-
-                int inSize = neurons.size();
-                int outSize = nextNeurons.size();
-
-                Vector inputVector = new Vector(inSize);
-                Vector[] synapseMatrix = this.synapsesMatrices.get(l);
-
-                for (int i = 0; i < inSize; i++) {
-                    inputVector.set(i, neurons.get(i).getValue(cacheHolder));
-                }
-
-                for (int i = 0; i < outSize; i++) {
-                    double value = synapseMatrix[i].weightedSum(inputVector);
-                    nextNeurons.get(i).setValue(cacheHolder, value);
-                }
-
-                nextLayer.applyFunction(cacheHolder, layer);
+                layer.forward(cache, synapseMatrix, nextLayer);
             }
 
             lastLayer = layer;
@@ -343,7 +315,7 @@ public class Model {
         double[] output = new double[outputLayer.getNeurons().size()];
 
         for (int i = 0; i < output.length; i++) {
-            output[i] = outputLayer.getNeuronAt(i).getValue(cacheHolder);
+            output[i] = outputLayer.getNeuronAt(i).getValue(cache);
         }
 
         return Vector.of(output);
@@ -500,57 +472,6 @@ public class Model {
     }
 
     /**
-     * Gets the model's loss function.
-     */
-    public LossFunction getLossFunction() {
-        return this.lossFunction.getFunction();
-    }
-
-    /**
-     * Gets the model's optimizer.
-     */
-    public Optimizer getOptimizer() {
-        return this.optimizer;
-    }
-
-    /**
-     * Gets the model's weights updater.
-     */
-    public Updater getUpdater() {
-        return this.updater;
-    }
-
-    /**
-     * Gets the weight initialization technique used.
-     */
-    public WeightInit getWeightInit() {
-        return this.weightInit;
-    }
-
-    /**
-     * Gets the random generator used by the model.
-     */
-    public Random getGenerator() {
-        return this.generator;
-    }
-
-    /**
-     * Retrieves layers of the network.
-     *
-     * @return list of layers
-     */
-    public List<Layer> getLayers() {
-        return this.layers;
-    }
-
-    /**
-     * Gets the synapse weights as a matrix, this is used by the model to cache weights for faster computation.
-     */
-    public List<Vector[]> getSynapsesMatrices() {
-        return this.synapsesMatrices;
-    }
-
-    /**
      * Generates model statistics.
      */
     public String getStats() {
@@ -588,20 +509,71 @@ public class Model {
     }
 
     /**
-     * Sets the seed for the weights generation.
+     * Gets the model's loss function.
+     */
+    public LossFunction getLossFunction() {
+        return lossFunction.getFunction();
+    }
+
+    /**
+     * Gets the model's optimizer.
+     */
+    public Optimizer getOptimizer() {
+        return optimizer;
+    }
+
+    /**
+     * Gets the model's weights updater.
+     */
+    public Updater getUpdater() {
+        return updater;
+    }
+
+    /**
+     * Gets the weight initialization technique used.
+     */
+    public WeightInit getWeightInit() {
+        return weightInit;
+    }
+
+    /**
+     * Gets the random generator used by the model.
+     */
+    public Random getGenerator() {
+        return generator;
+    }
+
+    /**
+     * Retrieves layers of the network.
      *
-     * @param seed the seed, may be any value
+     * @return list of layers
+     */
+    public List<Layer> getLayers() {
+        return layers;
+    }
+
+    /**
+     * Gets the synapse weights as a matrix, this is used by the model to cache weights for faster computation.
+     */
+    public List<Vector[]> getSynapsesMatrices() {
+        return synapsesMatrices;
+    }
+
+    /**
+     * Sets the seed for the weight generation.
+     *
+     * @param seed the seed may be any value
      */
     public void setSeed(int seed) {
         this.seed = seed;
     }
 
     /**
-     * Returns the seed for the weights generation.
+     * Returns the seed for the weight generation.
      *
-     * @return the seed, generated randomly at first
+     * @return the current seed
      */
     public int getSeed() {
-        return this.seed;
+        return seed;
     }
 }

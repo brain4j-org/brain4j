@@ -101,4 +101,18 @@ public class ConvLayer extends Layer {
     public int getStride() {
         return stride;
     }
+
+    public Kernel forward(Kernel convInput) {
+        Preconditions.checkNotNull(convInput, "Last convolutional input is null! Missing an input layer?");
+
+        List<Kernel> featureMap = new ArrayList<>();
+
+        for (Kernel kernel : kernels) {
+            Kernel result = convInput.convolute(kernel, stride);
+
+            featureMap.add(result);
+        }
+
+        return postProcess(featureMap).padding(padding);
+    }
 }
