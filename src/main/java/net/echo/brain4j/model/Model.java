@@ -1,5 +1,7 @@
 package net.echo.brain4j.model;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -101,26 +103,21 @@ public class Model {
             }
         }
 
-        if (isInput && !hasConv) {
-            throw new IllegalArgumentException("Cannot use the InputLayer outside of a convolutional model!");
-        }
-
-        if (!isInput && hasConv) {
-            throw new IllegalArgumentException("Cannot use a convolutional layer without an InputLayer!");
-        }
+        if (isInput && !hasConv) throw new IllegalArgumentException("Cannot use the InputLayer outside of a convolutional model!");
+        if (!isInput && hasConv) throw new IllegalArgumentException("Cannot use a convolutional layer without an InputLayer!");
     }
 
     private void connect(WeightInit weightInit, boolean update) {
-        Layer lastNormalLayer = layers.getFirst();
+        Layer lastNormalLayer = this.layers.getFirst();
 
-        for (Layer layer : layers) {
+        for (Layer layer : this.layers) {
             if (layer instanceof DenseLayer denseLayer && !update) {
-                denseLayer.init(generator);
+                denseLayer.init(this.generator);
             }
         }
 
-        for (int i = 1; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+        for (int i = 1; i < this.layers.size(); i++) {
+            Layer layer = this.layers.get(i);
 
             if (layer.getNeurons().isEmpty() && !layer.isConvolutional()) continue;
 
@@ -129,7 +126,7 @@ public class Model {
 
             double bound = weightInit.getInitializer().getBound(nIn, nOut);
 
-            lastNormalLayer.connectAll(generator, layer, bound);
+            lastNormalLayer.connectAll(this.generator, layer, bound);
             lastNormalLayer = layer;
         }
     }
@@ -144,7 +141,7 @@ public class Model {
      */
     public Model compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.weightInit = weightInit;
-        this.generator = new Random(seed);
+        this.generator = new Random(this.seed);
         this.lossFunction = function;
         this.optimizer = optimizer;
         this.updater = updater;
@@ -166,7 +163,7 @@ public class Model {
      * @param set dataset for training
      */
     public void fit(DataSet set) {
-        propagation.iterate(set);
+        this.propagation.iterate(set);
     }
 
     /**
@@ -188,7 +185,7 @@ public class Model {
 
                 Vector outputs = predict(new StatesCache(), inputs);
 
-                double loss = lossFunction.getFunction().calculate(targets, outputs);
+                double loss = this.lossFunction.getFunction().calculate(targets, outputs);
                 totalError.updateAndGet(v -> v + loss);
             });
 
@@ -206,10 +203,10 @@ public class Model {
      * @return the next computation layer
      */
     public Layer getNextComputationLayer(int index) {
-        Layer nextLayer = layers.get(index + 1);
+        Layer nextLayer = this.layers.get(index + 1);
 
-        for (int j = 2; j < layers.size() && nextLayer instanceof DropoutLayer; j++) {
-            nextLayer = layers.get(index + j);
+        for (int j = 2; j < this.layers.size() && nextLayer instanceof DropoutLayer; j++) {
+            nextLayer = this.layers.get(index + j);
         }
 
         return nextLayer;
@@ -221,8 +218,8 @@ public class Model {
     public void reloadMatrices() {
         List<Vector[]> matrices = new ArrayList<>();
 
-        for (int i = 0; i < layers.size() - 1; i++) {
-            Layer layer = layers.get(i);
+        for (int i = 0; i < this.layers.size() - 1; i++) {
+            Layer layer = this.layers.get(i);
 
             if (layer instanceof DropoutLayer) {
                 matrices.add(new Vector[0]);
@@ -239,7 +236,7 @@ public class Model {
             matrices.add(synapseMatrixLayer);
         }
 
-        synapsesMatrices = matrices;
+        this.synapsesMatrices = matrices;
     }
 
     /**
@@ -259,12 +256,10 @@ public class Model {
      * @return predicted outputs as a vector
      */
     public Vector predict(StatesCache cacheHolder, Vector input) {
-        Layer firstLayer = layers.getFirst();
+        Layer firstLayer = this.layers.getFirst();
 
-        if (input.size() != firstLayer.size()) {
-            throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
-                    input.size() + " != " + firstLayer.getNeurons().size());
-        }
+        Preconditions.checkState(input.size() == firstLayer.size(), "Input dimension does not " +
+                "match model input dimension! (Input != Expected " + input.size() + " != " + firstLayer.size() + ")");
 
         Layer lastLayer = firstLayer;
         Kernel convInput = null;
@@ -275,15 +270,13 @@ public class Model {
             convInput = inputLayer.getImage(cacheHolder);
         }
 
-        for (int l = 0; l < layers.size() - 1; l++) {
-            Layer layer = layers.get(l);
+        for (int l = 0; l < this.layers.size() - 1; l++) {
+            Layer layer = this.layers.get(l);
 
             if (layer instanceof DropoutLayer) continue;
 
             if (layer instanceof ConvLayer convLayer) {
-                if (convInput == null) {
-                    throw new IllegalStateException("The last convolutional input is null! Missing an input layer.");
-                }
+                Preconditions.checkNotNull(convInput, "Last convolutional input is null! Missing an input layer?");
 
                 List<Kernel> kernels = convLayer.getKernels();
                 List<Kernel> featureMap = new ArrayList<>();
@@ -294,27 +287,20 @@ public class Model {
                     featureMap.add(result);
                 }
 
-                Kernel kernel = convLayer.postProcess(featureMap);
-                convInput = kernel.padding(convLayer.getPadding());
+                convInput = convLayer.postProcess(featureMap).padding(convLayer.getPadding());
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
-                if (convInput == null) {
-                    throw new IllegalStateException("The last convolutional input is null! Missing a layer before.");
-                }
+                Preconditions.checkNotNull(convInput, "Last convolutional input is null! Missing a convolutional layer?");
 
                 convInput = poolingLayer.applyPooling(convInput);
             }
 
             if (layer instanceof FlattenLayer flattenLayer && (lastLayer instanceof ConvLayer || lastLayer instanceof PoolingLayer)) {
-                if (convInput == null) {
-                    throw new NullPointerException("Last convolutional input is null!");
-                }
-
-                if (flattenLayer.size() != convInput.size()) {
-                    throw new IllegalArgumentException("Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
-                            + flattenLayer.size() + " != " + convInput.size());
-                }
+                Preconditions.checkNotNull(convInput, "Last convolutional input is null!");
+                Preconditions.checkState(flattenLayer.size() == convInput.size(),
+                        "Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
+                        + flattenLayer.size() + " != " + convInput.size());
 
                 for (int h = 0; h < convInput.getHeight(); h++) {
                     for (int w = 0; w < convInput.getWidth(); w++) {
@@ -335,7 +321,7 @@ public class Model {
                 int outSize = nextNeurons.size();
 
                 Vector inputVector = new Vector(inSize);
-                Vector[] synapseMatrix = synapsesMatrices.get(l);
+                Vector[] synapseMatrix = this.synapsesMatrices.get(l);
 
                 for (int i = 0; i < inSize; i++) {
                     inputVector.set(i, neurons.get(i).getValue(cacheHolder));
@@ -352,7 +338,7 @@ public class Model {
             lastLayer = layer;
         }
 
-        Layer outputLayer = layers.getLast();
+        Layer outputLayer = this.layers.getLast();
 
         double[] output = new double[outputLayer.getNeurons().size()];
 
@@ -371,9 +357,7 @@ public class Model {
     public void load(String path) {
         File file = new File(path);
 
-        if (!file.exists()) {
-            throw new IllegalArgumentException("File does not exist: " + path);
-        }
+        Preconditions.checkState(file.exists(), "File does not exist: " + path);
 
         try {
             JsonObject parent = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
@@ -386,17 +370,17 @@ public class Model {
 
             this.weightInit = WeightInit.valueOf(parent.get("weightInit").getAsString());
             this.seed = parent.get("seed").getAsInt();
-            this.generator = new Random(seed);
+            this.generator = new Random(this.seed);
             this.layers = GSON.fromJson(parent.get("layers"), listType);
 
             Parameters.TOTAL_SYNAPSES = 0;
-            connect(weightInit, false);
+            connect(this.weightInit, false);
 
             double[][] biases = GSON.fromJson(parent.get("biases"), double[][].class);
 
             for (int i = 0; i < biases.length; i++) {
                 double[] layerBiases = biases[i];
-                Layer layer = layers.get(i);
+                Layer layer = this.layers.get(i);
 
                 for (int j = 0; j < layerBiases.length; j++) {
                     layer.getNeuronAt(j).setBias(layerBiases[j]);
@@ -407,7 +391,7 @@ public class Model {
 
             for (int i = 0; i < weights.length; i++) {
                 double[] layerWeights = weights[i];
-                Layer layer = layers.get(i);
+                Layer layer = this.layers.get(i);
 
                 for (int j = 0; j < layerWeights.length; j++) {
                     layer.getSynapses().get(j).setWeight(layerWeights[j]);
@@ -428,28 +412,28 @@ public class Model {
 
         JsonObject parent = new JsonObject();
 
-        JsonObject optimizerObject = GSON.toJsonTree(optimizer).getAsJsonObject();
-        JsonObject updaterObject = GSON.toJsonTree(updater).getAsJsonObject();
+        JsonObject optimizerObject = GSON.toJsonTree(this.optimizer).getAsJsonObject();
+        JsonObject updaterObject = GSON.toJsonTree(this.updater).getAsJsonObject();
 
-        parent.addProperty("seed", seed);
-        parent.addProperty("weightInit", weightInit.name());
-        parent.addProperty("lossFunction", lossFunction.name());
+        parent.addProperty("seed", this.seed);
+        parent.addProperty("weightInit", this.weightInit.name());
+        parent.addProperty("lossFunction", this.lossFunction.name());
 
         parent.add("optimizer", optimizerObject);
         parent.add("updater", updaterObject);
 
         List<JsonObject> layerObjects = new ArrayList<>();
 
-        for (Layer layer : layers) {
+        for (Layer layer : this.layers) {
             layerObjects.add(GSON.toJsonTree(layer).getAsJsonObject());
         }
 
         parent.add("layers", GSON.toJsonTree(layerObjects).getAsJsonArray());
 
-        double[][] biases = new double[layers.size()][];
+        double[][] biases = new double[this.layers.size()][];
 
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+        for (int i = 0; i < this.layers.size(); i++) {
+            Layer layer = this.layers.get(i);
             biases[i] = new double[layer.getNeurons().size()];
 
             for (int j = 0; j < biases[i].length; j++) {
@@ -459,10 +443,10 @@ public class Model {
 
         parent.add("biases", GSON.toJsonTree(biases));
 
-        double[][] weights = new double[layers.size()][];
+        double[][] weights = new double[this.layers.size()][];
 
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+        for (int i = 0; i < this.layers.size(); i++) {
+            Layer layer = this.layers.get(i);
             weights[i] = new double[layer.getSynapses().size()];
 
             for (int j = 0; j < layer.getSynapses().size(); j++) {
@@ -519,35 +503,35 @@ public class Model {
      * Gets the model's loss function.
      */
     public LossFunction getLossFunction() {
-        return lossFunction.getFunction();
+        return this.lossFunction.getFunction();
     }
 
     /**
      * Gets the model's optimizer.
      */
     public Optimizer getOptimizer() {
-        return optimizer;
+        return this.optimizer;
     }
 
     /**
      * Gets the model's weights updater.
      */
     public Updater getUpdater() {
-        return updater;
+        return this.updater;
     }
 
     /**
      * Gets the weight initialization technique used.
      */
     public WeightInit getWeightInit() {
-        return weightInit;
+        return this.weightInit;
     }
 
     /**
      * Gets the random generator used by the model.
      */
     public Random getGenerator() {
-        return generator;
+        return this.generator;
     }
 
     /**
@@ -556,14 +540,14 @@ public class Model {
      * @return list of layers
      */
     public List<Layer> getLayers() {
-        return layers;
+        return this.layers;
     }
 
     /**
      * Gets the synapse weights as a matrix, this is used by the model to cache weights for faster computation.
      */
     public List<Vector[]> getSynapsesMatrices() {
-        return synapsesMatrices;
+        return this.synapsesMatrices;
     }
 
     /**
@@ -579,8 +563,8 @@ public class Model {
 
         int params = 0;
 
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+        for (int i = 0; i < this.layers.size(); i++) {
+            Layer layer = this.layers.get(i);
 
             String layerType = layer.getClass().getSimpleName();
 
@@ -618,6 +602,6 @@ public class Model {
      * @return the seed, generated randomly at first
      */
     public int getSeed() {
-        return seed;
+        return this.seed;
     }
 }

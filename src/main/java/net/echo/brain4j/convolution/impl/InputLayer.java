@@ -40,7 +40,7 @@ public class InputLayer extends Layer {
 
         for (int x = 0; x < width; x++) {
             for (int h = 0; h < height; h++) {
-                Neuron neuron = getNeurons().get(h * width + x);
+                Neuron neuron = neurons.get(h * width + x);
 
                 result.getValues()[h].set(x, neuron.getValue(cache));
             }

@@ -1,5 +1,6 @@
 package net.echo.brain4j.convolution.impl;
 
+import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
@@ -62,9 +63,7 @@ public class ConvLayer extends Layer {
     }
 
     public Kernel postProcess(List<Kernel> featureMap) {
-        if (featureMap.isEmpty()) {
-            throw new IllegalArgumentException("Feature map is empty!");
-        }
+        Preconditions.checkArgument(featureMap.size() == filters, "Feature map size does not match the number of filters!");
 
         Kernel first = featureMap.getFirst();
         Kernel result = new Kernel(first.getWidth(), first.getHeight());
