@@ -1,4 +1,4 @@
-package net.echo.brain4j.nlp.model.layers;
+package net.echo.brain4j.transformers.model.layers;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
@@ -6,7 +6,7 @@ import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
-import net.echo.brain4j.nlp.attention.MultiHeadAttention;
+import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;

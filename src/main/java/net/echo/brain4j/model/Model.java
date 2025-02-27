@@ -217,8 +217,6 @@ public class Model {
      * Reloads the synapse matrix for each layer.
      */
     public void reloadMatrices() {
-        List<Vector[]> matrices = new ArrayList<>();
-
         for (int i = 0; i < this.layers.size() - 1; i++) {
             Layer layer = this.layers.get(i);
 
@@ -231,7 +229,7 @@ public class Model {
 
             Vector[] synapseMatrixLayer = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
 
-            denseLayer.updateWeights(synapseMatrixLayer);
+            denseLayer.updateWeights(nextLayer, synapseMatrixLayer);
         }
     }
 
@@ -272,33 +270,19 @@ public class Model {
             if (layer instanceof DropoutLayer) continue;
 
             if (layer instanceof ConvLayer convLayer) {
-                convInput = convLayer.forward(convInput);
+                convInput = convLayer.forward(cache, lastLayer, convInput);
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
-                convInput = poolingLayer.applyPooling(convInput);
+                convInput = poolingLayer.forward(cache, lastLayer, convInput);
             }
 
             if (layer instanceof FlattenLayer flattenLayer) {
-                boolean isConvolutional = convInput != null && (lastLayer instanceof ConvLayer || lastLayer instanceof PoolingLayer);
-
-                Preconditions.checkState(isConvolutional, "Flatten layer is not preceded by convolutional layer!");
-                Preconditions.checkState(flattenLayer.size() == convInput.size(),
-                        "Flatten layer dimension doesn't equal to convolution dimension! (Flatten != Conv) "
-                        + flattenLayer.size() + " != " + convInput.size());
-
-                for (int h = 0; h < convInput.getHeight(); h++) {
-                    for (int w = 0; w < convInput.getWidth(); w++) {
-                        double value = convInput.getValue(w, h);
-
-                        flattenLayer.getNeuronAt(h * convInput.getWidth() + w).setValue(cache, value);
-                    }
-                }
+                flattenLayer.flatten(cache, lastLayer, convInput);
             }
 
             if (layer instanceof DenseLayer || layer instanceof FlattenLayer) {
-                Layer nextLayer = getNextComputationLayer(l);
-                layer.forward(cache, nextLayer);
+                layer.forward(cache, lastLayer, convInput);
             }
 
             lastLayer = layer;

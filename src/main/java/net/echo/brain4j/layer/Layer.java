@@ -5,6 +5,7 @@ import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
+import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
@@ -52,6 +53,11 @@ public abstract class Layer {
                 synapses.add(synapse);
             }
         }
+    }
+
+    // TODO: Refactor this, now I don't have time
+    public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
+        return null;
     }
 
     public void applyFunction(StatesCache cacheHolder, Layer previous) {
@@ -114,8 +120,5 @@ public abstract class Layer {
 
     public int size() {
         return neurons.size();
-    }
-
-    public void forward(StatesCache cache, Layer nextLayer) {
     }
 }

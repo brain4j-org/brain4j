@@ -31,13 +31,10 @@ public class ConvExample {
         Model model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
-        System.out.println(dataSet.size());
-        System.out.println(model.getStats());
         long start = System.nanoTime();
-        double loss = model.evaluate(dataSet);
+        model.predict(dataSet.getData().getFirst().inputs());
+        // double loss = // model.evaluate(dataSet);
         double took = (System.nanoTime() - start) / 1e6;
-
-        System.out.println(took + " -> " + loss);
     }
 
     private Model getModel() {

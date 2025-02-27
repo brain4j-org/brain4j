@@ -1,4 +1,4 @@
-package net.echo.brain4j.nlp.model;
+package net.echo.brain4j.transformers.model;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunctions;

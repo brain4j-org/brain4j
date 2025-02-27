@@ -20,7 +20,7 @@ public class NormalUpdater extends Updater {
 
         for (Layer layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {
-                synapses[synapse.getSynapseId()] = synapse;
+                this.synapses[synapse.getSynapseId()] = synapse;
             }
         }
     }
@@ -28,8 +28,8 @@ public class NormalUpdater extends Updater {
     @Override
     public void postFit(Model model, double learningRate) {
         for (int i = 0; i < gradients.length; i++) {
-            Synapse synapse = synapses[i];
-            double gradient = gradients[i];
+            Synapse synapse = this.synapses[i];
+            double gradient = this.gradients[i];
 
             // FOR FUTURE ECHO: DO NOT TOUCH THIS!!!!! MULTIPLYING FOR THE LEARNING RATE IS IMPORTANT AND IDK WHY
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);

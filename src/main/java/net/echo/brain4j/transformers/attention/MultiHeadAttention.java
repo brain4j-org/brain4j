@@ -1,4 +1,4 @@
-package net.echo.brain4j.nlp.attention;
+package net.echo.brain4j.transformers.attention;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;

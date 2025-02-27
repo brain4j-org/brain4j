@@ -14,14 +14,6 @@ public class StatesCache {
         this.deltasCache = new double[Parameters.TOTAL_NEURONS];
     }
 
-    public double[] getGradients() {
-        return gradients;
-    }
-
-    public double getGradient(int index) {
-        return gradients[index];
-    }
-
     public double getValue(Neuron neuron) {
         return valuesCache[neuron.getId()];
     }
@@ -38,15 +30,7 @@ public class StatesCache {
         this.deltasCache[neuron.getId()] = delta;
     }
 
-    public void setGradient(int index, double gradient) {
-        this.gradients[index] = gradient;
-    }
-
     public void addDelta(Neuron neuron, double delta) {
         this.deltasCache[neuron.getId()] += delta;
-    }
-
-    public void addGradient(int index, double change) {
-        this.gradients[index] += change;
     }
 }

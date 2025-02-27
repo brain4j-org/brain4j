@@ -1,6 +1,5 @@
 package net.echo.brain4j.structure;
 
-import com.google.gson.annotations.Expose;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 
@@ -12,7 +11,6 @@ public class Neuron {
     private final List<Synapse> synapses = new ArrayList<>();
     private final int id;
 
-    @Expose
     private double bias;
     private double totalDelta;
 

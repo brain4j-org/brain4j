@@ -10,8 +10,8 @@ import net.echo.brain4j.training.updater.Updater;
 
 public class StochasticUpdater extends Updater {
 
-    private Synapse[] synapses;
-    private double[] gradients;
+    protected Synapse[] synapses;
+    protected double[] gradients;
 
     @Override
     public void postInitialize(Model model) {
@@ -20,7 +20,7 @@ public class StochasticUpdater extends Updater {
 
         for (Layer layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {
-                synapses[synapse.getSynapseId()] = synapse;
+                this.synapses[synapse.getSynapseId()] = synapse;
             }
         }
     }
@@ -32,9 +32,9 @@ public class StochasticUpdater extends Updater {
 
     @Override
     public void postIteration(Model model, double learningRate) {
-        for (int i = 0; i < synapses.length; i++) {
-            Synapse synapse = synapses[i];
-            double gradient = gradients[i];
+        for (int i = 0; i < this.synapses.length; i++) {
+            Synapse synapse = this.synapses[i];
+            double gradient = this.gradients[i];
 
             // FOR FUTURE ECHO: DO NOT TOUCH THIS!!!!! MULTIPLYING FOR THE LEARNING RATE IS IMPORTANT AND IDK WHY
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);

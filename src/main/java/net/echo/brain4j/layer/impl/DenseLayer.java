@@ -1,6 +1,7 @@
 package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
@@ -13,6 +14,7 @@ import java.util.List;
  */
 public class DenseLayer extends Layer {
 
+    private Layer nextLayer;
     private List<Vector> weights;
 
     /**
@@ -29,7 +31,7 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public void forward(StatesCache cache, Layer nextLayer) {
+    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
         List<Neuron> nextNeurons = nextLayer.getNeurons();
 
         int inSize = this.neurons.size();
@@ -47,9 +49,12 @@ public class DenseLayer extends Layer {
         }
 
         nextLayer.applyFunction(cache, this);
+
+        return null;
     }
 
-    public void updateWeights(Vector[] weights) {
+    public void updateWeights(Layer nextLayer, Vector[] weights) {
+        this.nextLayer = nextLayer;
         this.weights = List.of(weights);
     }
 }

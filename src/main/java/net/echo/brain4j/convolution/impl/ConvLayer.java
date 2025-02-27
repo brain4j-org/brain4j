@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.cache.StatesCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +78,20 @@ public class ConvLayer extends Layer {
         return result;
     }
 
+    @Override
+    public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
+        Preconditions.checkNotNull(input, "Last convolutional input is null! Missing an input layer?");
+
+        List<Kernel> featureMap = new ArrayList<>();
+
+        for (Kernel kernel : kernels) {
+            Kernel result = input.convolute(kernel, stride);
+
+            featureMap.add(result);
+        }
+
+        return postProcess(featureMap).padding(padding);
+    }
 
     public List<Kernel> getKernels() {
         return kernels;
@@ -100,19 +115,5 @@ public class ConvLayer extends Layer {
 
     public int getStride() {
         return stride;
-    }
-
-    public Kernel forward(Kernel convInput) {
-        Preconditions.checkNotNull(convInput, "Last convolutional input is null! Missing an input layer?");
-
-        List<Kernel> featureMap = new ArrayList<>();
-
-        for (Kernel kernel : kernels) {
-            Kernel result = convInput.convolute(kernel, stride);
-
-            featureMap.add(result);
-        }
-
-        return postProcess(featureMap).padding(padding);
     }
 }

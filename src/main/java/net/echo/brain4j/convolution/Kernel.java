@@ -70,6 +70,7 @@ public class Kernel {
     public Kernel padding(int padding) {
         int newWidth = width + 2 * padding;
         int newHeight = height + 2 * padding;
+
         Kernel paddedKernel = new Kernel(newWidth, newHeight);
 
         for (int i = 0; i < height; i++) {
@@ -117,12 +118,6 @@ public class Kernel {
             Vector row = values[h];
 
             values[h] = activation.activate(row);
-        }
-    }
-
-    public void print() {
-        for (int h = 0; h < height; h++) {
-            System.out.println(values[h]);
         }
     }
 }

@@ -5,6 +5,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.convolution.pooling.PoolingType;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.cache.StatesCache;
 
 public class PoolingLayer extends Layer {
 
@@ -36,7 +37,8 @@ public class PoolingLayer extends Layer {
         return true;
     }
 
-    public Kernel applyPooling(Kernel input) {
+    @Override
+    public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
         Preconditions.checkNotNull(input, "Last convolutional input is null");
 
         int outputWidth = (input.getWidth() - kernelWidth + 2 * padding) / stride + 1;
