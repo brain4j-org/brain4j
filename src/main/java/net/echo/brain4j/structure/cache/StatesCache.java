@@ -1,7 +1,6 @@
 package net.echo.brain4j.structure.cache;
 
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.Synapse;
 
 public class StatesCache {
 

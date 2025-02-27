@@ -6,10 +6,9 @@ import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;

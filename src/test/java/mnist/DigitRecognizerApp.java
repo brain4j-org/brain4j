@@ -1,11 +1,13 @@
 package mnist;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class DigitRecognizerApp extends JFrame {
 
