@@ -15,6 +15,9 @@ import net.echo.brain4j.utils.Vector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
+
+import static net.echo.brain4j.utils.MLUtils.clipGradient;
 
 @JsonAdapter(LayerAdapter.class)
 public abstract class Layer {
@@ -24,10 +27,7 @@ public abstract class Layer {
     protected final Activations activation;
 
     public Layer(int input, Activations activation) {
-        for (int i = 0; i < input; i++) {
-            this.neurons.add(new Neuron());
-        }
-
+        Stream.generate(Neuron::new).limit(input).forEach(neurons::add);
         this.activation = activation;
     }
 
@@ -40,9 +40,8 @@ public abstract class Layer {
     }
 
     public void init(Random generator) {
-        for (Neuron neuron : this.neurons) {
-            neuron.setBias(2 * generator.nextDouble() - 1);
-        }
+        this.neurons.forEach(neuron ->
+                neuron.setBias(2 * generator.nextDouble() - 1));
     }
 
     public void connectAll(Random generator, Layer nextLayer, double bound) {
@@ -86,12 +85,12 @@ public abstract class Layer {
         Neuron input = synapse.getInputNeuron();
         Neuron output = synapse.getOutputNeuron();
 
-        double error = MLUtils.clipGradient(synapse.getWeight() * output.getDelta(cacheHolder));
-        double delta = MLUtils.clipGradient(error * derivative);
+        double error = clipGradient(synapse.getWeight() * output.getDelta(cacheHolder));
+        double delta = clipGradient(error * derivative);
 
         input.setDelta(cacheHolder, delta);
 
-        return MLUtils.clipGradient(delta * input.getValue(cacheHolder));
+        return clipGradient(delta * input.getValue(cacheHolder));
     }
 
     public List<Neuron> getNeurons() {
