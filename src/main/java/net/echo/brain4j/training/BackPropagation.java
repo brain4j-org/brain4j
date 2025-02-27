@@ -6,14 +6,15 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.utils.MLUtils;
+import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.echo.brain4j.utils.MLUtils.waitAll;
 
 public class BackPropagation {
 
@@ -27,11 +28,16 @@ public class BackPropagation {
         this.updater = updater;
     }
 
-    public void iterate(DataSet dataSet) {
-        if (!dataSet.isPartitioned()) {
-            int threads = Runtime.getRuntime().availableProcessors();
-            dataSet.partition(Math.min(threads, dataSet.getData().size()));
-        }
+    private void partitionIfRequired(DataSet<DataRow> dataSet) {
+        if (dataSet.isPartitioned()) return;
+
+        int threads = Runtime.getRuntime().availableProcessors();
+
+        dataSet.partition(Math.min(threads, dataSet.getData().size()));
+    }
+
+    public void iteration(DataSet<DataRow> dataSet) {
+        partitionIfRequired(dataSet);
 
         List<Thread> threads = new ArrayList<>();
 
@@ -52,13 +58,13 @@ public class BackPropagation {
             threads.add(thread);
         }
 
-        MLUtils.waitAll(threads);
+        waitAll(threads);
         updater.postFit(model, optimizer.getLearningRate());
     }
 
     public void backpropagate(StatesCache cacheHolder, Vector targets, Vector outputs) {
         List<Layer> layers = model.getLayers();
-        initialDelta(cacheHolder, layers, targets, outputs);
+        initializeDeltas(cacheHolder, layers, targets, outputs);
 
         Layer previous = null;
 
@@ -75,7 +81,7 @@ public class BackPropagation {
         updater.postIteration(model, optimizer.getLearningRate());
     }
 
-    private void initialDelta(StatesCache cacheHolder, List<Layer> layers, Vector targets, Vector outputs) {
+    private void initializeDeltas(StatesCache cacheHolder, List<Layer> layers, Vector targets, Vector outputs) {
         Layer outputLayer = layers.getLast();
 
         List<Neuron> neurons = outputLayer.getNeurons();

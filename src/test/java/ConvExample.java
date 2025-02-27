@@ -9,9 +9,9 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 import org.apache.commons.io.FileUtils;
 
@@ -29,8 +29,9 @@ public class ConvExample {
 
     private void start() {
         Model model = getModel();
-        DataSet dataSet = getDataSet();
+        DataSet<DataRow> dataSet = getDataSet();
 
+        System.out.println(dataSet.size());
         System.out.println(model.getStats());
         long start = System.nanoTime();
         double loss = model.evaluate(dataSet);
@@ -63,8 +64,8 @@ public class ConvExample {
         return model.compile(WeightInit.HE, LossFunctions.CROSS_ENTROPY, new Adam(0.1), new StochasticUpdater());
     }
 
-    private DataSet getDataSet() {
-        DataSet set = new DataSet();
+    private DataSet<DataRow> getDataSet() {
+        DataSet<DataRow> set = new DataSet<>();
 
         try {
             List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");

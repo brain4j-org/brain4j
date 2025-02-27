@@ -4,9 +4,9 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -48,18 +48,16 @@ public class ApproxExample {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        model.compile(
+        return model.compile(
                 WeightInit.UNIFORM_XAVIER,
                 LossFunctions.MEAN_SQUARED_ERROR,
                 new Adam(0.01),
                 new StochasticUpdater()
         );
-
-        return model;
     }
 
-    public DataSet getDataSet() {
-        DataSet set = new DataSet();
+    public DataSet<DataRow> getDataSet() {
+        DataSet<DataRow> set = new DataSet<>();
 
         double yBound = FUNCTION.apply(BOUND);
 
@@ -67,7 +65,7 @@ public class ApproxExample {
             double x = Math.random() * BOUND * 2 - BOUND;
             double y = FUNCTION.apply(x) / yBound;
 
-            set.getData().add(new DataRow(Vector.of(x), Vector.of(y)));
+            set.add(new DataRow(Vector.of(x), Vector.of(y)));
         }
 
         set.shuffle();
@@ -109,7 +107,7 @@ public class ApproxExample {
 
     public void trainAndVisualize() {
         Model model = getModel();
-        DataSet dataSet = getDataSet();
+        DataSet<DataRow> dataSet = getDataSet();
 
         JFrame frame = new JFrame("Polynomial Optimization");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

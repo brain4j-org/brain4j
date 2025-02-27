@@ -2,21 +2,33 @@ package net.echo.brain4j.utils;
 
 import java.util.*;
 
-public class GenericDataSet<T> implements Iterable<T> {
+public class DataSet<T> implements Iterable<T> {
 
     protected final List<List<T>> partitions;
     protected final List<T> data;
     protected int batches;
 
-    public GenericDataSet(List<T> data) {
+    public DataSet(List<T> data) {
         this.partitions = new ArrayList<>();
         this.data = data;
     }
 
     @SafeVarargs
-    public GenericDataSet(T... rows) {
+    public DataSet(T... rows) {
         this.partitions = new ArrayList<>();
         this.data = new ArrayList<>(Arrays.asList(rows));
+    }
+
+    public int size() {
+        return data.size();
+    }
+
+    public int getBatches() {
+        return batches;
+    }
+
+    public boolean isPartitioned() {
+        return !partitions.isEmpty();
     }
 
     public List<T> getData() {
@@ -29,14 +41,6 @@ public class GenericDataSet<T> implements Iterable<T> {
 
     public void add(T row) {
         data.add(row);
-    }
-
-    public int getBatches() {
-        return batches;
-    }
-
-    public boolean isPartitioned() {
-        return !partitions.isEmpty();
     }
 
     private List<T> subdivide(List<T> rows, double batches, int offset) {
@@ -67,7 +71,7 @@ public class GenericDataSet<T> implements Iterable<T> {
     }
 
     /**
-     * Randomly shuffles the DataSet2, making the training more efficient.
+     * Randomly shuffles the data set, making the training more efficient.
      */
     public void shuffle() {
         Collections.shuffle(data);

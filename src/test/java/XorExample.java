@@ -4,9 +4,9 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 
 public class XorExample {
@@ -18,7 +18,7 @@ public class XorExample {
 
     private void start() {
         Model model = getModel();
-        DataSet dataSet = getDataSet();
+        DataSet<DataRow> dataSet = getDataSet();
 
         System.out.println(model.getStats());
 
@@ -45,14 +45,14 @@ public class XorExample {
         return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.1), new StochasticUpdater());
     }
 
-    private DataSet getDataSet() {
-        DataSet set = new DataSet();
+    private DataSet<DataRow> getDataSet() {
+        DataSet<DataRow> set = new DataSet<>();
 
         for (int x = 0; x < 2; x++) {
             for (int y = 0; y < 2; y++) {
                 int output = x ^ y;
 
-                set.add(Vector.of(x, y), Vector.of(output));
+                set.add(new DataRow(Vector.of(x, y), Vector.of(output)));
             }
         }
 

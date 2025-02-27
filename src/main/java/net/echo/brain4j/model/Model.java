@@ -1,7 +1,6 @@
 package net.echo.brain4j.model;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -27,7 +26,6 @@ import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
@@ -35,7 +33,7 @@ import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
-import net.echo.brain4j.utils.MLUtils;
+import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
@@ -48,6 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static net.echo.brain4j.utils.MLUtils.waitAll;
 
 /**
  * Represents a feed forward neural network.
@@ -76,8 +76,6 @@ public class Model {
             .create();
 
     protected List<Layer> layers;
-    protected List<Vector[]> synapsesMatrices;
-
     protected LossFunctions lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
@@ -89,14 +87,17 @@ public class Model {
 
     public Model(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
-        this.synapsesMatrices = new ArrayList<>();
 
         if (this.layers.isEmpty()) return;
 
-        boolean isInput = layers[0] instanceof InputLayer;
+        validateLayers();
+    }
+
+    private void validateLayers() {
+        boolean isInput = this.layers.getFirst() instanceof InputLayer;
         boolean hasConv = false;
 
-        for (Layer layer : layers) {
+        for (Layer layer : this.layers) {
             if (layer instanceof ConvLayer || layer instanceof PoolingLayer || layer instanceof FlattenLayer) {
                 hasConv = true;
                 break;
@@ -162,8 +163,8 @@ public class Model {
      *
      * @param set dataset for training
      */
-    public void fit(DataSet set) {
-        this.propagation.iterate(set);
+    public void fit(DataSet<DataRow> set) {
+        this.propagation.iteration(set);
     }
 
     /**
@@ -172,7 +173,7 @@ public class Model {
      * @param set dataset for testing
      * @return the error of the model
      */
-    public double evaluate(DataSet set) {
+    public double evaluate(DataSet<DataRow> set) {
         reloadMatrices();
 
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
@@ -192,7 +193,7 @@ public class Model {
             threads.add(thread);
         }
 
-        MLUtils.waitAll(threads);
+        waitAll(threads);
         return totalError.get() / set.getData().size();
     }
 
@@ -221,10 +222,7 @@ public class Model {
         for (int i = 0; i < this.layers.size() - 1; i++) {
             Layer layer = this.layers.get(i);
 
-            if (layer instanceof DropoutLayer) {
-                matrices.add(new Vector[0]);
-                continue;
-            }
+            if (!(layer instanceof DenseLayer denseLayer)) continue;
 
             Layer nextLayer = getNextComputationLayer(i);
 
@@ -233,10 +231,8 @@ public class Model {
 
             Vector[] synapseMatrixLayer = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
 
-            matrices.add(synapseMatrixLayer);
+            denseLayer.updateWeights(synapseMatrixLayer);
         }
-
-        this.synapsesMatrices = matrices;
     }
 
     /**
@@ -302,9 +298,7 @@ public class Model {
 
             if (layer instanceof DenseLayer || layer instanceof FlattenLayer) {
                 Layer nextLayer = getNextComputationLayer(l);
-                Vector[] synapseMatrix = synapsesMatrices.get(l);
-
-                layer.forward(cache, synapseMatrix, nextLayer);
+                layer.forward(cache, nextLayer);
             }
 
             lastLayer = layer;
@@ -550,13 +544,6 @@ public class Model {
      */
     public List<Layer> getLayers() {
         return layers;
-    }
-
-    /**
-     * Gets the synapse weights as a matrix, this is used by the model to cache weights for faster computation.
-     */
-    public List<Vector[]> getSynapsesMatrices() {
-        return synapsesMatrices;
     }
 
     /**

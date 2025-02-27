@@ -4,9 +4,10 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
-import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void fit(DataSet set) {
+    public void fit(DataSet<DataRow> set) {
 
     }
 

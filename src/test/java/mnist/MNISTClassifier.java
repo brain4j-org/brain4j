@@ -6,12 +6,11 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.gpu.AdamGPU;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 import org.apache.commons.io.FileUtils;
@@ -63,7 +62,7 @@ public class MNISTClassifier {
     public static void evaluateModel(Model model) {
         model.reloadMatrices();
 
-        DataSet set = getData();
+        DataSet<DataRow> set = getData();
         Map<Integer, Vector> results = initializeResults(set);
 
         int correctlyClassified = 0;
@@ -89,7 +88,7 @@ public class MNISTClassifier {
         printEvaluationResults(results, model.evaluate(set), correctlyClassified, incorrectlyClassified);
     }
 
-    private static Map<Integer, Vector> initializeResults(DataSet set) {
+    private static Map<Integer, Vector> initializeResults(DataSet<DataRow> set) {
         Map<Integer, Vector> results = new HashMap<>();
 
         for (DataRow row : set.getData()) {
@@ -115,7 +114,7 @@ public class MNISTClassifier {
         System.out.println("----------- Finished Evaluation -----------");
     }
 
-    public static void train(Model model, DataSet set) {
+    public static void train(Model model, DataSet<DataRow> set) {
         SmartTrainer trainer = new SmartTrainer(0.7, 10);
 
         trainer.addListener(new ExampleListener());
@@ -142,8 +141,8 @@ public class MNISTClassifier {
         );
     }
 
-    public static DataSet getData() {
-        DataSet set = new DataSet();
+    public static DataSet<DataRow> getData() {
+        DataSet<DataRow> set = new DataSet<>();
 
         try {
             List<String> lines = FileUtils.readLines(new File("dataset.txt"), "UTF-8");
@@ -169,7 +168,7 @@ public class MNISTClassifier {
     private static class ExampleListener extends TrainListener {
 
         @Override
-        public void onEvaluated(DataSet dataSet, int epoch, double loss, long took) {
+        public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {
             System.out.print("\rEpoch " + epoch + " loss: " + loss + " took " + (took / 1e6) + " ms");
         }
     }

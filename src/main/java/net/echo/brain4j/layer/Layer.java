@@ -117,23 +117,6 @@ public abstract class Layer {
         return neurons.size();
     }
 
-    public void forward(StatesCache cache, Vector[] synapseMatrix, Layer nextLayer) {
-        List<Neuron> nextNeurons = nextLayer.getNeurons();
-
-        int inSize = this.neurons.size();
-        int outSize = nextNeurons.size();
-
-        Vector inputVector = new Vector(inSize);
-
-        for (int i = 0; i < inSize; i++) {
-            inputVector.set(i, neurons.get(i).getValue(cache));
-        }
-
-        for (int i = 0; i < outSize; i++) {
-            double value = synapseMatrix[i].weightedSum(inputVector);
-            nextNeurons.get(i).setValue(cache, value);
-        }
-
-        nextLayer.applyFunction(cache, this);
+    public void forward(StatesCache cache, Layer nextLayer) {
     }
 }
