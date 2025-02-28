@@ -110,10 +110,10 @@ public class Vector implements Cloneable, Iterable<Double> {
         double min = min();
         double max = max();
 
-        Vector normalized = new Vector(this.size());
+        Vector normalized = new Vector(size());
 
-        for (int i = 0; i < this.size(); i++) {
-            normalized.set(i, (this.get(i) - min) / (max - min));
+        for (int i = 0; i < size(); i++) {
+            normalized.set(i, (get(i) - min) / (max - min));
         }
 
         return normalized;

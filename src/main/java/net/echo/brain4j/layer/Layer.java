@@ -9,6 +9,7 @@ import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
 
@@ -40,12 +41,12 @@ public abstract class Layer {
     }
 
     public void init(Random generator) {
-        this.neurons.forEach(neuron ->
+        neurons.forEach(neuron ->
                 neuron.setBias(2 * generator.nextDouble() - 1));
     }
 
     public void connectAll(Random generator, Layer nextLayer, double bound) {
-        for (Neuron neuron : this.neurons) {
+        for (Neuron neuron : neurons) {
             for (Neuron nextNeuron : nextLayer.getNeurons()) {
                 Synapse synapse = new Synapse(generator, neuron, nextNeuron, bound);
                 neuron.addSynapse(synapse);
@@ -61,23 +62,23 @@ public abstract class Layer {
     }
 
     public void applyFunction(StatesCache cacheHolder, Layer previous) {
-        Activation function = this.activation.getFunction();
-        function.apply(cacheHolder, this.neurons);
+        Activation function = activation.getFunction();
+        function.apply(cacheHolder, neurons);
     }
 
     public void setInput(StatesCache cacheHolder, Vector input) {
-        Preconditions.checkState(input.size() == this.neurons.size(), "Input size does not match!" +
-                " (Input != Expected) " + input.size() + " != " + this.neurons.size());
+        Preconditions.checkState(input.size() == neurons.size(), "Input size does not match!" +
+                " (Input != Expected) " + input.size() + " != " + neurons.size());
 
         for (int i = 0; i < input.size(); i++) {
-            this.neurons.get(i).setValue(cacheHolder, input.get(i));
+            neurons.get(i).setValue(cacheHolder, input.get(i));
         }
     }
 
-    public void propagate(StatesCache cacheHolder, Layer previous, Updater updater) {
-        for (Neuron neuron : this.neurons) {
+    public void propagate(StatesCache cacheHolder, Layer previous, Updater updater, Optimizer optimizer) {
+        for (Neuron neuron : neurons) {
             double value = neuron.getValue(cacheHolder);
-            double derivative = this.activation.getFunction().getDerivative(value);
+            double derivative = activation.getFunction().getDerivative(value);
 
             for (Synapse synapse : neuron.getSynapses()) {
                 double weightChange = calculateGradient(cacheHolder, synapse, derivative);

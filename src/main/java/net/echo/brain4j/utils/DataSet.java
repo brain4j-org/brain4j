@@ -57,7 +57,7 @@ public class DataSet<T> implements Iterable<T> {
         int rowsPerBatch = data.size() / batches;
 
         for (int i = 0; i < batches; i++) {
-            this.partitions.add(subdivide(data, rowsPerBatch, i));
+            partitions.add(subdivide(data, rowsPerBatch, i));
         }
     }
 
@@ -66,7 +66,7 @@ public class DataSet<T> implements Iterable<T> {
         this.partitions.clear();
 
         for (int i = 0; i < batches; i++) {
-            this.partitions.add(subdivide(data, batchSize, i));
+            partitions.add(subdivide(data, batchSize, i));
         }
     }
 

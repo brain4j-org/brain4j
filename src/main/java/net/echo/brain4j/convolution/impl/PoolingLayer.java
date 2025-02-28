@@ -41,8 +41,11 @@ public class PoolingLayer extends Layer {
     public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
         Preconditions.checkNotNull(input, "Last convolutional input is null");
 
-        int outputWidth = (input.getWidth() - kernelWidth + 2 * padding) / stride + 1;
-        int outputHeight = (input.getHeight() - kernelHeight + 2 * padding) / stride + 1;
+        double initialWidth = input.getWidth() - kernelWidth + 2 * padding;
+        double initialHeight = input.getHeight() - kernelHeight + 2 * padding;
+
+        int outputWidth = (int) Math.ceil(initialWidth / stride) + 1;
+        int outputHeight = (int) Math.ceil(initialHeight / stride) + 1;
 
         Kernel output = new Kernel(outputWidth, outputHeight);
 

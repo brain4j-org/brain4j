@@ -41,8 +41,8 @@ public class TransformerEncoder {
     }
 
     public void compile(WeightInit weightInit, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
-        this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
         this.attention = new MultiHeadAttention(weightInit, heads, contextSize, dimension, temperature);
+        this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 
     /**

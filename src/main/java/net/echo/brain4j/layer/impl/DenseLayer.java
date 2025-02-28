@@ -34,7 +34,7 @@ public class DenseLayer extends Layer {
     public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
         List<Neuron> nextNeurons = nextLayer.getNeurons();
 
-        int inSize = this.neurons.size();
+        int inSize = neurons.size();
         int outSize = nextNeurons.size();
 
         Vector inputVector = new Vector(inSize);

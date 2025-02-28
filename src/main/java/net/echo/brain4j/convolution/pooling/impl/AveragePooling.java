@@ -14,10 +14,13 @@ public class AveragePooling implements PoolingFunction {
         int stride = layer.getStride();
         int padding = layer.getPadding();
 
+        int startX = j * stride - padding;
+        int startY = i * stride - padding;
+
         for (int ki = 0; ki < layer.getKernelHeight(); ki++) {
             for (int kj = 0; kj < layer.getKernelWidth(); kj++) {
-                int x = j * stride + kj - padding;
-                int y = i * stride + ki - padding;
+                int x = startX + kj;
+                int y = startY + ki;
 
                 if (x >= 0 && x < input.getWidth() && y >= 0 && y < input.getHeight()) {
                     sum += input.getValue(x, y);

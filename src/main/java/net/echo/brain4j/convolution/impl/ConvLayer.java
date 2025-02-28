@@ -4,7 +4,10 @@ import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.updater.Updater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,11 +47,6 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public int getTotalParams() {
-        return filters * kernelWidth * kernelHeight;
-    }
-
-    @Override
     public void connectAll(Random generator, Layer nextLayer, double bound) {
         for (int i = 0; i < filters; i++) {
             Kernel kernel = new Kernel(kernelWidth, kernelHeight);
@@ -56,11 +54,6 @@ public class ConvLayer extends Layer {
 
             this.kernels.add(kernel);
         }
-    }
-
-    @Override
-    public int size() {
-        return filters;
     }
 
     public Kernel postProcess(List<Kernel> featureMap) {
@@ -91,6 +84,24 @@ public class ConvLayer extends Layer {
         }
 
         return postProcess(featureMap).padding(padding);
+    }
+
+    @Override
+    public void propagate(StatesCache cacheHolder, Layer nextLayer, Updater updater, Optimizer optimizer) {
+        Kernel inputKernel = cacheHolder.getInputKernel(this);
+        Kernel outputKernel = cacheHolder.getOutputKernel(this);
+        Kernel errorMap = cacheHolder.getDeltaKernel(this);
+
+    }
+
+    @Override
+    public int getTotalParams() {
+        return filters * kernelWidth * kernelHeight;
+    }
+
+    @Override
+    public int size() {
+        return filters;
     }
 
     public List<Kernel> getKernels() {

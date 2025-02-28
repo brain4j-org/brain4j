@@ -36,26 +36,28 @@ public class BackPropagation {
         dataSet.partition(Math.min(threads, dataSet.getData().size()));
     }
 
+    private Thread propagatePartition(List<DataRow> partition) {
+        return Thread.startVirtualThread(() -> {
+            for (DataRow row : partition) {
+                StatesCache cacheHolder = new StatesCache();
+
+                Vector output = model.predict(cacheHolder, row.inputs());
+                Vector target = row.outputs();
+
+                backpropagate(cacheHolder, target, output);
+            }
+
+            updater.postBatch(model, optimizer.getLearningRate());
+        });
+    }
+
     public void iteration(DataSet<DataRow> dataSet) {
         partitionIfRequired(dataSet);
 
         List<Thread> threads = new ArrayList<>();
 
         for (List<DataRow> partition : dataSet.getPartitions()) {
-            Thread thread = Thread.startVirtualThread(() -> {
-                for (DataRow row : partition) {
-                    StatesCache cacheHolder = new StatesCache();
-
-                    Vector output = model.predict(cacheHolder, row.inputs());
-                    Vector target = row.outputs();
-
-                    backpropagate(cacheHolder, target, output);
-                }
-
-                updater.postBatch(model, optimizer.getLearningRate());
-            });
-
-            threads.add(thread);
+            threads.add(propagatePartition(partition));
         }
 
         waitAll(threads);
@@ -73,7 +75,7 @@ public class BackPropagation {
 
             if (!layer.canPropagate()) continue;
 
-            layer.propagate(cacheHolder, previous, updater);
+            layer.propagate(cacheHolder, previous, updater, optimizer);
             previous = layer;
         }
 
