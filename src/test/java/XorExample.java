@@ -30,16 +30,16 @@ public class XorExample {
         for (DataRow row : dataSet) {
             Vector prediction = model.predict(row.inputs());
 
-            System.out.println("Expected: " + row.outputs() + " -> Predicted: " + prediction);
+            System.out.println("Expected: " + row.outputs() + " -> Predicted: " + prediction.toString("%.3f"));
         }
     }
 
     private Model getModel() {
         Model model = new Model(
-            new DenseLayer(2, Activations.LINEAR), // 2 Input neurons
-            new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
-            new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
-            new DenseLayer(1, Activations.SIGMOID) // 1 Output neuron for classification
+                new DenseLayer(2, Activations.LINEAR), // 2 Input neurons
+                new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
+                new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
+                new DenseLayer(1, Activations.SIGMOID) // 1 Output neuron for classification
         );
 
         return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.1), new StochasticUpdater());

@@ -87,13 +87,13 @@ public class BackPropagation {
         List<Neuron> neurons = outputLayer.getNeurons();
         Activation function = outputLayer.getActivation().getFunction();
 
-        Vector changes = function.getDerivative(outputs);
+        Vector derivative = function.getDerivative(outputs);
 
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
 
             double error = outputs.get(i) - targets.get(i);
-            double delta = changes.get(i) * error;
+            double delta = model.getLossFunction().getDelta(error, derivative.get(i));
 
             neuron.setDelta(cacheHolder, delta);
         }

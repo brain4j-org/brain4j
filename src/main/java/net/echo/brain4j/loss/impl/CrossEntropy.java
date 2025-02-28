@@ -15,4 +15,9 @@ public class CrossEntropy implements LossFunction {
 
         return loss / actual.size();
     }
+
+    @Override
+    public double getDelta(double error, double derivative) {
+        return error;
+    }
 }

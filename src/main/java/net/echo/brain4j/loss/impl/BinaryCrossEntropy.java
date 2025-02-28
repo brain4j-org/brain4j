@@ -16,4 +16,9 @@ public class BinaryCrossEntropy implements LossFunction {
 
         return loss / actual.size();
     }
+
+    @Override
+    public double getDelta(double error, double derivative) {
+        return error;
+    }
 }
