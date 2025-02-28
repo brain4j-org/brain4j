@@ -4,12 +4,10 @@ import net.echo.brain4j.structure.Neuron;
 
 public class StatesCache {
 
-    private final double[] gradients;
     private final double[] valuesCache;
     private final double[] deltasCache;
 
     public StatesCache() {
-        this.gradients = new double[Parameters.TOTAL_SYNAPSES];
         this.valuesCache = new double[Parameters.TOTAL_NEURONS];
         this.deltasCache = new double[Parameters.TOTAL_NEURONS];
     }
