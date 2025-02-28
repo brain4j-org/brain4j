@@ -18,6 +18,6 @@ public class MeanAbsoluteError implements LossFunction {
 
     @Override
     public double getDelta(double error, double derivative) {
-        return error * derivative;
+        return Math.signum(error);
     }
 }
