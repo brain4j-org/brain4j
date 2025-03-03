@@ -17,8 +17,16 @@ public class Vector implements Cloneable, Iterable<Double> {
         this.data = data;
     }
 
+    private Vector(int... data) {
+        this.data = Arrays.stream(data).mapToDouble(i -> i).toArray();
+    }
+
     public static Vector of(double... data) {
         return new Vector(Arrays.copyOf(data, data.length));
+    }
+
+    public static Vector of(int... data) {
+        return new Vector(data);
     }
 
     public static Vector random(int size) {
