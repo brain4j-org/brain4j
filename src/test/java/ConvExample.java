@@ -1,10 +1,10 @@
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.convolution.pooling.PoolingType;
+import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.convolution.ConvLayer;
 import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
 import net.echo.brain4j.layer.impl.convolution.InputLayer;
 import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
-import net.echo.brain4j.convolution.pooling.PoolingType;
-import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;

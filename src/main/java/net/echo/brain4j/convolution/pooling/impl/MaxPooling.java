@@ -1,8 +1,8 @@
 package net.echo.brain4j.convolution.pooling.impl;
 
 import net.echo.brain4j.convolution.Kernel;
-import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.convolution.pooling.PoolingFunction;
+import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 
 public class MaxPooling implements PoolingFunction {
 

@@ -5,11 +5,8 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
-import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
-
-import java.util.Map;
 
 public class StochasticUpdater extends Updater {
 

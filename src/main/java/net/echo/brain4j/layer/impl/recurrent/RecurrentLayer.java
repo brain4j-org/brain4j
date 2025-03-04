@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static net.echo.brain4j.utils.MLUtils.clipGradient;
-
 /**
  * Represents a recurrent layer in a neural network.
  */

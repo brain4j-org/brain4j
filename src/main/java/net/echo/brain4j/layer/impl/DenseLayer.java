@@ -7,7 +7,6 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.utils.Vector;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
