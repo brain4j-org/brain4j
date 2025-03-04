@@ -32,8 +32,9 @@ public class BackPropagation {
         if (dataSet.isPartitioned()) return;
 
         int threads = Runtime.getRuntime().availableProcessors();
+        int partitions = Math.min(threads, dataSet.getData().size());
 
-        dataSet.partition(Math.min(threads, dataSet.getData().size()));
+        dataSet.partition(partitions);
     }
 
     private Thread propagatePartition(List<DataRow> partition) {

@@ -1,13 +1,13 @@
-package net.echo.brain4j.convolution.impl;
+package net.echo.brain4j.layer.impl.convolution;
 
 import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +72,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
+    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
         Preconditions.checkNotNull(input, "Last convolutional input is null! Missing an input layer?");
 
         List<Kernel> featureMap = new ArrayList<>();
@@ -92,6 +92,7 @@ public class ConvLayer extends Layer {
         Kernel outputKernel = cacheHolder.getOutputKernel(this);
         Kernel errorMap = cacheHolder.getDeltaKernel(this);
 
+        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     @Override

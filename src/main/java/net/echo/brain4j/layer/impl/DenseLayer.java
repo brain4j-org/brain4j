@@ -7,6 +7,7 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.utils.Vector;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -14,17 +15,14 @@ import java.util.List;
  */
 public class DenseLayer extends Layer {
 
-    private Layer nextLayer;
-    private List<Vector> weights;
+    protected Layer nextLayer;
+    protected List<Vector> weights;
 
     /**
-     * Constructs a new DenseLayer instance.
+     * Constructs an instance of a dense layer.
      *
-     * @param input the number of neurons (units) in this layer, which determines
-     *              the layer's capacity to learn and represent data.
-     * @param activation the activation function to be applied to the output
-     *                   of each neuron, enabling non-linear transformations
-     *                   of the input data.
+     * @param input the number of neurons in this layer
+     * @param activation the activation function to be applied to the output of each neuron
      */
     public DenseLayer(int input, Activations activation) {
         super(input, activation);
@@ -49,7 +47,6 @@ public class DenseLayer extends Layer {
         }
 
         nextLayer.applyFunction(cache, this);
-
         return null;
     }
 

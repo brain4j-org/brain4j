@@ -1,4 +1,4 @@
-package net.echo.brain4j.convolution.impl;
+package net.echo.brain4j.layer.impl.convolution;
 
 import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
@@ -38,7 +38,7 @@ public class PoolingLayer extends Layer {
     }
 
     @Override
-    public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
+    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
         Preconditions.checkNotNull(input, "Last convolutional input is null");
 
         double initialWidth = input.getWidth() - kernelWidth + 2 * padding;

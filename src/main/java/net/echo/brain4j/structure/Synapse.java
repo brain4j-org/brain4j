@@ -11,6 +11,13 @@ public class Synapse {
     private final int synapseId;
     private double weight;
 
+    public Synapse(Neuron inputNeuron, Neuron outputNeuron, double weight) {
+        this.synapseId = Parameters.TOTAL_SYNAPSES++;
+        this.inputNeuron = inputNeuron;
+        this.outputNeuron = outputNeuron;
+        this.weight = weight;
+    }
+
     public Synapse(Random generator, Neuron inputNeuron, Neuron outputNeuron, double bound) {
         this.synapseId = Parameters.TOTAL_SYNAPSES++;
         this.inputNeuron = inputNeuron;

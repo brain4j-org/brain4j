@@ -1,7 +1,7 @@
 package net.echo.brain4j.convolution.pooling.impl;
 
 import net.echo.brain4j.convolution.Kernel;
-import net.echo.brain4j.convolution.impl.PoolingLayer;
+import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.convolution.pooling.PoolingFunction;
 
 public class AveragePooling implements PoolingFunction {

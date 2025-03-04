@@ -1,10 +1,9 @@
-package net.echo.brain4j.convolution.impl;
+package net.echo.brain4j.layer.impl.convolution;
 
 import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.structure.cache.StatesCache;
 
 public class FlattenLayer extends Layer {
@@ -14,8 +13,8 @@ public class FlattenLayer extends Layer {
     }
 
     @Override
-    public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
-        super.forward(cache, layer, input);
+    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
+        super.forward(cache, lastLayer, input);
         return null;
     }
 

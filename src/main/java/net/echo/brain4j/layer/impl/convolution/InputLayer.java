@@ -1,4 +1,4 @@
-package net.echo.brain4j.convolution.impl;
+package net.echo.brain4j.layer.impl.convolution;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;

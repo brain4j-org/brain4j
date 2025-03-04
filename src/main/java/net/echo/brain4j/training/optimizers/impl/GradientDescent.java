@@ -24,7 +24,7 @@ public class GradientDescent extends Optimizer {
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(cacheHolder, synapse);
-                updater.acknowledgeChange(cacheHolder, synapse, change);
+                updater.acknowledgeChange(synapse, change);
             }
         }
     }

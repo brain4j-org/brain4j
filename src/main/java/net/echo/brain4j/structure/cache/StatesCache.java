@@ -9,12 +9,14 @@ import java.util.Map;
 
 public class StatesCache {
 
-    private final double[] valuesCache;
-    private final double[] deltasCache;
-
     private final Map<Layer, Kernel> inputKernelCache;
     private final Map<Layer, Kernel> outputKernelCache;
     private final Map<Layer, Kernel> deltaKernelCache;
+
+    private final double[] valuesCache;
+    private final double[] deltasCache;
+
+    private double[] previousTimestep;
 
     public StatesCache() {
         this.valuesCache = new double[Parameters.TOTAL_NEURONS];
@@ -66,5 +68,19 @@ public class StatesCache {
 
     public void setDeltaKernel(Layer layer, Kernel kernel) {
         deltaKernelCache.put(layer, kernel);
+    }
+
+    public void ensureRecurrentCache() {
+        if (previousTimestep != null) return;
+
+        previousTimestep = new double[Parameters.TOTAL_NEURONS];
+    }
+
+    public double getHiddenState(Neuron neuron) {
+        return previousTimestep[neuron.getId()];
+    }
+
+    public void setHiddenState(Neuron neuron, double activatedValue) {
+        previousTimestep[neuron.getId()] = activatedValue;
     }
 }

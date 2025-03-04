@@ -9,14 +9,15 @@ import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.adapters.UpdaterAdapter;
 import net.echo.brain4j.convolution.Kernel;
-import net.echo.brain4j.convolution.impl.ConvLayer;
-import net.echo.brain4j.convolution.impl.FlattenLayer;
-import net.echo.brain4j.convolution.impl.InputLayer;
-import net.echo.brain4j.convolution.impl.PoolingLayer;
+import net.echo.brain4j.layer.impl.convolution.ConvLayer;
+import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
+import net.echo.brain4j.layer.impl.convolution.InputLayer;
+import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
+import net.echo.brain4j.layer.impl.recurrent.RecurrentLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -112,7 +113,7 @@ public class Model {
         Layer lastNormalLayer = layers.getFirst();
 
         for (Layer layer : layers) {
-            if (layer instanceof DenseLayer denseLayer && !update) {
+            if (layer instanceof DenseLayer denseLayer && update) {
                 denseLayer.init(generator);
             }
         }
@@ -220,7 +221,7 @@ public class Model {
         for (int i = 0; i < layers.size() - 1; i++) {
             Layer layer = layers.get(i);
 
-            if (!(layer instanceof DenseLayer denseLayer)) continue;
+            if (!(layer instanceof DenseLayer)) continue;
 
             Layer nextLayer = getNextComputationLayer(i);
 
@@ -229,7 +230,7 @@ public class Model {
 
             Vector[] synapseMatrixLayer = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
 
-            denseLayer.updateWeights(nextLayer, synapseMatrixLayer);
+            layer.updateWeights(nextLayer, synapseMatrixLayer);
         }
     }
 

@@ -164,7 +164,7 @@ public class AdamGPU extends Optimizer {
             Synapse synapse = synapses[i];
             float update = updates[i];
 
-            updater.acknowledgeChange(cacheHolder, synapse, update);
+            updater.acknowledgeChange(synapse, update);
         }
     }
 

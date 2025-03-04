@@ -8,6 +8,7 @@ import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -26,10 +27,14 @@ public abstract class Layer {
     protected final List<Neuron> neurons = new ArrayList<>();
     protected final List<Synapse> synapses = new ArrayList<>();
     protected final Activations activation;
+    protected final Activation function;
 
     public Layer(int input, Activations activation) {
+        Parameters.TOTAL_LAYERS++;
         Stream.generate(Neuron::new).limit(input).forEach(neurons::add);
+
         this.activation = activation;
+        this.function = activation.getFunction();
     }
 
     public boolean canPropagate() {
@@ -41,8 +46,7 @@ public abstract class Layer {
     }
 
     public void init(Random generator) {
-        neurons.forEach(neuron ->
-                neuron.setBias(2 * generator.nextDouble() - 1));
+        neurons.forEach(neuron -> neuron.setBias(2 * generator.nextDouble() - 1));
     }
 
     public void connectAll(Random generator, Layer nextLayer, double bound) {
@@ -56,13 +60,15 @@ public abstract class Layer {
         }
     }
 
-    // TODO: Refactor this, now I don't have time
-    public Kernel forward(StatesCache cache, Layer layer, Kernel input) {
-        return null;
+    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
+        throw new UnsupportedOperationException("Not implemented for this class.");
+    }
+
+    public void updateWeights(Layer nextLayer, Vector[] synapseMatrixLayer) {
+        throw new UnsupportedOperationException("Not implemented for this class.");
     }
 
     public void applyFunction(StatesCache cacheHolder, Layer previous) {
-        Activation function = activation.getFunction();
         function.apply(cacheHolder, neurons);
     }
 
@@ -82,7 +88,7 @@ public abstract class Layer {
 
             for (Synapse synapse : neuron.getSynapses()) {
                 double weightChange = calculateGradient(cacheHolder, synapse, derivative);
-                updater.acknowledgeChange(cacheHolder, synapse, weightChange);
+                updater.acknowledgeChange(synapse, weightChange);
             }
         }
     }
@@ -91,12 +97,12 @@ public abstract class Layer {
         Neuron input = synapse.getInputNeuron();
         Neuron output = synapse.getOutputNeuron();
 
-        double error = clipGradient(synapse.getWeight() * output.getDelta(cacheHolder));
-        double delta = clipGradient(error * derivative);
+        double delta = output.getDelta(cacheHolder);
+        double error = clipGradient(synapse.getWeight() * delta * derivative);
 
-        input.setDelta(cacheHolder, delta);
+        input.setDelta(cacheHolder, error);
 
-        return clipGradient(delta * input.getValue(cacheHolder));
+        return clipGradient(error * input.getValue(cacheHolder));
     }
 
     public List<Neuron> getNeurons() {

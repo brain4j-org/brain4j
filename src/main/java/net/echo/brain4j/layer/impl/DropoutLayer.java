@@ -11,26 +11,24 @@ import java.util.Objects;
 
 /**
  * Represents a Dropout layer for regularization in a neural network.
- * <p>
- * This layer randomly sets a fraction of the input neurons to zero
- * during training to mitigate overfitting.
+ * <p>Dropout is a technique used to mitigate overfitting by randomly deactivating a fraction of the input neurons.</p>
  */
 public class DropoutLayer extends Layer {
 
     private final double dropout;
 
     /**
-     * Constructs a Dropout layer.
+     * Constructs an instance of a dropout layer.
      *
-     * @param dropout the dropout rate (0 < dropout <= 1), specifying the
-     *                proportion of neurons to deactivate during training.
-     * @throws IllegalArgumentException if dropout is not in the range (0, 1].
+     * @param dropout the dropout rate (0 < dropout < 1), specifying the
+     *                proportion of neurons to deactivate during training
+     * @throws IllegalArgumentException if dropout is not in the range 0-1 (exclusive).
      */
     public DropoutLayer(double dropout) {
         super(0, Activations.LINEAR);
 
-        if (dropout <= 0 || dropout > 1) {
-            throw new IllegalArgumentException("Dropout must be between 0 and 1");
+        if (dropout <= 0 || dropout >= 1) {
+            throw new IllegalArgumentException("Dropout must be greater than 0 and less than 1!");
         }
 
         this.dropout = dropout;
@@ -38,7 +36,7 @@ public class DropoutLayer extends Layer {
 
     @Override
     public void propagate(StatesCache cacheHolder, Layer previous, Updater updater, Optimizer optimizer) {
-        Objects.requireNonNull(previous, "Previous layer is null, is the drop out layer the first layer?");
+        Objects.requireNonNull(previous, "Previous layer is null");
 
         for (Neuron neuron : previous.getNeurons()) {
             neuron.setValue(cacheHolder, neuron.getValue(cacheHolder) * (1.0 - dropout));
