@@ -133,11 +133,22 @@ public class Model {
     }
 
     /**
-     * Initializes the model and layers.
+     * Initializes the model and layers with default values.
      *
-     * @param weightInit initialization method
-     * @param function loss function for error assessment
-     * @param optimizer optimization algorithm for training
+     * @param function loss function for evaluation and training
+     * @param optimizer optimization algorithm to use
+     * @return the instance of the model
+     */
+    public Model compile(LossFunctions function, Optimizer optimizer) {
+        return compile(WeightInit.UNIFORM_XAVIER, function, optimizer, new StochasticUpdater());
+    }
+
+    /**
+     * Initializes the model and layers with default values.
+     *
+     * @param weightInit initialization method for weights
+     * @param function loss function for evaluation and training
+     * @param optimizer optimization algorithm to use
      * @param updater weights updating algorithm for training
      */
     public Model compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {

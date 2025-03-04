@@ -53,4 +53,8 @@ public class DenseLayer extends Layer {
         this.nextLayer = nextLayer;
         this.weights = List.of(weights);
     }
+
+    public List<Vector> getWeights() {
+        return weights;
+    }
 }

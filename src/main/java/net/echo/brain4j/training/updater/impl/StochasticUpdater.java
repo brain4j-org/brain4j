@@ -1,12 +1,15 @@
 package net.echo.brain4j.training.updater.impl;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.recurrent.RecurrentLayer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
+
+import java.util.List;
 
 public class StochasticUpdater extends Updater {
 
@@ -25,10 +28,23 @@ public class StochasticUpdater extends Updater {
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);
         }
 
-        // Adds all the gradients to the weights
-        recurrentGradients.forEach(Vector::add);
-
         for (Layer layer : model.getLayers()) {
+            if (layer instanceof RecurrentLayer recurrentLayer) {
+                List<Vector> recurrentWeights = recurrentLayer.getRecurrentWeights();
+
+                for (int i = 0; i < recurrentWeights.size(); i++) {
+                    Vector recurrentWeightVector = recurrentWeights.get(i);
+                    for (int j = 0; j < recurrentWeightVector.size(); j++) {
+                        int index = i * Parameters.TOTAL_NEURONS + j;
+
+                        double gradient = recurrentGradients[index];
+                        double newWeight = recurrentWeightVector.get(j) - learningRate * gradient;
+
+                        recurrentWeightVector.set(j, newWeight);
+                    }
+                }
+            }
+
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 
@@ -37,6 +53,7 @@ public class StochasticUpdater extends Updater {
             }
         }
 
+        this.recurrentGradients = new double[Parameters.TOTAL_NEURONS * Parameters.TOTAL_NEURONS];
         this.gradients = new double[Parameters.TOTAL_SYNAPSES];
     }
 }

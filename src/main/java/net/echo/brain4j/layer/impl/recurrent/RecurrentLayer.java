@@ -21,6 +21,7 @@ import java.util.Random;
 public class RecurrentLayer extends DenseLayer {
 
     private List<Vector> recurrentWeights;
+    private Vector hiddenStateBias;
 
     /**
      * Constructs an instance of a recurrent layer.
@@ -38,6 +39,7 @@ public class RecurrentLayer extends DenseLayer {
 
         int inSize = neurons.size();
         this.recurrentWeights = new ArrayList<>(inSize);
+        this.hiddenStateBias = Vector.uniform(-1, 1, inSize);
 
         for (int i = 0; i < inSize; i++) {
             Vector recurrentWeightsVector = new Vector(inSize);
@@ -55,6 +57,10 @@ public class RecurrentLayer extends DenseLayer {
     public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
         cache.ensureRecurrentCache();
 
+        if (!(lastLayer instanceof DenseLayer denseLayer)) {
+            throw new UnsupportedOperationException("Recurrent layer must be connected to a dense layer or a recurrent layer!");
+        }
+
         List<Neuron> nextNeurons = nextLayer.getNeurons();
 
         int inSize = neurons.size();
@@ -69,17 +75,25 @@ public class RecurrentLayer extends DenseLayer {
         Vector previousHiddenState = new Vector(inSize);
 
         for (int i = 0; i < inSize; i++) {
-            previousHiddenState.set(i, cache.getHiddenState(neurons.get(i)));
+            previousHiddenState.set(i, neurons.get(i).getHiddenState(cache));
+        }
+
+        for (int i = 0; i < inSize; i++) {
+            Neuron neuron = neurons.get(i);
+
+            double inputValue = denseLayer.getWeights().get(i).weightedSum(currentInput);
+            double recurrentValue = recurrentWeights.get(i).weightedSum(previousHiddenState);
+
+            double rawState = inputValue + recurrentValue + hiddenStateBias.get(i);
+            double newState = Activations.TANH.getFunction().activate(rawState);
+
+            cache.setHiddenState(neuron, newState);
+            // neuron.setValue(cache, newState);
         }
 
         for (int i = 0; i < outSize; i++) {
-            double inputValue = weights.get(i).weightedSum(currentInput);
-            double recurrentValue = recurrentWeights.get(i).weightedSum(previousHiddenState);
-
-            double newState = activation.getFunction().activate(inputValue + recurrentValue);
-
-            cache.setHiddenState(nextNeurons.get(i), newState);
-            nextNeurons.get(i).setValue(cache, newState);
+            double value = weights.get(i).weightedSum(currentInput);
+            nextNeurons.get(i).setValue(cache, value);
         }
 
         nextLayer.applyFunction(cache, this);
@@ -88,28 +102,31 @@ public class RecurrentLayer extends DenseLayer {
 
     @Override
     public void propagate(StatesCache cacheHolder, Layer previous, Updater updater, Optimizer optimizer) {
+        super.propagate(cacheHolder, previous, updater, optimizer);
+
         for (Neuron neuron : neurons) {
             double value = neuron.getValue(cacheHolder);
             double derivative = activation.getFunction().getDerivative(value);
 
-            double delta = cacheHolder.getDelta(neuron);
+            double delta = neuron.getDelta(cacheHolder);
 
-            for (int i = 0; i < neurons.size(); i++) {
-                Neuron recurrentNeuron = neurons.get(i);
-
-                double recurrentValue = recurrentNeuron.getValue(cacheHolder);
+            for (Neuron recurrentNeuron : neurons) {
+                double recurrentValue = cacheHolder.getHiddenState(recurrentNeuron);
                 double recurrentGradient = delta * recurrentValue * derivative;
 
-                double currentRecurrentWeight = recurrentWeights.get(i).get(i);
-                double updatedRecurrentWeight = currentRecurrentWeight - optimizer.getLearningRate() * recurrentGradient;
-
-                recurrentWeights.get(i).set(i, updatedRecurrentWeight);
+                updater.acknowledgeRecurrentChange(neuron.getId(), recurrentNeuron.getId(), recurrentGradient);
             }
 
             for (Synapse synapse : neuron.getSynapses()) {
-                double weightChange = calculateGradient(cacheHolder, synapse, derivative);
-                updater.acknowledgeChange(synapse, weightChange);
+                double weight = synapse.getWeight();
+                double propagatedDelta = delta * weight;
+
+                cacheHolder.addDelta(synapse.getInputNeuron(), propagatedDelta);
             }
         }
+    }
+
+    public List<Vector> getRecurrentWeights() {
+        return recurrentWeights;
     }
 }

@@ -20,9 +20,6 @@ public class NormalUpdater extends Updater {
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);
         }
 
-        // Adds all the gradients to the weights
-        recurrentGradients.forEach(Vector::add);
-
         for (Layer layer : model.getLayers()) {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
@@ -33,6 +30,7 @@ public class NormalUpdater extends Updater {
         }
 
         model.reloadMatrices();
+
         this.gradients = new double[Parameters.TOTAL_SYNAPSES];
     }
 }

@@ -6,30 +6,27 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
-import net.echo.brain4j.utils.Vector;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @JsonAdapter(UpdaterAdapter.class)
 public abstract class Updater {
 
-    protected Map<Vector, Vector> recurrentGradients;
     protected Synapse[] synapses;
     protected double[] gradients;
+    protected double[] recurrentGradients;
 
     public void acknowledgeChange(Synapse synapse, double change) {
         gradients[synapse.getSynapseId()] += change;
     }
 
-    public void acknowledgeRecurrentChange(Vector recurrentWeights, Vector recurrentChanges) {
-        recurrentGradients.put(recurrentWeights, recurrentChanges);
+    public void acknowledgeRecurrentChange(int neuronId, int recurrentNeuronId, double change) {
+        int index = neuronId * Parameters.TOTAL_NEURONS + recurrentNeuronId;
+        recurrentGradients[index] += change;
     }
 
     public void postInitialize(Model model) {
         this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
         this.gradients = new double[Parameters.TOTAL_SYNAPSES];
-        this.recurrentGradients = new HashMap<>();
+        this.recurrentGradients = new double[Parameters.TOTAL_NEURONS * Parameters.TOTAL_NEURONS];
 
         for (Layer layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {

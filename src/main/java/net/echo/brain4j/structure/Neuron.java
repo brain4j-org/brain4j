@@ -63,4 +63,8 @@ public class Neuron {
     public void setBias(double bias) {
         this.bias = bias;
     }
+
+    public double getHiddenState(StatesCache cache) {
+        return cache.getHiddenState(this);
+    }
 }
