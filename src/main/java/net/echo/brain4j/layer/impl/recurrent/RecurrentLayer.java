@@ -72,6 +72,9 @@ public class RecurrentLayer extends DenseLayer {
             currentInput.set(i, neurons.get(i).getValue(cache));
         }
 
+        // TODO: Found the issue!
+        // We are calculating the hidden state of the current layer and the output of the next layer.
+        // How to solve? Make the current layer calculate the values of this layer
         Vector previousHiddenState = new Vector(inSize);
 
         for (int i = 0; i < inSize; i++) {
@@ -92,6 +95,7 @@ public class RecurrentLayer extends DenseLayer {
         }
 
         for (int i = 0; i < outSize; i++) {
+            System.out.println(i + " -> " + weights.get(i).size());
             double value = weights.get(i).weightedSum(currentInput);
             nextNeurons.get(i).setValue(cache, value);
         }
