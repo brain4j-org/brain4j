@@ -1,8 +1,8 @@
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.convolution.impl.ConvLayer;
-import net.echo.brain4j.convolution.impl.FlattenLayer;
-import net.echo.brain4j.convolution.impl.InputLayer;
-import net.echo.brain4j.convolution.impl.PoolingLayer;
+import net.echo.brain4j.layer.impl.convolution.ConvLayer;
+import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
+import net.echo.brain4j.layer.impl.convolution.InputLayer;
+import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.convolution.pooling.PoolingType;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
@@ -31,10 +31,15 @@ public class ConvExample {
         Model model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
-        long start = System.nanoTime();
-        model.predict(dataSet.getData().getFirst().inputs());
-        // double loss = // model.evaluate(dataSet);
-        double took = (System.nanoTime() - start) / 1e6;
+        double loss = model.evaluate(dataSet);
+        System.out.println("Initial loss: " + loss);
+
+        for (int i = 0; i < 1000; i++) {
+            model.fit(dataSet);
+
+            loss = model.evaluate(dataSet);
+            System.out.println("Final loss: " + loss + " at " + i);
+        }
     }
 
     private Model getModel() {
@@ -51,7 +56,7 @@ public class ConvExample {
                 new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // Flattens the feature map to a 1D vector
-                new FlattenLayer(16), // You must find the right size by trial and error
+                new FlattenLayer(25), // You must find the right size by trial and error
 
                 // Classifiers
                 new DenseLayer(32, Activations.RELU),

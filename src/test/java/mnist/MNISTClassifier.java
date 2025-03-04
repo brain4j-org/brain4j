@@ -118,7 +118,7 @@ public class MNISTClassifier {
         SmartTrainer trainer = new SmartTrainer(0.7, 10);
 
         trainer.addListener(new ExampleListener());
-        trainer.startFor(model, set, 150);
+        trainer.startFor(model, set, 150, 0.01);
 
         double loss = model.evaluate(set);
         model.save("mnist_" + loss + ".json");
