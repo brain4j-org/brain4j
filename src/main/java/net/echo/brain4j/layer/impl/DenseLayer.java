@@ -1,7 +1,6 @@
 package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
@@ -12,9 +11,8 @@ import java.util.List;
 /**
  * Represents a fully connected (dense) layer in a neural network.
  */
-public class DenseLayer extends Layer {
+public class DenseLayer extends Layer<Vector, Vector> {
 
-    protected Layer nextLayer;
     protected List<Vector> weights;
 
     /**
@@ -28,33 +26,30 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
+    public Vector forward(StatesCache cache, Layer<?, ?> lastLayer, Vector input) {
         if (!(lastLayer instanceof DenseLayer denseLayer)) {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
-        List<Neuron> lastNeurons = lastLayer.getNeurons();
-
-        int inSize = lastNeurons.size();
         int outSize = neurons.size();
-
-        Vector inputVector = new Vector(inSize);
-
-        for (int i = 0; i < inSize; i++) {
-            inputVector.set(i, lastNeurons.get(i).getValue(cache));
-        }
+        Vector output = new Vector(outSize);
 
         for (int i = 0; i < outSize; i++) {
-            double value = denseLayer.getWeights().get(i).weightedSum(inputVector);
+            double value = denseLayer.getWeights().get(i).weightedSum(input);
             neurons.get(i).setValue(cache, value);
         }
 
         applyFunction(cache, lastLayer);
-        return null;
+
+        for (int i = 0; i < size(); i++) {
+            output.set(i, neurons.get(i).getValue(cache));
+        }
+
+        return output;
     }
 
-    public void updateWeights(Layer nextLayer, Vector[] weights) {
-        this.nextLayer = nextLayer;
+    @Override
+    public void updateWeights(Vector[] weights) {
         this.weights = List.of(weights);
     }
 

@@ -62,13 +62,13 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
         this.timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        for (Layer layer : layers) {
+        for (Layer<?, ?> layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(cacheHolder, synapse);
                 updater.acknowledgeChange(synapse, change);

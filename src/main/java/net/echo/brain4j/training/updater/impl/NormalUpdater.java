@@ -20,7 +20,7 @@ public class NormalUpdater extends Updater {
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);
         }
 
-        for (Layer layer : model.getLayers()) {
+        for (Layer<?, ?> layer : model.getLayers()) {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 

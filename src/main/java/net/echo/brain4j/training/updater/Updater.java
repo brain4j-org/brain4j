@@ -28,7 +28,7 @@ public abstract class Updater {
         this.gradients = new double[Parameters.TOTAL_SYNAPSES];
         this.recurrentGradients = new double[Parameters.TOTAL_NEURONS * Parameters.TOTAL_NEURONS];
 
-        for (Layer layer : model.getLayers()) {
+        for (Layer<?, ?> layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {
                 synapses[synapse.getSynapseId()] = synapse;
             }

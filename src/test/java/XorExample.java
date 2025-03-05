@@ -5,6 +5,7 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
@@ -22,10 +23,16 @@ public class XorExample {
 
         System.out.println(model.getStats());
 
+        long start = System.nanoTime();
+
         // Fit the model for 1000 epoches
         for (int i = 0; i < 1000; i++) {
             model.fit(dataSet);
         }
+
+        double took = (System.nanoTime() - start) / 1e6;
+
+        System.out.println("Took: " + took + " ms");
 
         for (DataRow row : dataSet) {
             Vector prediction = model.predict(row.inputs());

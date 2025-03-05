@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ConvLayer extends Layer {
+public class ConvLayer extends Layer<Kernel, Kernel> {
 
     protected final List<Kernel> kernels = new ArrayList<>();
 
@@ -46,7 +46,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public void connectAll(Random generator, Layer nextLayer, double bound) {
+    public void connectAll(Random generator, Layer<?, ?> nextLayer, double bound) {
         for (int i = 0; i < filters; i++) {
             Kernel kernel = new Kernel(kernelWidth, kernelHeight);
             kernel.setValues(generator, bound);
@@ -66,12 +66,11 @@ public class ConvLayer extends Layer {
         }
 
         result.apply(this.activation.getFunction());
-
         return result;
     }
 
     @Override
-    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
+    public Kernel forward(StatesCache cache, Layer<?, ?> lastLayer, Kernel input) {
         Preconditions.checkNotNull(input, "Last convolutional input is null! Missing an input layer?");
 
         List<Kernel> featureMap = new ArrayList<>();
@@ -86,7 +85,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public void propagate(StatesCache cacheHolder, Layer nextLayer, Updater updater, Optimizer optimizer) {
+    public void propagate(StatesCache cacheHolder, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
         Kernel inputKernel = cacheHolder.getInputKernel(this);
         Kernel outputKernel = cacheHolder.getOutputKernel(this);
         Kernel errorMap = cacheHolder.getDeltaKernel(this);

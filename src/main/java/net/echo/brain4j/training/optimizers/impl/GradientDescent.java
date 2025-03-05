@@ -20,8 +20,8 @@ public class GradientDescent extends Optimizer {
     }
 
     @Override
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
-        for (Layer layer : layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
+        for (Layer<?, ?> layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(cacheHolder, synapse);
                 updater.acknowledgeChange(synapse, change);

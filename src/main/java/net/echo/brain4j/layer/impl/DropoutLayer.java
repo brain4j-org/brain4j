@@ -6,6 +6,7 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ import java.util.Objects;
  * Represents a Dropout layer for regularization in a neural network.
  * <p>Dropout is a technique used to mitigate overfitting by randomly deactivating a fraction of the input neurons.</p>
  */
-public class DropoutLayer extends Layer {
+public class DropoutLayer extends Layer<Vector, Vector> {
 
     private final double dropout;
 
@@ -35,7 +36,7 @@ public class DropoutLayer extends Layer {
     }
 
     @Override
-    public void propagate(StatesCache cacheHolder, Layer previous, Updater updater, Optimizer optimizer) {
+    public void propagate(StatesCache cacheHolder, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
         Objects.requireNonNull(previous, "Previous layer is null");
 
         for (Neuron neuron : previous.getNeurons()) {

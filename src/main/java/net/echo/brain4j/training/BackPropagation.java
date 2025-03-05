@@ -66,13 +66,13 @@ public class BackPropagation {
     }
 
     public void backpropagate(StatesCache cacheHolder, Vector targets, Vector outputs) {
-        List<Layer> layers = model.getLayers();
+        List<Layer<?, ?>> layers = model.getLayers();
         initializeDeltas(cacheHolder, layers, targets, outputs);
 
-        Layer previous = null;
+        Layer<?, ?> previous = null;
 
         for (int l = layers.size() - 2; l > 0; l--) {
-            Layer layer = layers.get(l);
+            Layer<?, ?> layer = layers.get(l);
 
             if (!layer.canPropagate()) continue;
 
@@ -84,8 +84,8 @@ public class BackPropagation {
         updater.postIteration(model, optimizer.getLearningRate());
     }
 
-    private void initializeDeltas(StatesCache cacheHolder, List<Layer> layers, Vector targets, Vector outputs) {
-        Layer outputLayer = layers.getLast();
+    private void initializeDeltas(StatesCache cacheHolder, List<Layer<?, ?>> layers, Vector targets, Vector outputs) {
+        Layer<?, ?> outputLayer = layers.getLast();
 
         List<Neuron> neurons = outputLayer.getNeurons();
         Activation function = outputLayer.getActivation().getFunction();

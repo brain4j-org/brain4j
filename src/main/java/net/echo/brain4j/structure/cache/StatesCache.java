@@ -15,7 +15,6 @@ public class StatesCache {
 
     private final double[] valuesCache;
     private final double[] deltasCache;
-
     private double[] previousTimestep;
 
     public StatesCache() {

@@ -19,31 +19,33 @@ public class RNNExample {
         Model model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
-        model.predict(Vector.of(3, 3));
-//        for (int i = 0; i < 1000; i++) {
-//            model.fit(dataSet);
-//            double loss = model.evaluate(dataSet);
-//
-//            System.out.println("Loss: " + loss);
-//        }
+        for (int i = 0; i < 10000; i++) {
+            model.fit(dataSet);
 
-//        for (DataRow row : dataSet) {
-//            Vector input = row.inputs();
-//            Vector output = row.outputs();
-//
-//            Vector prediction = model.predict(input);
-//            System.out.println("Input: " + input + ", Output: " + output + ", Prediction: " + prediction);
-//        }
+            if (i % 1000 == 0) {
+                double loss = model.evaluate(dataSet);
+
+                System.out.println(i + ". Loss: " + loss);
+            }
+        }
+
+        for (DataRow row : dataSet) {
+            Vector input = row.inputs();
+            Vector output = row.outputs();
+
+            Vector prediction = model.predict(input);
+            System.out.println("Input: " + input + ", Output: " + output + ", Prediction: " + prediction);
+        }
     }
 
     public Model getModel() {
         Model model = new Model(
-                new DenseLayer(2, Activations.LINEAR),
-                new RecurrentLayer(4, Activations.TANH),
+                new DenseLayer(1, Activations.LINEAR),
+                new RecurrentLayer(32, Activations.TANH),
                 new DenseLayer(1, Activations.LINEAR)
         );
 
-        return model.compile(LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.001));
+        return model.compile(LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.01));
     }
 
     public DataSet<DataRow> getDataSet() {

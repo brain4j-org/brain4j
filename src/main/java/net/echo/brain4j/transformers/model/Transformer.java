@@ -60,7 +60,7 @@ public class Transformer extends Model {
     }
 
     @Override
-    public Layer getNextComputationLayer(int index) {
+    public Layer<?, ?> getNextComputationLayer(int index) {
         return null;
     }
 

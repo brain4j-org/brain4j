@@ -8,7 +8,7 @@ import net.echo.brain4j.utils.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiHeadAttention extends Layer {
+public class MultiHeadAttention extends Layer<Vector, Vector> {
 
     private final List<AttentionHead> heads;
     private final WeightInit weightInit;

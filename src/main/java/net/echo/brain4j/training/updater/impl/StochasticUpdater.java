@@ -28,22 +28,9 @@ public class StochasticUpdater extends Updater {
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);
         }
 
-        for (Layer layer : model.getLayers()) {
+        for (Layer<?, ?> layer : model.getLayers()) {
             if (layer instanceof RecurrentLayer recurrentLayer) {
-                List<Vector> recurrentWeights = recurrentLayer.getRecurrentWeights();
-
-                for (int i = 0; i < recurrentWeights.size(); i++) {
-                    Vector recurrentWeightVector = recurrentWeights.get(i);
-
-                    for (int j = 0; j < recurrentWeightVector.size(); j++) {
-                        int index = i * Parameters.TOTAL_NEURONS + j;
-
-                        double gradient = recurrentGradients[index];
-                        double newWeight = recurrentWeightVector.get(j) - learningRate * gradient;
-
-                        recurrentWeightVector.set(j, newWeight);
-                    }
-                }
+                propagateRecurrentGradients(learningRate, recurrentLayer);
             }
 
             for (Neuron neuron : layer.getNeurons()) {
@@ -56,5 +43,26 @@ public class StochasticUpdater extends Updater {
 
         this.recurrentGradients = new double[Parameters.TOTAL_NEURONS * Parameters.TOTAL_NEURONS];
         this.gradients = new double[Parameters.TOTAL_SYNAPSES];
+    }
+
+    private void propagateRecurrentGradients(double learningRate, RecurrentLayer recurrentLayer) {
+        List<Vector> recurrentWeights = recurrentLayer.getRecurrentWeights();
+        List<Neuron> neurons = recurrentLayer.getNeurons();
+        int numNeurons = neurons.size();
+
+        for (int i = 0; i < numNeurons; i++) {
+            Neuron currentNeuron = neurons.get(i);
+            Vector currentRecurrentWeights = recurrentWeights.get(i);
+
+            for (int j = 0; j < numNeurons; j++) {
+                Neuron recurrentNeuron = neurons.get(j);
+
+                int index = currentNeuron.getId() * Parameters.TOTAL_NEURONS + recurrentNeuron.getId();
+                double gradient = recurrentGradients[index];
+
+                double currentWeight = currentRecurrentWeights.get(j);
+                currentRecurrentWeights.set(j, currentWeight - learningRate * gradient);
+            }
+        }
     }
 }

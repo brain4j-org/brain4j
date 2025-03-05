@@ -8,7 +8,7 @@ import net.echo.brain4j.utils.Vector;
 
 import java.util.List;
 
-public class LayerNorm extends Layer {
+public class LayerNorm extends Layer<Vector, Vector>{
 
     private final double epsilon;
 
@@ -27,7 +27,7 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public void applyFunction(StatesCache cacheHolder, Layer previous) {
+    public void applyFunction(StatesCache cacheHolder, Layer<?, ?> previous) {
         List<Neuron> inputs = previous.getNeurons();
 
         double mean = calculateMean(cacheHolder, inputs);

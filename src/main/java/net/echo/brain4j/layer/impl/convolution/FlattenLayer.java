@@ -6,6 +6,7 @@ import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.utils.Vector;
 
 public class FlattenLayer extends DenseLayer {
 
@@ -14,14 +15,16 @@ public class FlattenLayer extends DenseLayer {
     }
 
     @Override
-    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
-        return super.forward(cache, lastLayer, input);
+    public Vector forward(StatesCache cache, Layer<?, ?> lastLayer, Vector input) {
+        return input;
     }
 
-    public void flatten(StatesCache cache, Layer layer, Kernel input) {
+    public Vector flatten(StatesCache cache, Layer<?, ?> layer, Kernel input) {
         Preconditions.checkNotNull(input, "Last convolutional input is null! Missing an input layer?");
 
         boolean isConvolutional = layer instanceof ConvLayer || layer instanceof PoolingLayer;
+
+        Vector output = new Vector(size());
 
         Preconditions.checkState(isConvolutional, "Flatten layer is not preceded by convolutional layer!");
         Preconditions.checkState(size() == input.size(),
@@ -32,8 +35,11 @@ public class FlattenLayer extends DenseLayer {
                 double value = input.getValue(w, h);
                 int index = h * input.getWidth() + w;
 
+                output.set(index, value);
                 neurons.get(index).setValue(cache, value);
             }
         }
+
+        return output;
     }
 }

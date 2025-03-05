@@ -81,7 +81,7 @@ public class AdamGPU extends Optimizer {
     public void postInitialize(Model model) {
         this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
 
-        for (Layer layer : model.getLayers()) {
+        for (Layer<?, ?> layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {
                 synapses[synapse.getSynapseId()] = synapse;
             }
@@ -110,7 +110,7 @@ public class AdamGPU extends Optimizer {
     }
 
     @Override
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
         this.timestep++;
 
         this.beta1Timestep = (float) (1.0 - Math.pow(beta1, timestep));
@@ -118,7 +118,7 @@ public class AdamGPU extends Optimizer {
 
         float[] gradients = new float[Parameters.TOTAL_SYNAPSES];
 
-        for (Layer layer : layers) {
+        for (Layer<?, ?> layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 int synapseId = synapse.getSynapseId();
 

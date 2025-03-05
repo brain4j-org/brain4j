@@ -5,8 +5,9 @@ import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.utils.Vector;
 
-public class InputLayer extends Layer {
+public class InputLayer extends Layer<Vector, Vector> {
 
     private final int width;
     private final int height;

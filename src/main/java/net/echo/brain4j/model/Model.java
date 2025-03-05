@@ -75,7 +75,7 @@ public class Model {
 
             .create();
 
-    protected List<Layer> layers;
+    protected List<Layer<?, ?>> layers;
     protected LossFunctions lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
@@ -85,7 +85,7 @@ public class Model {
     protected Random generator;
     private int seed;
 
-    public Model(Layer... layers) {
+    public Model(Layer<?, ?>... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
 
         if (this.layers.isEmpty()) return;
@@ -97,7 +97,7 @@ public class Model {
         boolean isInput = layers.getFirst() instanceof InputLayer;
         boolean hasConv = false;
 
-        for (Layer layer : layers) {
+        for (Layer<?, ?> layer : layers) {
             if (layer instanceof ConvLayer || layer instanceof PoolingLayer || layer instanceof FlattenLayer) {
                 hasConv = true;
                 break;
@@ -109,16 +109,16 @@ public class Model {
     }
 
     private void connect(WeightInit weightInit, boolean update) {
-        Layer lastNormalLayer = layers.getFirst();
+        Layer<?, ?> lastNormalLayer = layers.getFirst();
 
-        for (Layer layer : layers) {
+        for (Layer<?, ?> layer : layers) {
             if (layer instanceof DenseLayer denseLayer && update) {
                 denseLayer.init(generator);
             }
         }
 
         for (int i = 1; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+            Layer<?, ?> layer = layers.get(i);
 
             if (layer.getNeurons().isEmpty() && !layer.isConvolutional()) continue;
 
@@ -178,6 +178,20 @@ public class Model {
         propagation.iteration(set);
     }
 
+    private Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
+        return Thread.startVirtualThread(() -> {
+            for (DataRow row : partition) {
+                Vector inputs = row.inputs();
+                Vector targets = row.outputs();
+
+                Vector outputs = predict(inputs);
+                double loss = lossFunction.getFunction().calculate(targets, outputs);
+
+                totalError.updateAndGet(v -> v + loss);
+            }
+        });
+    }
+
     /**
      * Evaluates the model on the given dataset.
      *
@@ -190,22 +204,12 @@ public class Model {
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
 
-        for (DataRow row : set.getData()) {
-            Thread thread = Thread.startVirtualThread(() -> {
-                Vector inputs = row.inputs();
-                Vector targets = row.outputs();
-
-                Vector outputs = predict(new StatesCache(), inputs);
-
-                double loss = lossFunction.getFunction().calculate(targets, outputs);
-                totalError.updateAndGet(v -> v + loss);
-            });
-
-            threads.add(thread);
+        for (List<DataRow> partition : set.getPartitions()) {
+            threads.add(predictPartition(partition, totalError));
         }
 
         waitAll(threads);
-        return totalError.get() / set.getData().size();
+        return totalError.get() / set.size();
     }
 
     /**
@@ -214,8 +218,8 @@ public class Model {
      * @param index starting layer index
      * @return the next computation layer
      */
-    public Layer getNextComputationLayer(int index) {
-        Layer nextLayer = layers.get(index + 1);
+    public Layer<?, ?> getNextComputationLayer(int index) {
+        Layer<?, ?> nextLayer = layers.get(index + 1);
 
         for (int j = 2; j < layers.size() && nextLayer instanceof DropoutLayer; j++) {
             nextLayer = layers.get(index + j);
@@ -228,17 +232,17 @@ public class Model {
      * Reloads the synapse matrix for each layer.
      */
     public void reloadMatrices() {
-        Layer lastLayer = layers.getFirst();
+        Layer<?, ?> lastLayer = layers.getFirst();
 
         for (int i = 1; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+            Layer<?, ?> layer = layers.get(i);
 
             if (!(layer instanceof DenseLayer)) continue;
 
             List<Neuron> neurons = layer.getNeurons();
             Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), lastLayer.size(), neurons.size());
 
-            lastLayer.updateWeights(layer, synapseMatrixLayer);
+            lastLayer.updateWeights(synapseMatrixLayer);
             lastLayer = layer;
         }
     }
@@ -260,15 +264,17 @@ public class Model {
      * @return predicted outputs as a vector
      */
     public Vector predict(StatesCache cache, Vector input) {
-        Layer firstLayer = layers.getFirst();
+        Layer<?, ?> firstLayer = layers.getFirst();
 
         Preconditions.checkState(input.size() == firstLayer.size(), "Input dimension does not " +
                 "match model input dimension! (Input != Expected " + input.size() + " != " + firstLayer.size() + ")");
 
-        Layer lastLayer = firstLayer;
-        Kernel convInput = null;
+        Layer<?, ?> lastLayer = firstLayer;
 
-        firstLayer.setInput(cache, input);
+        Kernel convInput = null;
+        Vector denseInput = input.clone();
+
+        firstLayer.setInput(cache, denseInput);
 
         if (firstLayer instanceof InputLayer inputLayer) {
             convInput = inputLayer.getImage(cache);
@@ -276,7 +282,7 @@ public class Model {
         }
 
         for (int l = 1; l < layers.size(); l++) {
-            Layer layer = layers.get(l);
+            Layer<?, ?> layer = layers.get(l);
 
             if (layer instanceof DropoutLayer) continue;
 
@@ -291,18 +297,17 @@ public class Model {
             }
 
             if (layer instanceof FlattenLayer flattenLayer) {
-                flattenLayer.flatten(cache, lastLayer, convInput);
-                convInput = null;
+                denseInput = flattenLayer.flatten(cache, lastLayer, convInput);
             }
 
-            if (layer instanceof DenseLayer) {
-                layer.forward(cache, lastLayer, convInput);
+            if (layer instanceof DenseLayer denseLayer) {
+                denseInput = denseLayer.forward(cache, lastLayer, denseInput);
             }
 
             lastLayer = layer;
         }
 
-        Layer outputLayer = layers.getLast();
+        Layer<?, ?> outputLayer = layers.getLast();
         Vector output = new Vector(outputLayer.size());
 
         for (int i = 0; i < output.size(); i++) {
@@ -329,7 +334,7 @@ public class Model {
             this.updater = GSON.fromJson(parent.get("updater"), Updater.class);
             this.lossFunction = LossFunctions.valueOf(parent.get("lossFunction").getAsString());
 
-            Type listType = new TypeToken<ArrayList<Layer>>(){}.getType();
+            Type listType = new TypeToken<ArrayList<Layer<?, ?>>>(){}.getType();
 
             this.weightInit = WeightInit.valueOf(parent.get("weightInit").getAsString());
             this.seed = parent.get("seed").getAsInt();
@@ -343,7 +348,7 @@ public class Model {
 
             for (int i = 0; i < biases.length; i++) {
                 double[] layerBiases = biases[i];
-                Layer layer = this.layers.get(i);
+                Layer<?, ?> layer = this.layers.get(i);
 
                 for (int j = 0; j < layerBiases.length; j++) {
                     layer.getNeuronAt(j).setBias(layerBiases[j]);
@@ -354,7 +359,7 @@ public class Model {
 
             for (int i = 0; i < weights.length; i++) {
                 double[] layerWeights = weights[i];
-                Layer layer = this.layers.get(i);
+                Layer<?, ?> layer = this.layers.get(i);
 
                 for (int j = 0; j < layerWeights.length; j++) {
                     layer.getSynapses().get(j).setWeight(layerWeights[j]);
@@ -387,7 +392,7 @@ public class Model {
 
         List<JsonObject> layerObjects = new ArrayList<>();
 
-        for (Layer layer : this.layers) {
+        for (Layer<?, ?> layer : this.layers) {
             layerObjects.add(GSON.toJsonTree(layer).getAsJsonObject());
         }
 
@@ -396,7 +401,7 @@ public class Model {
         double[][] biases = new double[this.layers.size()][];
 
         for (int i = 0; i < this.layers.size(); i++) {
-            Layer layer = this.layers.get(i);
+            Layer<?, ?> layer = this.layers.get(i);
             biases[i] = new double[layer.getNeurons().size()];
 
             for (int j = 0; j < biases[i].length; j++) {
@@ -409,7 +414,7 @@ public class Model {
         double[][] weights = new double[this.layers.size()][];
 
         for (int i = 0; i < this.layers.size(); i++) {
-            Layer layer = this.layers.get(i);
+            Layer<?, ?> layer = this.layers.get(i);
             weights[i] = new double[layer.getSynapses().size()];
 
             for (int j = 0; j < layer.getSynapses().size(); j++) {
@@ -433,7 +438,7 @@ public class Model {
      *
      * @param layers a list of layers to add
      */
-    public void add(Layer... layers) {
+    public void add(Layer<?, ?>... layers) {
         this.layers.addAll(Arrays.asList(layers));
     }
 
@@ -476,7 +481,7 @@ public class Model {
         int params = 0;
 
         for (int i = 0; i < this.layers.size(); i++) {
-            Layer layer = this.layers.get(i);
+            Layer<?, ?> layer = this.layers.get(i);
 
             String layerType = layer.getClass().getSimpleName();
 
@@ -539,7 +544,7 @@ public class Model {
      *
      * @return list of layers
      */
-    public List<Layer> getLayers() {
+    public List<Layer<?, ?>> getLayers() {
         return layers;
     }
 

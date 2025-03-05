@@ -64,6 +64,6 @@ public abstract class Optimizer {
      * @param updater the backpropagation updater
      * @param layers the layers of the model
      */
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
     }
 }

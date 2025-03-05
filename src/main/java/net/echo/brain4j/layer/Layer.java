@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import static net.echo.brain4j.utils.MLUtils.clipGradient;
 
 @JsonAdapter(LayerAdapter.class)
-public abstract class Layer {
+public abstract class Layer<I, O> {
 
     protected final List<Neuron> neurons = new ArrayList<>();
     protected final List<Synapse> synapses = new ArrayList<>();
@@ -49,7 +49,7 @@ public abstract class Layer {
         neurons.forEach(neuron -> neuron.setBias(2 * generator.nextDouble() - 1));
     }
 
-    public void connectAll(Random generator, Layer nextLayer, double bound) {
+    public void connectAll(Random generator, Layer<?, ?> nextLayer, double bound) {
         for (Neuron neuron : neurons) {
             for (Neuron nextNeuron : nextLayer.getNeurons()) {
                 Synapse synapse = new Synapse(generator, neuron, nextNeuron, bound);
@@ -60,15 +60,15 @@ public abstract class Layer {
         }
     }
 
-    public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
+    public O forward(StatesCache cache, Layer<?, ?> lastLayer, I input) {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
 
-    public void updateWeights(Layer nextLayer, Vector[] synapseMatrixLayer) {
+    public void updateWeights(Vector[] synapseMatrixLayer) {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
 
-    public void applyFunction(StatesCache cacheHolder, Layer previous) {
+    public void applyFunction(StatesCache cacheHolder, Layer<?, ?> previous) {
         function.apply(cacheHolder, neurons);
     }
 
@@ -81,7 +81,7 @@ public abstract class Layer {
         }
     }
 
-    public void propagate(StatesCache cacheHolder, Layer previous, Updater updater, Optimizer optimizer) {
+    public void propagate(StatesCache cacheHolder, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
         for (Neuron neuron : neurons) {
             double value = neuron.getValue(cacheHolder);
             double derivative = activation.getFunction().getDerivative(value);
