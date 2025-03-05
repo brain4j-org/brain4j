@@ -1,3 +1,5 @@
+package conv;
+
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.pooling.PoolingType;
 import net.echo.brain4j.layer.impl.DenseLayer;
