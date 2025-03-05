@@ -16,14 +16,14 @@ public class TrainListener {
      * Called when the trainer completes an epoch
      * @param epoch the epoch that has completed
      */
-    public void onEpochCompleted(int epoch) {
+    public void onEpochCompleted(int epoch, long took) {
     }
 
     /**
      * Called before the trainer starts an epoch
      * @param epoch the current epoch that has started
      */
-    public void onEpochStarted(int epoch) {
+    public void onEpochStarted(int epoch, long start) {
     }
 
     public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {

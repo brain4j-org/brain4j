@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static net.echo.brain4j.utils.MLUtils.clipGradient;
+
 /**
  * Represents a recurrent layer in a neural network.
  */
@@ -55,21 +57,21 @@ public class RecurrentLayer extends DenseLayer {
 
     @Override
     public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
-        cache.ensureRecurrentCache();
-
         if (!(lastLayer instanceof DenseLayer denseLayer)) {
             throw new UnsupportedOperationException("Recurrent layer must be connected to a dense layer or a recurrent layer!");
         }
 
-        List<Neuron> nextNeurons = nextLayer.getNeurons();
+        cache.ensureRecurrentCache();
 
+        List<Neuron> prevNeurons = lastLayer.getNeurons();
+
+        int prevSize = prevNeurons.size();
         int inSize = neurons.size();
-        int outSize = nextNeurons.size();
 
-        Vector currentInput = new Vector(inSize);
+        Vector currentInput = new Vector(prevSize);
 
-        for (int i = 0; i < inSize; i++) {
-            currentInput.set(i, neurons.get(i).getValue(cache));
+        for (int i = 0; i < prevSize; i++) {
+            currentInput.set(i, lastLayer.getNeuronAt(i).getValue(cache));
         }
 
         // TODO: Found the issue!
@@ -91,16 +93,10 @@ public class RecurrentLayer extends DenseLayer {
             double newState = Activations.TANH.getFunction().activate(rawState);
 
             cache.setHiddenState(neuron, newState);
-            // neuron.setValue(cache, newState);
+            neuron.setValue(cache, newState);
         }
 
-        for (int i = 0; i < outSize; i++) {
-            System.out.println(i + " -> " + weights.get(i).size());
-            double value = weights.get(i).weightedSum(currentInput);
-            nextNeurons.get(i).setValue(cache, value);
-        }
-
-        nextLayer.applyFunction(cache, this);
+        applyFunction(cache, lastLayer);
         return null;
     }
 
@@ -108,27 +104,32 @@ public class RecurrentLayer extends DenseLayer {
     public void propagate(StatesCache cacheHolder, Layer previous, Updater updater, Optimizer optimizer) {
         super.propagate(cacheHolder, previous, updater, optimizer);
 
-        for (Neuron neuron : neurons) {
-            double value = neuron.getValue(cacheHolder);
-            double derivative = activation.getFunction().getDerivative(value);
+        int n = neurons.size();
 
-            double delta = neuron.getDelta(cacheHolder);
+        for (int i = 0; i < n; i++) {
+            Neuron currentNeuron = neurons.get(i);
+            double output = currentNeuron.getValue(cacheHolder);
 
-            for (Neuron recurrentNeuron : neurons) {
-                double recurrentValue = cacheHolder.getHiddenState(recurrentNeuron);
-                double recurrentGradient = delta * recurrentValue * derivative;
+            double derivative = activation.getFunction().getDerivative(output);
+            double delta = currentNeuron.getDelta(cacheHolder);
 
-                updater.acknowledgeRecurrentChange(neuron.getId(), recurrentNeuron.getId(), recurrentGradient);
-            }
+            double errorSignal = clipGradient(delta * derivative);
 
-            for (Synapse synapse : neuron.getSynapses()) {
-                double weight = synapse.getWeight();
-                double propagatedDelta = delta * weight;
+            for (int j = 0; j < n; j++) {
+                Neuron recurrentNeuron = neurons.get(j);
+                double previousHidden = cacheHolder.getHiddenState(recurrentNeuron);
 
-                cacheHolder.addDelta(synapse.getInputNeuron(), propagatedDelta);
+                double recurrentGradient = clipGradient(errorSignal * previousHidden);
+                updater.acknowledgeRecurrentChange(currentNeuron.getId(), recurrentNeuron.getId(), recurrentGradient);
+
+                double recurrentWeight = recurrentWeights.get(i).get(j);
+                double recurrentError = clipGradient(errorSignal * recurrentWeight);
+
+                cacheHolder.addDelta(recurrentNeuron, recurrentError);
             }
         }
     }
+
 
     public List<Vector> getRecurrentWeights() {
         return recurrentWeights;

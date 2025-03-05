@@ -26,7 +26,7 @@ import java.util.Map;
 public class MNISTClassifier {
 
     public static void main(String[] args) {
-        DataSet set = getData();
+        DataSet<DataRow> set = getData();
         Model model = getModel();
 
         System.out.println(model.getStats());
@@ -37,26 +37,6 @@ public class MNISTClassifier {
 
         train(model, set);
         evaluateModel(model);
-    }
-
-    public static void test(Model model) {
-        try {
-            String data = FileUtils.readFileToString(new File("example.csv"), StandardCharsets.UTF_8);
-            String[] pixels = data.split(",");
-
-            Vector vector = new Vector(pixels.length);
-
-            for (int i = 0; i < pixels.length; i++) {
-                vector.set(i, Double.parseDouble(pixels[i]));
-            }
-
-            Vector output = model.predict(vector);
-            int prediction = MLUtils.indexOfMaxValue(output);
-
-            System.out.println("Predicted a " + prediction + " vector: " + output.toString("%.3f"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static void evaluateModel(Model model) {

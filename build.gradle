@@ -26,7 +26,7 @@ java {
 }
 
 shadowJar {
-    archiveBaseName.set('Brain4J')
+    archiveBaseName.set('brain4j')
     archiveClassifier.set('')
     archiveVersion.set(version)
 }

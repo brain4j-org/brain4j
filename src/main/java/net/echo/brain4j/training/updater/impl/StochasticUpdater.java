@@ -34,6 +34,7 @@ public class StochasticUpdater extends Updater {
 
                 for (int i = 0; i < recurrentWeights.size(); i++) {
                     Vector recurrentWeightVector = recurrentWeights.get(i);
+
                     for (int j = 0; j < recurrentWeightVector.size(); j++) {
                         int index = i * Parameters.TOTAL_NEURONS + j;
 

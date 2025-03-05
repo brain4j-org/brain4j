@@ -29,23 +29,27 @@ public class DenseLayer extends Layer {
 
     @Override
     public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
-        List<Neuron> nextNeurons = nextLayer.getNeurons();
+        if (!(lastLayer instanceof DenseLayer denseLayer)) {
+            throw new UnsupportedOperationException("Layer before must be a dense layer!");
+        }
 
-        int inSize = neurons.size();
-        int outSize = nextNeurons.size();
+        List<Neuron> lastNeurons = lastLayer.getNeurons();
+
+        int inSize = lastNeurons.size();
+        int outSize = neurons.size();
 
         Vector inputVector = new Vector(inSize);
 
         for (int i = 0; i < inSize; i++) {
-            inputVector.set(i, neurons.get(i).getValue(cache));
+            inputVector.set(i, lastNeurons.get(i).getValue(cache));
         }
 
         for (int i = 0; i < outSize; i++) {
-            double value = weights.get(i).weightedSum(inputVector);
-            nextNeurons.get(i).setValue(cache, value);
+            double value = denseLayer.getWeights().get(i).weightedSum(inputVector);
+            neurons.get(i).setValue(cache, value);
         }
 
-        nextLayer.applyFunction(cache, this);
+        applyFunction(cache, lastLayer);
         return null;
     }
 

@@ -4,9 +4,10 @@ import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.structure.cache.StatesCache;
 
-public class FlattenLayer extends Layer {
+public class FlattenLayer extends DenseLayer {
 
     public FlattenLayer(int input) {
         super(input, Activations.LINEAR);
@@ -14,8 +15,7 @@ public class FlattenLayer extends Layer {
 
     @Override
     public Kernel forward(StatesCache cache, Layer lastLayer, Kernel input) {
-        super.forward(cache, lastLayer, input);
-        return null;
+        return super.forward(cache, lastLayer, input);
     }
 
     public void flatten(StatesCache cache, Layer layer, Kernel input) {
@@ -30,8 +30,9 @@ public class FlattenLayer extends Layer {
         for (int h = 0; h < input.getHeight(); h++) {
             for (int w = 0; w < input.getWidth(); w++) {
                 double value = input.getValue(w, h);
+                int index = h * input.getWidth() + w;
 
-                getNeuronAt(h * input.getWidth() + w).setValue(cache, value);
+                neurons.get(index).setValue(cache, value);
             }
         }
     }

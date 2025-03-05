@@ -69,9 +69,13 @@ public class SmartTrainer {
     }
 
     public void step(Model model, DataSet<DataRow> dataSet) {
-        this.listeners.forEach(listener -> listener.onEpochStarted(epoches));
+        long start = System.nanoTime();
+        this.listeners.forEach(listener -> listener.onEpochStarted(epoches, start));
+
         model.fit(dataSet);
-        this.listeners.forEach(listener -> listener.onEpochCompleted(epoches));
+
+        long took = System.nanoTime() - start;
+        this.listeners.forEach(listener -> listener.onEpochCompleted(epoches, took));
     }
 
     public void startFor(Model model, DataSet<DataRow> dataSet, int epochesAmount, double lossTolerance) {

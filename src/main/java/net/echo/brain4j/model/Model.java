@@ -228,19 +228,18 @@ public class Model {
      * Reloads the synapse matrix for each layer.
      */
     public void reloadMatrices() {
-        for (int i = 0; i < layers.size() - 1; i++) {
+        Layer lastLayer = layers.getFirst();
+
+        for (int i = 1; i < layers.size(); i++) {
             Layer layer = layers.get(i);
 
             if (!(layer instanceof DenseLayer)) continue;
 
-            Layer nextLayer = getNextComputationLayer(i);
-
             List<Neuron> neurons = layer.getNeurons();
-            List<Neuron> nextNeurons = nextLayer.getNeurons();
+            Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), lastLayer.size(), neurons.size());
 
-            Vector[] synapseMatrixLayer = recalculateSynapseMatrix(layer.getSynapses(), neurons.size(), nextNeurons.size());
-
-            layer.updateWeights(nextLayer, synapseMatrixLayer);
+            lastLayer.updateWeights(layer, synapseMatrixLayer);
+            lastLayer = layer;
         }
     }
 
@@ -276,7 +275,7 @@ public class Model {
             cache.setOutputKernel(inputLayer, convInput);
         }
 
-        for (int l = 0; l < layers.size() - 1; l++) {
+        for (int l = 1; l < layers.size(); l++) {
             Layer layer = layers.get(l);
 
             if (layer instanceof DropoutLayer) continue;
@@ -296,7 +295,7 @@ public class Model {
                 convInput = null;
             }
 
-            if (layer instanceof DenseLayer || layer instanceof FlattenLayer) {
+            if (layer instanceof DenseLayer) {
                 layer.forward(cache, lastLayer, convInput);
             }
 

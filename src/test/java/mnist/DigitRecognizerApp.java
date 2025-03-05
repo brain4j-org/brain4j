@@ -191,7 +191,7 @@ public class DigitRecognizerApp extends JFrame {
 
     public static void main(String[] args) {
         Model model = new Model();
-        model.load("mnist-99.json");
+        model.load("mnist.json");
         model.reloadMatrices();
         SwingUtilities.invokeLater(() -> new DigitRecognizerApp(model));
     }
