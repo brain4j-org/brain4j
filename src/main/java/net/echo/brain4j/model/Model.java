@@ -472,7 +472,7 @@ public class Model {
 
         String header = "==========================================================\n";
 
-        stats.append(String.format("%-7s %-15s %-10s %-12s %-15s\n", "Index", "Layer name", "In", "Params", "Activation"));
+        stats.append(String.format("%-7s %-15s %-10s %-12s %-15s\n", "Index", "Layer", "Neurons", "Weights", "Activation"));
         stats.append(header);
 
         int params = 0;
@@ -490,12 +490,22 @@ public class Model {
             stats.append(String.format("%-7d %-15s %-10s %-12d %-15s\n",
                     i, layerType, formatNin, totalParams, layer.getActivation().name()));
 
-            params += totalParams;
+            params += totalParams + nIn;
         }
 
+        String[] prefixes = {"", "KB", "MB", "GB", "TB"};
+
+        int ciphers = (int) (Math.log10(params) / 3);
+        int weightInBytes = params * 4;
+
+        double divisor = Math.pow(1024, ciphers);
+        double normalized = weightInBytes / divisor;
+
+        String formatted = String.format("%.2f %s", normalized, prefixes[ciphers]);
+
         stats.append(header);
-        stats.append("Optimizer: ").append(optimizer.getClass().getSimpleName()).append("\n");
         stats.append("Total parameters: ").append(params).append("\n");
+        stats.append("Size in memory: ").append(formatted).append("\n");
         stats.append(header);
 
         return stats.toString();

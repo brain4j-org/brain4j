@@ -29,40 +29,14 @@ public class StochasticUpdater extends Updater {
         }
 
         for (Layer<?, ?> layer : model.getLayers()) {
-            if (layer instanceof RecurrentLayer recurrentLayer) {
-                propagateRecurrentGradients(learningRate, recurrentLayer);
-            }
-
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 
                 neuron.setBias(neuron.getBias() - deltaBias);
-                neuron.setTotalDelta(0);
+                neuron.setTotalDelta(0.0f);
             }
         }
 
-        this.recurrentGradients = new double[Parameters.TOTAL_NEURONS * Parameters.TOTAL_NEURONS];
-        this.gradients = new double[Parameters.TOTAL_SYNAPSES];
-    }
-
-    private void propagateRecurrentGradients(double learningRate, RecurrentLayer recurrentLayer) {
-        List<Vector> recurrentWeights = recurrentLayer.getRecurrentWeights();
-        List<Neuron> neurons = recurrentLayer.getNeurons();
-        int numNeurons = neurons.size();
-
-        for (int i = 0; i < numNeurons; i++) {
-            Neuron currentNeuron = neurons.get(i);
-            Vector currentRecurrentWeights = recurrentWeights.get(i);
-
-            for (int j = 0; j < numNeurons; j++) {
-                Neuron recurrentNeuron = neurons.get(j);
-
-                int index = currentNeuron.getId() * Parameters.TOTAL_NEURONS + recurrentNeuron.getId();
-                double gradient = recurrentGradients[index];
-
-                double currentWeight = currentRecurrentWeights.get(j);
-                currentRecurrentWeights.set(j, currentWeight - learningRate * gradient);
-            }
-        }
+        this.gradients = new float[Parameters.TOTAL_SYNAPSES];
     }
 }

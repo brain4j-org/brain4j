@@ -62,7 +62,7 @@ public class MLUtils {
      * @param gradient the gradient
      * @return the clipped gradient
      */
-    public static double clipGradient(double gradient) {
-        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
+    public static float clipGradient(double gradient) {
+        return (float) Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }
 }

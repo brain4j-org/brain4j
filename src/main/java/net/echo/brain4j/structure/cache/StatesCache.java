@@ -12,11 +12,11 @@ public class StatesCache {
         this.deltasCache = new float[Parameters.TOTAL_NEURONS];
     }
 
-    public double getValue(Neuron neuron) {
+    public float getValue(Neuron neuron) {
         return valuesCache[neuron.getId()];
     }
 
-    public double getDelta(Neuron neuron) {
+    public float getDelta(Neuron neuron) {
         return deltasCache[neuron.getId()];
     }
 

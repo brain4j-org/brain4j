@@ -25,12 +25,12 @@ public class NormalUpdater extends Updater {
                 double deltaBias = learningRate * neuron.getTotalDelta();
 
                 neuron.setBias(neuron.getBias() - deltaBias);
-                neuron.setTotalDelta(0.0);
+                neuron.setTotalDelta(0.0f);
             }
         }
 
         model.reloadMatrices();
 
-        this.gradients = new double[Parameters.TOTAL_SYNAPSES];
+        this.gradients = new float[Parameters.TOTAL_SYNAPSES];
     }
 }

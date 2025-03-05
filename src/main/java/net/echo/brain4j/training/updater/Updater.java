@@ -11,16 +11,15 @@ import net.echo.brain4j.structure.cache.Parameters;
 public abstract class Updater {
 
     protected Synapse[] synapses;
-    protected double[] gradients;
-    protected double[] recurrentGradients;
+    protected float[] gradients;
 
-    public void acknowledgeChange(Synapse synapse, double change) {
+    public void acknowledgeChange(Synapse synapse, float change) {
         gradients[synapse.getSynapseId()] += change;
     }
 
     public void postInitialize(Model model) {
         this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
-        this.gradients = new double[Parameters.TOTAL_SYNAPSES];
+        this.gradients = new float[Parameters.TOTAL_SYNAPSES];
 
         for (Layer<?, ?> layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {

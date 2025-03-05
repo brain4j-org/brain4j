@@ -28,6 +28,7 @@ public abstract class Layer<I, O> {
     protected final List<Synapse> synapses = new ArrayList<>();
     protected final Activations activation;
     protected final Activation function;
+    protected Layer<?, ?> nextLayer;
 
     public Layer(int input, Activations activation) {
         Parameters.TOTAL_LAYERS++;
@@ -50,10 +51,12 @@ public abstract class Layer<I, O> {
     }
 
     public void connectAll(Random generator, Layer<?, ?> nextLayer, double bound) {
+        this.nextLayer = nextLayer;
+
         for (Neuron neuron : neurons) {
             for (Neuron nextNeuron : nextLayer.getNeurons()) {
                 Synapse synapse = new Synapse(generator, neuron, nextNeuron, bound);
-                neuron.addSynapse(synapse);
+                // neuron.addSynapse(synapse);
 
                 synapses.add(synapse);
             }
@@ -82,23 +85,40 @@ public abstract class Layer<I, O> {
     }
 
     public void propagate(StatesCache cacheHolder, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
-        for (Neuron neuron : neurons) {
+        int nextLayerSize = nextLayer.getNeurons().size();
+
+        // DOPO
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron neuron = neurons.get(i);
+
             double value = neuron.getValue(cacheHolder);
             double derivative = activation.getFunction().getDerivative(value);
 
-            for (Synapse synapse : neuron.getSynapses()) {
-                double weightChange = calculateGradient(cacheHolder, synapse, derivative);
+            for (int j = 0; j < nextLayerSize; j++) {
+                Synapse synapse = synapses.get(i * nextLayerSize + j);
+
+                float weightChange = calculateGradient(cacheHolder, synapse, derivative);
                 updater.acknowledgeChange(synapse, weightChange);
             }
         }
+        // PRIMA
+//        for (Neuron neuron : neurons) {
+//            double value = neuron.getValue(cacheHolder);
+//            double derivative = activation.getFunction().getDerivative(value);
+//
+//            for (Synapse synapse : neuron.getSynapses()) {
+//                float weightChange = calculateGradient(cacheHolder, synapse, derivative);
+//                updater.acknowledgeChange(synapse, weightChange);
+//            }
+//        }
     }
 
-    public double calculateGradient(StatesCache cacheHolder, Synapse synapse, double derivative) {
+    public float calculateGradient(StatesCache cacheHolder, Synapse synapse, double derivative) {
         Neuron input = synapse.getInputNeuron();
         Neuron output = synapse.getOutputNeuron();
 
-        double delta = output.getDelta(cacheHolder);
-        double error = clipGradient(synapse.getWeight() * delta * derivative);
+        float delta = output.getDelta(cacheHolder);
+        float error = clipGradient(synapse.getWeight() * delta * derivative);
 
         input.setDelta(cacheHolder, error);
 

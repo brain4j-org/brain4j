@@ -98,7 +98,7 @@ public class BackPropagation {
             double error = outputs.get(i) - targets.get(i);
             double delta = model.getLossFunction().getDelta(error, derivative.get(i));
 
-            neuron.setDelta(cacheHolder, delta);
+            neuron.setDelta(cacheHolder, (float) delta);
         }
     }
 }

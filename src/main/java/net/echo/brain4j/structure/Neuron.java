@@ -8,25 +8,16 @@ import java.util.List;
 
 public class Neuron {
 
-    private final List<Synapse> synapses = new ArrayList<>();
     private final int id;
 
-    private double bias;
-    private double totalDelta;
+    private float bias;
+    private float totalDelta;
 
     public Neuron() {
         this.id = Parameters.TOTAL_NEURONS++;
     }
 
-    public List<Synapse> getSynapses() {
-        return synapses;
-    }
-
-    public void addSynapse(Synapse synapse) {
-        synapses.add(synapse);
-    }
-
-    public void setTotalDelta(double totalDelta) {
+    public void setTotalDelta(float totalDelta) {
         this.totalDelta = totalDelta;
     }
 
@@ -38,14 +29,14 @@ public class Neuron {
         return id;
     }
 
-    public double getDelta(StatesCache cacheHolder) {
+    public float getDelta(StatesCache cacheHolder) {
         return cacheHolder.getDelta(this);
     }
 
-    public void setDelta(StatesCache cacheHolder, double delta) {
+    public void setDelta(StatesCache cacheHolder, float delta) {
         this.totalDelta += delta;
 
-        cacheHolder.addDelta(this, (float) delta);
+        cacheHolder.addDelta(this, delta);
     }
 
     public double getValue(StatesCache cacheHolder) {
@@ -61,6 +52,6 @@ public class Neuron {
     }
 
     public void setBias(double bias) {
-        this.bias = bias;
+        this.bias = (float) bias;
     }
 }

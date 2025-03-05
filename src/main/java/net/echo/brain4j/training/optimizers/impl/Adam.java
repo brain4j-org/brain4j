@@ -73,7 +73,7 @@ public class Adam extends Optimizer {
 
         for (Layer<?, ?> layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
-                double change = update(cacheHolder, synapse);
+                float change = (float) update(cacheHolder, synapse);
                 updater.acknowledgeChange(synapse, change);
             }
         }

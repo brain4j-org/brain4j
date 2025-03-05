@@ -9,20 +9,13 @@ public class Synapse {
     private final Neuron inputNeuron;
     private final Neuron outputNeuron;
     private final int synapseId;
-    private double weight;
-
-    public Synapse(Neuron inputNeuron, Neuron outputNeuron, double weight) {
-        this.synapseId = Parameters.TOTAL_SYNAPSES++;
-        this.inputNeuron = inputNeuron;
-        this.outputNeuron = outputNeuron;
-        this.weight = weight;
-    }
+    private float weight;
 
     public Synapse(Random generator, Neuron inputNeuron, Neuron outputNeuron, double bound) {
         this.synapseId = Parameters.TOTAL_SYNAPSES++;
         this.inputNeuron = inputNeuron;
         this.outputNeuron = outputNeuron;
-        this.weight = (generator.nextDouble() * 2 * bound) - bound;
+        this.weight = (float) ((generator.nextDouble() * 2 * bound) - bound);
     }
 
     public Neuron getInputNeuron() {
@@ -42,6 +35,6 @@ public class Synapse {
     }
 
     public void setWeight(double weight) {
-        this.weight = weight;
+        this.weight = (float) weight;
     }
 }
