@@ -15,6 +15,7 @@ import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class TransformerEncoder extends Layer<List<Vector>, List<Vector>> {
 
@@ -42,6 +43,22 @@ public class TransformerEncoder extends Layer<List<Vector>, List<Vector>> {
         );
     }
 
+    @Override
+    public int size() {
+        // TODO
+        int total = 0;
+
+        if (attention != null) {
+            total += attention.size();
+        }
+
+        // total += feedForward.size();
+        total += normalizer.size();
+
+        return total;
+    }
+
+    @Override
     public void compile(WeightInit weightInit, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
         this.attention = new MultiHeadAttention(weightInit, heads, dimension, temperature);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);

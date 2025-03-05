@@ -87,6 +87,8 @@ public abstract class Model<R, I, O> {
         Layer<?, ?> lastNormalLayer = layers.getFirst();
 
         for (Layer<?, ?> layer : layers) {
+            layer.compile(weightInit, lossFunction, optimizer, updater);
+
             if (layer instanceof DenseLayer denseLayer && update) {
                 denseLayer.init(generator);
             }

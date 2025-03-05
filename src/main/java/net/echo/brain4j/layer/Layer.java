@@ -5,6 +5,8 @@ import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
+import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
@@ -22,6 +24,11 @@ import static net.echo.brain4j.utils.MLUtils.clipGradient;
 
 @JsonAdapter(LayerAdapter.class)
 public abstract class Layer<I, O> {
+
+    protected LossFunctions lossFunction;
+    protected Optimizer optimizer;
+    protected Updater updater;
+    protected WeightInit weightInit;
 
     protected final List<Neuron> neurons = new ArrayList<>();
     protected final List<Synapse> synapses = new ArrayList<>();
@@ -45,6 +52,13 @@ public abstract class Layer<I, O> {
         return false;
     }
 
+    public void compile(WeightInit weightInit, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+        this.weightInit = weightInit;
+        this.lossFunction = lossFunction;
+        this.optimizer = optimizer;
+        this.updater = updater;
+    }
+
     public void init(Random generator) {
         neurons.forEach(neuron -> neuron.setBias(2 * generator.nextDouble() - 1));
     }
@@ -55,8 +69,6 @@ public abstract class Layer<I, O> {
         for (Neuron neuron : neurons) {
             for (Neuron nextNeuron : nextLayer.getNeurons()) {
                 Synapse synapse = new Synapse(generator, neuron, nextNeuron, bound);
-                // neuron.addSynapse(synapse);
-
                 synapses.add(synapse);
             }
         }
@@ -86,7 +98,6 @@ public abstract class Layer<I, O> {
     public void propagate(StatesCache cacheHolder, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
         int nextLayerSize = nextLayer.getNeurons().size();
 
-        // DOPO
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
 
@@ -100,16 +111,6 @@ public abstract class Layer<I, O> {
                 updater.acknowledgeChange(synapse, weightChange);
             }
         }
-        // PRIMA
-//        for (Neuron neuron : neurons) {
-//            double value = neuron.getValue(cacheHolder);
-//            double derivative = activation.getFunction().getDerivative(value);
-//
-//            for (Synapse synapse : neuron.getSynapses()) {
-//                float weightChange = calculateGradient(cacheHolder, synapse, derivative);
-//                updater.acknowledgeChange(synapse, weightChange);
-//            }
-//        }
     }
 
     public float calculateGradient(StatesCache cacheHolder, Synapse synapse, double derivative) {

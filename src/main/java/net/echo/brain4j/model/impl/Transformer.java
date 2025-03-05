@@ -23,7 +23,14 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
 
     @Override
     public Model<Object, List<Vector>, List<Vector>> compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
-        return super.compile(weightInit, function, optimizer, updater);
+        super.compile(weightInit, function, optimizer, updater);
+
+        connect(weightInit, true);
+    }
+
+    @Override
+    public void connect(WeightInit weightInit, boolean update) {
+
     }
 
     @Override
