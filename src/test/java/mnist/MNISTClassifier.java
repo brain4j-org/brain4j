@@ -4,6 +4,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
@@ -27,7 +28,7 @@ public class MNISTClassifier {
 
     public static void main(String[] args) {
         DataSet<DataRow> set = getData();
-        Model model = getModel();
+        Sequential model = getModel();
 
         System.out.println(model.getStats());
         set.partition(32);
@@ -39,7 +40,7 @@ public class MNISTClassifier {
         evaluateModel(model);
     }
 
-    public static void evaluateModel(Model model) {
+    public static void evaluateModel(Sequential model) {
         model.reloadMatrices();
 
         DataSet<DataRow> set = getData();
@@ -106,19 +107,14 @@ public class MNISTClassifier {
         System.out.println("Took: " + trainer.getTook() / 1e6);
     }
 
-    public static Model getModel() {
-        Model model = new Model(
+    public static Sequential getModel() {
+        Sequential model = new Sequential(
                 new DenseLayer(784, Activations.LINEAR),
                 new DenseLayer(64, Activations.SIGMOID),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        return model.compile(
-                WeightInit.UNIFORM_XAVIER,
-                LossFunctions.CROSS_ENTROPY,
-                new Adam(0.01),
-                new NormalUpdater()
-        );
+        return model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.01));
     }
 
     public static DataSet<DataRow> getData() {

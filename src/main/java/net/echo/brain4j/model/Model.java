@@ -8,7 +8,6 @@ import com.google.gson.reflect.TypeToken;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.adapters.UpdaterAdapter;
-import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
@@ -20,12 +19,9 @@ import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
-import net.echo.brain4j.training.BackPropagation;
-import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
@@ -47,14 +43,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static net.echo.brain4j.utils.MLUtils.waitAll;
 
 /**
  * Represents a feed forward neural network.
  */
-public class Model {
+public abstract class Model<R, I, O> {
 
     private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
     private static final UpdaterAdapter UPDATER_ADAPTER = new UpdaterAdapter();
@@ -81,7 +74,6 @@ public class Model {
     protected LossFunctions lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
-    protected BackPropagation propagation;
     protected WeightInit weightInit;
 
     protected Random generator;
@@ -110,7 +102,7 @@ public class Model {
         if (!isInput && hasConv) throw new IllegalArgumentException("Cannot use a convolutional layer without an InputLayer!");
     }
 
-    private void connect(WeightInit weightInit, boolean update) {
+    public void connect(WeightInit weightInit, boolean update) {
         Layer<?, ?> lastNormalLayer = layers.getFirst();
 
         for (Layer<?, ?> layer : layers) {
@@ -141,7 +133,7 @@ public class Model {
      * @param optimizer optimization algorithm to use
      * @return the instance of the model
      */
-    public Model compile(LossFunctions function, Optimizer optimizer) {
+    public Model<R, I, O> compile(LossFunctions function, Optimizer optimizer) {
         return compile(WeightInit.UNIFORM_XAVIER, function, optimizer, new StochasticUpdater());
     }
 
@@ -153,45 +145,13 @@ public class Model {
      * @param optimizer optimization algorithm to use
      * @param updater weights updating algorithm for training
      */
-    public Model compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
+    public Model<R, I, O> compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.weightInit = weightInit;
         this.generator = new Random(this.seed);
         this.lossFunction = function;
         this.optimizer = optimizer;
         this.updater = updater;
-        this.propagation = new BackPropagation(this, optimizer, updater);
-
-        connect(weightInit, true);
-
-        this.optimizer.postInitialize(this);
-        this.updater.postInitialize(this);
-
-        reloadMatrices();
-
         return this;
-    }
-
-    /**
-     * Trains the model for one epoch.
-     *
-     * @param set dataset for training
-     */
-    public void fit(DataSet<DataRow> set) {
-        propagation.iteration(set);
-    }
-
-    private Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
-        return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
-                Vector inputs = row.inputs();
-                Vector targets = row.outputs();
-
-                Vector outputs = predict(inputs);
-                double loss = lossFunction.getFunction().calculate(targets, outputs);
-
-                totalError.updateAndGet(v -> v + loss);
-            }
-        });
     }
 
     /**
@@ -200,19 +160,7 @@ public class Model {
      * @param set dataset for testing
      * @return the error of the model
      */
-    public double evaluate(DataSet<DataRow> set) {
-        reloadMatrices();
-
-        AtomicReference<Double> totalError = new AtomicReference<>(0.0);
-        List<Thread> threads = new ArrayList<>();
-
-        for (List<DataRow> partition : set.getPartitions()) {
-            threads.add(predictPartition(partition, totalError));
-        }
-
-        waitAll(threads);
-        return totalError.get() / set.size();
-    }
+    public abstract double evaluate(DataSet<R> set);
 
     /**
      * Finds the next layer used for computations given the initial index
@@ -231,23 +179,11 @@ public class Model {
     }
 
     /**
-     * Reloads the synapse matrix for each layer.
+     * Trains the model for one epoch.
+     *
+     * @param dataSet dataset for training
      */
-    public void reloadMatrices() {
-        Layer<?, ?> lastLayer = layers.getFirst();
-
-        for (int i = 1; i < layers.size(); i++) {
-            Layer<?, ?> layer = layers.get(i);
-
-            if (!(layer instanceof DenseLayer)) continue;
-
-            List<Neuron> neurons = layer.getNeurons();
-            Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), lastLayer.size(), neurons.size());
-
-            lastLayer.updateWeights(synapseMatrixLayer);
-            lastLayer = layer;
-        }
-    }
+    public abstract void fit(DataSet<R> dataSet);
 
     /**
      * Predicts the output for the given input.
@@ -255,66 +191,16 @@ public class Model {
      * @param input input data as a vector, must have dimension equal to the model's input dimension
      * @return predicted outputs as a vector
      */
-    public Vector predict(Vector input) {
-        return predict(new StatesCache(), input);
-    }
+    public abstract O predict(I input);
 
     /**
      * Predicts output for given input.
      *
      * @param input input data as a vector, must have dimension equal to the model's input dimension
+     * @param cache cache used to store neuron states
      * @return predicted outputs as a vector
      */
-    public Vector predict(StatesCache cache, Vector input) {
-        Layer<?, ?> firstLayer = layers.getFirst();
-
-        Preconditions.checkState(input.size() == firstLayer.size(), "Input dimension does not " +
-                "match model input dimension! (Input != Expected " + input.size() + " != " + firstLayer.size() + ")");
-
-        Layer<?, ?> lastLayer = firstLayer;
-
-        Kernel convInput = null;
-        Vector denseInput = input.clone();
-
-        firstLayer.setInput(cache, denseInput);
-
-        if (firstLayer instanceof InputLayer inputLayer) {
-            convInput = inputLayer.getImage(cache);
-        }
-
-        for (int l = 1; l < layers.size(); l++) {
-            Layer<?, ?> layer = layers.get(l);
-
-            if (layer instanceof DropoutLayer) continue;
-
-            if (layer instanceof ConvLayer convLayer) {
-                convInput = convLayer.forward(cache, lastLayer, convInput);
-            }
-
-            if (layer instanceof PoolingLayer poolingLayer) {
-                convInput = poolingLayer.forward(cache, lastLayer, convInput);
-            }
-
-            if (layer instanceof FlattenLayer flattenLayer) {
-                denseInput = flattenLayer.flatten(cache, lastLayer, convInput);
-            }
-
-            if (layer instanceof DenseLayer denseLayer) {
-                denseInput = denseLayer.forward(cache, lastLayer, denseInput);
-            }
-
-            lastLayer = layer;
-        }
-
-        Layer<?, ?> outputLayer = layers.getLast();
-        Vector output = new Vector(outputLayer.size());
-
-        for (int i = 0; i < output.size(); i++) {
-            output.set(i, outputLayer.getNeuronAt(i).getValue(cache));
-        }
-
-        return output;
-    }
+    public abstract O predict(StatesCache cache, I input);
 
     /**
      * Loads a model from a file.

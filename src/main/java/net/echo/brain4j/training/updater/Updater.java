@@ -3,7 +3,7 @@ package net.echo.brain4j.training.updater;
 import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.UpdaterAdapter;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 
@@ -17,7 +17,7 @@ public abstract class Updater {
         gradients[synapse.getSynapseId()] += change;
     }
 
-    public void postInitialize(Model model) {
+    public void postInitialize(Sequential model) {
         this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
         this.gradients = new float[Parameters.TOTAL_SYNAPSES];
 
@@ -28,12 +28,12 @@ public abstract class Updater {
         }
     }
 
-    public void postIteration(Model model, double learningRate) {
+    public void postIteration(Sequential model, double learningRate) {
     }
 
-    public void postFit(Model model, double learningRate) {
+    public void postFit(Sequential model, double learningRate) {
     }
 
-    public void postBatch(Model model, double learningRate) {
+    public void postBatch(Sequential model, double learningRate) {
     }
 }

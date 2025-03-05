@@ -7,6 +7,7 @@ import net.echo.brain4j.layer.impl.convolution.InputLayer;
 import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
@@ -42,8 +43,8 @@ public class ConvExample {
         }
     }
 
-    private Model getModel() {
-        Model model = new Model(
+    private Sequential getModel() {
+        Sequential model = new Sequential(
                 // Input layer, necessary when using CNNs
                 new InputLayer(28, 28),
 

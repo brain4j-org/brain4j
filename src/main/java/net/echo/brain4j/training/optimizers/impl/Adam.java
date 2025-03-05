@@ -1,7 +1,7 @@
 package net.echo.brain4j.training.optimizers.impl;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
@@ -35,7 +35,7 @@ public class Adam extends Optimizer {
         this.epsilon = (float) epsilon;
     }
 
-    public void postInitialize(Model model) {
+    public void postInitialize(Sequential model) {
         this.firstMomentum = new float[Parameters.TOTAL_SYNAPSES];
         this.secondMomentum = new float[Parameters.TOTAL_SYNAPSES];
     }

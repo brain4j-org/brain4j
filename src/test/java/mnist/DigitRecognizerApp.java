@@ -1,6 +1,7 @@
 package mnist;
 
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
@@ -11,12 +12,12 @@ import java.awt.event.MouseEvent;
 
 public class DigitRecognizerApp extends JFrame {
 
-    private final Model model;
+    private final Sequential model;
     private DrawingPanel drawingPanel;
     private PredictionPanel predictionPanel;
     private JToggleButton penButton;
 
-    public DigitRecognizerApp(Model model) {
+    public DigitRecognizerApp(Sequential model) {
         this.model = model;
         initComponents();
     }
@@ -190,7 +191,7 @@ public class DigitRecognizerApp extends JFrame {
     }
 
     public static void main(String[] args) {
-        Model model = new Model();
+        Sequential model = new Sequential();
         model.load("mnist.json");
         model.reloadMatrices();
         SwingUtilities.invokeLater(() -> new DigitRecognizerApp(model));

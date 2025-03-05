@@ -1,11 +1,13 @@
 package net.echo.brain4j.transformers.model.layers;
 
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
-import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
@@ -14,26 +16,26 @@ import net.echo.brain4j.utils.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransformerEncoder {
+public class TransformerEncoder extends Layer<List<Vector>, List<Vector>> {
 
     private final int heads;
-    private final int contextSize;
     private final int dimension;
     private final double temperature;
 
-    private final Model feedForward;
+    private final Sequential feedForward;
     private final LayerNorm normalizer;
 
     private MultiHeadAttention attention;
 
-    public TransformerEncoder(int numHeads, int contextSize, int dimension, double temperature) {
+    public TransformerEncoder(int numHeads, int dimension, double temperature) {
+        super(0, Activations.LINEAR);
+
         this.heads = numHeads;
-        this.contextSize = contextSize;
         this.dimension = dimension;
         this.temperature = temperature;
 
         this.normalizer = new LayerNorm();
-        this.feedForward = new Model(
+        this.feedForward = new Sequential(
                 new DenseLayer(dimension, Activations.LINEAR),
                 new DenseLayer(4 * dimension, Activations.GELU),
                 new DenseLayer(dimension, Activations.LINEAR)
@@ -41,7 +43,7 @@ public class TransformerEncoder {
     }
 
     public void compile(WeightInit weightInit, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
-        this.attention = new MultiHeadAttention(weightInit, heads, contextSize, dimension, temperature);
+        this.attention = new MultiHeadAttention(weightInit, heads, dimension, temperature);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 
@@ -50,39 +52,42 @@ public class TransformerEncoder {
      * <p>
      * The transformation is applied in the following order:
      * <ol>
-     *     <li>Layer Normalization</li>
      *     <li>Multi-Head Attention</li>
-     *     <li>Layer Normalization</li>
-     *     <li>Feed Forward Network</li>
-     *     <li>Layer Normalization</li>
+     *     <li>Add & Norm</li>
+     *     <li>Feed-Forward</li>
+     *     <li>Add & Norm</li>
      * </ol>
      *
-     * @param embeddings the list of embeddings to transform
+     * @param input the list of embeddings to transform
      */
-    public List<Vector> transform(List<Vector> embeddings) {
-        List<Vector> resulting = new ArrayList<>();
+    @Override
+    public List<Vector> forward(StatesCache cache, Layer<?, ?> lastLayer, List<Vector> input) {
+        List<Vector> attentionOutput = attention.attend(input);
+        List<Vector> normAttention = new ArrayList<>();
 
-        for (Vector vector : embeddings) {
-            Vector embedding = Vector.of(vector.toArray());
-            embedding = normalizer.normalize(embedding);
-
-            Vector attended = attention.attend(embedding);
-            attended = normalizer.normalize(attended);
-
-            System.out.println("Attended");
-            System.out.println(attended);
-            Vector result = feedForward.predict(attended);
-            // result = normalizer.normalize(result);
-
-            System.out.println("Result");
-            System.out.println(result);
-            resulting.add(result);
+        for (Vector token : attentionOutput) {
+            normAttention.add(normalizer.normalize(token));
         }
 
-        return resulting;
+        List<Vector> feedForwardOutput = new ArrayList<>();
+
+        for (Vector vector : normAttention) {
+            feedForwardOutput.add(feedForward.predict(vector));
+        }
+
+        List<Vector> result = new ArrayList<>();
+
+        for (int i = 0; i < feedForwardOutput.size(); i++) {
+            Vector tokenFF = feedForwardOutput.get(i);
+
+            tokenFF.add(normAttention.get(i));
+            result.add(normalizer.normalize(tokenFF));
+        }
+
+        return result;
     }
 
-    public Model getFeedForward() {
+    public Sequential getFeedForward() {
         return feedForward;
     }
 

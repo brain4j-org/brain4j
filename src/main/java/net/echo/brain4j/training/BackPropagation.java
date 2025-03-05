@@ -2,7 +2,7 @@ package net.echo.brain4j.training;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
@@ -18,11 +18,11 @@ import static net.echo.brain4j.utils.MLUtils.waitAll;
 
 public class BackPropagation {
 
-    private final Model model;
+    private final Sequential model;
     private final Optimizer optimizer;
     private final Updater updater;
 
-    public BackPropagation(Model model, Optimizer optimizer, Updater updater) {
+    public BackPropagation(Sequential model, Optimizer optimizer, Updater updater) {
         this.model = model;
         this.optimizer = optimizer;
         this.updater = updater;

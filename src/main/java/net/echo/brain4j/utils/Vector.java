@@ -200,7 +200,7 @@ public class Vector implements Cloneable, Iterable<Double> {
 
     public Vector scale(double value) {
         for (int i = 0; i < data.length; i++) {
-            data[i] *= value;
+            data[i] *= (float) value;
         }
 
         return this;
@@ -230,9 +230,7 @@ public class Vector implements Cloneable, Iterable<Double> {
         double sum = 0.0;
 
         for (int i = 0; i < data.length; i++) {
-            double value = data[i] * vector.data[i];
-
-            sum += value;
+            sum += data[i] * vector.data[i];
         }
 
         return sum;

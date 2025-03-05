@@ -3,7 +3,7 @@ package net.echo.brain4j.training.optimizers;
 import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
@@ -37,7 +37,7 @@ public abstract class Optimizer {
     /**
      * Called after the network has been compiled and all the synapses have been initialized.
      */
-    public void postInitialize(Model model) {
+    public void postInitialize(Sequential model) {
     }
 
     /**

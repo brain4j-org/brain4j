@@ -4,68 +4,53 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
-import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.transformers.model.layers.TransformerEncoder;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Transformer extends Model {
+public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
 
-    private Model concatModel;
-
-    public Transformer(Layer... layers) {
+    @SafeVarargs
+    public Transformer(Layer<List<Vector>, List<Vector>>... layers) {
         super(layers);
     }
 
     @Override
-    public Model compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
-        super.compile(weightInit, function, optimizer, updater);
-
-        if (concatModel == null) return null;
-
-        concatModel.compile(weightInit, function, optimizer, updater);
-        return this;
+    public Model<Object, List<Vector>, List<Vector>> compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
+        return super.compile(weightInit, function, optimizer, updater);
     }
 
-    public List<Vector> transform(List<Vector> embeddings) {
-        List<Vector> resulting = new ArrayList<>(embeddings);
+    @Override
+    public double evaluate(DataSet<Object> set) {
+        return 0;
+    }
 
-        /*for (Layer layer : layers) {
+    @Override
+    public void fit(DataSet<Object> dataSet) {
+
+    }
+
+    @Override
+    public List<Vector> predict(StatesCache cache, List<Vector> input) {
+        List<Vector> result = new ArrayList<>(input);
+
+        for (Layer<?, ?> layer : layers) {
             if (layer instanceof TransformerEncoder encoder) {
-                resulting = encoder.transform(resulting);
+                result = encoder.forward(cache, layer, input);
             }
-        }*/
-
-        for (Vector vector : resulting) {
-            System.out.println("Resulting");
-            System.out.println(vector);
         }
 
-        List<Vector> concatEmbeddings = new ArrayList<>(resulting);
-
-        for (Vector embedding : resulting) {
-            concatEmbeddings.add(concatModel.predict(embedding));
-        }
-
-        return concatEmbeddings;
+        return result;
     }
 
     @Override
-    public void fit(DataSet<DataRow> set) {
-
-    }
-
-    @Override
-    public Layer<?, ?> getNextComputationLayer(int index) {
-        return null;
-    }
-
-    @Override
-    public Vector predict(Vector input) {
-        throw new UnsupportedOperationException("Transformer model is not supported for single input.");
+    public List<Vector> predict(List<Vector> input) {
+        return predict(null, input);
     }
 }

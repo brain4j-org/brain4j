@@ -2,6 +2,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
@@ -39,8 +40,8 @@ public class ApproxExample {
         app.trainAndVisualize();
     }
 
-    public Model getModel() {
-        Model model = new Model(
+    public Sequential getModel() {
+        Sequential model = new Sequential(
                 new DenseLayer(1, Activations.LINEAR),
                 new DenseLayer(64, Activations.SIGMOID),
                 new DenseLayer(32, Activations.SIGMOID),
@@ -48,12 +49,7 @@ public class ApproxExample {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        return model.compile(
-                WeightInit.UNIFORM_XAVIER,
-                LossFunctions.MEAN_SQUARED_ERROR,
-                new Adam(0.01),
-                new StochasticUpdater()
-        );
+        return model.compile(LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.01));
     }
 
     public DataSet<DataRow> getDataSet() {
@@ -106,7 +102,7 @@ public class ApproxExample {
     }
 
     public void trainAndVisualize() {
-        Model model = getModel();
+        Sequential model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
         JFrame frame = new JFrame("Polynomial Optimization");
