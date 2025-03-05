@@ -1,6 +1,5 @@
 package mnist;
 
-import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
