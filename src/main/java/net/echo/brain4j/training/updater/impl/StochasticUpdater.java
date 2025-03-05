@@ -1,15 +1,11 @@
 package net.echo.brain4j.training.updater.impl;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.recurrent.RecurrentLayer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.utils.Vector;
-
-import java.util.List;
 
 public class StochasticUpdater extends Updater {
 

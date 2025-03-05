@@ -5,7 +5,6 @@ import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
-import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;

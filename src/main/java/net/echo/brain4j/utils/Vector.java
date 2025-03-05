@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 public class Vector implements Cloneable, Iterable<Double> {
 

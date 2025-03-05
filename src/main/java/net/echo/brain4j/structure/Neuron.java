@@ -3,9 +3,6 @@ package net.echo.brain4j.structure;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Neuron {
 
     private final int id;
