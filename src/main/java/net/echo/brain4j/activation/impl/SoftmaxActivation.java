@@ -18,7 +18,7 @@ public class SoftmaxActivation implements Activation {
 
     @Override
     public Vector activate(Vector input) {
-        double maxInput = Arrays.stream(input.toArray()).max().orElse(0.0);
+        double maxInput = Arrays.stream(input.toDoubleArray()).max().orElse(0.0);
 
         Vector expValues = new Vector(input.size());
         double sum = 0.0;

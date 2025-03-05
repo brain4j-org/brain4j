@@ -34,6 +34,7 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
+import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
@@ -475,37 +476,35 @@ public class Model {
         stats.append(String.format("%-7s %-15s %-10s %-12s %-15s\n", "Index", "Layer", "Neurons", "Weights", "Activation"));
         stats.append(header);
 
-        int params = 0;
+        int totalSynapses = 0;
+        int totalBiases = 0;
 
         for (int i = 0; i < this.layers.size(); i++) {
             Layer<?, ?> layer = this.layers.get(i);
 
             String layerType = layer.getClass().getSimpleName();
 
-            int nIn = layer.size();
-            int totalParams = layer.getTotalParams();
+            int biases = layer.size();
+            int synapses = layer.getTotalParams();
 
-            String formatNin = layer instanceof DropoutLayer ? "-" : String.valueOf(nIn);
+            String formatNin = layer instanceof DropoutLayer ? "-" : String.valueOf(biases);
 
             stats.append(String.format("%-7d %-15s %-10s %-12d %-15s\n",
-                    i, layerType, formatNin, totalParams, layer.getActivation().name()));
+                    i, layerType, formatNin, synapses, layer.getActivation().name()));
 
-            params += totalParams + nIn;
+            totalSynapses += synapses;
+            totalBiases += biases;
         }
 
-        String[] prefixes = {"", "KB", "MB", "GB", "TB"};
+        int params = totalSynapses + totalBiases;
 
-        int ciphers = (int) (Math.log10(params) / 3);
-        int weightInBytes = params * 4;
-
-        double divisor = Math.pow(1024, ciphers);
-        double normalized = weightInBytes / divisor;
-
-        String formatted = String.format("%.2f %s", normalized, prefixes[ciphers]);
+        String formatted = MLUtils.formatNumber(params, 4); // 4 = float size in bytes
+        String actual = MLUtils.formatNumber(totalSynapses, 32);
 
         stats.append(header);
         stats.append("Total parameters: ").append(params).append("\n");
         stats.append("Size in memory: ").append(formatted).append("\n");
+        stats.append("Actual memory usage: ").append(actual).append("\n");
         stats.append(header);
 
         return stats.toString();

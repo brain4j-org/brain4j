@@ -4,21 +4,38 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class Vector implements Cloneable, Iterable<Double> {
 
-    private final double[] data;
+    private final float[] data;
 
     public Vector(int size) {
-        this.data = new double[size];
+        this.data = new float[size];
     }
 
-    private Vector(double... data) {
+    private Vector(float... data) {
         this.data = data;
     }
 
+    private Vector(double... data) {
+        this.data = new float[data.length];
+
+        for (int i = 0; i < data.length; i++) {
+            this.data[i] = (float) data[i];
+        }
+    }
+
     private Vector(int... data) {
-        this.data = Arrays.stream(data).mapToDouble(i -> i).toArray();
+        this.data = new float[data.length];
+
+        for (int i = 0; i < data.length; i++) {
+            this.data[i] = data[i];
+        }
+    }
+
+    public static Vector of(float... data) {
+        return new Vector(Arrays.copyOf(data, data.length));
     }
 
     public static Vector of(double... data) {
@@ -53,11 +70,11 @@ public class Vector implements Cloneable, Iterable<Double> {
     }
 
     public void set(int index, double value) {
-        data[index] = value;
+        data[index] = (float) value;
     }
 
     public void add(int index, double value) {
-        data[index] += value;
+        data[index] += (float) value;
     }
 
     public double get(int index) {
@@ -223,13 +240,13 @@ public class Vector implements Cloneable, Iterable<Double> {
     }
 
     public Vector fill(double value) {
-        Arrays.fill(data, value);
+        Arrays.fill(data, (float) value);
         return this;
     }
 
     public Vector fill(Supplier<Double> function) {
         for (int i = 0; i < data.length; i++) {
-            data[i] = function.get();
+            data[i] = (float) (double) function.get();
         }
 
         return this;
@@ -260,7 +277,17 @@ public class Vector implements Cloneable, Iterable<Double> {
         return sum / data.length;
     }
 
-    public double[] toArray() {
+    public double[] toDoubleArray() {
+        double[] result = new double[data.length];
+
+        for (int i = 0; i < data.length; i++) {
+            result[i] = data[i];
+        }
+
+        return result;
+    }
+
+    public float[] toArray() {
         return data;
     }
 
@@ -310,6 +337,12 @@ public class Vector implements Cloneable, Iterable<Double> {
 
     @Override
     public Iterator<Double> iterator() {
-        return Arrays.stream(data).iterator();
+        double[] copy = new double[data.length];
+
+        for (int i = 0; i < data.length; i++) {
+            copy[i] = data[i];
+        }
+
+        return Arrays.stream(copy).iterator();
     }
 }

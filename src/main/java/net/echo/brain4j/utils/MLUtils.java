@@ -65,4 +65,16 @@ public class MLUtils {
     public static float clipGradient(double gradient) {
         return (float) Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }
+
+    public static String formatNumber(int params, int size) {
+        String[] prefixes = {"", "KB", "MB", "GB", "TB"};
+
+        int ciphers = (int) (Math.log10(params) / 3);
+        int weight = params * size;
+
+        double divisor = Math.pow(1024, ciphers);
+        double normalized = weight / divisor;
+
+        return String.format("%.2f %s", normalized, prefixes[ciphers]);
+    }
 }
