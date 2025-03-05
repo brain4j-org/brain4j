@@ -1,4 +1,4 @@
-package net.echo.brain4j.transformers.model;
+package net.echo.brain4j.model.impl;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunctions;
@@ -7,7 +7,7 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.transformers.model.layers.TransformerEncoder;
+import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
 
@@ -47,6 +47,11 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
         }
 
         return result;
+    }
+
+    @Override
+    public void reloadMatrices() {
+
     }
 
     @Override

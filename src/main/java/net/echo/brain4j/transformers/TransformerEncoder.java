@@ -1,4 +1,4 @@
-package net.echo.brain4j.transformers.model.layers;
+package net.echo.brain4j.transformers;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;

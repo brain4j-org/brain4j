@@ -45,7 +45,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Represents a feed forward neural network.
+ * Represents an abstract neural network model.
+ * @see net.echo.brain4j.model.impl.Sequential for a sequential model implementation
  */
 public abstract class Model<R, I, O> {
 
@@ -75,9 +76,8 @@ public abstract class Model<R, I, O> {
     protected Optimizer optimizer;
     protected Updater updater;
     protected WeightInit weightInit;
-
     protected Random generator;
-    private int seed;
+    protected int seed;
 
     public Model(Layer<?, ?>... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
