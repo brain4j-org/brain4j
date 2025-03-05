@@ -13,6 +13,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
@@ -34,6 +35,25 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
     public Sequential(Layer<?, ?>... layers) {
         super(layers);
+
+        if (this.layers.isEmpty()) return;
+
+        validateLayers();
+    }
+
+    private void validateLayers() {
+        boolean isInput = layers.getFirst() instanceof InputLayer;
+        boolean hasConv = false;
+
+        for (Layer<?, ?> layer : layers) {
+            if (layer instanceof ConvLayer || layer instanceof PoolingLayer || layer instanceof FlattenLayer) {
+                hasConv = true;
+                break;
+            }
+        }
+
+        if (isInput && !hasConv) throw new IllegalArgumentException("Cannot use the InputLayer outside of a convolutional model!");
+        if (!isInput && hasConv) throw new IllegalArgumentException("Cannot use a convolutional layer without an InputLayer!");
     }
 
     private Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
@@ -147,9 +167,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         return output;
     }
 
-    /**
-     * Reloads the synapse matrix for each layer.
-     */
+    @Override
     public void reloadMatrices() {
         Layer<?, ?> lastLayer = layers.getFirst();
 
@@ -164,5 +182,30 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
             lastLayer.updateWeights(synapseMatrixLayer);
             lastLayer = layer;
         }
+    }
+
+    /**
+     * Recalculates the synapse matrix, used to cache the synapse weights for faster computation.
+     *
+     * @param synapses list of synapses to cache
+     * @param inSize input size of the vector
+     * @param outSize output size of the vector
+     *
+     * @return the synapse matrix
+     */
+    public Vector[] recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {
+        Vector[] synapseMatrix = new Vector[outSize];
+
+        for (int i = 0; i < outSize; i++) {
+            Vector vector = new Vector(inSize);
+            synapseMatrix[i] = vector;
+
+            for (int j = 0; j < inSize; j++) {
+                Synapse synapse = synapses.get(j * outSize + i);
+                vector.set(j, synapse.getWeight());
+            }
+        }
+
+        return synapseMatrix;
     }
 }

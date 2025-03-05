@@ -81,25 +81,6 @@ public abstract class Model<R, I, O> {
 
     public Model(Layer<?, ?>... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
-
-        if (this.layers.isEmpty()) return;
-
-        validateLayers();
-    }
-
-    private void validateLayers() {
-        boolean isInput = layers.getFirst() instanceof InputLayer;
-        boolean hasConv = false;
-
-        for (Layer<?, ?> layer : layers) {
-            if (layer instanceof ConvLayer || layer instanceof PoolingLayer || layer instanceof FlattenLayer) {
-                hasConv = true;
-                break;
-            }
-        }
-
-        if (isInput && !hasConv) throw new IllegalArgumentException("Cannot use the InputLayer outside of a convolutional model!");
-        if (!isInput && hasConv) throw new IllegalArgumentException("Cannot use a convolutional layer without an InputLayer!");
     }
 
     public void connect(WeightInit weightInit, boolean update) {
@@ -125,6 +106,43 @@ public abstract class Model<R, I, O> {
             lastNormalLayer = layer;
         }
     }
+
+    /**
+     * Evaluates the model on the given dataset.
+     *
+     * @param set dataset for testing
+     * @return the error of the model
+     */
+    public abstract double evaluate(DataSet<R> set);
+
+    /**
+     * Trains the model for one epoch.
+     *
+     * @param dataSet dataset for training
+     */
+    public abstract void fit(DataSet<R> dataSet);
+
+    /**
+     * Predicts the output for the given input.
+     *
+     * @param input input data as a vector, must have dimension equal to the model's input dimension
+     * @return predicted outputs as a vector
+     */
+    public abstract O predict(I input);
+
+    /**
+     * Predicts output for given input.
+     *
+     * @param input input data as a vector, must have dimension equal to the model's input dimension
+     * @param cache cache used to store neuron states
+     * @return predicted outputs as a vector
+     */
+    public abstract O predict(StatesCache cache, I input);
+
+    /**
+     * Reloads the values inside the network.
+     */
+    public abstract void reloadMatrices();
 
     /**
      * Initializes the model and layers with default values.
@@ -153,54 +171,6 @@ public abstract class Model<R, I, O> {
         this.updater = updater;
         return this;
     }
-
-    /**
-     * Evaluates the model on the given dataset.
-     *
-     * @param set dataset for testing
-     * @return the error of the model
-     */
-    public abstract double evaluate(DataSet<R> set);
-
-    /**
-     * Finds the next layer used for computations given the initial index
-     *
-     * @param index starting layer index
-     * @return the next computation layer
-     */
-    public Layer<?, ?> getNextComputationLayer(int index) {
-        Layer<?, ?> nextLayer = layers.get(index + 1);
-
-        for (int j = 2; j < layers.size() && nextLayer instanceof DropoutLayer; j++) {
-            nextLayer = layers.get(index + j);
-        }
-
-        return nextLayer;
-    }
-
-    /**
-     * Trains the model for one epoch.
-     *
-     * @param dataSet dataset for training
-     */
-    public abstract void fit(DataSet<R> dataSet);
-
-    /**
-     * Predicts the output for the given input.
-     *
-     * @param input input data as a vector, must have dimension equal to the model's input dimension
-     * @return predicted outputs as a vector
-     */
-    public abstract O predict(I input);
-
-    /**
-     * Predicts output for given input.
-     *
-     * @param input input data as a vector, must have dimension equal to the model's input dimension
-     * @param cache cache used to store neuron states
-     * @return predicted outputs as a vector
-     */
-    public abstract O predict(StatesCache cache, I input);
 
     /**
      * Loads a model from a file.
@@ -325,31 +295,6 @@ public abstract class Model<R, I, O> {
      */
     public void add(Layer<?, ?>... layers) {
         this.layers.addAll(Arrays.asList(layers));
-    }
-
-    /**
-     * Recalculates the synapse matrix, used to cache the synapse weights for faster computation.
-     *
-     * @param synapses list of synapses to cache
-     * @param inSize input size of the vector
-     * @param outSize output size of the vector
-     *
-     * @return the synapse matrix
-     */
-    public Vector[] recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {
-        Vector[] synapseMatrix = new Vector[outSize];
-
-        for (int i = 0; i < outSize; i++) {
-            Vector vector = new Vector(inSize);
-            synapseMatrix[i] = vector;
-
-            for (int j = 0; j < inSize; j++) {
-                Synapse synapse = synapses.get(j * outSize + i);
-                vector.set(j, synapse.getWeight());
-            }
-        }
-
-        return synapseMatrix;
     }
 
     /**
