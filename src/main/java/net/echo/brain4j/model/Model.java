@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.lang.reflect.Type;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -498,13 +499,15 @@ public class Model {
 
         int params = totalSynapses + totalBiases;
 
-        String formatted = MLUtils.formatNumber(params, 4); // 4 = float size in bytes
-        String actual = MLUtils.formatNumber(totalSynapses, 32);
+        DecimalFormat format = new DecimalFormat("#,###");
+
+        String parameters = format.format(params);
+        String formatted = MLUtils.formatNumber(params * 4); // 4 = float size in bytes
+        String actual = MLUtils.formatNumber(totalSynapses * 32);
 
         stats.append(header);
-        stats.append("Total parameters: ").append(params).append("\n");
-        stats.append("Size in memory: ").append(formatted).append("\n");
-        stats.append("Actual memory usage: ").append(actual).append("\n");
+        stats.append("Total parameters: ").append(parameters).append(" (").append(formatted).append(")\n");
+        stats.append("Expected memory usage: ").append(actual).append("\n");
         stats.append(header);
 
         return stats.toString();
