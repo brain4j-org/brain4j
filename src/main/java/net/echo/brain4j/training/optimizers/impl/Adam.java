@@ -13,15 +13,15 @@ import java.util.List;
 public class Adam extends Optimizer {
 
     // Momentum vectors
-    protected double[] firstMomentum;
-    protected double[] secondMomentum;
+    protected float[] firstMomentum;
+    protected float[] secondMomentum;
 
     protected double beta1Timestep;
     protected double beta2Timestep;
 
-    protected double beta1;
-    protected double beta2;
-    protected double epsilon;
+    protected float beta1;
+    protected float beta2;
+    protected float epsilon;
     protected int timestep = 0;
 
     public Adam(double learningRate) {
@@ -30,27 +30,30 @@ public class Adam extends Optimizer {
 
     public Adam(double learningRate, double beta1, double beta2, double epsilon) {
         super(learningRate);
-        this.beta1 = beta1;
-        this.beta2 = beta2;
-        this.epsilon = epsilon;
+        this.beta1 = (float) beta1;
+        this.beta2 = (float) beta2;
+        this.epsilon = (float) epsilon;
     }
 
     public void postInitialize(Model model) {
-        this.firstMomentum = new double[Parameters.TOTAL_SYNAPSES];
-        this.secondMomentum = new double[Parameters.TOTAL_SYNAPSES];
+        this.firstMomentum = new float[Parameters.TOTAL_SYNAPSES];
+        this.secondMomentum = new float[Parameters.TOTAL_SYNAPSES];
     }
 
     @Override
     public double update(StatesCache cacheHolder, Synapse synapse) {
-        double gradient = synapse.getOutputNeuron().getDelta(cacheHolder) * synapse.getInputNeuron().getValue(cacheHolder);
+        double delta = synapse.getOutputNeuron().getDelta(cacheHolder);
+        double value = synapse.getInputNeuron().getValue(cacheHolder);
+
+        float gradient = (float) (delta * value);
 
         int synapseId = synapse.getSynapseId();
 
-        double currentFirstMomentum = firstMomentum[synapseId];
-        double currentSecondMomentum = secondMomentum[synapseId];
+        float currentFirstMomentum = firstMomentum[synapseId];
+        float currentSecondMomentum = secondMomentum[synapseId];
 
-        double m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
-        double v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
+        float m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
+        float v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
 
         firstMomentum[synapseId] = m;
         secondMomentum[synapseId] = v;
@@ -81,7 +84,7 @@ public class Adam extends Optimizer {
     }
 
     public void setBeta1(double beta1) {
-        this.beta1 = beta1;
+        this.beta1 = (float) beta1;
     }
 
     public double getBeta2() {
@@ -89,7 +92,7 @@ public class Adam extends Optimizer {
     }
 
     public void setBeta2(double beta2) {
-        this.beta2 = beta2;
+        this.beta2 = (float) beta2;
     }
 
     public double getEpsilon() {
@@ -97,6 +100,6 @@ public class Adam extends Optimizer {
     }
 
     public void setEpsilon(double epsilon) {
-        this.epsilon = epsilon;
+        this.epsilon = (float) epsilon;
     }
 }

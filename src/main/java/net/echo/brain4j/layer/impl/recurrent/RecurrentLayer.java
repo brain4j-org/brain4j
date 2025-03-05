@@ -23,7 +23,6 @@ public class RecurrentLayer extends DenseLayer {
     private ThreadLocal<Vector> previousTimestep;
 
     private List<Vector> outputWeights;
-    private Vector outputBias;
 
     /**
      * Constructs an instance of a recurrent layer.
@@ -57,7 +56,6 @@ public class RecurrentLayer extends DenseLayer {
         }
 
         this.outputWeights = new ArrayList<>(inSize);
-        this.outputBias = Vector.uniform(-1, 1, inSize);
 
         for (int i = 0; i < inSize; i++) {
             Vector outputWeightVector = new Vector(inSize);
@@ -74,36 +72,39 @@ public class RecurrentLayer extends DenseLayer {
     @Override
     public Vector forward(StatesCache cache, Layer<?, ?> lastLayer, Vector input) {
         if (!(lastLayer instanceof DenseLayer denseLayer)) {
-            throw new UnsupportedOperationException("Recurrent layer must be connected to a dense layer or a recurrent layer!");
+            throw new UnsupportedOperationException("Previous layer must be a dense or recurrent layer!");
         }
 
-        List<Neuron> prevNeurons = lastLayer.getNeurons();
+        int prevSize = lastLayer.getNeurons().size();
 
-        int prevSize = prevNeurons.size();
-
-        Vector currentInput = new Vector(prevSize);
-
-        for (int i = 0; i < prevSize; i++) {
-            currentInput.set(i, lastLayer.getNeuronAt(i).getValue(cache));
-        }
-
-        Vector timestep = previousTimestep.get();
+        Vector hiddenState = previousTimestep.get();
 
         for (int i = 0; i < neurons.size(); i++) {
-            double inputValue = denseLayer.getWeights().get(i).weightedSum(currentInput);
-            double recurrentValue = recurrentWeights.get(i).weightedSum(timestep);
+            double inputValue = denseLayer.getWeights().get(i).weightedSum(input);
+            double recurrentValue = recurrentWeights.get(i).weightedSum(hiddenState);
 
             double rawState = inputValue + recurrentValue + hiddenStateBias.get(i);
-            double newState = Activations.TANH.getFunction().activate(rawState);
+            double newState = activation.getFunction().activate(rawState);
 
-            timestep.set(i, newState);
-            neurons.get(i).setValue(cache, newState);
+            hiddenState.set(i, newState);
         }
 
-        previousTimestep.set(timestep);
+        previousTimestep.set(hiddenState);
+
+        for (int i = 0; i < neurons.size(); i++) {
+            double output = outputWeights.get(i).weightedSum(hiddenState);
+            neurons.get(i).setValue(cache, output);
+        }
+
         applyFunction(cache, lastLayer);
 
-        return null;
+        Vector outputVector = new Vector(neurons.size());
+
+        for (int i = 0; i < size(); i++) {
+            outputVector.set(i, neurons.get(i).getValue(cache));
+        }
+
+        return outputVector;
     }
 
     @Override

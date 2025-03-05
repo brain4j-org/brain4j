@@ -86,10 +86,6 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
 
     @Override
     public void propagate(StatesCache cacheHolder, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
-        Kernel inputKernel = cacheHolder.getInputKernel(this);
-        Kernel outputKernel = cacheHolder.getOutputKernel(this);
-        Kernel errorMap = cacheHolder.getDeltaKernel(this);
-
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 

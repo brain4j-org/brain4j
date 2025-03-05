@@ -18,15 +18,9 @@ public abstract class Updater {
         gradients[synapse.getSynapseId()] += change;
     }
 
-    public void acknowledgeRecurrentChange(int neuronId, int recurrentNeuronId, double change) {
-        int index = neuronId * Parameters.TOTAL_NEURONS + recurrentNeuronId;
-        recurrentGradients[index] += change;
-    }
-
     public void postInitialize(Model model) {
         this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
         this.gradients = new double[Parameters.TOTAL_SYNAPSES];
-        this.recurrentGradients = new double[Parameters.TOTAL_NEURONS * Parameters.TOTAL_NEURONS];
 
         for (Layer<?, ?> layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {

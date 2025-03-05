@@ -45,7 +45,7 @@ public class Neuron {
     public void setDelta(StatesCache cacheHolder, double delta) {
         this.totalDelta += delta;
 
-        cacheHolder.addDelta(this, delta);
+        cacheHolder.addDelta(this, (float) delta);
     }
 
     public double getValue(StatesCache cacheHolder) {
@@ -53,7 +53,7 @@ public class Neuron {
     }
 
     public void setValue(StatesCache cacheHolder, double value) {
-        cacheHolder.setValue(this, value);
+        cacheHolder.setValue(this, (float) value);
     }
 
     public double getBias() {
@@ -62,9 +62,5 @@ public class Neuron {
 
     public void setBias(double bias) {
         this.bias = bias;
-    }
-
-    public double getHiddenState(StatesCache cache) {
-        return cache.getHiddenState(this);
     }
 }

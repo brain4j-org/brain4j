@@ -278,7 +278,6 @@ public class Model {
 
         if (firstLayer instanceof InputLayer inputLayer) {
             convInput = inputLayer.getImage(cache);
-            cache.setOutputKernel(inputLayer, convInput);
         }
 
         for (int l = 1; l < layers.size(); l++) {
@@ -288,12 +287,10 @@ public class Model {
 
             if (layer instanceof ConvLayer convLayer) {
                 convInput = convLayer.forward(cache, lastLayer, convInput);
-                cache.setOutputKernel(layer, convInput);
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
                 convInput = poolingLayer.forward(cache, lastLayer, convInput);
-                cache.setOutputKernel(layer, convInput);
             }
 
             if (layer instanceof FlattenLayer flattenLayer) {
