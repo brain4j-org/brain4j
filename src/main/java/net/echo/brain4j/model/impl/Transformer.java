@@ -26,12 +26,12 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
     }
 
     @Override
-    public Model<Object, List<Vector>, List<Vector>> compile(LossFunctions function, Optimizer optimizer) {
+    public Transformer compile(LossFunctions function, Optimizer optimizer) {
         return compile(WeightInit.UNIFORM_XAVIER, function, optimizer, new StochasticUpdater());
     }
 
     @Override
-    public Model<Object, List<Vector>, List<Vector>> compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
+    public Transformer compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
         super.compile(weightInit, function, optimizer, updater);
 
         connect(weightInit, true);
