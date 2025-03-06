@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -63,6 +64,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
      */
     public ConvLayer(int filters, int kernelWidth, int kernelHeight, int stride, int padding, Activations activation) {
         super(0, activation);
+        this.id = Parameters.TOTAL_CONV_LAYER++;
         this.filters = filters;
         this.kernelWidth = kernelWidth;
         this.kernelHeight = kernelHeight;
@@ -115,7 +117,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
     }
 
     @Override
-    public void propagate(StatesCache cacheHolder, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
+    public void propagate(StatesCache cache, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 

@@ -13,6 +13,8 @@ import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.techniques.SmartTrainer;
+import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
@@ -25,24 +27,22 @@ import java.util.List;
 
 public class ConvExample {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         ConvExample example = new ConvExample();
         example.start();
     }
 
-    private void start() {
-        Model model = getModel();
+    private void start() throws IOException {
+        Sequential model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
+        model.fit(dataSet);
+
         double loss = model.evaluate(dataSet);
-        System.out.println("Initial loss: " + loss);
-
-        for (int i = 0; i < 1000; i++) {
+        System.out.println("Loss: " + loss);
+        /*for (int i = 0; i < 1000; i++) {
             model.fit(dataSet);
-
-            loss = model.evaluate(dataSet);
-            System.out.println("Final loss: " + loss + " at " + i);
-        }
+        }*/
     }
 
     private Sequential getModel() {
@@ -52,14 +52,14 @@ public class ConvExample {
 
                 // #1 convolutional block
                 new ConvLayer(32, 3, 3, Activations.RELU),
-                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                // new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // #2 convolutional block
                 new ConvLayer(64, 5, 5, Activations.RELU),
-                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                // new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // Flattens the feature map to a 1D vector
-                new FlattenLayer(25), // You must find the right size by trial and error
+                new FlattenLayer(484), // You must find the right size by trial and error
 
                 // Classifiers
                 new DenseLayer(32, Activations.RELU),
@@ -69,25 +69,21 @@ public class ConvExample {
         return model.compile(WeightInit.HE, LossFunctions.CROSS_ENTROPY, new Adam(0.1), new StochasticUpdater());
     }
 
-    private DataSet<DataRow> getDataSet() {
+    private DataSet<DataRow> getDataSet() throws IOException {
         DataSet<DataRow> set = new DataSet<>();
 
-        try {
-            List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
+        List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
 
-            for (String line : lines) {
-                String[] parts = line.split(",");
-                double[] inputs = Arrays.stream(parts, 1, parts.length).mapToDouble(x -> Double.parseDouble(x) / 255).toArray();
+        for (String line : lines) {
+            String[] parts = line.split(",");
+            double[] inputs = Arrays.stream(parts, 1, parts.length).mapToDouble(x -> Double.parseDouble(x) / 255).toArray();
 
-                Vector output = new Vector(10);
+            Vector output = new Vector(10);
 
-                int value = Integer.parseInt(parts[0]);
-                output.set(value, 1);
+            int value = Integer.parseInt(parts[0]);
+            output.set(value, 1);
 
-                set.getData().add(new DataRow(Vector.of(inputs), output));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading dataset: " + e.getMessage(), e);
+            set.getData().add(new DataRow(Vector.of(inputs), output));
         }
 
         return set;

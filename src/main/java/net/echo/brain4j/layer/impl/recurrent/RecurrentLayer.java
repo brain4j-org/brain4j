@@ -75,8 +75,6 @@ public class RecurrentLayer extends DenseLayer {
             throw new UnsupportedOperationException("Previous layer must be a dense or recurrent layer!");
         }
 
-        int prevSize = lastLayer.getNeurons().size();
-
         Vector hiddenState = previousTimestep.get();
 
         for (int i = 0; i < neurons.size(); i++) {
@@ -108,8 +106,8 @@ public class RecurrentLayer extends DenseLayer {
     }
 
     @Override
-    public void propagate(StatesCache cacheHolder, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
-        super.propagate(cacheHolder, previous, updater, optimizer);
+    public void propagate(StatesCache cache, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
+        super.propagate(cache, previous, updater, optimizer);
     }
 
     public List<Vector> getRecurrentWeights() {

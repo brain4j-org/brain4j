@@ -138,7 +138,7 @@ public class MNISTClassifier {
         return set;
     }
 
-    private static class ExampleListener extends TrainListener {
+    private static class ExampleListener extends TrainListener<DataRow> {
 
         @Override
         public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {

@@ -6,6 +6,8 @@ import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
 
 public class FlattenLayer extends DenseLayer {
@@ -17,6 +19,17 @@ public class FlattenLayer extends DenseLayer {
     @Override
     public Vector forward(StatesCache cache, Layer<?, ?> lastLayer, Vector input) {
         return input;
+    }
+
+    @Override
+    public void propagate(StatesCache cache, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
+        super.propagate(cache, previous, updater, optimizer);
+
+        for (int i = 0; i < getTotalNeurons(); i++) {
+            double value = neurons.get(i).getValue(cache);
+
+            System.out.println(i + " has " + value);
+        }
     }
 
     public Vector flatten(StatesCache cache, Layer<?, ?> layer, Kernel input) {

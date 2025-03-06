@@ -35,11 +35,12 @@ public abstract class Layer<I, O> {
     protected final Activations activation;
     protected final Activation function;
     protected Layer<?, ?> nextLayer;
+    protected int id;
 
     public Layer(int input, Activations activation) {
-        Parameters.TOTAL_LAYERS++;
         Stream.generate(Neuron::new).limit(input).forEach(neurons::add);
 
+        this.id = Parameters.TOTAL_LAYERS++;
         this.activation = activation;
         this.function = activation.getFunction();
     }
@@ -82,32 +83,32 @@ public abstract class Layer<I, O> {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
 
-    public void applyFunction(StatesCache cacheHolder, Layer<?, ?> previous) {
-        function.apply(cacheHolder, neurons);
+    public void applyFunction(StatesCache cache, Layer<?, ?> previous) {
+        function.apply(cache, neurons);
     }
 
-    public void setInput(StatesCache cacheHolder, Vector input) {
+    public void setInput(StatesCache cache, Vector input) {
         Preconditions.checkState(input.size() == neurons.size(), "Input size does not match!" +
                 " (Input != Expected) " + input.size() + " != " + neurons.size());
 
         for (int i = 0; i < input.size(); i++) {
-            neurons.get(i).setValue(cacheHolder, input.get(i));
+            neurons.get(i).setValue(cache, input.get(i));
         }
     }
 
-    public void propagate(StatesCache cacheHolder, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
+    public void propagate(StatesCache cache, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
         int nextLayerSize = nextLayer.getNeurons().size();
 
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
 
-            double value = neuron.getValue(cacheHolder);
+            double value = neuron.getValue(cache);
             double derivative = activation.getFunction().getDerivative(value);
 
             for (int j = 0; j < nextLayerSize; j++) {
                 Synapse synapse = synapses.get(i * nextLayerSize + j);
 
-                float weightChange = calculateGradient(cacheHolder, synapse, derivative);
+                float weightChange = calculateGradient(cache, synapse, derivative);
                 updater.acknowledgeChange(synapse, weightChange);
             }
         }
@@ -147,5 +148,9 @@ public abstract class Layer<I, O> {
 
     public int getTotalNeurons() {
         return neurons.size();
+    }
+
+    public int getId() {
+        return id;
     }
 }
