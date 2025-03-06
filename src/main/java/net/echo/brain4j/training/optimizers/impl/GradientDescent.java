@@ -15,8 +15,13 @@ public class GradientDescent extends Optimizer {
     }
 
     @Override
-    public double update(StatesCache cacheHolder, Synapse synapse) {
-        return learningRate * synapse.getOutputNeuron().getDelta(cacheHolder) * synapse.getInputNeuron().getValue(cacheHolder);
+    public double update(StatesCache cache, Synapse synapse) {
+        return learningRate * synapse.getOutputNeuron().getDelta(cache) * synapse.getInputNeuron().getValue(cache);
+    }
+
+    @Override
+    public double update(StatesCache cache, int id, float gradient, float weight) {
+        return learningRate * gradient;
     }
 
     @Override

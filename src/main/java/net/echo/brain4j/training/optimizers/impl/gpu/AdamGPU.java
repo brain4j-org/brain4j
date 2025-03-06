@@ -154,12 +154,18 @@ public class AdamGPU extends Optimizer {
     }
 
     @Override
-    public double update(StatesCache cacheHolder, Synapse synapse) {
+    public double update(StatesCache cache, Synapse synapse) {
         // CPU-based update fallback
         return 0; // Not used when GPU is enabled
     }
 
-    private void applyChanges(StatesCache cacheHolder, Updater updater, float[] updates) {
+    @Override
+    public double update(StatesCache cache, int id, float gradient, float weight) {
+        // CPU-based update fallback
+        return 0;
+    }
+
+    private void applyChanges(StatesCache cache, Updater updater, float[] updates) {
         for (int i = 0; i < updates.length; i++) {
             Synapse synapse = synapses[i];
             float update = updates[i];

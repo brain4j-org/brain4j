@@ -25,9 +25,17 @@ public class AdamW extends Adam {
     }
 
     @Override
-    public double update(StatesCache cacheHolder, Synapse synapse) {
-        double adamValue = super.update(cacheHolder, synapse);
+    public double update(StatesCache cache, Synapse synapse) {
+        double adamValue = super.update(cache, synapse);
         double weightDecayTerm = weightDecay * synapse.getWeight();
+
+        return adamValue + weightDecayTerm;
+    }
+
+    @Override
+    public double update(StatesCache cache, int id, float gradient, float weight) {
+        double adamValue = super.update(cache, id, gradient, weight);
+        double weightDecayTerm = weightDecay * weight;
 
         return adamValue + weightDecayTerm;
     }

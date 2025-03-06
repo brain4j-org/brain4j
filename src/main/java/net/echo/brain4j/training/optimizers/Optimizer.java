@@ -32,7 +32,9 @@ public abstract class Optimizer {
      *
      * @param synapse the synapse to update
      */
-    public abstract double update(StatesCache cacheHolder, Synapse synapse);
+    public abstract double update(StatesCache cache, Synapse synapse);
+
+    public abstract double update(StatesCache cache, int id, float gradient, float weight);
 
     /**
      * Called after the network has been compiled and all the synapses have been initialized.

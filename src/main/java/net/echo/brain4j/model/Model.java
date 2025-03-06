@@ -343,11 +343,14 @@ public abstract class Model<R, I, O> {
         int params = totalWeights + totalBiases;
 
         String parameters = format.format(params);
+        String synapses = format.format(totalSynapses);
+
         String formatted = MLUtils.formatNumber(params * 4); // 4 = float size in bytes
         String actual = MLUtils.formatNumber(totalSynapses * 32);
 
         stats.append(header);
         stats.append("Total parameters: ").append(parameters).append(" (").append(formatted).append(")\n");
+        stats.append("Total synapses: ").append(synapses).append("\n");
         stats.append("Expected memory usage: ").append(actual).append("\n");
         stats.append(header);
 

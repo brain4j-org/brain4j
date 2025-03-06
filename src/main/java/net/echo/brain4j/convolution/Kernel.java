@@ -7,18 +7,22 @@ import java.util.Random;
 
 public class Kernel {
 
-    private final Vector[] values;
+    private static int ID_COUNTER = 0;
 
+    private final Vector[] values;
     private final int width;
     private final int height;
+    private final int id;
 
     public Kernel(Vector... values) {
+        this.id = -1;
         this.values = values;
         this.width = values.length;
         this.height = values[0].size();
     }
 
-    public Kernel(int width, int height) {
+    public Kernel(int id, int width, int height) {
+        this.id = ID_COUNTER++;
         this.width = width;
         this.height = height;
         this.values = new Vector[height];
@@ -26,6 +30,14 @@ public class Kernel {
         for (int i = 0; i < height; i++) {
             values[i] = new Vector(width);
         }
+    }
+
+    public Kernel(int width, int height) {
+        this(-1, width, height);
+    }
+
+    public int getId() {
+        return id;
     }
 
     public void setValues(Random generator, double bound) {
@@ -89,7 +101,7 @@ public class Kernel {
         }
     }
 
-    public double getValue(int x, int y) {
+    public float getValue(int x, int y) {
         return values[y].get(x);
     }
 
@@ -118,6 +130,33 @@ public class Kernel {
             Vector row = values[h];
 
             values[h] = activation.activate(row);
+        }
+    }
+
+    public Kernel rotate180() {
+        Kernel result = new Kernel(width, height);
+
+        for (int h = 0; h < height; h++) {
+            Vector row = values[h];
+
+            for (int w = 0; w < width; w++) {
+                double value = row.get(w);
+
+                int rotatedW = width - w - 1;
+                int rotatedH = height - h - 1;
+
+                result.setValue(rotatedW, rotatedH, value);
+            }
+        }
+
+        return result;
+    }
+
+    public void print() {
+        for (int i = 0; i < height; i++) {
+            Vector row = values[i];
+
+            System.out.println(row.toString("%.3f"));
         }
     }
 }

@@ -97,7 +97,7 @@ public class AttentionHead {
     }
 
     public List<Vector> attend(List<Vector> inputs) {
-        int seqLen = inputs.size();
+        int sequenceLength = inputs.size();
 
         List<Vector> queries = new ArrayList<>();
         List<Vector> keys = new ArrayList<>();
@@ -112,11 +112,11 @@ public class AttentionHead {
         List<Vector> output = new ArrayList<>();
         double scale = Math.sqrt(headDimension);
 
-        for (int i = 0; i < seqLen; i++) {
+        for (int i = 0; i < sequenceLength; i++) {
             Vector query = queries.get(i);
             List<Double> scoreList = new ArrayList<>();
 
-            for (int j = 0; j < seqLen; j++) {
+            for (int j = 0; j < sequenceLength; j++) {
                 double score = query.weightedSum(keys.get(j)) / scale;
                 scoreList.add(score);
             }
@@ -124,7 +124,7 @@ public class AttentionHead {
             Vector attentionWeights = softmax(scoreList);
             Vector headOutput = new Vector(headDimension);
 
-            for (int j = 0; j < seqLen; j++) {
+            for (int j = 0; j < sequenceLength; j++) {
                 Vector weightedValue = values.get(j).scale(attentionWeights.get(j));
                 headOutput = headOutput.add(weightedValue);
             }

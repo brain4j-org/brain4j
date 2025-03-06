@@ -21,17 +21,6 @@ public class FlattenLayer extends DenseLayer {
         return input;
     }
 
-    @Override
-    public void propagate(StatesCache cache, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
-        super.propagate(cache, previous, updater, optimizer);
-
-        for (int i = 0; i < getTotalNeurons(); i++) {
-            double value = neurons.get(i).getValue(cache);
-
-            System.out.println(i + " has " + value);
-        }
-    }
-
     public Vector flatten(StatesCache cache, Layer<?, ?> layer, Kernel input) {
         Preconditions.checkNotNull(input, "Last convolutional input is null! Missing an input layer?");
 

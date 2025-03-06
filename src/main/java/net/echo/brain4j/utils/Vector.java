@@ -76,7 +76,7 @@ public class Vector implements Cloneable, Iterable<Double> {
         data[index] += (float) value;
     }
 
-    public double get(int index) {
+    public float get(int index) {
         return data[index];
     }
 

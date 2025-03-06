@@ -41,9 +41,9 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public double update(StatesCache cacheHolder, Synapse synapse) {
-        double delta = synapse.getOutputNeuron().getDelta(cacheHolder);
-        double value = synapse.getInputNeuron().getValue(cacheHolder);
+    public double update(StatesCache cache, Synapse synapse) {
+        double delta = synapse.getOutputNeuron().getDelta(cache);
+        double value = synapse.getInputNeuron().getValue(cache);
 
         float gradient = (float) (delta * value);
 
@@ -57,6 +57,23 @@ public class Adam extends Optimizer {
 
         firstMomentum[synapseId] = m;
         secondMomentum[synapseId] = v;
+
+        double mHat = m / (1 - beta1Timestep);
+        double vHat = v / (1 - beta2Timestep);
+
+        return (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
+    }
+
+    @Override
+    public double update(StatesCache cache, int id, float gradient, float weight) {
+        float currentFirstMomentum = firstMomentum[id];
+        float currentSecondMomentum = secondMomentum[id];
+
+        float m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
+        float v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
+
+        firstMomentum[id] = m;
+        secondMomentum[id] = v;
 
         double mHat = m / (1 - beta1Timestep);
         double vHat = v / (1 - beta2Timestep);
