@@ -14,20 +14,30 @@ public class AttentionHead {
     private final int headDimension;
     private final double temperature;
 
-    private final double[][] queryWeights;
-    private final double[][] keyWeights;
-    private final double[][] valueWeights;
+    private final float[][] queryWeights;
+    private final float[][] keyWeights;
+    private final float[][] valueWeights;
 
     public AttentionHead(WeightInit weightInit, int inputDimension, int headDimension, double temperature) {
         this.inputDimension = inputDimension;
         this.headDimension = headDimension;
         this.temperature = temperature;
 
-        this.queryWeights = new double[inputDimension][headDimension];
-        this.keyWeights = new double[inputDimension][headDimension];
-        this.valueWeights = new double[inputDimension][headDimension];
+        this.queryWeights = new float[inputDimension][headDimension];
+        this.keyWeights = new float[inputDimension][headDimension];
+        this.valueWeights = new float[inputDimension][headDimension];
 
         initializeWeights(weightInit);
+    }
+
+    public int size() {
+        int total = 0;
+
+        total += queryWeights.length * queryWeights[0].length;
+        total += keyWeights.length * keyWeights[0].length;
+        total += valueWeights.length * valueWeights[0].length;
+
+        return total;
     }
 
     private void initializeWeights(WeightInit weightInit) {
@@ -38,14 +48,14 @@ public class AttentionHead {
 
         for (int i = 0; i < inputDimension; i++) {
             for (int j = 0; j < headDimension; j++) {
-                queryWeights[i][j] = (rng.nextDouble() * 2 * bound) - bound;
-                keyWeights[i][j] = (rng.nextDouble() * 2 * bound) - bound;
-                valueWeights[i][j] = (rng.nextDouble() * 2 * bound) - bound;
+                queryWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
+                keyWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
+                valueWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
             }
         }
     }
 
-    private Vector multiply(Vector vector, double[][] weights) {
+    private Vector multiply(Vector vector, float[][] weights) {
         Vector result = new Vector(headDimension);
 
         for (int j = 0; j < headDimension; j++) {

@@ -12,10 +12,6 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
-import net.echo.brain4j.layer.impl.convolution.ConvLayer;
-import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
-import net.echo.brain4j.layer.impl.convolution.InputLayer;
-import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -29,9 +25,9 @@ import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
-import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -99,8 +95,8 @@ public abstract class Model<R, I, O> {
 
             if (layer.getNeurons().isEmpty() && !layer.isConvolutional()) continue;
 
-            int nIn = lastNormalLayer.size();
-            int nOut = layer.size();
+            int nIn = lastNormalLayer.getTotalNeurons();
+            int nOut = layer.getTotalNeurons();
 
             double bound = weightInit.getInitializer().getBound(nIn, nOut);
 
@@ -303,13 +299,17 @@ public abstract class Model<R, I, O> {
      * Generates model statistics.
      */
     public String getStats() {
+
         StringBuilder stats = new StringBuilder();
+        DecimalFormat format = new DecimalFormat("#,###");
 
-        String header = "==========================================================\n";
+        String header = "=======================================================================\n";
+        String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
 
-        stats.append(String.format("%-7s %-15s %-10s %-12s %-15s\n", "Index", "Layer", "Neurons", "Weights", "Activation"));
+        stats.append(String.format(pattern, "Index", "Layer", "Neurons", "Weights", "Activation"));
         stats.append(header);
 
+        int totalWeights = 0;
         int totalSynapses = 0;
         int totalBiases = 0;
 
@@ -318,21 +318,23 @@ public abstract class Model<R, I, O> {
 
             String layerType = layer.getClass().getSimpleName();
 
-            int biases = layer.size();
-            int synapses = layer.getTotalParams();
+            int neurons = layer.getTotalNeurons();
+            int weights = layer.getTotalParams();
 
-            String formatNin = layer instanceof DropoutLayer ? "-" : String.valueOf(biases);
+            String formatNeurons = layer instanceof DropoutLayer ? "-" : format.format(neurons);
+            String formatWeights = format.format(weights);
 
-            stats.append(String.format("%-7d %-15s %-10s %-12d %-15s\n",
-                    i, layerType, formatNin, synapses, layer.getActivation().name()));
+            stats.append(String.format(pattern, i, layerType, formatNeurons, formatWeights, layer.getActivation().name()));
 
-            totalSynapses += synapses;
-            totalBiases += biases;
+            if (layer instanceof TransformerEncoder encoder) {
+                totalSynapses += encoder.getFeedForwardSize();
+            }
+
+            totalWeights += weights;
+            totalBiases += neurons;
         }
 
-        int params = totalSynapses + totalBiases;
-
-        DecimalFormat format = new DecimalFormat("#,###");
+        int params = totalWeights + totalBiases;
 
         String parameters = format.format(params);
         String formatted = MLUtils.formatNumber(params * 4); // 4 = float size in bytes
@@ -406,5 +408,33 @@ public abstract class Model<R, I, O> {
      */
     public int getSeed() {
         return seed;
+    }
+
+    /**
+     * Gets the amount of total neurons in the model.
+     * @return the total number of neurons
+     */
+    public int getTotalNeurons() {
+        int total = 0;
+
+        for (Layer<?, ?> layer : layers) {
+            total += layer.getTotalNeurons();
+        }
+
+        return total;
+    }
+
+    /**
+     * Gets the total amount of weights in the model.
+     * @return the total number of weights, usually the total amount of synapses
+     */
+    public int getTotalWeights() {
+        int total = 0;
+
+        for (Layer<?, ?> layer : layers) {
+            total += layer.getTotalParams();
+        }
+
+        return total;
     }
 }

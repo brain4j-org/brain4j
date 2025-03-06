@@ -119,8 +119,8 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     public Vector predict(StatesCache cache, Vector input) {
         Layer<?, ?> firstLayer = layers.getFirst();
 
-        Preconditions.checkState(input.size() == firstLayer.size(), "Input dimension does not " +
-                "match model input dimension! (Input != Expected " + input.size() + " != " + firstLayer.size() + ")");
+        Preconditions.checkState(input.size() == firstLayer.getTotalNeurons(), "Input dimension does not " +
+                "match model input dimension! (Input != Expected " + input.size() + " != " + firstLayer.getTotalNeurons() + ")");
 
         Layer<?, ?> lastLayer = firstLayer;
 
@@ -158,7 +158,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         }
 
         Layer<?, ?> outputLayer = layers.getLast();
-        Vector output = new Vector(outputLayer.size());
+        Vector output = new Vector(outputLayer.getTotalNeurons());
 
         for (int i = 0; i < output.size(); i++) {
             output.set(i, outputLayer.getNeuronAt(i).getValue(cache));
@@ -177,7 +177,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
             if (!(layer instanceof DenseLayer)) continue;
 
             List<Neuron> neurons = layer.getNeurons();
-            Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), lastLayer.size(), neurons.size());
+            Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), lastLayer.getTotalNeurons(), neurons.size());
 
             lastLayer.updateWeights(synapseMatrixLayer);
             lastLayer = layer;

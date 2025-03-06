@@ -32,7 +32,7 @@ public class InputLayer extends Layer<Vector, Vector> {
     }
 
     @Override
-    public int size() {
+    public int getTotalNeurons() {
         return width * height;
     }
 

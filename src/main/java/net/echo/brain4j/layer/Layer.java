@@ -145,7 +145,7 @@ public abstract class Layer<I, O> {
         return synapses.size();
     }
 
-    public int size() {
+    public int getTotalNeurons() {
         return neurons.size();
     }
 }

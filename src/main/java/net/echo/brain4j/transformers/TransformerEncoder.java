@@ -15,7 +15,6 @@ import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class TransformerEncoder extends Layer<List<Vector>, List<Vector>> {
 
@@ -43,19 +42,22 @@ public class TransformerEncoder extends Layer<List<Vector>, List<Vector>> {
         );
     }
 
+    public int getAttentionSize() {
+        return attention.getTotalNeurons();
+    }
+
+    public int getFeedForwardSize() {
+        return feedForward.getTotalWeights();
+    }
+
     @Override
-    public int size() {
-        // TODO
-        int total = 0;
+    public int getTotalParams() {
+        return getAttentionSize() + getFeedForwardSize();
+    }
 
-        if (attention != null) {
-            total += attention.size();
-        }
-
-        // total += feedForward.size();
-        total += normalizer.size();
-
-        return total;
+    @Override
+    public int getTotalNeurons() {
+        return feedForward.getTotalNeurons();
     }
 
     @Override

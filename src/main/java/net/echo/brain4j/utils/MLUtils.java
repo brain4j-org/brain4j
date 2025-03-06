@@ -69,9 +69,13 @@ public class MLUtils {
     public static String formatNumber(int params) {
         String[] prefixes = {"", "KB", "MB", "GB", "TB"};
 
+        if (params == 0) {
+            return "0";
+        }
+
         int ciphers = (int) (Math.log10(params) / 3);
 
-        double divisor = Math.pow(1024, ciphers);
+        double divisor = Math.pow(1000, ciphers);
         double normalized = params / divisor;
 
         return String.format("%.2f %s", normalized, prefixes[ciphers]);

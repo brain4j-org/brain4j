@@ -40,7 +40,7 @@ public class DenseLayer extends Layer<Vector, Vector> {
 
         applyFunction(cache, lastLayer);
 
-        for (int i = 0; i < size(); i++) {
+        for (int i = 0; i < getTotalNeurons(); i++) {
             output.set(i, neurons.get(i).getValue(cache));
         }
 

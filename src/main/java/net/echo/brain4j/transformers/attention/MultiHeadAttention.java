@@ -19,7 +19,7 @@ public class MultiHeadAttention extends Layer<List<Vector>, List<Vector>> {
     private final int modelDimension;
     private final int headDimension;
 
-    private final double[][] outProjectionWeights;
+    private final float[][] outProjectionWeights;
 
     public MultiHeadAttention(WeightInit weightInit, int headCount, int modelDimension, double temperature) {
         super(0, Activations.LINEAR);
@@ -28,14 +28,13 @@ public class MultiHeadAttention extends Layer<List<Vector>, List<Vector>> {
         this.modelDimension = modelDimension;
         this.temperature = temperature;
 
-        Preconditions.checkState(modelDimension % headCount != 0, "Model dimension must be divisible by head count!");
+        Preconditions.checkState(modelDimension % headCount == 0, "Model dimension must be divisible by head count!");
 
         this.headDimension = modelDimension / headCount;
         this.heads = new ArrayList<>();
+        this.outProjectionWeights = new float[headCount * headDimension][modelDimension];
 
         initializeHeads();
-
-        this.outProjectionWeights = new double[headCount * headDimension][modelDimension];
         initializeOutProjectionWeights();
     }
 
@@ -45,13 +44,27 @@ public class MultiHeadAttention extends Layer<List<Vector>, List<Vector>> {
         }
     }
 
+    @Override
+    public int getTotalNeurons() {
+        int total = 0;
+
+        total += outProjectionWeights.length * modelDimension;
+
+        for (AttentionHead head : heads) {
+            total += head.size();
+        }
+
+        return total;
+    }
+
     private void initializeOutProjectionWeights() {
         Random rng = new Random();
         double bound = weightInit.getInitializer().getBound(headCount * headDimension, modelDimension);
 
         for (int i = 0; i < headCount * headDimension; i++) {
             for (int j = 0; j < modelDimension; j++) {
-                outProjectionWeights[i][j] = (rng.nextDouble() * 2 * bound) - bound;
+                double value = (rng.nextDouble() * 2 * bound) - bound;
+                outProjectionWeights[i][j] = (float) value;
             }
         }
     }

@@ -24,11 +24,11 @@ public class FlattenLayer extends DenseLayer {
 
         boolean isConvolutional = layer instanceof ConvLayer || layer instanceof PoolingLayer;
 
-        Vector output = new Vector(size());
+        Vector output = new Vector(getTotalNeurons());
 
         Preconditions.checkState(isConvolutional, "Flatten layer is not preceded by convolutional layer!");
-        Preconditions.checkState(size() == input.size(),
-                "Flatten dimension != Conv dimension (" + size() + " != " + input.size() + ")");
+        Preconditions.checkState(getTotalNeurons() == input.size(),
+                "Flatten dimension != Conv dimension (" + getTotalNeurons() + " != " + input.size() + ")");
 
         for (int h = 0; h < input.getHeight(); h++) {
             for (int w = 0; w < input.getWidth(); w++) {

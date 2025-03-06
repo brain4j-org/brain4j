@@ -95,7 +95,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
     }
 
     @Override
-    public int size() {
+    public int getTotalNeurons() {
         return filters;
     }
 

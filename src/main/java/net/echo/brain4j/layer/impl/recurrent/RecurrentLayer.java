@@ -99,7 +99,7 @@ public class RecurrentLayer extends DenseLayer {
 
         Vector outputVector = new Vector(neurons.size());
 
-        for (int i = 0; i < size(); i++) {
+        for (int i = 0; i < getTotalNeurons(); i++) {
             outputVector.set(i, neurons.get(i).getValue(cache));
         }
 
