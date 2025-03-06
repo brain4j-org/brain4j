@@ -11,19 +11,19 @@ import net.echo.brain4j.utils.Vector;
 import java.util.Objects;
 
 /**
- * Represents a Dropout layer for regularization in a neural network.
- * <p>Dropout is a technique used to mitigate overfitting by randomly deactivating a fraction of the input neurons.</p>
+ * Represents a Dropout layer, used to mitigate overfitting
+ * by randomly deactivating a fraction of the input neurons.
  */
 public class DropoutLayer extends Layer<Vector, Vector> {
 
     private final double dropout;
 
     /**
-     * Constructs an instance of a dropout layer.
+     * Constructs a dropout layer instance.
      *
      * @param dropout the dropout rate (0 < dropout < 1), specifying the
      *                proportion of neurons to deactivate during training
-     * @throws IllegalArgumentException if dropout is not in the range 0-1 (exclusive).
+     * @throws IllegalArgumentException if dropout is outside the range 0-1
      */
     public DropoutLayer(double dropout) {
         super(0, Activations.LINEAR);
@@ -47,7 +47,7 @@ public class DropoutLayer extends Layer<Vector, Vector> {
     /**
      * Gets the dropout rate.
      *
-     * @return the dropout rate.
+     * @return the dropout rate
      */
     public double getDropout() {
         return dropout;

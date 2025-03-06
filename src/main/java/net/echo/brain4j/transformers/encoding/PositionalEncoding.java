@@ -1,5 +1,7 @@
 package net.echo.brain4j.transformers.encoding;
 
+import net.echo.brain4j.utils.Vector;
+
 public class PositionalEncoding {
 
     private final int maxLength;
@@ -22,11 +24,11 @@ public class PositionalEncoding {
         }
     }
 
-    public double[] encode(double[] input, int position) {
-        double[] encoded = new double[input.length];
+    public Vector encode(Vector input, int position) {
+        Vector encoded = new Vector(input.size());
 
-        for (int i = 0; i < input.length; i++) {
-            encoded[i] = input[i] + encodings[position][i];
+        for (int i = 0; i < input.size(); i++) {
+            encoded.set(i, input.get(i) + encodings[position][i]);
         }
 
         return encoded;

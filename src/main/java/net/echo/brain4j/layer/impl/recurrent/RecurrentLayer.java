@@ -24,13 +24,14 @@ public class RecurrentLayer extends DenseLayer {
     private List<Vector> outputWeights;
 
     /**
-     * Constructs an instance of a recurrent layer.
+     * Constructs a recurrent layer instance.
      *
      * @param input the number of neurons in this layer
      * @param activation the activation function to be applied to the output of each neuron
      */
     public RecurrentLayer(int input, Activations activation) {
         super(input, activation);
+        throw new UnsupportedOperationException("Recurrent layers are experimental and not yet supported!");
     }
 
     @Override

@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Represents a convolutional layer used for feature extraction and image classification.
+ */
 public class ConvLayer extends Layer<Kernel, Kernel> {
 
     protected final List<Kernel> kernels = new ArrayList<>();
@@ -23,14 +26,41 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
     protected int padding;
     protected int stride;
 
+    /**
+     * Constructs a convolutional layer instance with the given parameters.
+     *
+     * @param filters the amount of filters, more filters means more features
+     * @param kernelWidth the width of each filter
+     * @param kernelHeight the height of each filter
+     * @param activation the activation function
+     */
     public ConvLayer(int filters, int kernelWidth, int kernelHeight, Activations activation) {
         this(filters, kernelWidth, kernelHeight, 1, 0, activation);
     }
 
+    /**
+     * Constructs a convolutional layer instance with the given parameters.
+     *
+     * @param filters the amount of filters, more filters means more features
+     * @param kernelWidth the width of each filter
+     * @param kernelHeight the height of each filter
+     * @param stride the stride to apply to each convolution
+     * @param activation the activation function
+     */
     public ConvLayer(int filters, int kernelWidth, int kernelHeight, int stride, Activations activation) {
         this(filters, kernelWidth, kernelHeight, stride, 0, activation);
     }
 
+    /**
+     * Constructs a convolutional layer instance with the given parameters.
+     *
+     * @param filters the amount of filters, more filters means more features
+     * @param kernelWidth the width of each filter
+     * @param kernelHeight the height of each filter
+     * @param stride the stride to apply to each convolution
+     * @param padding the padding to apply to each convolution
+     * @param activation the activation function
+     */
     public ConvLayer(int filters, int kernelWidth, int kernelHeight, int stride, int padding, Activations activation) {
         super(0, activation);
         this.filters = filters;

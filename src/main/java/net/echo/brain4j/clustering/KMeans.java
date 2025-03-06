@@ -7,13 +7,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An implementation of the K-Means clustering algorithm.
+ */
 public class KMeans {
 
     private final List<Cluster> clusters;
     private final int clustersAmount;
 
     /**
-     * Constructs a new KMeans object with a specified amount of clusters.
+     * Constructs a KMeans instance with a specified amount of clusters.
      *
      * @param clusters the amount of clusters
      */
@@ -101,6 +104,11 @@ public class KMeans {
         return clusterMap;
     }
 
+    /**
+     * Retrieves the cluster closest to the given data point.
+     * @param point the data point
+     * @return the closest cluster
+     */
     public Cluster getClosest(Vector point) {
         double minDistance = Double.MAX_VALUE;
         Cluster closestCluster = null;

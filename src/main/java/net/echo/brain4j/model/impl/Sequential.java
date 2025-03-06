@@ -29,6 +29,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static net.echo.brain4j.utils.MLUtils.waitAll;
 
+/**
+ * Implementation of a sequential neural network model.
+ * <p>
+ * This model processes an input {@link Vector} and produces an output {@link Vector}.
+ * It supports training using instances of {@link DataRow}.
+ * </p>
+ */
 public class Sequential extends Model<DataRow, Vector, Vector> {
 
     protected BackPropagation propagation;

@@ -15,7 +15,7 @@ public class DenseLayer extends Layer<Vector, Vector> {
     protected List<Vector> weights;
 
     /**
-     * Constructs an instance of a dense layer.
+     * Constructs a dense layer instance.
      *
      * @param input the number of neurons in this layer
      * @param activation the activation function to be applied to the output of each neuron

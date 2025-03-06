@@ -8,14 +8,24 @@ import net.echo.brain4j.utils.Vector;
 
 import java.util.List;
 
-public class LayerNorm extends Layer<Vector, Vector>{
+/**
+ * Represents a normalization layer, used to normalize the inputs and improve training.
+ */
+public class LayerNorm extends Layer<Vector, Vector> {
 
     private final double epsilon;
 
+    /**
+     * Constructs a layer normalization instance with a default epsilon.
+     */
     public LayerNorm() {
         this(1e-5);
     }
 
+    /**
+     * Constructs a layer normalization instance with an epsilon.
+     * @param epsilon the epsilon used to avoid division by zero
+     */
     public LayerNorm(double epsilon) {
         super(0, Activations.LINEAR);
         this.epsilon = epsilon;
@@ -41,6 +51,12 @@ public class LayerNorm extends Layer<Vector, Vector>{
         }
     }
 
+    /**
+     * Normalizes a vector with a mean of zero and variance of one.
+     *
+     * @param input the input vector to normalize
+     * @return the normalized output vector
+     */
     public Vector normalize(Vector input) {
         double mean = input.mean();
         double variance = input.variance(mean);

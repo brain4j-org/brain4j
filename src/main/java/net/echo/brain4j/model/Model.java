@@ -42,7 +42,13 @@ import java.util.Random;
 
 /**
  * Represents an abstract neural network model.
- * @see net.echo.brain4j.model.impl.Sequential for a sequential model implementation
+ *
+ * @param <R> the data example type for training
+ * @param <I> the input type of this model
+ * @param <O> the output type of this model
+ *
+ * @see net.echo.brain4j.model.impl.Sequential Sequential
+ * @see net.echo.brain4j.model.impl.Transformer Transformer
  */
 public abstract class Model<R, I, O> {
 
