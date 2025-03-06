@@ -1,7 +1,6 @@
 package net.echo.brain4j.model.impl;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -11,10 +10,8 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.utils.DataSet;
-import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 

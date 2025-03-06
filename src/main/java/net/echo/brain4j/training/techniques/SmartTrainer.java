@@ -1,7 +1,6 @@
 package net.echo.brain4j.training.techniques;
 
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.utils.DataSet;
 
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ public class SmartTrainer {
         this.running = false;
     }
 
-    public void start(Model model, DataSet<DataRow> dataSet, double lossThreshold, double lossTolerance) {
+    public <R> void start(Model<R, ?, ?> model, DataSet<R> dataSet, double lossThreshold, double lossTolerance) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
@@ -68,7 +67,7 @@ public class SmartTrainer {
         this.end = System.nanoTime();
     }
 
-    public void step(Model model, DataSet<DataRow> dataSet) {
+    public <R> void step(Model<R, ?, ?> model, DataSet<R> dataSet) {
         long start = System.nanoTime();
         this.listeners.forEach(listener -> listener.onEpochStarted(epoches, start));
 
@@ -78,7 +77,7 @@ public class SmartTrainer {
         this.listeners.forEach(listener -> listener.onEpochCompleted(epoches, took));
     }
 
-    public void startFor(Model model, DataSet<DataRow> dataSet, int epochesAmount, double lossTolerance) {
+    public <R> void startFor(Model<R, ?, ?> model, DataSet<R> dataSet, int epochesAmount, double lossTolerance) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;

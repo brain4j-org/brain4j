@@ -181,12 +181,18 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         for (int i = 1; i < layers.size(); i++) {
             Layer<?, ?> layer = layers.get(i);
 
-            if (!(layer instanceof DenseLayer)) continue;
+            if (!(layer instanceof DenseLayer)) {
+                lastLayer = null;
+                continue;
+            }
 
-            List<Neuron> neurons = layer.getNeurons();
-            Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), lastLayer.getTotalNeurons(), neurons.size());
+            if (lastLayer != null) {
+                Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(),
+                        lastLayer.getTotalNeurons(), layer.getTotalNeurons());
 
-            lastLayer.updateWeights(synapseMatrixLayer);
+                lastLayer.updateWeights(synapseMatrixLayer);
+            }
+
             lastLayer = layer;
         }
     }

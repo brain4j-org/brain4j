@@ -4,11 +4,11 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.utils.DataSet;
 
-public class TrainListener {
+public class TrainListener<R> {
 
-    protected Model model;
+    protected Model<?, ?, ?> model;
 
-    public void register(Model model) {
+    public void register(Model<?, ?, ?> model) {
         this.model = model;
     }
 
@@ -26,7 +26,7 @@ public class TrainListener {
     public void onEpochStarted(int epoch, long start) {
     }
 
-    public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {
+    public void onEvaluated(DataSet<R> dataSet, int epoch, double loss, long took) {
     }
 
     public void onLossIncreased(double loss, double previousLoss) {
