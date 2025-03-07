@@ -68,15 +68,17 @@ public class PoolingLayer extends Layer<Kernel, Kernel> {
     }
     @Override
     public void propagate(StatesCache cache, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
-        System.out.println("Layer id: " + id);
         Kernel output = cache.getFeatureMap(this);
         Kernel input = cache.getInput(this);
 
         Kernel deltaPooling = new Kernel(output.getWidth(), output.getHeight());
 
         if (nextLayer instanceof ConvLayer convLayer) {
-            System.out.println("Getting pooling from conv");
             deltaPooling = cache.getDelta(convLayer);
+
+            if (deltaPooling.getWidth() != output.getWidth() || deltaPooling.getHeight() != output.getHeight()) {
+                deltaPooling = upsampleDelta(deltaPooling, output.getWidth(), output.getHeight());
+            }
         } else if (nextLayer instanceof FlattenLayer flattenLayer) {
             int outW = output.getWidth();
             int outH = output.getHeight();
@@ -97,11 +99,11 @@ public class PoolingLayer extends Layer<Kernel, Kernel> {
 
         Kernel deltaUnpooled = new Kernel(input.getWidth(), input.getHeight());
 
-        System.out.println("OutX: " + output.getWidth());
-        System.out.println("OutY: " + output.getHeight());
-
-        System.out.println("DX: " + deltaPooling.getWidth());
-        System.out.println("DY: " + deltaPooling.getHeight());
+//        System.out.println("OutX: " + output.getWidth());
+//        System.out.println("OutY: " + output.getHeight());
+//
+//        System.out.println("DX: " + deltaPooling.getWidth());
+//        System.out.println("DY: " + deltaPooling.getHeight());
         for (int outY = 0; outY < output.getHeight(); outY++) {
             for (int outX = 0; outX < output.getWidth(); outX++) {
                 poolingType.getFunction().unpool(this, outX, outY, deltaPooling, deltaUnpooled, input);
@@ -111,6 +113,19 @@ public class PoolingLayer extends Layer<Kernel, Kernel> {
         cache.setDelta(this, deltaUnpooled);
     }
 
+    private Kernel upsampleDelta(Kernel delta, int targetWidth, int targetHeight) {
+        Kernel upsampled = new Kernel(targetWidth, targetHeight);
+        double scaleX = (double) delta.getWidth() / targetWidth;
+        double scaleY = (double) delta.getHeight() / targetHeight;
+        for (int y = 0; y < targetHeight; y++) {
+            for (int x = 0; x < targetWidth; x++) {
+                int srcX = Math.min((int) (x * scaleX), delta.getWidth() - 1);
+                int srcY = Math.min((int) (y * scaleY), delta.getHeight() - 1);
+                upsampled.setValue(x, y, delta.getValue(srcX, srcY));
+            }
+        }
+        return upsampled;
+    }
 
     public PoolingType getPoolingType() {
         return poolingType;

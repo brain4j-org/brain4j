@@ -53,8 +53,8 @@ public class Kernel {
     }
 
     public Kernel convolute(Kernel kernel, int stride) {
-        int outputWidth = width - kernel.getWidth() + 1;
-        int outputHeight = height - kernel.getHeight() + 1;
+        int outputWidth = (width - kernel.getWidth()) + 1;
+        int outputHeight = (height - kernel.getHeight()) + 1;
 
         if (outputWidth <= 0 || outputHeight <= 0) {
             throw new IllegalArgumentException("Kernel dimensions must be smaller than or equal to the input dimensions");
@@ -75,7 +75,7 @@ public class Kernel {
                     }
                 }
 
-                result.getValues()[i].set(j, sum);
+                result.getValues()[i / stride].set(j / stride, sum);
             }
         }
 

@@ -42,16 +42,19 @@ public class ConvExample {
         System.out.println(model.getStats());
         model.fit(dataSet);
 
-        for (int i = 0; i < 1; i++) {
-            long start = System.nanoTime();
-            model.fit(dataSet);
-            double took = (System.nanoTime() - start) / 1e6;
+        /*SmartTrainer trainer = new SmartTrainer(1, 1);
+        trainer.addListener(new TrainListener<DataRow>() {
+            @Override
+            public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {
+                System.out.println("Epoch #" + epoch + " Loss: " + loss);
+            }
+        });
+        trainer.start(model, dataSet, 0.01, 0.01);*/
 
-            System.out.println("Took " + took + " ms with " + dataSet.size() + " samples");
+        double loss = model.evaluate(dataSet);
+        System.out.println("Post training loss: " + loss);
 
-            double loss = model.evaluate(dataSet);
-            System.out.println("Loss: " + loss);
-        }
+        model.save("mnist-conv.json");
 
         int incorrect = 0;
 
@@ -79,13 +82,11 @@ public class ConvExample {
                 new InputLayer(28, 28),
 
                 // #1 convolutional block
-                new ConvLayer(20, 3, 3, Activations.MISH),
-                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                new ConvLayer(32, 3, 3, 2, Activations.MISH),
+                // new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // #2 convolutional block
-                new ConvLayer(16, 5, 5, Activations.MISH),
-
-                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                new ConvLayer(32, 5, 5, 2, Activations.MISH),
 
                 // Flattens the feature map to a 1D vector
                 new FlattenLayer(25), // You must find the right size by trial and error
@@ -95,7 +96,7 @@ public class ConvExample {
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        return model.compile(WeightInit.HE, LossFunctions.CROSS_ENTROPY, new AdamW(0.001), new StochasticUpdater());
+        return model.compile(WeightInit.HE, LossFunctions.CROSS_ENTROPY, new Adam(0.001), new StochasticUpdater());
     }
 
     private DataSet<DataRow> getDataSet() throws IOException {
@@ -103,10 +104,11 @@ public class ConvExample {
 
         List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
 
-        int max = 1, i = 0;
+        int max = 150 * 10, i = 0;
 
         for (String line : lines) {
             i++;
+
             String[] parts = line.split(",");
             double[] inputs = Arrays.stream(parts, 1, parts.length).mapToDouble(x -> Double.parseDouble(x) / 255).toArray();
 
@@ -117,9 +119,7 @@ public class ConvExample {
 
             set.getData().add(new DataRow(Vector.of(inputs), output));
 
-            if (i >= max) {
-                break;
-            }
+            if (i >= max) break;
         }
 
         return set;
