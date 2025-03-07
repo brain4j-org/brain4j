@@ -31,4 +31,25 @@ public class AveragePooling implements PoolingFunction {
 
         return sum / count;
     }
+
+    @Override
+    public void unpool(PoolingLayer layer, int outX, int outY, Kernel deltaPooling, Kernel deltaUnpooled, Kernel input) {
+        double deltaVal = deltaPooling.getValue(outX, outY);
+
+        int startX = outX * layer.getStride();
+        int startY = outY * layer.getStride();
+
+        int endX = Math.min(startX + layer.getKernelWidth(), input.getWidth());
+        int endY = Math.min(startY + layer.getKernelHeight(), input.getHeight());
+
+        int poolArea = (endX - startX) * (endY - startY);
+        double distributedDelta = deltaVal / poolArea;
+
+        for (int y = startY; y < endY; y++) {
+            for (int x = startX; x < endX; x++) {
+                double current = deltaUnpooled.getValue(x, y);
+                deltaUnpooled.setValue(x, y, current + distributedDelta);
+            }
+        }
+    }
 }

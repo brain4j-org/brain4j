@@ -42,7 +42,7 @@ public class ConvExample {
         System.out.println(model.getStats());
         model.fit(dataSet);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1; i++) {
             long start = System.nanoTime();
             model.fit(dataSet);
             double took = (System.nanoTime() - start) / 1e6;
@@ -79,15 +79,16 @@ public class ConvExample {
                 new InputLayer(28, 28),
 
                 // #1 convolutional block
-                new ConvLayer(32, 3, 3, Activations.MISH),
-                // new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                new ConvLayer(20, 3, 3, Activations.MISH),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // #2 convolutional block
                 new ConvLayer(16, 5, 5, Activations.MISH),
-                // new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2),
 
                 // Flattens the feature map to a 1D vector
-                new FlattenLayer(484), // You must find the right size by trial and error
+                new FlattenLayer(25), // You must find the right size by trial and error
 
                 // Classifiers
                 new DenseLayer(32, Activations.MISH),
@@ -102,7 +103,7 @@ public class ConvExample {
 
         List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
 
-        int max = 1500, i = 0;
+        int max = 1, i = 0;
 
         for (String line : lines) {
             i++;

@@ -30,4 +30,33 @@ public class MaxPooling implements PoolingFunction {
 
         return pooledValue;
     }
+
+    @Override
+    public void unpool(PoolingLayer layer, int outX, int outY, Kernel deltaPooling, Kernel deltaUnpooled, Kernel input) {
+        double deltaVal = deltaPooling.getValue(outX, outY);
+        double maxVal = Double.NEGATIVE_INFINITY;
+
+        int startX = outX * layer.getStride();
+        int startY = outY * layer.getStride();
+
+        int endX = Math.min(startX + layer.getKernelWidth(), input.getWidth());
+        int endY = Math.min(startY + layer.getKernelHeight(), input.getHeight());
+
+        int maxX = startX, maxY = startY;
+
+        for (int y = startY; y < endY; y++) {
+            for (int x = startX; x < endX; x++) {
+                double val = input.getValue(x, y);
+
+                if (val > maxVal) {
+                    maxVal = val;
+                    maxX = x;
+                    maxY = y;
+                }
+            }
+        }
+
+        double current = deltaUnpooled.getValue(maxX, maxY);
+        deltaUnpooled.setValue(maxX, maxY, current + deltaVal);
+    }
 }

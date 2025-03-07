@@ -1,7 +1,7 @@
 package net.echo.brain4j.structure.cache;
 
 import net.echo.brain4j.convolution.Kernel;
-import net.echo.brain4j.layer.impl.convolution.ConvLayer;
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 
 public class StatesCache {
@@ -15,32 +15,33 @@ public class StatesCache {
     public StatesCache() {
         this.valuesCache = new float[Parameters.TOTAL_NEURONS];
         this.deltasCache = new float[Parameters.TOTAL_NEURONS];
+
         this.inputMap = new Kernel[Parameters.TOTAL_CONV_LAYER];
         this.featureMaps = new Kernel[Parameters.TOTAL_CONV_LAYER];
         this.deltaMap = new Kernel[Parameters.TOTAL_CONV_LAYER];
     }
 
-    public void setInput(ConvLayer layer, Kernel input) {
+    public void setInput(Layer<Kernel, Kernel> layer, Kernel input) {
         inputMap[layer.getId()] = input;
     }
 
-    public Kernel getInput(ConvLayer layer) {
+    public Kernel getInput(Layer<Kernel, Kernel> layer) {
         return inputMap[layer.getId()];
     }
 
-    public void setFeatureMap(ConvLayer layer, Kernel output) {
+    public void setFeatureMap(Layer<Kernel, Kernel> layer, Kernel output) {
         featureMaps[layer.getId()] = output;
     }
 
-    public Kernel getFeatureMap(ConvLayer layer) {
+    public Kernel getFeatureMap(Layer<Kernel, Kernel> layer) {
         return featureMaps[layer.getId()];
     }
 
-    public Kernel getDelta(ConvLayer layer) {
+    public Kernel getDelta(Layer<Kernel, Kernel> layer) {
         return deltaMap[layer.getId()];
     }
 
-    public void setDelta(ConvLayer layer, Kernel delta) {
+    public void setDelta(Layer<Kernel, Kernel> layer, Kernel delta) {
         deltaMap[layer.getId()] = delta;
     }
 

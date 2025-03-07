@@ -4,13 +4,11 @@ import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import org.checkerframework.checker.units.qual.K;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -130,50 +128,87 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
     public void propagate(StatesCache cache, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
         Kernel featureMap = cache.getFeatureMap(this);
 
-        if (nextLayer instanceof FlattenLayer) {
-            List<Neuron> neurons = nextLayer.getNeurons();
-            Kernel deltaKernel = new Kernel(featureMap.getWidth(), featureMap.getHeight());
+        switch (nextLayer) {
+            case FlattenLayer flattenLayer -> {
+                List<Neuron> neurons = nextLayer.getNeurons();
+                Kernel deltaKernel = new Kernel(featureMap.getWidth(), featureMap.getHeight());
 
-            for (int h = 0; h < featureMap.getHeight(); h++) {
-                for (int w = 0; w < featureMap.getWidth(); w++) {
-                    int index = h * featureMap.getWidth() + w;
-                    double deltaNeuron = neurons.get(index).getDelta(cache);
+                for (int h = 0; h < featureMap.getHeight(); h++) {
+                    for (int w = 0; w < featureMap.getWidth(); w++) {
+                        int index = h * featureMap.getWidth() + w;
+                        double deltaNeuron = neurons.get(index).getDelta(cache);
 
-                    double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
-                    double localDelta = deltaNeuron * derivative;
+                        double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
+                        double localDelta = deltaNeuron * derivative;
 
-                    deltaKernel.setValue(w, h, localDelta);
-                }
-            }
-
-            updateParameters(cache, optimizer, deltaKernel);
-        } else if (nextLayer instanceof ConvLayer nextConvLayer) {
-            Kernel deltaNext = cache.getDelta(nextConvLayer);
-            Kernel deltaCurrent = new Kernel(featureMap.getWidth(), featureMap.getHeight());
-
-            for (Kernel nextKernel : nextConvLayer.getKernels()) {
-                Kernel rotatedKernel = nextKernel.rotate180();
-                Kernel contribution = deltaNext.convolute(rotatedKernel, 1);
-
-                if (contribution.getWidth() != deltaCurrent.getWidth() || contribution.getHeight() != deltaCurrent.getHeight()) {
-                    contribution = cropTo(contribution, deltaCurrent.getWidth(), deltaCurrent.getHeight());
+                        deltaKernel.setValue(w, h, localDelta);
+                    }
                 }
 
-                deltaCurrent.add(contribution);
+                updateParameters(cache, optimizer, deltaKernel);
             }
+            case ConvLayer nextConvLayer -> {
+                Kernel deltaNext = cache.getDelta(nextConvLayer);
+                Kernel deltaCurrent = new Kernel(featureMap.getWidth(), featureMap.getHeight());
 
-            for (int h = 0; h < deltaCurrent.getHeight(); h++) {
-                for (int w = 0; w < deltaCurrent.getWidth(); w++) {
-                    double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
-                    double updatedDelta = clipGradient(deltaCurrent.getValue(w, h) * derivative);
+                for (Kernel nextKernel : nextConvLayer.getKernels()) {
+                    Kernel rotatedKernel = nextKernel.rotate180();
+                    Kernel contribution = deltaNext.convolute(rotatedKernel, 1);
 
-                    deltaCurrent.setValue(w, h, updatedDelta);
+                    if (contribution.getWidth() != deltaCurrent.getWidth() || contribution.getHeight() != deltaCurrent.getHeight()) {
+                        contribution = cropTo(contribution, deltaCurrent.getWidth(), deltaCurrent.getHeight());
+                    }
+
+                    deltaCurrent.add(contribution);
                 }
-            }
 
-            updateParameters(cache, optimizer, deltaCurrent);
-        } else {
-            throw new UnsupportedOperationException("Propagation not support for " + nextLayer.getClass().getSimpleName());
+                for (int h = 0; h < deltaCurrent.getHeight(); h++) {
+                    for (int w = 0; w < deltaCurrent.getWidth(); w++) {
+                        double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
+                        double updatedDelta = clipGradient(deltaCurrent.getValue(w, h) * derivative);
+
+                        deltaCurrent.setValue(w, h, updatedDelta);
+                    }
+                }
+
+                updateParameters(cache, optimizer, deltaCurrent);
+            }
+            case PoolingLayer poolingLayer -> {
+                Kernel deltaPooling = cache.getDelta(poolingLayer);
+                Kernel deltaUnpooled = new Kernel(featureMap.getWidth(), featureMap.getHeight());
+
+                int poolWidth = poolingLayer.getKernelWidth();
+                int poolHeight = poolingLayer.getKernelHeight();
+                int poolStride = poolingLayer.getStride();
+
+                for (int ph = 0; ph < deltaPooling.getHeight(); ph++) {
+                    for (int pw = 0; pw < deltaPooling.getWidth(); pw++) {
+                        double deltaVal = deltaPooling.getValue(pw, ph);
+
+                        int startX = pw * poolStride;
+                        int startY = ph * poolStride;
+
+                        for (int y = startY; y < startY + poolHeight && y < featureMap.getHeight(); y++) {
+                            for (int x = startX; x < startX + poolWidth && x < featureMap.getWidth(); x++) {
+                                double current = deltaUnpooled.getValue(x, y);
+                                current += deltaVal / (poolWidth * poolHeight);
+                                deltaUnpooled.setValue(x, y, current);
+                            }
+                        }
+                    }
+                }
+
+                for (int h = 0; h < deltaUnpooled.getHeight(); h++) {
+                    for (int w = 0; w < deltaUnpooled.getWidth(); w++) {
+                        double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
+                        double updatedDelta = clipGradient(deltaUnpooled.getValue(w, h) * derivative);
+                        deltaUnpooled.setValue(w, h, updatedDelta);
+                    }
+                }
+
+                updateParameters(cache, optimizer, deltaUnpooled);
+            }
+            default -> throw new UnsupportedOperationException("Propagation not support for " + nextLayer.getClass().getSimpleName());
         }
     }
 
