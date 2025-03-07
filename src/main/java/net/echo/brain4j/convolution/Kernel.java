@@ -1,13 +1,12 @@
 package net.echo.brain4j.convolution;
 
 import net.echo.brain4j.activation.Activation;
+import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.Random;
 
 public class Kernel {
-
-    private static int ID_COUNTER = 0;
 
     private final Vector[] values;
     private final int width;
@@ -22,7 +21,7 @@ public class Kernel {
     }
 
     public Kernel(int id, int width, int height) {
-        this.id = ID_COUNTER++;
+        this.id = id;
         this.width = width;
         this.height = height;
         this.values = new Vector[height];
@@ -34,6 +33,10 @@ public class Kernel {
 
     public Kernel(int width, int height) {
         this(-1, width, height);
+    }
+
+    public static Kernel withId(int width, int height) {
+        return new Kernel(Parameters.TOTAL_KERNELS++, width, height);
     }
 
     public int getId() {
@@ -157,6 +160,14 @@ public class Kernel {
             Vector row = values[i];
 
             System.out.println(row.toString("%.3f"));
+        }
+    }
+
+    public void subtract(Kernel other) {
+        for (int i = 0; i < height; i++) {
+            Vector row = values[i];
+
+            row.subtract(other.getValues()[i]);
         }
     }
 }

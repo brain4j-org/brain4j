@@ -10,6 +10,7 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,31 +38,33 @@ public class BackPropagation {
         dataSet.partition(partitions);
     }
 
-    private Thread propagatePartition(List<DataRow> partition) {
-        return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
+    private void propagatePartition(List<DataRow> partition) {
+        List<Thread> threads = new ArrayList<>();
+
+        for (DataRow row : partition) {
+            Thread thread = Thread.startVirtualThread(() -> {
                 StatesCache cacheHolder = new StatesCache();
 
                 Vector output = model.predict(cacheHolder, row.inputs());
                 Vector target = row.outputs();
 
                 backpropagate(cacheHolder, target, output);
-            }
+            });
 
-            updater.postBatch(model, optimizer.getLearningRate());
-        });
+            threads.add(thread);
+        }
+
+        waitAll(threads);
+        updater.postBatch(model, optimizer.getLearningRate());
     }
 
     public void iteration(DataSet<DataRow> dataSet) {
         partitionIfRequired(dataSet);
 
-        List<Thread> threads = new ArrayList<>();
-
         for (List<DataRow> partition : dataSet.getPartitions()) {
-            threads.add(propagatePartition(partition));
+            propagatePartition(partition);
         }
 
-        waitAll(threads);
         updater.postFit(model, optimizer.getLearningRate());
     }
 

@@ -11,14 +11,9 @@ public class StochasticUpdater extends Updater {
 
     @Override
     public void postBatch(Sequential model, double learningRate) {
-        model.reloadMatrices();
-    }
-
-    @Override
-    public void postIteration(Sequential model, double learningRate) {
         for (int i = 0; i < synapses.length; i++) {
             Synapse synapse = synapses[i];
-            double gradient = gradients[i];
+            float gradient = gradients[i];
 
             // Do not touch this, multiplying by the learning rate is important either way.
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);
@@ -34,5 +29,6 @@ public class StochasticUpdater extends Updater {
         }
 
         this.gradients = new float[Parameters.TOTAL_SYNAPSES];
+        model.reloadMatrices();
     }
 }

@@ -43,7 +43,11 @@ public class ConvExample {
         model.fit(dataSet);
 
         for (int i = 0; i < 100; i++) {
+            long start = System.nanoTime();
             model.fit(dataSet);
+            double took = (System.nanoTime() - start) / 1e6;
+
+            System.out.println("Took " + took + " ms with " + dataSet.size() + " samples");
 
             double loss = model.evaluate(dataSet);
             System.out.println("Loss: " + loss);
@@ -98,7 +102,7 @@ public class ConvExample {
 
         List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
 
-        int max = 300, i = 0;
+        int max = 1500, i = 0;
 
         for (String line : lines) {
             i++;

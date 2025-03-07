@@ -10,6 +10,7 @@ import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import org.checkerframework.checker.units.qual.K;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +85,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
     @Override
     public void connectAll(Random generator, Layer<?, ?> nextLayer, double bound) {
         for (int i = 0; i < filters; i++) {
-            Kernel kernel = new Kernel(i, kernelWidth, kernelHeight);
+            Kernel kernel = Kernel.withId(kernelWidth, kernelHeight);
             kernel.setValues(generator, bound);
 
             this.kernels.add(kernel);
@@ -181,7 +182,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         Kernel input = cache.getInput(this);
 
         for (Kernel kernel : kernels) {
-            Kernel grad = input.convolute(deltaKernel, stride);
+            Kernel grad = input.convolute(deltaKernel, 1);
 
             for (int h = 0; h < kernel.getHeight(); h++) {
                 for (int w = 0; w < kernel.getWidth(); w++) {
@@ -189,7 +190,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
                     float gradient = clipGradient(grad.getValue(w, h));
 
                     float update = (float) optimizer.update(cache, kernel.getId(), gradient, weight);
-                    kernel.setValue(w, h, weight - update);
+                    kernel.setValue(w, h, weight - optimizer.getLearningRate() * update);
                 }
             }
         }

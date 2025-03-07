@@ -2,10 +2,14 @@ package net.echo.brain4j.training.updater;
 
 import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.UpdaterAdapter;
+import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.convolution.ConvLayer;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
+
+import java.util.List;
 
 @JsonAdapter(UpdaterAdapter.class)
 public abstract class Updater {

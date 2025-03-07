@@ -11,9 +11,9 @@ public class NormalUpdater extends Updater {
 
     @Override
     public void postFit(Sequential model, double learningRate) {
-        for (int i = 0; i < gradients.length; i++) {
+        for (int i = 0; i < synapses.length; i++) {
             Synapse synapse = synapses[i];
-            double gradient = gradients[i];
+            float gradient = gradients[i];
 
             // Do not touch this, multiplying by the learning rate is important either way.
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);
@@ -28,8 +28,7 @@ public class NormalUpdater extends Updater {
             }
         }
 
-        model.reloadMatrices();
-
         this.gradients = new float[Parameters.TOTAL_SYNAPSES];
+        model.reloadMatrices();
     }
 }
