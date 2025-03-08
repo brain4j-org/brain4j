@@ -1,6 +1,6 @@
 <h2 align="center">🧠 Brain4J</h2>
 
-<center>
+<div align="center">
     Powerful, lightweight, and easy-to-use machine learning framework written in Java.
     <br><br>
     <a href="https://github.com/xEcho1337/brain4j-examples">🚀 Examples</a>
@@ -10,10 +10,10 @@
     <a href="https://github.com/xEcho1337/brain4j/issues/new?template=Blank+issue">🛠️ Report an issue</a>
     ·
     <a href="https://github.com/xEcho1337/brain4j/wiki">⚙️ Wiki</a>
-</center>
+</div>
 <h3 align="center">❓ Contacts</h3>
-<center>
+<div align="center">
     Discord: @xecho1337
     ·
     Telegram: @xecho1338
-</center>
+</div>
