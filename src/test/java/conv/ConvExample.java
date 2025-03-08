@@ -1,20 +1,15 @@
 package conv;
 
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.convolution.Kernel;
-import net.echo.brain4j.convolution.pooling.PoolingType;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.convolution.ConvLayer;
 import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
 import net.echo.brain4j.layer.impl.convolution.InputLayer;
-import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.loss.LossFunctions;
-import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
@@ -40,19 +35,15 @@ public class ConvExample {
         DataSet<DataRow> dataSet = getDataSet();
 
         System.out.println(model.getStats());
-        model.fit(dataSet);
 
-        /*SmartTrainer trainer = new SmartTrainer(1, 1);
+        SmartTrainer trainer = new SmartTrainer(1, 1);
         trainer.addListener(new TrainListener<DataRow>() {
             @Override
             public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {
                 System.out.println("Epoch #" + epoch + " Loss: " + loss);
             }
         });
-        trainer.start(model, dataSet, 0.01, 0.01);*/
-
-        double loss = model.evaluate(dataSet);
-        System.out.println("Post training loss: " + loss);
+        trainer.startFor(model, dataSet, 100, 0.01);
 
         model.save("mnist-conv.json");
 
@@ -82,33 +73,28 @@ public class ConvExample {
                 new InputLayer(28, 28),
 
                 // #1 convolutional block
-                new ConvLayer(32, 3, 3, 2, Activations.MISH),
-                // new PoolingLayer(PoolingType.MAX, 2, 2, 2),
+                new ConvLayer(32, 3, 3, Activations.MISH),
 
                 // #2 convolutional block
-                new ConvLayer(32, 5, 5, 2, Activations.MISH),
+                new ConvLayer(32, 5, 5, Activations.MISH),
 
                 // Flattens the feature map to a 1D vector
-                new FlattenLayer(25), // You must find the right size by trial and error
+                new FlattenLayer(484), // You must find the right size by trial and error
 
                 // Classifiers
                 new DenseLayer(32, Activations.MISH),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        return model.compile(WeightInit.HE, LossFunctions.CROSS_ENTROPY, new Adam(0.001), new StochasticUpdater());
+        return model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.005));
     }
 
     private DataSet<DataRow> getDataSet() throws IOException {
-        DataSet<DataRow> set = new DataSet<>();
-
+        DataSet<DataRow> dataSet = new DataSet<>();
         List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
 
-        int max = 150 * 10, i = 0;
-
-        for (String line : lines) {
-            i++;
-
+        for (int j = 0; j < 150 * 2; j++) {
+            String line = lines.get(j);
             String[] parts = line.split(",");
             double[] inputs = Arrays.stream(parts, 1, parts.length).mapToDouble(x -> Double.parseDouble(x) / 255).toArray();
 
@@ -117,11 +103,9 @@ public class ConvExample {
             int value = Integer.parseInt(parts[0]);
             output.set(value, 1);
 
-            set.getData().add(new DataRow(Vector.of(inputs), output));
-
-            if (i >= max) break;
+            dataSet.getData().add(new DataRow(Vector.of(inputs), output));
         }
 
-        return set;
+        return dataSet;
     }
 }

@@ -10,13 +10,13 @@ import java.util.Random;
 
 public class AttentionHead {
 
-    private final int inputDimension;
-    private final int headDimension;
-    private final double temperature;
+    protected final int inputDimension;
+    protected final int headDimension;
+    protected final double temperature;
 
-    private final float[][] queryWeights;
-    private final float[][] keyWeights;
-    private final float[][] valueWeights;
+    protected final float[][] queryWeights;
+    protected final float[][] keyWeights;
+    protected final float[][] valueWeights;
 
     public AttentionHead(WeightInit weightInit, int inputDimension, int headDimension, double temperature) {
         this.inputDimension = inputDimension;
@@ -38,62 +38,6 @@ public class AttentionHead {
         total += valueWeights.length * valueWeights[0].length;
 
         return total;
-    }
-
-    private void initializeWeights(WeightInit weightInit) {
-        Random rng = new Random();
-        WeightInitializer initializer = weightInit.getInitializer();
-
-        double bound = initializer.getBound(inputDimension, headDimension);
-
-        for (int i = 0; i < inputDimension; i++) {
-            for (int j = 0; j < headDimension; j++) {
-                queryWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
-                keyWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
-                valueWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
-            }
-        }
-    }
-
-    private Vector multiply(Vector vector, float[][] weights) {
-        Vector result = new Vector(headDimension);
-
-        for (int j = 0; j < headDimension; j++) {
-            double sum = 0.0;
-
-            for (int i = 0; i < inputDimension; i++) {
-                sum += vector.get(i) * weights[i][j];
-            }
-
-            result.set(j, sum);
-        }
-        return result;
-    }
-
-    private Vector softmax(List<Double> scores) {
-        Vector result = new Vector(scores.size());
-        double maxScore = Double.NEGATIVE_INFINITY;
-
-        for (double score : scores) {
-            if (score > maxScore) {
-                maxScore = score;
-            }
-        }
-
-        double sum = 0.0;
-
-        for (int i = 0; i < scores.size(); i++) {
-            double expVal = Math.exp((scores.get(i) - maxScore) / temperature);
-            result.set(i, expVal);
-
-            sum += expVal;
-        }
-
-        for (int i = 0; i < result.size(); i++) {
-            result.set(i, result.get(i) / sum);
-        }
-
-        return result;
     }
 
     public List<Vector> attend(List<Vector> inputs) {
@@ -133,5 +77,61 @@ public class AttentionHead {
         }
 
         return output;
+    }
+
+    protected void initializeWeights(WeightInit weightInit) {
+        Random rng = new Random();
+        WeightInitializer initializer = weightInit.getInitializer();
+
+        double bound = initializer.getBound(inputDimension, headDimension);
+
+        for (int i = 0; i < inputDimension; i++) {
+            for (int j = 0; j < headDimension; j++) {
+                queryWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
+                keyWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
+                valueWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
+            }
+        }
+    }
+
+    protected Vector multiply(Vector vector, float[][] weights) {
+        Vector result = new Vector(headDimension);
+
+        for (int j = 0; j < headDimension; j++) {
+            double sum = 0.0;
+
+            for (int i = 0; i < inputDimension; i++) {
+                sum += vector.get(i) * weights[i][j];
+            }
+
+            result.set(j, sum);
+        }
+        return result;
+    }
+
+    protected Vector softmax(List<Double> scores) {
+        Vector result = new Vector(scores.size());
+        double maxScore = Double.NEGATIVE_INFINITY;
+
+        for (double score : scores) {
+            if (score > maxScore) {
+                maxScore = score;
+            }
+        }
+
+        double sum = 0.0;
+
+        for (int i = 0; i < scores.size(); i++) {
+            double expVal = Math.exp((scores.get(i) - maxScore) / temperature);
+            result.set(i, expVal);
+
+            sum += expVal;
+        }
+
+        for (int i = 0; i < result.size(); i++) {
+            result.set(i, result.get(i) / sum);
+        }
+
+        return result;
     }
 }

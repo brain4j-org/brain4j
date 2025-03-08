@@ -4,6 +4,9 @@ import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.utils.Vector;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +15,10 @@ public class TransformerExample {
     public static void main(String[] args) throws InterruptedException {
         TransformerExample example = new TransformerExample();
         example.start();
+    }
+
+    public List<String> getExamples() throws IOException {
+        return Files.readAllLines(Path.of("examples.txt"));
     }
 
     public void start() throws InterruptedException {
