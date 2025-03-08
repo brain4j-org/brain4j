@@ -52,9 +52,9 @@ public class Kernel {
         }
     }
 
-    public Kernel convolute(Kernel kernel, int stride) {
-        int outputWidth = (width - kernel.getWidth()) + 1;
-        int outputHeight = (height - kernel.getHeight()) + 1;
+    public Kernel convolve(Kernel kernel, int padding, int stride) {
+        int outputWidth = (width + 2 * padding - kernel.getWidth()) + 1;
+        int outputHeight = (height + 2 * padding - kernel.getHeight()) + 1;
 
         if (outputWidth <= 0 || outputHeight <= 0) {
             throw new IllegalArgumentException("Kernel dimensions must be smaller than or equal to the input dimensions");
@@ -62,15 +62,22 @@ public class Kernel {
 
         Kernel result = new Kernel(outputWidth, outputHeight);
 
-        for (int i = 0; i < outputHeight; i += stride) {
-            for (int j = 0; j < outputWidth; j += stride) {
+        for (int i = 0; i < outputHeight; i++) {
+            for (int j = 0; j < outputWidth; j++) {
                 double sum = 0.0;
 
                 for (int ki = 0; ki < kernel.getHeight(); ki++) {
                     for (int kj = 0; kj < kernel.getWidth(); kj++) {
-                        double image = values[i + ki].get(j + kj);
-                        double filter = kernel.getValues()[ki].get(kj);
+                        int y = i * stride - padding + ki;
+                        int x = j * stride - padding + kj;
 
+                        double image = 0.0;
+
+                        if (y >= 0 && y < height && x >= 0 && x < width) {
+                            image = values[y].get(x);
+                        }
+
+                        double filter = kernel.getValues()[ki].get(kj);
                         sum += image * filter;
                     }
                 }
@@ -78,7 +85,6 @@ public class Kernel {
                 result.getValues()[i / stride].set(j / stride, sum);
             }
         }
-
         return result;
     }
 

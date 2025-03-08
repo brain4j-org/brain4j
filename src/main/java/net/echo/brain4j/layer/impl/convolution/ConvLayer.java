@@ -111,7 +111,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         List<Kernel> featureMap = new ArrayList<>();
 
         for (Kernel kernel : kernels) {
-            Kernel result = input.convolute(kernel, stride);
+            Kernel result = input.convolve(kernel, padding, stride);
 
             featureMap.add(result);
         }
@@ -129,31 +129,13 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         Kernel featureMap = cache.getFeatureMap(this);
 
         switch (nextLayer) {
-            case FlattenLayer flattenLayer -> {
-                List<Neuron> neurons = nextLayer.getNeurons();
-                Kernel deltaKernel = new Kernel(featureMap.getWidth(), featureMap.getHeight());
-
-                for (int h = 0; h < featureMap.getHeight(); h++) {
-                    for (int w = 0; w < featureMap.getWidth(); w++) {
-                        int index = h * featureMap.getWidth() + w;
-                        double deltaNeuron = neurons.get(index).getDelta(cache);
-
-                        double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
-                        double localDelta = deltaNeuron * derivative;
-
-                        deltaKernel.setValue(w, h, localDelta);
-                    }
-                }
-
-                updateParameters(cache, optimizer, deltaKernel);
-            }
             case ConvLayer nextConvLayer -> {
                 Kernel deltaNext = cache.getDelta(nextConvLayer);
                 Kernel deltaCurrent = new Kernel(featureMap.getWidth(), featureMap.getHeight());
 
                 for (Kernel nextKernel : nextConvLayer.getKernels()) {
                     Kernel rotatedKernel = nextKernel.rotate180();
-                    Kernel contribution = deltaNext.convolute(rotatedKernel, 1);
+                    Kernel contribution = deltaNext.convolve(rotatedKernel, 0, 1);
 
                     if (contribution.getWidth() != deltaCurrent.getWidth() || contribution.getHeight() != deltaCurrent.getHeight()) {
                         contribution = cropTo(contribution, deltaCurrent.getWidth(), deltaCurrent.getHeight());
@@ -172,6 +154,24 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
                 }
 
                 updateParameters(cache, optimizer, deltaCurrent);
+            }
+            case FlattenLayer flattenLayer -> {
+                List<Neuron> neurons = nextLayer.getNeurons();
+                Kernel deltaKernel = new Kernel(featureMap.getWidth(), featureMap.getHeight());
+
+                for (int h = 0; h < featureMap.getHeight(); h++) {
+                    for (int w = 0; w < featureMap.getWidth(); w++) {
+                        int index = h * featureMap.getWidth() + w;
+                        double deltaNeuron = neurons.get(index).getDelta(cache);
+
+                        double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
+                        double localDelta = deltaNeuron * derivative;
+
+                        deltaKernel.setValue(w, h, localDelta);
+                    }
+                }
+
+                updateParameters(cache, optimizer, deltaKernel);
             }
             case PoolingLayer poolingLayer -> {
                 Kernel deltaPooling = cache.getDelta(poolingLayer);
@@ -202,6 +202,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
                     for (int w = 0; w < deltaUnpooled.getWidth(); w++) {
                         double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
                         double updatedDelta = clipGradient(deltaUnpooled.getValue(w, h) * derivative);
+
                         deltaUnpooled.setValue(w, h, updatedDelta);
                     }
                 }
@@ -217,7 +218,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         Kernel input = cache.getInput(this);
 
         for (Kernel kernel : kernels) {
-            Kernel grad = input.convolute(deltaKernel, 1);
+            Kernel grad = input.convolve(deltaKernel, 0, 1);
 
             for (int h = 0; h < kernel.getHeight(); h++) {
                 for (int w = 0; w < kernel.getWidth(); w++) {
@@ -242,7 +243,8 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
 
         for (int h = 0; h < targetHeight; h++) {
             for (int w = 0; w < targetWidth; w++) {
-                cropped.setValue(w, h, source.getValue(w / offsetW, h / offsetH));
+                float value = source.getValue(w / offsetW, h / offsetH);
+                cropped.setValue(w, h, value);
             }
         }
 
