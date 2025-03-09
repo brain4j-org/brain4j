@@ -21,6 +21,18 @@ public class MLUtils {
         return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
     }
 
+    public static String getHeader(String middleText) {
+        String base = "=";
+
+        int maxLength = 70;
+        int middleLength = middleText.length();
+
+        String repeated = base.repeat((maxLength - middleLength) / 2);
+        String result = repeated + middleText + repeated;
+
+        return (result.length() != maxLength ? result + "=" : result) + "\n";
+    }
+
     /**
      * Finds the index of the maximum value in an array.
      *

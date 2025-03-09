@@ -105,12 +105,10 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
         int classes = layers.getLast().getNeurons().size();
 
-        Map<Integer, Integer> correctlyClassified = new ConcurrentHashMap<>();
-        Map<Integer, Integer> incorrectlyClassified = new ConcurrentHashMap<>();
+        Map<Integer, Vector> classifications = new ConcurrentHashMap<>();
 
         for (int i = 0; i < classes; i++) {
-            correctlyClassified.put(i, 0);
-            incorrectlyClassified.put(i, 0);
+            classifications.put(i, new Vector(classes));
         }
 
         List<Thread> threads = new ArrayList<>();
@@ -120,14 +118,14 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         }
 
         for (List<DataRow> partition : dataSet.getPartitions()) {
-            threads.add(makeEvaluation(partition, correctlyClassified, incorrectlyClassified));
+            threads.add(makeEvaluation(partition, classifications));
         }
 
         waitAll(threads);
-        return new EvaluationResult(classes, correctlyClassified, incorrectlyClassified);
+        return new EvaluationResult(classes, classifications);
     }
 
-    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Integer> correctlyClassified, Map<Integer, Integer> incorrectlyClassified) {
+    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Vector> classifications) {
         return Thread.startVirtualThread(() -> {
             for (DataRow row : partition) {
                 Vector prediction = predict(row.inputs());
@@ -135,11 +133,8 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
                 int predIndex = MLUtils.indexOfMaxValue(prediction);
                 int targetIndex = MLUtils.indexOfMaxValue(row.outputs());
 
-                if (predIndex == targetIndex) {
-                    correctlyClassified.compute(targetIndex, (k, v) -> v == null ? 1 : v + 1);
-                } else {
-                    incorrectlyClassified.compute(targetIndex, (k, v) -> v == null ? 1 : v + 1);
-                }
+                Vector predictions = classifications.get(targetIndex);
+                predictions.set(predIndex, predictions.get(predIndex) + 1);
             }
         });
     }

@@ -1,41 +1,95 @@
 package net.echo.brain4j.training.evaluation;
 
+import net.echo.brain4j.utils.Vector;
+
 import java.util.Map;
 
-public record EvaluationResult(int classes, Map<Integer, Integer> correctlyClassified, Map<Integer, Integer> incorrectlyClassified) {
+import static net.echo.brain4j.utils.MLUtils.getHeader;
+
+public record EvaluationResult(int classes, Map<Integer, Vector> classifications) {
 
     public String confusionMatrix() {
         StringBuilder matrix = new StringBuilder();
-        String header = "======================================\n";
+        String divider = getHeader(" Evaluation Results ");
 
-        String pattern = "%-10s %-10s %-10s\n";
-        matrix.append(String.format(pattern, "Classes", "Correct", "Incorrect"));
-        matrix.append(header);
+        matrix.append(divider);
+        matrix.append("Out of ").append(classifications.size()).append(" classes\n");
+        matrix.append("-".repeat(divider.length() - 1)).append("\n");
 
         int totalCorrect = 0;
         int totalIncorrect = 0;
+        int[] truePositives = new int[classes];
+        int[] falsePositives = new int[classes];
+        int[] falseNegatives = new int[classes];
 
-        for (int i = 0; i < correctlyClassified.size(); i++) {
-            totalCorrect += correctlyClassified.get(i);
-            totalIncorrect += incorrectlyClassified.get(i);
+        for (int i = 0; i < classifications.size(); i++) {
+            Vector vector = classifications.get(i);
+
+            for (int j = 0; j < vector.size(); j++) {
+                int value = (int) vector.get(j);
+
+                if (i == j) {
+                    totalCorrect += value;
+                    truePositives[i] += value;
+                } else {
+                    totalIncorrect += value;
+                    falsePositives[j] += value;
+                    falseNegatives[i] += value;
+                }
+            }
         }
 
+        // Accuracy
+        double accuracy = (double) totalCorrect / (totalCorrect + totalIncorrect);
+
+        double precisionSum = 0, recallSum = 0;
         for (int i = 0; i < classes; i++) {
-            matrix.append(String.format(pattern, i, correctlyClassified.get(i), incorrectlyClassified.get(i)));
+            double precision = (truePositives[i] + falsePositives[i]) > 0 ?
+                    (double) truePositives[i] / (truePositives[i] + falsePositives[i]) : 0;
+
+            double recall = (truePositives[i] + falseNegatives[i]) > 0 ?
+                    (double) truePositives[i] / (truePositives[i] + falseNegatives[i]) : 0;
+
+            precisionSum += precision;
+            recallSum += recall;
         }
 
-        matrix.append(header);
-
-        double accuracy = totalCorrect / (double) (totalCorrect + totalIncorrect);
-        double precision = totalCorrect / (double) (totalCorrect + incorrectlyClassified.get(0));
-        double recall = totalCorrect / (double) (totalCorrect + correctlyClassified.get(0));
+        double precision = precisionSum / classes;
+        double recall = recallSum / classes;
+        double f1Score = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
 
         String secondary = "%-20s %-10s\n";
-        matrix.append(String.format(secondary, "Accuracy:", String.format("%.2f", accuracy * 100), ""));
-        matrix.append(String.format(secondary, "Precision:", String.format("%.2f", precision * 100), ""));
-        matrix.append(String.format(secondary, "Recall: ", String.format("%.2f", recall * 100), ""));
-        matrix.append(header);
+        matrix.append(String.format(secondary, "Accuracy:", String.format("%.4f", accuracy)));
+        matrix.append(String.format(secondary, "Precision:", String.format("%.4f", precision)));
+        matrix.append(String.format(secondary, "Recall:", String.format("%.4f", recall)));
+        matrix.append(String.format(secondary, "F1-score:", String.format("%.4f", f1Score)));
 
+        divider = getHeader(" Confusion Matrix ");
+        matrix.append(divider);
+        matrix.append("The first column is the actual class, the rows are the predicted classes.\n\n");
+        matrix.append("       ");
+
+        for (int i = 0; i < classes; i++) {
+            matrix.append(String.format("%4d", i)).append(" ");
+        }
+
+        matrix.append("\n  ");
+        matrix.append("-".repeat(classes * 6)).append("\n");
+
+        for (int i = 0; i < classes; i++) {
+            StringBuilder text = new StringBuilder();
+            Vector predictions = classifications.get(i);
+
+            for (int j = 0; j < predictions.size(); j++) {
+                text.append(String.format("%4d", (int) predictions.get(j))).append(" ");
+            }
+
+            matrix.append(String.format("%4d | ", i));
+            matrix.append(text).append("\n");
+        }
+
+        matrix.append("\n");
+        matrix.append("=".repeat(divider.length() - 1));
         return matrix.toString();
     }
 }

@@ -41,6 +41,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static net.echo.brain4j.utils.MLUtils.getHeader;
+
 /**
  * Represents an abstract neural network model.
  *
@@ -329,11 +331,13 @@ public abstract class Model<R, I, O> {
         StringBuilder stats = new StringBuilder();
         DecimalFormat format = new DecimalFormat("#,###");
 
-        String header = "=======================================================================\n";
+        String header = "======================================================================\n";
         String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
+        String divider = getHeader(" Architecture ");
 
+        stats.append(divider);
         stats.append(String.format(pattern, "Index", "Layer", "Neurons", "Weights", "Activation"));
-        stats.append(header);
+        stats.append("-".repeat(divider.length() - 1)).append("\n");
 
         int totalWeights = 0;
         int totalSynapses = 0;
@@ -354,6 +358,8 @@ public abstract class Model<R, I, O> {
 
             if (layer instanceof TransformerEncoder encoder) {
                 totalSynapses += encoder.getFeedForwardSize();
+            } else {
+                totalSynapses += weights;
             }
 
             totalWeights += weights;
@@ -368,7 +374,7 @@ public abstract class Model<R, I, O> {
         String formatted = MLUtils.formatNumber(params * 4); // 4 = float size in bytes
         String actual = MLUtils.formatNumber(totalSynapses * 32);
 
-        stats.append(header);
+        stats.append(getHeader(" Recap "));
         stats.append("Total parameters: ").append(parameters).append(" (").append(formatted).append(")\n");
         stats.append("Total synapses: ").append(synapses).append("\n");
         stats.append("Expected memory usage: ").append(actual).append("\n");
