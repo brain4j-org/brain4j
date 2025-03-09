@@ -30,7 +30,7 @@ public class MNISTClassifier {
         System.out.println(model.getStats());
         set.partition(32);
 
-        double loss = model.evaluate(set);
+        double loss = model.loss(set);
         System.out.println("Initial loss: " + loss);
 
         train(model, set);
@@ -63,7 +63,7 @@ public class MNISTClassifier {
             }
         }
 
-        printEvaluationResults(results, model.evaluate(set), correctlyClassified, incorrectlyClassified);
+        printEvaluationResults(results, model.loss(set), correctlyClassified, incorrectlyClassified);
     }
 
     private static Map<Integer, Vector> initializeResults(DataSet<DataRow> set) {
@@ -98,7 +98,7 @@ public class MNISTClassifier {
         trainer.addListener(new ExampleListener());
         trainer.startFor(model, set, 150, 0.01);
 
-        double loss = model.evaluate(set);
+        double loss = model.loss(set);
         model.save("mnist_" + loss + ".json");
 
         System.out.println("Took: " + trainer.getTook() / 1e6);

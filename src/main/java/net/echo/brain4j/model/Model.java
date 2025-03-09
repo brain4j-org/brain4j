@@ -117,7 +117,7 @@ public abstract class Model<R, I, O> {
      * @param set dataset for testing
      * @return the error of the model
      */
-    public abstract double evaluate(DataSet<R> set);
+    public abstract double loss(DataSet<R> set);
 
     /**
      * Trains the model for one epoch.
@@ -125,6 +125,18 @@ public abstract class Model<R, I, O> {
      * @param dataSet dataset for training
      */
     public abstract void fit(DataSet<R> dataSet);
+
+    /**
+     * Trains the model for the given number of epoches.
+     *
+     * @param dataSet dataset for training
+     * @param epoches number of epoches
+     */
+    public void fit(DataSet<R> dataSet, int epoches) {
+        for (int i = 0; i < epoches; i++) {
+            fit(dataSet);
+        }
+    }
 
     /**
      * Predicts the output for the given input.

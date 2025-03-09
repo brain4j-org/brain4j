@@ -17,7 +17,7 @@ public class MLUtils {
      * @param <T>     the type of the enum
      * @return the best matching enum constant
      */
-    public static <T extends Enum<T>> T findBestMatch(Vector outputs, Class<T> clazz) {
+    public static <T extends Enum<T>> T parse(Vector outputs, Class<T> clazz) {
         return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
     }
 

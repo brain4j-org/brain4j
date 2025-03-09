@@ -12,7 +12,6 @@ import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
@@ -98,7 +97,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     }
 
     @Override
-    public double evaluate(DataSet<DataRow> set) {
+    public double loss(DataSet<DataRow> set) {
         reloadMatrices();
 
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);

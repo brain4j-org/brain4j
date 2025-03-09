@@ -31,7 +31,7 @@ public class XorExample {
 
         double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.println("Loss: " + model.evaluate(dataSet));
+        System.out.println("Loss: " + model.loss(dataSet));
         System.out.println("Took: " + took + " ms");
 
         for (DataRow row : dataSet) {

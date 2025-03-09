@@ -2,6 +2,7 @@ package net.echo.brain4j.utils;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
@@ -66,6 +67,16 @@ public class Vector implements Cloneable, Iterable<Double> {
 
     public static Vector zeros(int size) {
         return new Vector(size).fill(0.0);
+    }
+
+    public static Vector parse(List<String> pixels) {
+        Vector vector = new Vector(pixels.size());
+
+        for (int i = 0; i < pixels.size(); i++) {
+            vector.set(i, Double.parseDouble(pixels.get(i)));
+        }
+
+        return vector;
     }
 
     public void set(int index, double value) {

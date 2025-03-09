@@ -42,7 +42,7 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
     }
 
     @Override
-    public double evaluate(DataSet<Object> set) {
+    public double loss(DataSet<Object> set) {
         return 0;
     }
 

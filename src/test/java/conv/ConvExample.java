@@ -7,20 +7,16 @@ import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
 import net.echo.brain4j.layer.impl.convolution.InputLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.techniques.SmartTrainer;
-import net.echo.brain4j.training.techniques.TrainListener;
-import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 
-import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 public class ConvExample {
@@ -36,15 +32,7 @@ public class ConvExample {
 
         System.out.println(model.getStats());
 
-        SmartTrainer trainer = new SmartTrainer(1, 1);
-        trainer.addListener(new TrainListener<DataRow>() {
-            @Override
-            public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {
-                System.out.println("Epoch #" + epoch + " Loss: " + loss);
-            }
-        });
-        trainer.startFor(model, dataSet, 100, 0.01);
-
+        model.fit(dataSet, 10);
         model.save("mnist-conv.json");
 
         int incorrect = 0;
@@ -91,20 +79,22 @@ public class ConvExample {
 
     private DataSet<DataRow> getDataSet() throws IOException {
         DataSet<DataRow> dataSet = new DataSet<>();
-        List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
 
-        for (int j = 0; j < 150 * 2; j++) {
-            String line = lines.get(j);
-            String[] parts = line.split(",");
-            double[] inputs = Arrays.stream(parts, 1, parts.length).mapToDouble(x -> Double.parseDouble(x) / 255).toArray();
+        FileReader reader = new FileReader("dataset.csv");
+        CSVParser parser = new CSVParser(reader, CSVFormat.EXCEL);
+
+        parser.forEach(record -> {
+            List<String> columns = record.toList();
+
+            String label = columns.getFirst();
+            List<String> pixels = columns.subList(1, columns.size());
 
             Vector output = new Vector(10);
+            output.set(Integer.parseInt(label), 1);
 
-            int value = Integer.parseInt(parts[0]);
-            output.set(value, 1);
-
-            dataSet.getData().add(new DataRow(Vector.of(inputs), output));
-        }
+            Vector input = Vector.parse(pixels).divide(255);
+            dataSet.add(new DataRow(input, output));
+        });
 
         return dataSet;
     }

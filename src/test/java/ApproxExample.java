@@ -134,7 +134,7 @@ public class ApproxExample {
                     updateGraph(x, trueOutput, predictedOutput);
                 }
 
-                double error = model.evaluate(dataSet);
+                double error = model.loss(dataSet);
                 errorLabel.setText("Error: " + String.format("%.4f", error) + " Took: " + String.format("%.2f", took) + " ms Epoch: " + i);
                 System.out.print("\rEpoch #" + j + " Error: " + error + " Took: " + took + " ms");
             }

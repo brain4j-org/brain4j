@@ -22,7 +22,7 @@ public class RNNExample {
             model.fit(dataSet);
 
             if (i % 1000 == 0) {
-                double loss = model.evaluate(dataSet);
+                double loss = model.loss(dataSet);
 
                 System.out.println(i + ". Loss: " + loss);
             }

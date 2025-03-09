@@ -48,7 +48,7 @@ public class SmartTrainer {
 
             if (epoches % evaluateEvery == 0) {
                 long start = System.nanoTime();
-                this.loss = model.evaluate(dataSet);
+                this.loss = model.loss(dataSet);
                 long took = System.nanoTime() - start;
 
                 this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss, took));
@@ -91,7 +91,7 @@ public class SmartTrainer {
 
             if (epoches % evaluateEvery == 0) {
                 long start = System.nanoTime();
-                this.loss = model.evaluate(dataSet);
+                this.loss = model.loss(dataSet);
                 long took = System.nanoTime() - start;
 
                 this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss, took));
