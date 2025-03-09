@@ -23,22 +23,15 @@ public class XorExample {
         System.out.println(model.getStats());
 
         long start = System.nanoTime();
-
-        // Fit the model for 1000 epoches
-        for (int i = 0; i < 100; i++) {
-            model.fit(dataSet);
-        }
-
+        model.fit(dataSet, 1000);
         double took = (System.nanoTime() - start) / 1e6;
 
         System.out.println("Loss: " + model.loss(dataSet));
         System.out.println("Took: " + took + " ms");
 
-        for (DataRow row : dataSet) {
-            Vector prediction = model.predict(row.inputs());
+        var result = model.evaluate(dataSet);
 
-            System.out.println("Expected: " + row.outputs() + " -> Predicted: " + prediction.toString("%.3f"));
-        }
+        System.out.println(result.confusionMatrix());
     }
 
     private Sequential getModel() {

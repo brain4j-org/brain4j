@@ -13,11 +13,11 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
         String divider = getHeader(" Evaluation Results ");
 
         matrix.append(divider);
-        matrix.append("Out of ").append(classifications.size()).append(" classes\n");
-        matrix.append("-".repeat(divider.length() - 1)).append("\n");
+        matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
 
         int totalCorrect = 0;
         int totalIncorrect = 0;
+
         int[] truePositives = new int[classes];
         int[] falsePositives = new int[classes];
         int[] falseNegatives = new int[classes];
@@ -74,7 +74,7 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
         }
 
         matrix.append("\n  ");
-        matrix.append("-".repeat(classes * 6)).append("\n");
+        matrix.append("-".repeat(5 + classes * 5)).append("\n");
 
         for (int i = 0; i < classes; i++) {
             StringBuilder text = new StringBuilder();
