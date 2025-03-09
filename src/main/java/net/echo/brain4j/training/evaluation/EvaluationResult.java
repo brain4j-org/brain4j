@@ -74,7 +74,7 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
         }
 
         matrix.append("\n  ");
-        matrix.append("-".repeat(classes * 6)).append("\n");
+        matrix.append("-".repeat(5 + classes * 5)).append("\n");
 
         for (int i = 0; i < classes; i++) {
             StringBuilder text = new StringBuilder();

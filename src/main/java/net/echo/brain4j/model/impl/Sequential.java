@@ -103,7 +103,12 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
     @Override
     public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
-        int classes = layers.getLast().getNeurons().size();
+        int classes = dataSet.getData().getFirst().outputs().size();
+
+        // Binary classification
+        if (classes == 1) {
+            classes = 2;
+        }
 
         Map<Integer, Vector> classifications = new ConcurrentHashMap<>();
 
@@ -132,6 +137,11 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
                 int predIndex = MLUtils.indexOfMaxValue(prediction);
                 int targetIndex = MLUtils.indexOfMaxValue(row.outputs());
+
+                if (row.outputs().size() == 1) {
+                    predIndex = prediction.get(0) > 0.5 ? 1 : 0;
+                    targetIndex = (int) row.outputs().get(0);
+                }
 
                 Vector predictions = classifications.get(targetIndex);
                 predictions.set(predIndex, predictions.get(predIndex) + 1);
