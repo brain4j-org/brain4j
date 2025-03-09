@@ -18,6 +18,7 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
@@ -114,10 +115,10 @@ public abstract class Model<R, I, O> {
     /**
      * Evaluates the model on the given dataset.
      *
-     * @param set dataset for testing
+     * @param dataSet dataset for testing
      * @return the error of the model
      */
-    public abstract double loss(DataSet<R> set);
+    public abstract double loss(DataSet<R> dataSet);
 
     /**
      * Trains the model for one epoch.
@@ -145,6 +146,13 @@ public abstract class Model<R, I, O> {
      * @return predicted outputs as a vector
      */
     public abstract O predict(I input);
+
+    /**
+     * Evaluates the model performance on the given dataset.
+     * @param dataSet dataset to evaluate
+     * @return an evaluation result
+     */
+    public abstract EvaluationResult evaluate(DataSet<R> dataSet);
 
     /**
      * Predicts output for given input.

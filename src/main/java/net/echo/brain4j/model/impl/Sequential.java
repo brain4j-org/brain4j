@@ -16,14 +16,19 @@ import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
+import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static net.echo.brain4j.utils.MLUtils.waitAll;
@@ -97,18 +102,61 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     }
 
     @Override
-    public double loss(DataSet<DataRow> set) {
+    public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
+        int classes = layers.getLast().getNeurons().size();
+
+        Map<Integer, Integer> correctlyClassified = new ConcurrentHashMap<>();
+        Map<Integer, Integer> incorrectlyClassified = new ConcurrentHashMap<>();
+
+        for (int i = 0; i < classes; i++) {
+            correctlyClassified.put(i, 0);
+            incorrectlyClassified.put(i, 0);
+        }
+
+        List<Thread> threads = new ArrayList<>();
+
+        if (!dataSet.isPartitioned()) {
+            dataSet.partition(Math.min(Runtime.getRuntime().availableProcessors(), dataSet.getData().size()));
+        }
+
+        for (List<DataRow> partition : dataSet.getPartitions()) {
+            threads.add(makeEvaluation(partition, correctlyClassified, incorrectlyClassified));
+        }
+
+        waitAll(threads);
+        return new EvaluationResult(classes, correctlyClassified, incorrectlyClassified);
+    }
+
+    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Integer> correctlyClassified, Map<Integer, Integer> incorrectlyClassified) {
+        return Thread.startVirtualThread(() -> {
+            for (DataRow row : partition) {
+                Vector prediction = predict(row.inputs());
+
+                int predIndex = MLUtils.indexOfMaxValue(prediction);
+                int targetIndex = MLUtils.indexOfMaxValue(row.outputs());
+
+                if (predIndex == targetIndex) {
+                    correctlyClassified.compute(targetIndex, (k, v) -> v == null ? 1 : v + 1);
+                } else {
+                    incorrectlyClassified.compute(targetIndex, (k, v) -> v == null ? 1 : v + 1);
+                }
+            }
+        });
+    }
+
+    @Override
+    public double loss(DataSet<DataRow> dataSet) {
         reloadMatrices();
 
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
 
-        for (List<DataRow> partition : set.getPartitions()) {
+        for (List<DataRow> partition : dataSet.getPartitions()) {
             threads.add(predictPartition(partition, totalError));
         }
 
         waitAll(threads);
-        return totalError.get() / set.size();
+        return totalError.get() / dataSet.size();
     }
 
     @Override

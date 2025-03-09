@@ -8,6 +8,7 @@ import net.echo.brain4j.layer.impl.convolution.InputLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
@@ -17,6 +18,7 @@ import org.apache.commons.csv.CSVParser;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 public class ConvExample {
@@ -32,27 +34,12 @@ public class ConvExample {
 
         System.out.println(model.getStats());
 
-        model.fit(dataSet, 10);
-        model.save("mnist-conv.json");
+        // model.fit(dataSet, 10);
+        // model.save("mnist-conv.json");
 
-        int incorrect = 0;
+        EvaluationResult result = model.evaluate(dataSet);
 
-        for (DataRow row : dataSet) {
-            Vector input = row.inputs();
-            Vector output = row.outputs();
-            Vector prediction = model.predict(input);
-
-            int expected = MLUtils.indexOfMaxValue(output) + 1;
-            int predicted = MLUtils.indexOfMaxValue(prediction) + 1;
-
-            if (expected != predicted) {
-                System.out.println("Expected: " + expected + ", Prediction: " + predicted);
-                incorrect++;
-            }
-        }
-
-        int correct = dataSet.size() - incorrect;
-        System.out.println("Correct: " + correct + ", Incorrect: " + incorrect);
+        System.out.println(result.confusionMatrix());
     }
 
     private Sequential getModel() {

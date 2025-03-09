@@ -5,6 +5,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
@@ -37,12 +38,17 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
     }
 
     @Override
+    public EvaluationResult evaluate(DataSet<Object> dataSet) {
+        return null;
+    }
+
+    @Override
     public void connect(WeightInit weightInit, boolean update) {
         super.connect(weightInit, update);
     }
 
     @Override
-    public double loss(DataSet<Object> set) {
+    public double loss(DataSet<Object> dataSet) {
         return 0;
     }
 
