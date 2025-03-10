@@ -58,7 +58,7 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
     }
 
     @Override
-    public List<Vector> predict(StatesCache cache, List<Vector> input) {
+    public List<Vector> predict(StatesCache cache, List<Vector> input, boolean training) {
         List<Vector> result = new ArrayList<>(input);
 
         for (Layer<?, ?> layer : layers) {
@@ -73,10 +73,5 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
     @Override
     public void reloadWeights() {
 
-    }
-
-    @Override
-    public List<Vector> predict(List<Vector> input) {
-        return predict(null, input);
     }
 }

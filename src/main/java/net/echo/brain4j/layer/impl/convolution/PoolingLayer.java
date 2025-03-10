@@ -68,7 +68,7 @@ public class PoolingLayer extends Layer<Kernel, Kernel> {
     }
 
     @Override
-    public void propagate(StatesCache cache, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
+    public void propagate(StatesCache cache, Layer<?, ?> previous) {
         Kernel output = cache.getFeatureMap(this);
         Kernel input = cache.getInput(this);
 
