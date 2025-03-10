@@ -14,6 +14,7 @@ import java.util.List;
 @JsonAdapter(UpdaterAdapter.class)
 public abstract class Updater {
 
+    protected Kernel[] kernels;
     protected Synapse[] synapses;
     protected float[] gradients;
 
@@ -22,12 +23,21 @@ public abstract class Updater {
     }
 
     public void postInitialize(Sequential model) {
+        this.kernels = new Kernel[Parameters.TOTAL_KERNELS];
         this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
         this.gradients = new float[Parameters.TOTAL_SYNAPSES];
 
         for (Layer<?, ?> layer : model.getLayers()) {
             for (Synapse synapse : layer.getSynapses()) {
                 synapses[synapse.getSynapseId()] = synapse;
+            }
+
+            if (layer instanceof ConvLayer convLayer) {
+                List<Kernel> filters = convLayer.getKernels();
+
+                for (Kernel filter : filters) {
+                    kernels[filter.getId()] = filter;
+                }
             }
         }
     }

@@ -9,15 +9,21 @@ import java.util.Random;
 public class Kernel {
 
     private final Vector[] values;
+    private final Vector[] updates;
     private final int width;
     private final int height;
     private final int id;
 
     public Kernel(Vector... values) {
         this.id = -1;
+        this.width = values[0].size();
+        this.height = values.length;
         this.values = values;
-        this.width = values.length;
-        this.height = values[0].size();
+        this.updates = new Vector[height];
+
+        for (int i = 0; i < height; i++) {
+            updates[i] = new Vector(width);
+        }
     }
 
     public Kernel(int id, int width, int height) {
@@ -25,9 +31,14 @@ public class Kernel {
         this.width = width;
         this.height = height;
         this.values = new Vector[height];
+        this.updates = new Vector[height];
 
         for (int i = 0; i < height; i++) {
             values[i] = new Vector(width);
+        }
+
+        for (int i = 0; i < height; i++) {
+            updates[i] = new Vector(width);
         }
     }
 
@@ -118,6 +129,10 @@ public class Kernel {
         values[height].set(width, value);
     }
 
+    public Vector[] getUpdates() {
+        return updates;
+    }
+
     public Vector[] getValues() {
         return values;
     }
@@ -174,6 +189,16 @@ public class Kernel {
             Vector row = values[i];
 
             row.subtract(other.getValues()[i]);
+        }
+    }
+
+    public void update(int w, int h, double gradient) {
+        updates[h].set(w, gradient);
+    }
+
+    public void resetUpdates() {
+        for (int i = 0; i < updates.length; i++) {
+            updates[i] = new Vector(width);
         }
     }
 }

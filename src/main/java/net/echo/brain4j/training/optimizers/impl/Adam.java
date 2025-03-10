@@ -36,8 +36,8 @@ public class Adam extends Optimizer {
     }
 
     public void postInitialize(Sequential model) {
-        this.firstMomentum = new float[Parameters.TOTAL_SYNAPSES];
-        this.secondMomentum = new float[Parameters.TOTAL_SYNAPSES];
+        this.firstMomentum = new float[Parameters.TOTAL_SYNAPSES + Parameters.TOTAL_KERNELS];
+        this.secondMomentum = new float[Parameters.TOTAL_SYNAPSES + Parameters.TOTAL_KERNELS];
     }
 
     @Override

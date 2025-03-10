@@ -67,7 +67,7 @@ public class TransformerDecoder extends Layer<List<Vector>, List<Vector>> {
     }
 
     @Override
-    public void propagate(StatesCache cache, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
+    public void propagate(StatesCache cache, Layer<?, ?> previous) {
 //        feedForward.propagate(cache, this, updater, optimizer);
 //        maskedAttention.propagate(cache, this, updater, optimizer);
     }

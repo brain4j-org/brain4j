@@ -6,9 +6,11 @@ import net.echo.brain4j.utils.DataSet;
 
 public class TrainListener<R> {
 
+    protected SmartTrainer<R> trainer;
     protected Model<?, ?, ?> model;
 
-    public void register(Model<?, ?, ?> model) {
+    public void register(SmartTrainer<R> trainer, Model<?, ?, ?> model) {
+        this.trainer = trainer;
         this.model = model;
     }
 

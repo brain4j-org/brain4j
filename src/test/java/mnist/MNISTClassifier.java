@@ -38,7 +38,7 @@ public class MNISTClassifier {
     }
 
     public static void evaluateModel(Sequential model) {
-        model.reloadMatrices();
+        model.reloadWeights();
 
         DataSet<DataRow> set = getData();
         Map<Integer, Vector> results = initializeResults(set);

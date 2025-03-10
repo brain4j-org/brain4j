@@ -19,13 +19,11 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,9 +79,28 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         });
     }
 
+    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Vector> classifications) {
+        return Thread.startVirtualThread(() -> {
+            for (DataRow row : partition) {
+                Vector prediction = predict(row.inputs());
+
+                int predIndex = MLUtils.indexOfMaxValue(prediction);
+                int targetIndex = MLUtils.indexOfMaxValue(row.outputs());
+
+                if (row.outputs().size() == 1) {
+                    predIndex = prediction.get(0) > 0.5 ? 1 : 0;
+                    targetIndex = (int) row.outputs().get(0);
+                }
+
+                Vector predictions = classifications.get(targetIndex);
+                predictions.set(predIndex, predictions.get(predIndex) + 1);
+            }
+        });
+    }
+
     @Override
     public Sequential compile(LossFunctions function, Optimizer optimizer) {
-        return this.compile(WeightInit.UNIFORM_XAVIER, function, optimizer, new StochasticUpdater());
+        return (Sequential) super.compile(function, optimizer);
     }
 
     @Override
@@ -97,7 +114,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         this.optimizer.postInitialize(this);
         this.updater.postInitialize(this);
 
-        reloadMatrices();
+        reloadWeights();
         return this;
     }
 
@@ -130,28 +147,9 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         return new EvaluationResult(classes, classifications);
     }
 
-    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Vector> classifications) {
-        return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
-                Vector prediction = predict(row.inputs());
-
-                int predIndex = MLUtils.indexOfMaxValue(prediction);
-                int targetIndex = MLUtils.indexOfMaxValue(row.outputs());
-
-                if (row.outputs().size() == 1) {
-                    predIndex = prediction.get(0) > 0.5 ? 1 : 0;
-                    targetIndex = (int) row.outputs().get(0);
-                }
-
-                Vector predictions = classifications.get(targetIndex);
-                predictions.set(predIndex, predictions.get(predIndex) + 1);
-            }
-        });
-    }
-
     @Override
     public double loss(DataSet<DataRow> dataSet) {
-        reloadMatrices();
+        reloadWeights();
 
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
@@ -171,11 +169,11 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
     @Override
     public Vector predict(Vector input) {
-        return predict(new StatesCache(), input);
+        return predict(new StatesCache(), input, false);
     }
 
     @Override
-    public Vector predict(StatesCache cache, Vector input) {
+    public Vector predict(StatesCache cache, Vector input, boolean training) {
         Layer<?, ?> firstLayer = layers.getFirst();
 
         Preconditions.checkState(input.size() == firstLayer.getTotalNeurons(), "Input dimension does not " +
@@ -195,7 +193,10 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         for (int l = 1; l < layers.size(); l++) {
             Layer<?, ?> layer = layers.get(l);
 
-            if (layer instanceof DropoutLayer) continue;
+            if (training && layer instanceof DropoutLayer) {
+                layer.forward(cache, lastLayer, null);
+                continue;
+            }
 
             if (layer instanceof ConvLayer convLayer) {
                 convInput = convLayer.forward(cache, lastLayer, convInput);
@@ -227,7 +228,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     }
 
     @Override
-    public void reloadMatrices() {
+    public void reloadWeights() {
         Layer<?, ?> lastLayer = layers.getFirst();
 
         for (int i = 1; i < layers.size(); i++) {
@@ -239,9 +240,10 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
             }
 
             if (lastLayer != null) {
-                Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(),
-                        lastLayer.getTotalNeurons(), layer.getTotalNeurons());
+                int input = lastLayer.getTotalNeurons();
+                int output = layer.getTotalNeurons();
 
+                Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), input, output);
                 lastLayer.updateWeights(synapseMatrixLayer);
             }
 

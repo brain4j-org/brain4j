@@ -45,7 +45,7 @@ public class BackPropagation {
             Thread thread = Thread.startVirtualThread(() -> {
                 StatesCache cacheHolder = new StatesCache();
 
-                Vector output = model.predict(cacheHolder, row.inputs());
+                Vector output = model.predict(cacheHolder, row.inputs(), true);
                 Vector target = row.outputs();
 
                 backpropagate(cacheHolder, target, output);
@@ -79,7 +79,7 @@ public class BackPropagation {
 
             if (!layer.canPropagate()) continue;
 
-            layer.propagate(cacheHolder, previous, updater, optimizer);
+            layer.propagate(cacheHolder, previous);
             previous = layer;
         }
 

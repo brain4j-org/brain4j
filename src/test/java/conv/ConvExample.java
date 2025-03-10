@@ -10,16 +10,17 @@ import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.techniques.EpochListener;
+import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.utils.DataSet;
-import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.Vector;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConvExample {
 
@@ -34,12 +35,14 @@ public class ConvExample {
 
         System.out.println(model.getStats());
 
-        // model.fit(dataSet, 10);
-        // model.save("mnist-conv.json");
+        SmartTrainer<DataRow> trainer = new SmartTrainer(1, 1);
+        trainer.addListener(new EpochListener<>());
+        trainer.startFor(model, dataSet, 100, 0.000001);
 
         EvaluationResult result = model.evaluate(dataSet);
-
         System.out.println(result.confusionMatrix());
+
+        model.save("mnist-conv.json");
     }
 
     private Sequential getModel() {
@@ -53,15 +56,18 @@ public class ConvExample {
                 // #2 convolutional block
                 new ConvLayer(32, 5, 5, Activations.MISH),
 
+                // #3 convolutional block
+                new ConvLayer(32, 7, 7, Activations.MISH),
+
                 // Flattens the feature map to a 1D vector
-                new FlattenLayer(484), // You must find the right size by trial and error
+                new FlattenLayer(16 * 16), // You must find the right size by trial and error
 
                 // Classifiers
                 new DenseLayer(32, Activations.MISH),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        return model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.005));
+        return model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.01));
     }
 
     private DataSet<DataRow> getDataSet() throws IOException {
@@ -70,7 +76,11 @@ public class ConvExample {
         FileReader reader = new FileReader("dataset.csv");
         CSVParser parser = new CSVParser(reader, CSVFormat.EXCEL);
 
+        AtomicInteger i = new AtomicInteger();
+
         parser.forEach(record -> {
+            if (i.get() > 150 * 2) return;
+
             List<String> columns = record.toList();
 
             String label = columns.getFirst();
@@ -81,6 +91,8 @@ public class ConvExample {
 
             Vector input = Vector.parse(pixels).divide(255);
             dataSet.add(new DataRow(input, output));
+
+            i.getAndIncrement();
         });
 
         return dataSet;

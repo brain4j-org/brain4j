@@ -6,9 +6,9 @@ import net.echo.brain4j.utils.DataSet;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SmartTrainer {
+public class SmartTrainer<R> {
 
-    private final List<TrainListener> listeners;
+    private final List<TrainListener<R>> listeners;
     private final double learningRateDecay;
     private final int evaluateEvery;
 
@@ -26,7 +26,7 @@ public class SmartTrainer {
         this.evaluateEvery = evaluateEvery;
     }
 
-    public void addListener(TrainListener listener) {
+    public void addListener(TrainListener<R> listener) {
         listeners.add(listener);
     }
 
@@ -34,12 +34,12 @@ public class SmartTrainer {
         this.running = false;
     }
 
-    public <R> void start(Model<R, ?, ?> model, DataSet<R> dataSet, double lossThreshold, double lossTolerance) {
+    public void start(Model<R, ?, ?> model, DataSet<R> dataSet, double lossThreshold, double lossTolerance) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
 
-        this.listeners.forEach(listener -> listener.register(model));
+        this.listeners.forEach(listener -> listener.register(this, model));
 
         while (running && loss > lossThreshold) {
             step(model, dataSet);
@@ -67,7 +67,7 @@ public class SmartTrainer {
         this.end = System.nanoTime();
     }
 
-    public <R> void step(Model<R, ?, ?> model, DataSet<R> dataSet) {
+    public void step(Model<R, ?, ?> model, DataSet<R> dataSet) {
         long start = System.nanoTime();
         this.listeners.forEach(listener -> listener.onEpochStarted(epoches, start));
 
@@ -77,14 +77,14 @@ public class SmartTrainer {
         this.listeners.forEach(listener -> listener.onEpochCompleted(epoches, took));
     }
 
-    public <R> void startFor(Model<R, ?, ?> model, DataSet<R> dataSet, int epochesAmount, double lossTolerance) {
+    public void startFor(Model<R, ?, ?> model, DataSet<R> dataSet, int epochesAmount, double lossTolerance) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
 
-        this.listeners.forEach(listener -> listener.register(model));
+        this.listeners.forEach(listener -> listener.register(this, model));
 
-        for (int i = 0; i < epochesAmount; i++) {
+        for (int i = 0; i < epochesAmount && running; i++) {
             step(model, dataSet);
 
             this.epoches++;
@@ -134,7 +134,7 @@ public class SmartTrainer {
         return evaluateEvery;
     }
 
-    public List<TrainListener> getListeners() {
+    public List<TrainListener<R>> getListeners() {
         return listeners;
     }
 

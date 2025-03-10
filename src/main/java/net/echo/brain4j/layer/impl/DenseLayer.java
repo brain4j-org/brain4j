@@ -2,6 +2,8 @@ package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.utils.Vector;
 
@@ -45,6 +47,25 @@ public class DenseLayer extends Layer<Vector, Vector> {
         }
 
         return output;
+    }
+
+    @Override
+    public void propagate(StatesCache cache, Layer<?, ?> previous) {
+        int nextLayerSize = nextLayer.getNeurons().size();
+
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron neuron = neurons.get(i);
+
+            double value = neuron.getValue(cache);
+            double derivative = activation.getFunction().getDerivative(value);
+
+            for (int j = 0; j < nextLayerSize; j++) {
+                Synapse synapse = synapses.get(i * nextLayerSize + j);
+
+                float weightChange = calculateGradient(cache, synapse, derivative);
+                updater.acknowledgeChange(synapse, weightChange);
+            }
+        }
     }
 
     @Override

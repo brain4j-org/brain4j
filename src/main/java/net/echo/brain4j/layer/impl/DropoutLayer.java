@@ -1,5 +1,6 @@
 package net.echo.brain4j.layer.impl;
 
+import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
@@ -36,12 +37,21 @@ public class DropoutLayer extends Layer<Vector, Vector> {
     }
 
     @Override
-    public void propagate(StatesCache cacheHolder, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
-        Objects.requireNonNull(previous, "Previous layer is null");
+    public boolean canPropagate() {
+        return false;
+    }
 
-        for (Neuron neuron : previous.getNeurons()) {
-            neuron.setValue(cacheHolder, neuron.getValue(cacheHolder) * (1.0 - dropout));
+    @Override
+    public Vector forward(StatesCache cache, Layer<?, ?> lastLayer, Vector input) {
+        Preconditions.checkState(lastLayer instanceof DenseLayer, "Dropout layer is not preceded by a dense layer!");
+
+        for (Neuron neuron : lastLayer.getNeurons()) {
+            if (Math.random() > dropout) continue;
+
+            neuron.setValue(cache, 0);
         }
+
+        return null;
     }
 
     /**

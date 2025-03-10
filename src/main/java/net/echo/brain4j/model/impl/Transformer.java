@@ -71,7 +71,7 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
     }
 
     @Override
-    public void reloadMatrices() {
+    public void reloadWeights() {
 
     }
 

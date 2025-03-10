@@ -109,7 +109,7 @@ public abstract class Model<R, I, O> {
 
             double bound = weightInit.getInitializer().getBound(nIn, nOut);
 
-            lastNormalLayer.connectAll(generator, layer, bound);
+            lastNormalLayer.connect(generator, layer, bound);
             lastNormalLayer = layer;
         }
     }
@@ -123,11 +123,32 @@ public abstract class Model<R, I, O> {
     public abstract double loss(DataSet<R> dataSet);
 
     /**
+     * Evaluates the model performance on the given dataset.
+     * @param dataSet dataset to evaluate
+     * @return an evaluation result
+     */
+    public abstract EvaluationResult evaluate(DataSet<R> dataSet);
+
+    /**
      * Trains the model for one epoch.
      *
      * @param dataSet dataset for training
      */
     public abstract void fit(DataSet<R> dataSet);
+
+    /**
+     * Predicts output for given input.
+     *
+     * @param input input data as a vector, must have dimension equal to the model's input dimension
+     * @param cache cache used to store neuron states
+     * @return predicted outputs as a vector
+     */
+    public abstract O predict(StatesCache cache, I input, boolean training);
+
+    /**
+     * Reloads the values inside the network.
+     */
+    public abstract void reloadWeights();
 
     /**
      * Trains the model for the given number of epoches.
@@ -147,28 +168,9 @@ public abstract class Model<R, I, O> {
      * @param input input data as a vector, must have dimension equal to the model's input dimension
      * @return predicted outputs as a vector
      */
-    public abstract O predict(I input);
-
-    /**
-     * Evaluates the model performance on the given dataset.
-     * @param dataSet dataset to evaluate
-     * @return an evaluation result
-     */
-    public abstract EvaluationResult evaluate(DataSet<R> dataSet);
-
-    /**
-     * Predicts output for given input.
-     *
-     * @param input input data as a vector, must have dimension equal to the model's input dimension
-     * @param cache cache used to store neuron states
-     * @return predicted outputs as a vector
-     */
-    public abstract O predict(StatesCache cache, I input);
-
-    /**
-     * Reloads the values inside the network.
-     */
-    public abstract void reloadMatrices();
+    public O predict(I input) {
+        return predict(new StatesCache(), input, false);
+    }
 
     /**
      * Initializes the model and layers with default values.
@@ -191,10 +193,11 @@ public abstract class Model<R, I, O> {
      */
     public Model<R, I, O> compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.weightInit = weightInit;
-        this.generator = new Random(this.seed);
         this.lossFunction = function;
         this.optimizer = optimizer;
         this.updater = updater;
+        this.generator = new Random(this.seed);
+
         return this;
     }
 

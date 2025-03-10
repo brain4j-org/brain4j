@@ -2,7 +2,6 @@ package net.echo.brain4j.layer;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.JsonAdapter;
-import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.loss.LossFunctions;
@@ -25,24 +24,23 @@ import static net.echo.brain4j.utils.MLUtils.clipGradient;
 @JsonAdapter(LayerAdapter.class)
 public abstract class Layer<I, O> {
 
+    protected final List<Neuron> neurons = new ArrayList<>();
+    protected final List<Synapse> synapses = new ArrayList<>();
+    protected final Activations activation;
+
     protected LossFunctions lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
     protected WeightInit weightInit;
 
-    protected final List<Neuron> neurons = new ArrayList<>();
-    protected final List<Synapse> synapses = new ArrayList<>();
-    protected final Activations activation;
-    protected final Activation function;
     protected Layer<?, ?> nextLayer;
     protected int id;
 
     public Layer(int input, Activations activation) {
-        Stream.generate(Neuron::new).limit(input).forEach(neurons::add);
-
         this.id = Parameters.TOTAL_LAYERS++;
         this.activation = activation;
-        this.function = activation.getFunction();
+
+        Stream.generate(Neuron::new).limit(input).forEach(neurons::add);
     }
 
     public boolean canPropagate() {
@@ -64,7 +62,7 @@ public abstract class Layer<I, O> {
         neurons.forEach(neuron -> neuron.setBias(2 * generator.nextDouble() - 1));
     }
 
-    public void connectAll(Random generator, Layer<?, ?> nextLayer, double bound) {
+    public void connect(Random generator, Layer<?, ?> nextLayer, double bound) {
         this.nextLayer = nextLayer;
 
         for (Neuron neuron : neurons) {
@@ -84,7 +82,7 @@ public abstract class Layer<I, O> {
     }
 
     public void applyFunction(StatesCache cache, Layer<?, ?> previous) {
-        function.apply(cache, neurons);
+        activation.getFunction().apply(cache, neurons);
     }
 
     public void setInput(StatesCache cache, Vector input) {
@@ -96,22 +94,8 @@ public abstract class Layer<I, O> {
         }
     }
 
-    public void propagate(StatesCache cache, Layer<?, ?> previous, Updater updater, Optimizer optimizer) {
-        int nextLayerSize = nextLayer.getNeurons().size();
-
-        for (int i = 0; i < neurons.size(); i++) {
-            Neuron neuron = neurons.get(i);
-
-            double value = neuron.getValue(cache);
-            double derivative = activation.getFunction().getDerivative(value);
-
-            for (int j = 0; j < nextLayerSize; j++) {
-                Synapse synapse = synapses.get(i * nextLayerSize + j);
-
-                float weightChange = calculateGradient(cache, synapse, derivative);
-                updater.acknowledgeChange(synapse, weightChange);
-            }
-        }
+    public void propagate(StatesCache cache, Layer<?, ?> previous) {
+        throw new UnsupportedOperationException("Not implemented for this class.");
     }
 
     public float calculateGradient(StatesCache cacheHolder, Synapse synapse, double derivative) {

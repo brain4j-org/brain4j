@@ -1,11 +1,13 @@
 package net.echo.brain4j.training.updater.impl;
 
+import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.Vector;
 
 public class NormalUpdater extends Updater {
 
@@ -19,6 +21,20 @@ public class NormalUpdater extends Updater {
             synapse.setWeight(synapse.getWeight() - learningRate * gradient);
         }
 
+        for (Kernel kernel : kernels) {
+            Vector[] updates = kernel.getUpdates();
+
+            for (int j = 0; j < updates.length; j++) {
+                Vector update = updates[j];
+                Vector kernelValue = kernel.getValues()[j];
+
+                kernelValue.subtract(update.scale(learningRate));
+                kernel.getValues()[j] = kernelValue;
+            }
+
+            kernel.resetUpdates();
+        }
+
         for (Layer<?, ?> layer : model.getLayers()) {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
@@ -29,6 +45,6 @@ public class NormalUpdater extends Updater {
         }
 
         this.gradients = new float[Parameters.TOTAL_SYNAPSES];
-        model.reloadMatrices();
+        model.reloadWeights();
     }
 }

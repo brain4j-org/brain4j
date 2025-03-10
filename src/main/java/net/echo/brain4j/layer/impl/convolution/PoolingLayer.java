@@ -66,6 +66,7 @@ public class PoolingLayer extends Layer<Kernel, Kernel> {
 
         return output;
     }
+
     @Override
     public void propagate(StatesCache cache, Layer<?, ?> nextLayer, Updater updater, Optimizer optimizer) {
         Kernel output = cache.getFeatureMap(this);
@@ -99,11 +100,6 @@ public class PoolingLayer extends Layer<Kernel, Kernel> {
 
         Kernel deltaUnpooled = new Kernel(input.getWidth(), input.getHeight());
 
-//        System.out.println("OutX: " + output.getWidth());
-//        System.out.println("OutY: " + output.getHeight());
-//
-//        System.out.println("DX: " + deltaPooling.getWidth());
-//        System.out.println("DY: " + deltaPooling.getHeight());
         for (int outY = 0; outY < output.getHeight(); outY++) {
             for (int outX = 0; outX < output.getWidth(); outX++) {
                 poolingType.getFunction().unpool(this, outX, outY, deltaPooling, deltaUnpooled, input);
