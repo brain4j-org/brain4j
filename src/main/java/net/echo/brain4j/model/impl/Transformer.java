@@ -54,7 +54,7 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
 
     @Override
     public void fit(DataSet<Object> dataSet) {
-
+        throw new UnsupportedOperationException("Not implemented yet for this class.");
     }
 
     @Override

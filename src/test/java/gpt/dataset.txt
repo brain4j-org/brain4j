@@ -1,4 +1,4 @@
 hello, how are you?
-i am doing fine thanks
+I am doing fine thanks
 what about you?
-i am fine too
+I am fine too

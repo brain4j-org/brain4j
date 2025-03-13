@@ -1,4 +1,4 @@
-package conv;
+package cnn;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
@@ -20,7 +20,6 @@ import org.apache.commons.csv.CSVParser;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConvExample {
 
@@ -35,7 +34,7 @@ public class ConvExample {
 
         System.out.println(model.getStats());
 
-        SmartTrainer<DataRow> trainer = new SmartTrainer(1, 1);
+        SmartTrainer<DataRow> trainer = new SmartTrainer<>(1, 1);
         trainer.addListener(new EpochListener<>());
         trainer.startFor(model, dataSet, 100, 0.000001);
 
@@ -76,11 +75,7 @@ public class ConvExample {
         FileReader reader = new FileReader("dataset.csv");
         CSVParser parser = new CSVParser(reader, CSVFormat.EXCEL);
 
-        AtomicInteger i = new AtomicInteger();
-
         parser.forEach(record -> {
-            if (i.get() > 150 * 2) return;
-
             List<String> columns = record.toList();
 
             String label = columns.getFirst();
@@ -91,8 +86,6 @@ public class ConvExample {
 
             Vector input = Vector.parse(pixels).divide(255);
             dataSet.add(new DataRow(input, output));
-
-            i.getAndIncrement();
         });
 
         return dataSet;

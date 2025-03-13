@@ -21,6 +21,12 @@ public class MLUtils {
         return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
     }
 
+    /**
+     * Gets the header with a middle text for display.
+     *
+     * @param middleText the middle text
+     * @return the combined header
+     */
     public static String getHeader(String middleText) {
         String base = "=";
 

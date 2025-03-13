@@ -1,3 +1,5 @@
+package gpt;
+
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
@@ -12,16 +14,16 @@ import java.util.List;
 
 public class TransformerExample {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         TransformerExample example = new TransformerExample();
         example.start();
     }
 
     public List<String> getExamples() throws IOException {
-        return Files.readAllLines(Path.of("examples.txt"));
+        return Files.readAllLines(Path.of("dataset.txt"));
     }
 
-    public void start() throws InterruptedException {
+    public void start() {
         Transformer transformer = new Transformer(
                 new TransformerEncoder(4, 784, 1.0),
                 new TransformerEncoder(4, 784, 1.0),
@@ -39,12 +41,10 @@ public class TransformerExample {
             vectors.add(Vector.random(784));
         }
 
-        long start = System.nanoTime();
-        var output = transformer.predict(vectors);
-        double took = (System.nanoTime() - start) / 1e6;
+        List<Vector> output = transformer.predict(vectors);
 
-        System.out.println("Took: " + took + " ms");
-
-        Thread.sleep(Integer.MAX_VALUE);
+        for (Vector vector : output) {
+            System.out.println(vector.toString("%.3f"));
+        }
     }
 }
