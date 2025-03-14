@@ -6,7 +6,7 @@ import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.structure.cache.StatesCache;
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 public class FlattenLayer extends DenseLayer {
 

@@ -9,8 +9,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.DataSet;
-import net.echo.brain4j.utils.Vector;
-import org.checkerframework.checker.units.qual.A;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.ArrayList;
 import java.util.List;

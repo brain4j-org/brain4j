@@ -2,7 +2,7 @@ package net.echo.brain4j.convolution;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.cache.Parameters;
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.Random;
 

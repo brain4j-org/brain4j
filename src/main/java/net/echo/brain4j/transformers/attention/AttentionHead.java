@@ -2,7 +2,7 @@ package net.echo.brain4j.transformers.attention;
 
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.ArrayList;
 import java.util.List;

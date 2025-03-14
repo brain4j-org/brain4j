@@ -1,6 +1,6 @@
 package net.echo.brain4j.transformers.encoding;
 
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 public class PositionalEncoding {
 
