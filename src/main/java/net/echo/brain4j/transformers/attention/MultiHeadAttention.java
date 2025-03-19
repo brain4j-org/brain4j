@@ -1,8 +1,9 @@
 package net.echo.brain4j.transformers.attention;
 
 import com.google.common.base.Preconditions;
-import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
+import net.echo.brain4j.utils.math.tensor.Tensor;
+import net.echo.brain4j.utils.math.tensor.TensorFactory;
 import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class MultiHeadAttention {
     protected final int headDimension;
 
     protected final float[][] outProjectionWeights;
+    protected Tensor outProjectionTensor;
 
     public MultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension, double temperature) {
         this.weightInit = weightInit;
@@ -46,6 +48,16 @@ public class MultiHeadAttention {
         return concatenate(headOutputs, inputs);
     }
 
+    public List<Tensor> attendTensors(List<Tensor> inputs) {
+        List<List<Tensor>> headOutputs = new ArrayList<>();
+
+        for (AttentionHead head : heads) {
+            headOutputs.add(head.attendTensors(inputs));
+        }
+
+        return concatenateTensors(headOutputs, inputs);
+    }
+
     public List<Vector> concatenate(List<List<Vector>> headOutputs, List<Vector> inputs) {
         List<Vector> result = new ArrayList<>();
 
@@ -61,6 +73,29 @@ public class MultiHeadAttention {
 
             projected.add(inputs.get(i));
             result.add(projected);
+        }
+
+        return result;
+    }
+
+    public List<Tensor> concatenateTensors(List<List<Tensor>> headOutputs, List<Tensor> inputs) {
+        List<Tensor> result = new ArrayList<>();
+        
+        ensureOutProjectionTensor();
+
+        for (int i = 0; i < inputs.size(); i++) {
+            List<Tensor> concatList = new ArrayList<>();
+
+            for (List<Tensor> headOutput : headOutputs) {
+                concatList.add(headOutput.get(i));
+            }
+
+            Tensor concatenated = concatenateTensorsList(concatList);
+            
+            Tensor projected = concatenated.matmul(outProjectionTensor);
+            
+            Tensor combined = projected.add(inputs.get(i));
+            result.add(combined);
         }
 
         return result;
@@ -93,6 +128,24 @@ public class MultiHeadAttention {
                 double value = (rng.nextDouble() * 2 * bound) - bound;
                 outProjectionWeights[i][j] = (float) value;
             }
+        }
+    }
+
+    protected void ensureOutProjectionTensor() {
+        if (outProjectionTensor == null) {
+            float[] flatWeights = new float[headCount * headDimension * modelDimension];
+            int index = 0;
+            
+            for (int i = 0; i < headCount * headDimension; i++) {
+                for (int j = 0; j < modelDimension; j++) {
+                    flatWeights[index++] = outProjectionWeights[i][j];
+                }
+            }
+            
+            outProjectionTensor = TensorFactory.of(
+                new int[]{headCount * headDimension, modelDimension}, 
+                flatWeights
+            );
         }
     }
 
@@ -129,5 +182,23 @@ public class MultiHeadAttention {
         }
 
         return concatenated;
+    }
+
+    protected Tensor concatenateTensorsList(List<Tensor> tensors) {
+        int totalSize = 0;
+        for (Tensor t : tensors) {
+            totalSize += t.numel();
+        }
+        
+        Tensor result = TensorFactory.create(totalSize);
+        
+        int position = 0;
+        for (Tensor t : tensors) {
+            for (int i = 0; i < t.numel(); i++) {
+                result.set(t.get(i), position++);
+            }
+        }
+        
+        return result;
     }
 }

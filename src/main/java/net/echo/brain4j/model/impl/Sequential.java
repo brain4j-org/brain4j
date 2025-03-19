@@ -24,8 +24,9 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
+import net.echo.brain4j.utils.math.tensor.Tensor;
+import net.echo.brain4j.utils.math.tensor.TensorFactory;
 import net.echo.brain4j.utils.math.vector.Vector;
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -317,5 +318,23 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
             layers.add(layer);
         }
+    }
+
+    public Tensor predict(Tensor input) {
+        double[] data = input.toDoubleArray();
+        Vector inputVector = Vector.of(data);
+        
+        Vector outputVector = predict(inputVector);
+        
+        return TensorFactory.vector(outputVector);
+    }
+
+    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
+        double[] data = input.toDoubleArray();
+        Vector inputVector = Vector.of(data);
+        
+        Vector outputVector = predict(cache, inputVector, training);
+        
+        return TensorFactory.vector(outputVector);
     }
 }

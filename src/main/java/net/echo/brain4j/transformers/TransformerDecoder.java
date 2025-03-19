@@ -5,21 +5,19 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.masked.MaskedMultiHeadAttention;
-import net.echo.brain4j.utils.math.vector.Vector;
+import net.echo.brain4j.utils.math.tensor.Tensor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransformerDecoder extends Layer<List<Vector>, List<Vector>> {
+public class TransformerDecoder extends Layer<List<Tensor>, List<Tensor>> {
 
     private final int heads;
     private final int dimension;
@@ -70,32 +68,29 @@ public class TransformerDecoder extends Layer<List<Vector>, List<Vector>> {
 
     @Override
     public void propagate(StatesCache cache, Layer<?, ?> previous) {
-//        feedForward.propagate(cache, this, updater, optimizer);
-//        maskedAttention.propagate(cache, this, updater, optimizer);
     }
 
     @Override
-    public List<Vector> forward(StatesCache cache, Layer<?, ?> lastLayer, List<Vector> input) {
-        List<Vector> attentionOutput = maskedAttention.attend(input);
-        List<Vector> normAttention = new ArrayList<>();
+    public List<Tensor> forward(StatesCache cache, Layer<?, ?> lastLayer, List<Tensor> input) {
+        List<Tensor> attentionOutput = maskedAttention.attendTensors(input);
+        List<Tensor> normAttention = new ArrayList<>();
 
-        for (Vector token : attentionOutput) {
+        for (Tensor token : attentionOutput) {
             normAttention.add(normalizer.normalize(token));
         }
 
-        List<Vector> feedForwardOutput = new ArrayList<>();
+        List<Tensor> feedForwardOutput = new ArrayList<>();
 
-        for (Vector vector : normAttention) {
-            feedForwardOutput.add(feedForward.predict(vector));
+        for (Tensor tensor : normAttention) {
+            feedForwardOutput.add(feedForward.predict(tensor));
         }
 
-        List<Vector> result = new ArrayList<>();
+        List<Tensor> result = new ArrayList<>();
 
         for (int i = 0; i < feedForwardOutput.size(); i++) {
-            Vector tokenFF = feedForwardOutput.get(i);
-
-            tokenFF.add(normAttention.get(i));
-            result.add(normalizer.normalize(tokenFF));
+            Tensor tokenFF = feedForwardOutput.get(i);
+            Tensor combined = tokenFF.add(normAttention.get(i));
+            result.add(normalizer.normalize(combined));
         }
 
         return result;

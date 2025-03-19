@@ -1,9 +1,9 @@
 package net.echo.brain4j.transformers.masked;
 
 import com.google.common.base.Preconditions;
-import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
+import net.echo.brain4j.utils.math.tensor.Tensor;
 import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         initializeOutProjectionWeights();
     }
 
+    @Override
     public List<Vector> attend(List<Vector> inputs) {
         List<List<Vector>> headOutputs = new ArrayList<>();
 
@@ -32,7 +33,19 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
 
         return concatenate(headOutputs, inputs);
     }
+    
+    @Override
+    public List<Tensor> attendTensors(List<Tensor> inputs) {
+        List<List<Tensor>> headOutputs = new ArrayList<>();
 
+        for (MaskedAttentionHead head : heads) {
+            headOutputs.add(head.attendTensors(inputs));
+        }
+
+        return concatenateTensors(headOutputs, inputs);
+    }
+
+    @Override
     public int getTotalNeurons() {
         int total = outProjectionWeights.length * modelDimension;
 

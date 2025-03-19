@@ -4,6 +4,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.utils.math.tensor.Tensor;
 import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.io.DataInputStream;
@@ -85,6 +86,28 @@ public class LayerNorm extends Layer<Vector, Vector> {
         }
 
         return input;
+    }
+    
+    /**
+     * Normalizes a tensor with a mean of zero and variance of one.
+     *
+     * @param input the input tensor to normalize
+     * @return the normalized output tensor
+     */
+    public Tensor normalize(Tensor input) {
+        double mean = input.mean();
+        double variance = 0.0;
+        
+        for (Double value : input) {
+            variance += Math.pow(value - mean, 2);
+        }
+        variance /= input.numel();
+        
+        double denominator = Math.sqrt(variance + epsilon);
+        
+        Tensor normalized = input.clone();
+        
+        return normalized.map(value -> (value - mean) / denominator);
     }
 
     private double calculateMean(StatesCache cacheHolder, List<Neuron> inputs) {
