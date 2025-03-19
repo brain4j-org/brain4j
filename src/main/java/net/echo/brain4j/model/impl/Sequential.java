@@ -1,6 +1,7 @@
 package net.echo.brain4j.model.impl;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
@@ -9,9 +10,11 @@ import net.echo.brain4j.layer.impl.convolution.ConvLayer;
 import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
 import net.echo.brain4j.layer.impl.convolution.InputLayer;
 import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
+import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
@@ -22,7 +25,11 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.math.vector.Vector;
+import org.checkerframework.checker.units.qual.A;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +40,6 @@ import static net.echo.brain4j.utils.MLUtils.waitAll;
 
 /**
  * Implementation of a sequential neural network model.
- * <p>
  * This model processes an input {@link Vector} and produces an output {@link Vector}.
  * It supports training using instances of {@link DataRow}.
  * </p>
@@ -47,22 +53,15 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
         if (this.layers.isEmpty()) return;
 
-        validateLayers();
+        validateCNNIfPresent();
     }
 
-    private void validateLayers() {
+    private void validateCNNIfPresent() {
         boolean isInput = layers.getFirst() instanceof InputLayer;
-        boolean hasConv = false;
+        boolean hasConv = layers.stream().anyMatch(Layer::isConvolutional);
 
-        for (Layer<?, ?> layer : layers) {
-            if (layer instanceof ConvLayer || layer instanceof PoolingLayer || layer instanceof FlattenLayer) {
-                hasConv = true;
-                break;
-            }
-        }
-
-        if (isInput && !hasConv) throw new IllegalArgumentException("Cannot use the InputLayer outside of a convolutional model!");
-        if (!isInput && hasConv) throw new IllegalArgumentException("Cannot use a convolutional layer without an InputLayer!");
+        Preconditions.checkState(!(isInput && !hasConv), "Cannot use an input layer without convolutional layers!");
+        Preconditions.checkState(!(!isInput && hasConv), "Cannot use a convolutional layer without an input layer!");
     }
 
     private Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
@@ -72,7 +71,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
                 Vector targets = row.outputs();
 
                 Vector outputs = predict(inputs);
-                double loss = lossFunction.getFunction().calculate(targets, outputs);
+                double loss = lossFunction.calculate(targets, outputs);
 
                 totalError.updateAndGet(v -> v + loss);
             }
@@ -104,12 +103,22 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     }
 
     @Override
-    public Sequential compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
-        super.compile(weightInit, function, optimizer, updater);
+    public Sequential compile(LossFunction function, Optimizer optimizer) {
+        return (Sequential) super.compile(function, optimizer);
+    }
+
+    @Override
+    public Sequential compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        return (Sequential) super.compile(initializer, lossFunction, optimizer, updater);
+    }
+
+    @Override
+    public Sequential compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+        super.compile(initializer, lossFunction, optimizer, updater);
 
         this.propagation = new BackPropagation(this, optimizer, updater);
 
-        connect(weightInit, true);
+        connect(initializer.getFunction(), true);
 
         this.optimizer.postInitialize(this);
         this.updater.postInitialize(this);
@@ -274,5 +283,39 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         }
 
         return synapseMatrix;
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        stream.writeInt(layers.size());
+
+        System.out.println("Writing " + layers.size());
+
+        for (Layer<?, ?> layer : layers) {
+            stream.writeUTF(layer.getClass().getName());
+            layer.serialize(stream);
+        }
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        int layersSize = stream.readInt();
+
+        this.layers = new ArrayList<>();
+
+        System.out.println("layers size: " + layersSize);
+
+        for (int i = 0; i < layersSize; i++) {
+            String layerClassPath = stream.readUTF();
+            Class<?> layerClass = Class.forName(layerClassPath);
+
+            Constructor<?> constructor = layerClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+
+            Layer<?, ?> layer = (Layer<?, ?>) constructor.newInstance();
+            layer.deserialize(stream);
+
+            layers.add(layer);
+        }
     }
 }

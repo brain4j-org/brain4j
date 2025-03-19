@@ -2,6 +2,7 @@ package net.echo.brain4j.transformers.masked;
 
 import com.google.common.base.Preconditions;
 import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.utils.math.vector.Vector;
 
@@ -12,7 +13,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
 
     private final List<MaskedAttentionHead> heads;
 
-    public MaskedMultiHeadAttention(WeightInit weightInit, int headCount, int modelDimension, double temperature) {
+    public MaskedMultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension, double temperature) {
         super(weightInit, headCount, modelDimension, temperature);
         this.heads = new ArrayList<>();
 

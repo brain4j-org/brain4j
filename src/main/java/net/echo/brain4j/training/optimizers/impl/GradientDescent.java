@@ -6,6 +6,9 @@ import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 public class GradientDescent extends Optimizer {
@@ -32,5 +35,15 @@ public class GradientDescent extends Optimizer {
                 updater.acknowledgeChange(synapse, change);
             }
         }
+    }
+
+    @Override
+    public void serialize(DataOutputStream dataOutputStream) throws IOException {
+        dataOutputStream.writeDouble(learningRate);
+    }
+
+    @Override
+    public void deserialize(DataInputStream dataInputStream) throws IOException {
+        this.learningRate = dataInputStream.readDouble();
     }
 }

@@ -2,6 +2,7 @@ package net.echo.brain4j.transformers.attention;
 
 import com.google.common.base.Preconditions;
 import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.Random;
 public class MultiHeadAttention {
 
     private final List<AttentionHead> heads;
-    protected final WeightInit weightInit;
+    protected final WeightInitializer weightInit;
     protected final double temperature;
     protected final int headCount;
     protected final int modelDimension;
@@ -19,7 +20,7 @@ public class MultiHeadAttention {
 
     protected final float[][] outProjectionWeights;
 
-    public MultiHeadAttention(WeightInit weightInit, int headCount, int modelDimension, double temperature) {
+    public MultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension, double temperature) {
         this.weightInit = weightInit;
         this.headCount = headCount;
         this.modelDimension = modelDimension;
@@ -85,7 +86,7 @@ public class MultiHeadAttention {
 
     protected void initializeOutProjectionWeights() {
         Random rng = new Random();
-        double bound = weightInit.getInitializer().getBound(headCount * headDimension, modelDimension);
+        double bound = weightInit.getBound(headCount * headDimension, modelDimension);
 
         for (int i = 0; i < headCount * headDimension; i++) {
             for (int j = 0; j < modelDimension; j++) {

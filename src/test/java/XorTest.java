@@ -1,6 +1,8 @@
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
@@ -15,10 +17,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class XorTest {
 
     @Test
-    void testXorModel() {
-        Sequential model = getModel();
+    void testXorModel() throws Exception {
+        Sequential model = ModernAdapter.deserialize("xor.bin", new Sequential());
+        // Sequential model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
+        System.out.println(model.getStats());
         model.fit(dataSet, 1000);
 
         EvaluationResult result = model.evaluate(dataSet);
@@ -28,6 +32,8 @@ public class XorTest {
         System.out.println(result.confusionMatrix());
 
         assertTrue(loss < 0.001, "Loss is too high! " + loss);
+
+        ModernAdapter.serialize("xor.bin", model);
     }
 
     private Sequential getModel() {

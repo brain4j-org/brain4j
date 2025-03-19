@@ -2,10 +2,12 @@ package net.echo.brain4j.layer;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.JsonAdapter;
+import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.adapters.LayerAdapter;
-import net.echo.brain4j.loss.LossFunctions;
-import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.adapters.Adapter;
+import net.echo.brain4j.adapters.json.LayerAdapter;
+import net.echo.brain4j.loss.LossFunction;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
@@ -14,33 +16,77 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.math.vector.Vector;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Stream;
 
 import static net.echo.brain4j.utils.MLUtils.clipGradient;
 
 @JsonAdapter(LayerAdapter.class)
-public abstract class Layer<I, O> {
+public abstract class Layer<I, O> implements Adapter {
 
-    protected final List<Neuron> neurons = new ArrayList<>();
-    protected final List<Synapse> synapses = new ArrayList<>();
-    protected final Activations activation;
 
-    protected LossFunctions lossFunction;
+    protected WeightInitializer weightInit;
+    protected LossFunction lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
-    protected WeightInit weightInit;
-
     protected Layer<?, ?> nextLayer;
+
+    protected List<Synapse> synapses;
+    protected List<Neuron> neurons;
+    protected Activation activation;
     protected int id;
 
+    public Layer() {
+        this(Activations.LINEAR);
+    }
+
+    public Layer(Activation activation) {
+        this(0, activation);
+    }
+
+    public Layer(Activations activation) {
+        this(0, activation);
+    }
+
     public Layer(int input, Activations activation) {
+        this(input, activation.getFunction());
+    }
+
+    public Layer(int input, Activation activation) {
         this.id = Parameters.TOTAL_LAYERS++;
+        this.synapses = new ArrayList<>();
+        this.neurons = new ArrayList<>();
         this.activation = activation;
 
-        Stream.generate(Neuron::new).limit(input).forEach(neurons::add);
+        for (int i = 0; i < input; i++) {
+            neurons.add(new Neuron());
+        }
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        stream.writeInt(id);
+        stream.writeInt(neurons.size());
+        stream.writeUTF(activation.getClass().toString());
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        this.id = stream.readInt();
+
+        int totalNeurons = stream.readInt();
+
+        for (int i = 0; i < totalNeurons; i++) {
+            neurons.add(new Neuron());
+        }
+
+        String activationClassPath = stream.readUTF();
+        Class<?> activationClass = Class.forName(activationClassPath);
+
+        this.activation = (Activation) activationClass.getDeclaredConstructor().newInstance();
     }
 
     public boolean canPropagate() {
@@ -51,7 +97,7 @@ public abstract class Layer<I, O> {
         return false;
     }
 
-    public void compile(WeightInit weightInit, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+    public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         this.weightInit = weightInit;
         this.lossFunction = lossFunction;
         this.optimizer = optimizer;
@@ -82,7 +128,7 @@ public abstract class Layer<I, O> {
     }
 
     public void applyFunction(StatesCache cache, Layer<?, ?> previous) {
-        activation.getFunction().apply(cache, neurons);
+        activation.apply(cache, neurons);
     }
 
     public void setInput(StatesCache cache, Vector input) {
@@ -118,7 +164,7 @@ public abstract class Layer<I, O> {
         return synapses;
     }
 
-    public Activations getActivation() {
+    public Activation getActivation() {
         return activation;
     }
 

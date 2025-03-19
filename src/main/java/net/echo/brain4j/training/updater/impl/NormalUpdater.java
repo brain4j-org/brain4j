@@ -9,6 +9,10 @@ import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.math.vector.Vector;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 public class NormalUpdater extends Updater {
 
     @Override

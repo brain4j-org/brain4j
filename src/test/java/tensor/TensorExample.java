@@ -19,14 +19,14 @@ public class TensorExample {
         System.out.println("GPU usage: " + TensorFactory.isUsingGPU());
         
         TensorFactory.useGPUIfAvailable();
-        
-        long startCPU = System.currentTimeMillis();
-        testXORNeuralNetworkCPU();
-        long endCPU = System.currentTimeMillis();
-        
+
         long startGPU = System.currentTimeMillis();
         testXORNeuralNetworkGPU();
         long endGPU = System.currentTimeMillis();
+
+        long startCPU = System.currentTimeMillis();
+        testXORNeuralNetworkCPU();
+        long endCPU = System.currentTimeMillis();
         
         System.out.println("\nPerformance Comparison:");
         System.out.println("CPU Time: " + (endCPU - startCPU) + " ms");

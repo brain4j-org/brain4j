@@ -46,7 +46,7 @@ public interface Activation {
     }
 
     /**
-     * Caller applies this activation function to the values of a list of Neurons.
+     * Applies the activation factor to a list of neurons.
      */
     default void apply(StatesCache cacheHolder, List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
@@ -55,5 +55,13 @@ public interface Activation {
 
             neuron.setValue(cacheHolder, activated);
         }
+    }
+
+    /**
+     * Gets the default name for this activation function.
+     * @return The name of the activation function.
+     */
+    default String getName() {
+        return getClass().getSimpleName().replaceAll("Activation", "");
     }
 }

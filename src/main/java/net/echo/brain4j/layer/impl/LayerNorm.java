@@ -6,6 +6,8 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.utils.math.vector.Vector;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.List;
 
 /**
@@ -13,7 +15,7 @@ import java.util.List;
  */
 public class LayerNorm extends Layer<Vector, Vector> {
 
-    private final double epsilon;
+    private double epsilon;
 
     /**
      * Constructs a layer normalization instance with a default epsilon.
@@ -29,6 +31,18 @@ public class LayerNorm extends Layer<Vector, Vector> {
     public LayerNorm(double epsilon) {
         super(0, Activations.LINEAR);
         this.epsilon = epsilon;
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        super.serialize(stream);
+        stream.writeDouble(epsilon);
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        super.deserialize(stream);
+        this.epsilon = stream.readDouble();
     }
 
     @Override

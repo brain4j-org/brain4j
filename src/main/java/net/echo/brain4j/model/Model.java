@@ -5,9 +5,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import net.echo.brain4j.adapters.LayerAdapter;
-import net.echo.brain4j.adapters.OptimizerAdapter;
-import net.echo.brain4j.adapters.UpdaterAdapter;
+import net.echo.brain4j.adapters.Adapter;
+import net.echo.brain4j.adapters.json.LayerAdapter;
+import net.echo.brain4j.adapters.json.OptimizerAdapter;
+import net.echo.brain4j.adapters.json.UpdaterAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
@@ -15,6 +16,7 @@ import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
@@ -30,10 +32,7 @@ import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -53,7 +52,7 @@ import static net.echo.brain4j.utils.MLUtils.getHeader;
  * @see net.echo.brain4j.model.impl.Sequential Sequential
  * @see net.echo.brain4j.model.impl.Transformer Transformer
  */
-public abstract class Model<R, I, O> {
+public abstract class Model<R, I, O> implements Adapter {
 
     private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
     private static final UpdaterAdapter UPDATER_ADAPTER = new UpdaterAdapter();
@@ -77,10 +76,10 @@ public abstract class Model<R, I, O> {
             .create();
 
     protected List<Layer<?, ?>> layers;
-    protected LossFunctions lossFunction;
+    protected WeightInitializer weightInit;
+    protected LossFunction lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
-    protected WeightInit weightInit;
     protected Random generator;
     protected int seed;
 
@@ -88,7 +87,11 @@ public abstract class Model<R, I, O> {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
-    public void connect(WeightInit weightInit, boolean update) {
+    public void connect() {
+        connect(weightInit, false);
+    }
+
+    public void connect(WeightInitializer weightInit, boolean update) {
         Layer<?, ?> lastNormalLayer = layers.getFirst();
 
         for (Layer<?, ?> layer : layers) {
@@ -107,7 +110,7 @@ public abstract class Model<R, I, O> {
             int nIn = lastNormalLayer.getTotalNeurons();
             int nOut = layer.getTotalNeurons();
 
-            double bound = weightInit.getInitializer().getBound(nIn, nOut);
+            double bound = weightInit.getBound(nIn, nOut);
 
             lastNormalLayer.connect(generator, layer, bound);
             lastNormalLayer = layer;
@@ -165,8 +168,8 @@ public abstract class Model<R, I, O> {
     /**
      * Predicts the output for the given input.
      *
-     * @param input input data as a vector, must have dimension equal to the model's input dimension
-     * @return predicted outputs as a vector
+     * @param input The input data.
+     * @return The model's prediction.
      */
     public O predict(I input) {
         return predict(new StatesCache(), input, false);
@@ -175,30 +178,55 @@ public abstract class Model<R, I, O> {
     /**
      * Initializes the model and layers with default values.
      *
-     * @param function loss function for evaluation and training
-     * @param optimizer optimization algorithm to use
-     * @return the instance of the model
+     * @param function The loss function used while evaluation and training.
+     * @param optimizer The gradient optimization algorithm to use.
+     * @return The current instance of the model.
      */
     public Model<R, I, O> compile(LossFunctions function, Optimizer optimizer) {
-        return compile(WeightInit.UNIFORM_XAVIER, function, optimizer, new StochasticUpdater());
+        return compile(function.getFunction(), optimizer);
     }
 
     /**
      * Initializes the model and layers with default values.
      *
-     * @param weightInit initialization method for weights
-     * @param function loss function for evaluation and training
-     * @param optimizer optimization algorithm to use
-     * @param updater weights updating algorithm for training
+     * @param function The loss function used while evaluation and training.
+     * @param optimizer The gradient optimization algorithm to use.
+     * @return The current instance of the model.
      */
-    public Model<R, I, O> compile(WeightInit weightInit, LossFunctions function, Optimizer optimizer, Updater updater) {
-        this.weightInit = weightInit;
-        this.lossFunction = function;
+    public Model<R, I, O> compile(LossFunction function, Optimizer optimizer) {
+        return compile(WeightInit.UNIFORM_XAVIER.getFunction(), function, optimizer, new StochasticUpdater());
+    }
+
+    /**
+     * Initializes the model and layers with default values.
+     *
+     * @param initializer The initialization method for weights.
+     * @param lossFunction The loss function to use while evaluating and training.
+     * @param optimizer The gradient optimization algorithm to use when training.
+     * @param updater The weights updating algorithm to use when training.
+     * @return The current instance of the model.
+     */
+    public Model<R, I, O> compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        this.weightInit = initializer;
+        this.lossFunction = lossFunction;
         this.optimizer = optimizer;
         this.updater = updater;
         this.generator = new Random(this.seed);
 
         return this;
+    }
+
+    /**
+     * Initializes the model and layers with default values.
+     *
+     * @param initializer The initialization method for weights.
+     * @param lossFunction The loss function to use while evaluating and training.
+     * @param optimizer The gradient optimization algorithm to use when training.
+     * @param updater The weights updating algorithm to use when training.
+     * @return The current instance of the model.
+     */
+    public Model<R, I, O> compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+        return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
     }
 
     /**
@@ -214,13 +242,19 @@ public abstract class Model<R, I, O> {
         try {
             JsonObject parent = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
 
+            String lossFunction = parent.get("loss_function").getAsString();
+            String weightInitFunction = parent.get("weight_initialization").getAsString();
+
+            Class<?> lossClass = Class.forName(lossFunction);
+            Class<?> weightInitClass = Class.forName(weightInitFunction);
+
             this.optimizer = GSON.fromJson(parent.get("optimizer"), Optimizer.class);
             this.updater = GSON.fromJson(parent.get("updater"), Updater.class);
-            this.lossFunction = LossFunctions.valueOf(parent.get("lossFunction").getAsString());
+            this.lossFunction = (LossFunction) lossClass.getDeclaredConstructor().newInstance();
+            this.weightInit = (WeightInitializer) weightInitClass.getDeclaredConstructor().newInstance();
 
             Type listType = new TypeToken<ArrayList<Layer<?, ?>>>(){}.getType();
 
-            this.weightInit = WeightInit.valueOf(parent.get("weightInit").getAsString());
             this.seed = parent.get("seed").getAsInt();
             this.generator = new Random(this.seed);
             this.layers = GSON.fromJson(parent.get("layers"), listType);
@@ -268,8 +302,8 @@ public abstract class Model<R, I, O> {
         JsonObject updaterObject = GSON.toJsonTree(this.updater).getAsJsonObject();
 
         parent.addProperty("seed", this.seed);
-        parent.addProperty("weightInit", this.weightInit.name());
-        parent.addProperty("lossFunction", this.lossFunction.name());
+        parent.addProperty("weight_initialization", String.valueOf(this.weightInit.getClass()));
+        parent.addProperty("loss_function", String.valueOf(this.lossFunction.getClass()));
 
         parent.add("optimizer", optimizerObject);
         parent.add("updater", updaterObject);
@@ -357,7 +391,7 @@ public abstract class Model<R, I, O> {
             String formatNeurons = layer instanceof DropoutLayer ? "-" : format.format(neurons);
             String formatWeights = format.format(weights);
 
-            stats.append(String.format(pattern, i, layerType, formatNeurons, formatWeights, layer.getActivation().name()));
+            stats.append(String.format(pattern, i, layerType, formatNeurons, formatWeights, layer.getActivation().getName()));
 
             if (layer instanceof TransformerEncoder encoder) {
                 totalSynapses += encoder.getFeedForwardSize();
@@ -390,7 +424,11 @@ public abstract class Model<R, I, O> {
      * Gets the model's loss function.
      */
     public LossFunction getLossFunction() {
-        return lossFunction.getFunction();
+        return lossFunction;
+    }
+
+    public void setLossFunction(LossFunction lossFunction) {
+        this.lossFunction = lossFunction;
     }
 
     /**
@@ -400,6 +438,10 @@ public abstract class Model<R, I, O> {
         return optimizer;
     }
 
+    public void setOptimizer(Optimizer optimizer) {
+        this.optimizer = optimizer;
+    }
+
     /**
      * Gets the model's weights updater.
      */
@@ -407,11 +449,19 @@ public abstract class Model<R, I, O> {
         return updater;
     }
 
+    public void setUpdater(Updater updater) {
+        this.updater = updater;
+    }
+
     /**
      * Gets the weight initialization technique used.
      */
-    public WeightInit getWeightInit() {
+    public WeightInitializer getWeightInit() {
         return weightInit;
+    }
+
+    public void setWeightInit(WeightInitializer weightInit) {
+        this.weightInit = weightInit;
     }
 
     /**

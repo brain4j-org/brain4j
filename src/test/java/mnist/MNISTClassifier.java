@@ -10,7 +10,7 @@ import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.techniques.EpochListener;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.brain4j.utils.DataSet;
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -77,7 +77,7 @@ public class MNISTClassifier {
             output.set(value, 1);
 
             dataSet.getData().add(new DataRow(Vector.of(inputs), output));
-            }
+        }
 
         return dataSet;
     }

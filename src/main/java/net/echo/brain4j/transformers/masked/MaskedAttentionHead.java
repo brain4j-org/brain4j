@@ -1,6 +1,7 @@
 package net.echo.brain4j.transformers.masked;
 
 import net.echo.brain4j.model.initialization.WeightInit;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.transformers.attention.AttentionHead;
 import net.echo.brain4j.utils.math.vector.Vector;
 
@@ -9,7 +10,7 @@ import java.util.List;
 
 public class MaskedAttentionHead extends AttentionHead {
 
-    public MaskedAttentionHead(WeightInit weightInit, int inputDimension, int headDimension, double temperature) {
+    public MaskedAttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension, double temperature) {
         super(weightInit, inputDimension, headDimension, temperature);
     }
 

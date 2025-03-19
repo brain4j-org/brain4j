@@ -1,22 +1,28 @@
 package net.echo.brain4j.training.optimizers;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.echo.brain4j.adapters.OptimizerAdapter;
+import net.echo.brain4j.adapters.Adapter;
+import net.echo.brain4j.adapters.json.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.List;
 
 /**
  * Interface providing various methods to optimize training.
  */
 @JsonAdapter(OptimizerAdapter.class)
-public abstract class Optimizer {
+public abstract class Optimizer implements Adapter {
 
     protected double learningRate;
+
+    protected Optimizer() {
+    }
 
     /**
      * Initializes the optimizer with a specified learning rate.
@@ -42,6 +48,25 @@ public abstract class Optimizer {
     public void postInitialize(Sequential model) {
     }
 
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        stream.writeDouble(learningRate);
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        this.learningRate = stream.readDouble();
+    }
+
+    /**
+     * Called after a sample has been iterated.
+     *
+     * @param updater the backpropagation updater
+     * @param layers the layers of the model
+     */
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
+    }
+
     /**
      * Gets the current learning rate.
      *
@@ -58,14 +83,5 @@ public abstract class Optimizer {
      */
     public void setLearningRate(double learningRate) {
         this.learningRate = learningRate;
-    }
-
-    /**
-     * Called after a sample has been iterated.
-     *
-     * @param updater the backpropagation updater
-     * @param layers the layers of the model
-     */
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
     }
 }

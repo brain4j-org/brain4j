@@ -6,7 +6,11 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.utils.math.vector.Vector;
+import org.checkerframework.checker.units.qual.N;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,6 +19,9 @@ import java.util.List;
 public class DenseLayer extends Layer<Vector, Vector> {
 
     protected List<Vector> weights;
+
+    private DenseLayer() {
+    }
 
     /**
      * Constructs a dense layer instance.
@@ -57,7 +64,7 @@ public class DenseLayer extends Layer<Vector, Vector> {
             Neuron neuron = neurons.get(i);
 
             double value = neuron.getValue(cache);
-            double derivative = activation.getFunction().getDerivative(value);
+            double derivative = activation.getDerivative(value);
 
             for (int j = 0; j < nextLayerSize; j++) {
                 Synapse synapse = synapses.get(i * nextLayerSize + j);

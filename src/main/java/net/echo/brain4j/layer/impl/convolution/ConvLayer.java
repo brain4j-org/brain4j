@@ -142,7 +142,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
             result.add(feature);
         }
 
-        result.apply(activation.getFunction());
+        result.apply(activation);
         return result;
     }
 
@@ -174,7 +174,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
 
         for (int h = 0; h < deltaUnpooled.getHeight(); h++) {
             for (int w = 0; w < deltaUnpooled.getWidth(); w++) {
-                double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
+                double derivative = activation.getDerivative(featureMap.getValue(w, h));
                 double updatedDelta = clipGradient(deltaUnpooled.getValue(w, h) * derivative);
 
                 deltaUnpooled.setValue(w, h, updatedDelta);
@@ -193,7 +193,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
                 int index = h * featureMap.getWidth() + w;
                 double deltaNeuron = neurons.get(index).getDelta(cache);
 
-                double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
+                double derivative = activation.getDerivative(featureMap.getValue(w, h));
                 double localDelta = deltaNeuron * derivative;
 
                 deltaKernel.setValue(w, h, localDelta);
@@ -220,7 +220,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
 
         for (int h = 0; h < deltaCurrent.getHeight(); h++) {
             for (int w = 0; w < deltaCurrent.getWidth(); w++) {
-                double derivative = activation.getFunction().getDerivative(featureMap.getValue(w, h));
+                double derivative = activation.getDerivative(featureMap.getValue(w, h));
                 double updatedDelta = clipGradient(deltaCurrent.getValue(w, h) * derivative);
 
                 deltaCurrent.setValue(w, h, updatedDelta);

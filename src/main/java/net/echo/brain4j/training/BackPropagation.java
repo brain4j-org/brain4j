@@ -47,7 +47,7 @@ public class BackPropagation {
                 Vector output = model.predict(cacheHolder, row.inputs(), true);
                 Vector target = row.outputs();
 
-                backpropagate(cacheHolder, target, output);
+                backpropagation(cacheHolder, target, output);
             });
 
             threads.add(thread);
@@ -67,7 +67,7 @@ public class BackPropagation {
         updater.postFit(model, optimizer.getLearningRate());
     }
 
-    public void backpropagate(StatesCache cacheHolder, Vector targets, Vector outputs) {
+    public void backpropagation(StatesCache cacheHolder, Vector targets, Vector outputs) {
         List<Layer<?, ?>> layers = model.getLayers();
         initializeDeltas(cacheHolder, layers, targets, outputs);
 
@@ -90,7 +90,7 @@ public class BackPropagation {
         Layer<?, ?> outputLayer = layers.getLast();
 
         List<Neuron> neurons = outputLayer.getNeurons();
-        Activation function = outputLayer.getActivation().getFunction();
+        Activation function = outputLayer.getActivation();
 
         Vector derivative = function.getDerivative(outputs);
 

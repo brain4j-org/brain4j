@@ -56,7 +56,7 @@ public enum WeightInit {
      *
      * @return the WeightInitializer instance for the current initialization type
      */
-    public WeightInitializer getInitializer() {
+    public WeightInitializer getFunction() {
         return initializer;
     }
 }

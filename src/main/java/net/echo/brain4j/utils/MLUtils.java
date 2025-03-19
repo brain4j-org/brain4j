@@ -1,6 +1,8 @@
 package net.echo.brain4j.utils;
 
+import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.function.Consumer;
 
 import net.echo.brain4j.utils.math.vector.Vector;
 
@@ -93,5 +95,15 @@ public class MLUtils {
         double normalized = params / divisor;
 
         return String.format("%.2f %s", normalized, prefixes[ciphers]);
+    }
+
+    @SuppressWarnings("all")
+    public static <T> T newInstance(String classPath) throws Exception {
+        Class<?> clazz = Class.forName(classPath);
+
+        Constructor<?> constructor = clazz.getDeclaredConstructor();
+        constructor.setAccessible(true);
+
+        return (T) constructor.newInstance();
     }
 }

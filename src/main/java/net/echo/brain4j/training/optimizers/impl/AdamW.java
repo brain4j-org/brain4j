@@ -3,13 +3,21 @@ package net.echo.brain4j.training.optimizers.impl;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 public class AdamW extends Adam {
 
     private double weightDecay;
+
+    private AdamW() {
+        this(0);
+    }
 
     public AdamW(double learningRate) {
         this(learningRate, 0.001);
@@ -22,6 +30,18 @@ public class AdamW extends Adam {
     public AdamW(double learningRate, double weightDecay, double beta1, double beta2, double epsilon) {
         super(learningRate, beta1, beta2, epsilon);
         this.weightDecay = weightDecay;
+    }
+
+    @Override
+    public void serialize(DataOutputStream dataOutputStream) throws Exception {
+        super.serialize(dataOutputStream);
+        dataOutputStream.writeDouble(weightDecay);
+    }
+
+    @Override
+    public void deserialize(DataInputStream dataInputStream) throws Exception {
+        super.deserialize(dataInputStream);
+        this.weightDecay = dataInputStream.readDouble();
     }
 
     @Override

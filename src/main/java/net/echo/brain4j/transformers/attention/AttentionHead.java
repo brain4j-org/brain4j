@@ -18,7 +18,7 @@ public class AttentionHead {
     protected final float[][] keyWeights;
     protected final float[][] valueWeights;
 
-    public AttentionHead(WeightInit weightInit, int inputDimension, int headDimension, double temperature) {
+    public AttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension, double temperature) {
         this.inputDimension = inputDimension;
         this.headDimension = headDimension;
         this.temperature = temperature;
@@ -79,9 +79,8 @@ public class AttentionHead {
         return output;
     }
 
-    protected void initializeWeights(WeightInit weightInit) {
+    protected void initializeWeights(WeightInitializer initializer) {
         Random rng = new Random();
-        WeightInitializer initializer = weightInit.getInitializer();
 
         double bound = initializer.getBound(inputDimension, headDimension);
 

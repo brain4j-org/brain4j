@@ -75,4 +75,4 @@ __kernel void element_wise_mul(
     else if (i < size) {
         C[i] = A[i] * B[i];
     }
-} 
+}

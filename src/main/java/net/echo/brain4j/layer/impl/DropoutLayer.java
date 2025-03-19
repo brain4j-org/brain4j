@@ -7,13 +7,16 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.utils.math.vector.Vector;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+
 /**
  * Represents a Dropout layer, used to mitigate overfitting
  * by randomly deactivating a fraction of the input neurons.
  */
 public class DropoutLayer extends Layer<Vector, Vector> {
 
-    private final double dropout;
+    private double dropout;
 
     /**
      * Constructs a dropout layer instance.
@@ -30,6 +33,18 @@ public class DropoutLayer extends Layer<Vector, Vector> {
         }
 
         this.dropout = dropout;
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        super.serialize(stream);
+        stream.writeDouble(dropout);
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        super.deserialize(stream);
+        this.dropout = stream.readDouble();
     }
 
     @Override

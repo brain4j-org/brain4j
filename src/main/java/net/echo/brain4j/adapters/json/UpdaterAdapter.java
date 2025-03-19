@@ -1,4 +1,4 @@
-package net.echo.brain4j.adapters;
+package net.echo.brain4j.adapters.json;
 
 import com.google.gson.*;
 import net.echo.brain4j.training.updater.Updater;

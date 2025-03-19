@@ -8,6 +8,10 @@ import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 
+import javax.xml.crypto.dsig.spec.ExcC14NParameterSpec;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 public class Adam extends Optimizer {
@@ -24,6 +28,9 @@ public class Adam extends Optimizer {
     protected float epsilon;
     protected int timestep = 0;
 
+    private Adam() {
+    }
+
     public Adam(double learningRate) {
         this(learningRate, 0.9, 0.999, 1e-8);
     }
@@ -38,6 +45,22 @@ public class Adam extends Optimizer {
     public void postInitialize(Sequential model) {
         this.firstMomentum = new float[Parameters.TOTAL_SYNAPSES + Parameters.TOTAL_KERNELS];
         this.secondMomentum = new float[Parameters.TOTAL_SYNAPSES + Parameters.TOTAL_KERNELS];
+    }
+
+    @Override
+    public void serialize(DataOutputStream dataOutputStream) throws Exception {
+        super.serialize(dataOutputStream);
+        dataOutputStream.writeFloat(beta1);
+        dataOutputStream.writeFloat(beta2);
+        dataOutputStream.writeFloat(epsilon);
+    }
+
+    @Override
+    public void deserialize(DataInputStream dataInputStream) throws Exception {
+        super.deserialize(dataInputStream);
+        this.beta1 = dataInputStream.readFloat();
+        this.beta2 = dataInputStream.readFloat();
+        this.epsilon = dataInputStream.readFloat();
     }
 
     @Override

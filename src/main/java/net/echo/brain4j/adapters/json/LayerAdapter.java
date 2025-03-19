@@ -1,4 +1,4 @@
-package net.echo.brain4j.adapters;
+package net.echo.brain4j.adapters.json;
 
 import com.google.gson.*;
 import net.echo.brain4j.activation.Activations;
@@ -16,7 +16,7 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
         JsonObject object = new JsonObject();
 
         object.addProperty("type", layer.getClass().getSimpleName());
-        object.addProperty("activation", layer.getActivation().name());
+        object.addProperty("activation", layer.getActivation().getName());
 
         if (layer instanceof DenseLayer denseLayer) {
             object.addProperty("neurons", denseLayer.getNeurons().size());
@@ -30,7 +30,7 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
     }
 
     @Override
-    public Layer<?, ?>deserialize(JsonElement element, Type type, JsonDeserializationContext context) throws JsonParseException {
+    public Layer<?, ?> deserialize(JsonElement element, Type type, JsonDeserializationContext context) throws JsonParseException {
         String layerType = element.getAsJsonObject().get("type").getAsString();
         String activationType = element.getAsJsonObject().get("activation").getAsString();
 

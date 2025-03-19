@@ -142,12 +142,12 @@ public class TensorGPU extends Tensor {
         TensorGPU result = new TensorGPU(m, p);
         
         try {
-            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                Sizeof.cl_float * m * n, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                Sizeof.cl_float * n * p, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
-                Sizeof.cl_float * m * p, null, null);
+            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    (long) Sizeof.cl_float * m * n, Pointer.to(this.toArray()), null);
+            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    (long) Sizeof.cl_float * n * p, Pointer.to(other.toArray()), null);
+            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                    (long) Sizeof.cl_float * m * p, null, null);
             
             clSetKernelArg(matmulKernel, 0, Sizeof.cl_mem, Pointer.to(deviceA));
             clSetKernelArg(matmulKernel, 1, Sizeof.cl_mem, Pointer.to(deviceB));
@@ -158,12 +158,12 @@ public class TensorGPU extends Tensor {
             
             long[] globalWorkSize = new long[]{m, p};
             
-            clEnqueueNDRangeKernel(commandQueue, matmulKernel, 2, null, 
+            clEnqueueNDRangeKernel(commandQueue, matmulKernel, 2, null,
                 globalWorkSize, null, 0, null, null);
             
             float[] resultBuffer = new float[m * p];
-            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0, 
-                Sizeof.cl_float * m * p, Pointer.to(resultBuffer), 0, null, null);
+            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0,
+                    (long) Sizeof.cl_float * m * p, Pointer.to(resultBuffer), 0, null, null);
             
             for (int i = 0; i < m * p; i++) {
                 int row = i / p;
@@ -194,14 +194,14 @@ public class TensorGPU extends Tensor {
         }
         
         int size = numel();
+        long floatSize = (long) Sizeof.cl_float * size;
         
         try {
-            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                Sizeof.cl_float * size, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                Sizeof.cl_float * size, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
-                Sizeof.cl_float * size, null, null);
+            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    floatSize, Pointer.to(this.toArray()), null);
+            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    floatSize, Pointer.to(other.toArray()), null);
+            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY, floatSize, null, null);
             
             clSetKernelArg(elementWiseAddKernel, 0, Sizeof.cl_mem, Pointer.to(deviceA));
             clSetKernelArg(elementWiseAddKernel, 1, Sizeof.cl_mem, Pointer.to(deviceB));
@@ -214,8 +214,8 @@ public class TensorGPU extends Tensor {
                 new long[]{globalWorkSize}, null, 0, null, null);
             
             float[] resultBuffer = new float[size];
-            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0, 
-                Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
+            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0,
+                    (long) Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
             
             for (int i = 0; i < size; i++) {
                 if (thisShape.length == 1) {
@@ -250,12 +250,12 @@ public class TensorGPU extends Tensor {
         int size = numel();
         
         try {
-            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                Sizeof.cl_float * size, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                Sizeof.cl_float * size, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
-                Sizeof.cl_float * size, null, null);
+            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    (long) Sizeof.cl_float * size, Pointer.to(this.toArray()), null);
+            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    (long) Sizeof.cl_float * size, Pointer.to(other.toArray()), null);
+            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                    (long) Sizeof.cl_float * size, null, null);
             
             clSetKernelArg(elementWiseMulKernel, 0, Sizeof.cl_mem, Pointer.to(deviceA));
             clSetKernelArg(elementWiseMulKernel, 1, Sizeof.cl_mem, Pointer.to(deviceB));
@@ -268,8 +268,8 @@ public class TensorGPU extends Tensor {
                 new long[]{globalWorkSize}, null, 0, null, null);
             
             float[] resultBuffer = new float[size];
-            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0, 
-                Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
+            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0,
+                    (long) Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
             
             for (int i = 0; i < size; i++) {
                 if (thisShape.length == 1) {
