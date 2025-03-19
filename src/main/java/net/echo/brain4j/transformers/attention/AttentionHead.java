@@ -1,7 +1,8 @@
 package net.echo.brain4j.transformers.attention;
 
-import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
+import net.echo.brain4j.utils.math.tensor.Tensor;
+import net.echo.brain4j.utils.math.tensor.TensorFactory;
 import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.ArrayList;
@@ -17,6 +18,10 @@ public class AttentionHead {
     protected final float[][] queryWeights;
     protected final float[][] keyWeights;
     protected final float[][] valueWeights;
+    
+    protected Tensor queryWeightsTensor;
+    protected Tensor keyWeightsTensor;
+    protected Tensor valueWeightsTensor;
 
     public AttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension, double temperature) {
         this.inputDimension = inputDimension;
@@ -39,8 +44,8 @@ public class AttentionHead {
 
         return total;
     }
-
-    public List<Vector> attend(List<Vector> inputs) {
+    
+    public List<Vector> attendVectors(List<Vector> inputs) {
         int sequenceLength = inputs.size();
 
         List<Vector> queries = new ArrayList<>();
@@ -78,6 +83,53 @@ public class AttentionHead {
 
         return output;
     }
+    
+    public List<Vector> attend(List<Vector> inputs) {
+        return attendVectors(inputs);
+    }
+    
+    public List<Tensor> attendTensors(List<Tensor> inputs) {
+        int sequenceLength = inputs.size();
+
+        ensureWeightTensors();
+
+        List<Tensor> queries = new ArrayList<>();
+        List<Tensor> keys = new ArrayList<>();
+        List<Tensor> values = new ArrayList<>();
+
+        for (Tensor token : inputs) {
+            queries.add(token.matmul(queryWeightsTensor));
+            keys.add(token.matmul(keyWeightsTensor));
+            values.add(token.matmul(valueWeightsTensor));
+        }
+
+        List<Tensor> output = new ArrayList<>();
+        double scale = Math.sqrt(headDimension);
+
+        for (int i = 0; i < sequenceLength; i++) {
+            Tensor query = queries.get(i);
+            List<Double> scoreList = new ArrayList<>();
+
+            for (int j = 0; j < sequenceLength; j++) {
+                double score = query.dot(keys.get(j)) / scale;
+                scoreList.add(score);
+            }
+
+            Vector attentionWeightsVec = softmax(scoreList);
+            Tensor attentionWeights = TensorFactory.vector(attentionWeightsVec);
+            
+            Tensor headOutput = TensorFactory.zeros(headDimension);
+
+            for (int j = 0; j < sequenceLength; j++) {
+                Tensor weightedValue = values.get(j).mul(attentionWeights.get(j));
+                headOutput = headOutput.add(weightedValue);
+            }
+
+            output.add(headOutput);
+        }
+
+        return output;
+    }
 
     protected void initializeWeights(WeightInitializer initializer) {
         Random rng = new Random();
@@ -91,6 +143,32 @@ public class AttentionHead {
                 valueWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
             }
         }
+    }
+    
+    protected void ensureWeightTensors() {
+        if (queryWeightsTensor == null) {
+            float[] qWeights = matrixToArray(queryWeights);
+            float[] kWeights = matrixToArray(keyWeights);
+            float[] vWeights = matrixToArray(valueWeights);
+            
+            queryWeightsTensor = TensorFactory.of(new int[]{inputDimension, headDimension}, qWeights);
+            keyWeightsTensor = TensorFactory.of(new int[]{inputDimension, headDimension}, kWeights);
+            valueWeightsTensor = TensorFactory.of(new int[]{inputDimension, headDimension}, vWeights);
+        }
+    }
+    
+    private float[] matrixToArray(float[][] matrix) {
+        int rows = matrix.length;
+        int cols = matrix[0].length;
+        float[] result = new float[rows * cols];
+        
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result[i * cols + j] = matrix[i][j];
+            }
+        }
+        
+        return result;
     }
 
     protected Vector multiply(Vector vector, float[][] weights) {
