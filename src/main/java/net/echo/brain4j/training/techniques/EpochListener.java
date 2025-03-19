@@ -11,7 +11,7 @@ public class EpochListener<R> extends TrainListener<R> {
 
     @Override
     public void onLossIncreased(double loss, double previousLoss) {
-        System.out.println("Loss increase!");
+        super.onLossIncreased(loss, previousLoss);
         trainer.abort();
     }
 }

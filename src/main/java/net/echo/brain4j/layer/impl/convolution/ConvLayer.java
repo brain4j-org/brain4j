@@ -124,9 +124,9 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
     public void propagate(StatesCache cache, Layer<?, ?> previous) {
         Kernel featureMap = cache.getFeatureMap(this);
 
-        switch (nextLayer) {
+        switch (previous) {
             case ConvLayer nextConvLayer -> propagateConv(cache, nextConvLayer, featureMap);
-            case FlattenLayer ignored -> propagateFlatten(cache, featureMap);
+            case FlattenLayer ignored -> propagateFlatten(cache, featureMap, previous);
             case PoolingLayer poolingLayer -> propagatePooling(cache, poolingLayer, featureMap);
             default -> throw new UnsupportedOperationException("Propagation not support for " + nextLayer.getClass().getSimpleName());
         }
@@ -184,7 +184,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         updateParameters(cache, optimizer, deltaUnpooled);
     }
 
-    private void propagateFlatten(StatesCache cache, Kernel featureMap) {
+    private void propagateFlatten(StatesCache cache, Kernel featureMap, Layer<?, ?> nextLayer) {
         List<Neuron> neurons = nextLayer.getNeurons();
         Kernel deltaKernel = new Kernel(featureMap.getWidth(), featureMap.getHeight());
 

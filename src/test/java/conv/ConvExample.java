@@ -37,7 +37,7 @@ public class ConvExample {
 
         SmartTrainer<DataRow> trainer = new SmartTrainer(1, 1);
         trainer.addListener(new EpochListener<>());
-        trainer.startFor(model, dataSet, 100, 0.000001);
+        trainer.startFor(model, dataSet, 20, 0.000001);
 
         EvaluationResult result = model.evaluate(dataSet);
         System.out.println(result.confusionMatrix());
@@ -64,10 +64,11 @@ public class ConvExample {
 
                 // Classifiers
                 new DenseLayer(32, Activations.MISH),
+                new DenseLayer(32, Activations.MISH),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        return model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.01));
+        return model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.001));
     }
 
     private DataSet<DataRow> getDataSet() throws IOException {
@@ -79,7 +80,7 @@ public class ConvExample {
         AtomicInteger i = new AtomicInteger();
 
         parser.forEach(record -> {
-            if (i.get() > 150 * 2) return;
+            if (i.get() >= 150 * 10) return;
 
             List<String> columns = record.toList();
 
