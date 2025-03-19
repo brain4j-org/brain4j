@@ -7,7 +7,7 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 public class NormalUpdater extends Updater {
 

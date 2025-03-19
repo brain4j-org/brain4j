@@ -1,7 +1,7 @@
 package net.echo.brain4j.loss.impl;
 
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 public class MeanSquaredError implements LossFunction {
 

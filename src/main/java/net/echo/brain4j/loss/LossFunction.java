@@ -1,6 +1,6 @@
 package net.echo.brain4j.loss;
 
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 /**
  * Also known as cost function is used to evaluate the model's performance while training.
