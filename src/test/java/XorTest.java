@@ -4,42 +4,38 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.Vector;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class XorExample {
+public class XorTest {
 
-    public static void main(String[] args) {
-        XorExample example = new XorExample();
-        example.start();
-    }
-
-    private void start() {
+    @Test
+    void testXorModel() {
         Sequential model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
-        System.out.println(model.getStats());
-
-        long start = System.nanoTime();
         model.fit(dataSet, 1000);
-        double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.println("Loss: " + model.loss(dataSet));
-        System.out.println("Took: " + took + " ms");
+        EvaluationResult result = model.evaluate(dataSet);
+        double loss = model.loss(dataSet);
 
-        var result = model.evaluate(dataSet);
-
+        System.out.println("Loss: " + loss);
         System.out.println(result.confusionMatrix());
+
+        assertTrue(loss < 0.001, "Loss is too high! " + loss);
     }
 
     private Sequential getModel() {
         Sequential model = new Sequential(
-                new DenseLayer(2, Activations.LINEAR), // 2 Input neurons
-                new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
-                new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
-                new DenseLayer(1, Activations.SIGMOID) // 1 Output neuron for classification
+                new DenseLayer(2, Activations.LINEAR),
+                new DenseLayer(32, Activations.MISH),
+                new DenseLayer(32, Activations.MISH),
+                new DenseLayer(1, Activations.SIGMOID)
         );
 
         return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new AdamW(0.1), new StochasticUpdater());
@@ -51,7 +47,6 @@ public class XorExample {
         for (int x = 0; x < 2; x++) {
             for (int y = 0; y < 2; y++) {
                 int output = x ^ y;
-
                 set.add(new DataRow(Vector.of(x, y), Vector.of(output)));
             }
         }
