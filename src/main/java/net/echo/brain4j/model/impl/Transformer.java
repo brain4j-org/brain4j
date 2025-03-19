@@ -13,12 +13,15 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.utils.DataSet;
+import net.echo.brain4j.utils.math.tensor.Tensor;
+import net.echo.brain4j.utils.math.tensor.TensorFactory;
 import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
 
@@ -77,7 +80,16 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
 
         for (Layer<?, ?> layer : layers) {
             if (layer instanceof TransformerEncoder encoder) {
-                result = encoder.forward(cache, layer, input);
+                // TODO: temporary fix, must be replaced
+                List<Tensor> tensorInput = input.stream()
+                    .map(TensorFactory::vector)
+                    .toList();
+                
+                List<Tensor> tensorOutput = encoder.forward(cache, layer, tensorInput);
+                
+                result = tensorOutput.stream()
+                    .map(tensor -> Vector.of(tensor.toArray()))
+                    .toList();
             }
         }
 
