@@ -21,7 +21,7 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package net.echo.brain4j.utils;
+package net.echo.brain4j.utils.math.vector;
 
 import java.util.Arrays;
 import java.util.Iterator;

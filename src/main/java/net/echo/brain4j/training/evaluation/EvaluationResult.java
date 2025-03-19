@@ -1,6 +1,6 @@
 package net.echo.brain4j.training.evaluation;
 
-import net.echo.brain4j.utils.Vector;
+import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.util.Map;
 
