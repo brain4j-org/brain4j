@@ -1,18 +1,16 @@
 package tensor;
 
-import static net.echo.brain4j.utils.math.tensor.TensorFactory.*;
-
-import net.echo.brain4j.utils.math.tensor.Tensor;
-import net.echo.brain4j.utils.math.tensor.TensorGPU;
-import net.echo.brain4j.utils.opencl.DeviceUtils;
-import net.echo.brain4j.utils.opencl.GPUProfiler;
-
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math4j.math.tensor.TensorGPU;
+import net.echo.math4j.opencl.DeviceUtils;
+import net.echo.math4j.opencl.GPUProfiler;
 
 public class TensorGPUTest {
 
     public static void main(String[] args) {
         System.out.println("GPU acceleration available: " + TensorGPU.isGpuAvailable());
-        System.out.println("Using GPU: " + isUsingGPU());
+        System.out.println("Using GPU: " + TensorFactory.isUsingGPU());
         
         if (TensorGPU.isGpuAvailable()) {
             GPUProfiler.printDeviceInfo(DeviceUtils.getDevice());
@@ -28,14 +26,14 @@ public class TensorGPUTest {
         int p = 1000;
         
         System.out.println("\n=== Matrix multiplication (" + m + "x" + n + ") * (" + n + "x" + p + ") ===");
-        
-        forceCPU();
-        Tensor cpuA = random(m, n);
-        Tensor cpuB = random(n, p);
-        
-        useGPUIfAvailable();
-        Tensor gpuA = random(m, n);
-        Tensor gpuB = random(n, p);
+
+        TensorFactory.forceCPU();
+        Tensor cpuA = TensorFactory.random(m, n);
+        Tensor cpuB = TensorFactory.random(n, p);
+
+        TensorFactory.useGPUIfAvailable();
+        Tensor gpuA = TensorFactory.random(m, n);
+        Tensor gpuB = TensorFactory.random(n, p);
         
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
@@ -69,15 +67,15 @@ public class TensorGPUTest {
     
     private static void benchmarkLargeMatrixMultiplication(int m, int n, int p) {
         System.out.println("\n=== Large matrix multiplication (" + m + "x" + n + ") * (" + n + "x" + p + ") ===");
-        
-        forceCPU();
+
+        TensorFactory.forceCPU();
         System.out.println("Creating matrices...");
-        Tensor cpuA = ones(m, n);
-        Tensor cpuB = ones(n, p);  
-        
-        useGPUIfAvailable();
-        Tensor gpuA = ones(m, n);
-        Tensor gpuB = ones(n, p);
+        Tensor cpuA = TensorFactory.ones(m, n);
+        Tensor cpuB = TensorFactory.ones(n, p);
+
+        TensorFactory.useGPUIfAvailable();
+        Tensor gpuA = TensorFactory.ones(m, n);
+        Tensor gpuB = TensorFactory.ones(n, p);
         
         System.out.println("Benchmark CPU in progress...");
         long cpuStart = System.currentTimeMillis();

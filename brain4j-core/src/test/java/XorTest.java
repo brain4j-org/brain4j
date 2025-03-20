@@ -8,8 +8,8 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
-import net.echo.brain4j.utils.DataSet;
-import net.echo.brain4j.math.vector.Vector;
+import net.echo.math4j.DataSet;
+import net.echo.math4j.math.vector.Vector;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;

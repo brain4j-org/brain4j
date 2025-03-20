@@ -9,8 +9,8 @@ import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.techniques.EpochListener;
 import net.echo.brain4j.training.techniques.SmartTrainer;
-import net.echo.brain4j.utils.DataSet;
-import net.echo.brain4j.math.vector.Vector;
+import net.echo.math4j.DataSet;
+import net.echo.math4j.math.vector.Vector;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;

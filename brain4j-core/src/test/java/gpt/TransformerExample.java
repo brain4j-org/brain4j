@@ -4,7 +4,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.transformers.TransformerEncoder;
-import net.echo.brain4j.math.vector.Vector;
+import net.echo.math4j.math.vector.Vector;
 
 import java.io.IOException;
 import java.nio.file.Files;
