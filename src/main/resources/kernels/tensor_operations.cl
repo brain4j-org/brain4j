@@ -93,9 +93,10 @@ __kernel void convolve1d(
         float sum = 0.0f;
         int inputPos = i * stride - padding;
         
-        int k = 0;
         int kStart = max(0, -inputPos);
         int kEnd = min(kernelSize, inputSize - inputPos);
+        
+        int k = kStart;
         
         for (; k + 3 < kEnd; k += 4) {
             if (inputPos + k >= 0 && inputPos + k + 3 < inputSize) {
@@ -126,7 +127,10 @@ __kernel void convolve1d(
         }
         
         for (; k < kEnd; k++) {
-            sum += input[inputPos + k] * kernel[kernelSize - 1 - k];
+            int pos = inputPos + k;
+            if (pos >= 0 && pos < inputSize) {
+                sum += input[pos] * kernel[kernelSize - 1 - k];
+            }
         }
         
         output[i] = sum;
@@ -148,11 +152,18 @@ __kernel void convolve2d(
 ) {
     const int row = get_global_id(0);
     const int col = get_global_id(1);
+    const int local_row = get_local_id(0);
+    const int local_col = get_local_id(1);
+    
+    const int LOCAL_SIZE = 16;
+    
+    /*
+    * __local float local_input[LOCAL_SIZE + 16][LOCAL_SIZE + 16];
+    * __local float local_kernel[16][16];
+    */
     
     if (row < outputRows && col < outputCols) {
         float sum = 0.0f;
-        
-        #define LOCAL_SIZE 16
         
         for (int ki = 0; ki < kernelRows; ki++) {
             int inputRowPos = row * stride + ki - padding;
@@ -161,9 +172,11 @@ __kernel void convolve2d(
                 int inputRowOffset = inputRowPos * inputCols;
                 int kernelRowOffset = (kernelRows - 1 - ki) * kernelCols;
                 
-                int kj = 0;
+                int colStart = max(0, padding - col * stride);
+                int colEnd = min(kernelCols, inputCols + padding - col * stride);
+                int kj = colStart;
                 
-                for (; kj + 3 < kernelCols; kj += 4) {
+                for (; kj + 3 < colEnd; kj += 4) {
                     int colPos0 = col * stride + kj - padding;
                     int colPos1 = col * stride + kj + 1 - padding;
                     int colPos2 = col * stride + kj + 2 - padding;
@@ -184,7 +197,7 @@ __kernel void convolve2d(
                                          kernel[kernelRowOffset + (kernelCols - 1 - (kj + 3))];
                 }
                 
-                for (; kj < kernelCols; kj++) {
+                for (; kj < colEnd; kj++) {
                     int inputColPos = col * stride + kj - padding;
                     
                     if (inputColPos >= 0 && inputColPos < inputCols) {
