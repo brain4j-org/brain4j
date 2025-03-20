@@ -76,3 +76,125 @@ __kernel void element_wise_mul(
         C[i] = A[i] * B[i];
     }
 }
+
+__kernel void convolve1d(
+    __global const float* input,
+    __global const float* kernel,
+    __global float* output,
+    const int inputSize,
+    const int kernelSize,
+    const int outputSize, 
+    const int stride,
+    const int padding
+) {
+    const int i = get_global_id(0);
+    
+    if (i < outputSize) {
+        float sum = 0.0f;
+        int inputPos = i * stride - padding;
+        
+        int k = 0;
+        int kStart = max(0, -inputPos);
+        int kEnd = min(kernelSize, inputSize - inputPos);
+        
+        for (; k + 3 < kEnd; k += 4) {
+            if (inputPos + k >= 0 && inputPos + k + 3 < inputSize) {
+                float4 inputVec = (float4)(
+                    input[inputPos + k],
+                    input[inputPos + k + 1],
+                    input[inputPos + k + 2],
+                    input[inputPos + k + 3]
+                );
+                
+                float4 kernelVec = (float4)(
+                    kernel[kernelSize - 1 - k],
+                    kernel[kernelSize - 1 - (k + 1)],
+                    kernel[kernelSize - 1 - (k + 2)],
+                    kernel[kernelSize - 1 - (k + 3)]
+                );
+                
+                float4 result = inputVec * kernelVec;
+                sum += result.x + result.y + result.z + result.w;
+            } else {
+                for (int j = 0; j < 4; j++) {
+                    int pos = inputPos + k + j;
+                    if (pos >= 0 && pos < inputSize) {
+                        sum += input[pos] * kernel[kernelSize - 1 - (k + j)];
+                    }
+                }
+            }
+        }
+        
+        for (; k < kEnd; k++) {
+            sum += input[inputPos + k] * kernel[kernelSize - 1 - k];
+        }
+        
+        output[i] = sum;
+    }
+}
+
+__kernel void convolve2d(
+    __global const float* input,
+    __global const float* kernel,
+    __global float* output,
+    const int inputRows,
+    const int inputCols,
+    const int kernelRows,
+    const int kernelCols,
+    const int outputRows,
+    const int outputCols,
+    const int stride,
+    const int padding
+) {
+    const int row = get_global_id(0);
+    const int col = get_global_id(1);
+    
+    if (row < outputRows && col < outputCols) {
+        float sum = 0.0f;
+        
+        #define LOCAL_SIZE 16
+        
+        for (int ki = 0; ki < kernelRows; ki++) {
+            int inputRowPos = row * stride + ki - padding;
+            
+            if (inputRowPos >= 0 && inputRowPos < inputRows) {
+                int inputRowOffset = inputRowPos * inputCols;
+                int kernelRowOffset = (kernelRows - 1 - ki) * kernelCols;
+                
+                int kj = 0;
+                
+                for (; kj + 3 < kernelCols; kj += 4) {
+                    int colPos0 = col * stride + kj - padding;
+                    int colPos1 = col * stride + kj + 1 - padding;
+                    int colPos2 = col * stride + kj + 2 - padding;
+                    int colPos3 = col * stride + kj + 3 - padding;
+                    
+                    bool validCol0 = colPos0 >= 0 && colPos0 < inputCols;
+                    bool validCol1 = colPos1 >= 0 && colPos1 < inputCols;
+                    bool validCol2 = colPos2 >= 0 && colPos2 < inputCols;
+                    bool validCol3 = colPos3 >= 0 && colPos3 < inputCols;
+                    
+                    if (validCol0) sum += input[inputRowOffset + colPos0] * 
+                                         kernel[kernelRowOffset + (kernelCols - 1 - kj)];
+                    if (validCol1) sum += input[inputRowOffset + colPos1] * 
+                                         kernel[kernelRowOffset + (kernelCols - 1 - (kj + 1))];
+                    if (validCol2) sum += input[inputRowOffset + colPos2] * 
+                                         kernel[kernelRowOffset + (kernelCols - 1 - (kj + 2))];
+                    if (validCol3) sum += input[inputRowOffset + colPos3] * 
+                                         kernel[kernelRowOffset + (kernelCols - 1 - (kj + 3))];
+                }
+                
+                for (; kj < kernelCols; kj++) {
+                    int inputColPos = col * stride + kj - padding;
+                    
+                    if (inputColPos >= 0 && inputColPos < inputCols) {
+                        sum += input[inputRowOffset + inputColPos] * 
+                              kernel[kernelRowOffset + (kernelCols - 1 - kj)];
+                    }
+                }
+            }
+        }
+        
+        output[row * outputCols + col] = sum;
+    }
+}
