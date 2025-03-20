@@ -1,5 +1,6 @@
 package net.echo.brain4j.adapters;
 
+import com.github.luben.zstd.Zstd;
 import net.echo.math4j.MLUtils;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
@@ -52,6 +53,7 @@ public class ModernAdapter {
         byte[] bytes = outputStream.toByteArray();
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+            //byte[] compressed = compress(bytes);
             fileOutputStream.write(bytes);
         }
     }
@@ -62,6 +64,9 @@ public class ModernAdapter {
 
     public static <T extends Model<?, ?, ?>> T deserialize(File file, T model) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            //byte[] bytes = decompress(fileInputStream.readAllBytes());
+
+            // DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
             DataInputStream dataStream = new DataInputStream(fileInputStream);
             int seed = dataStream.readInt();
 
@@ -105,5 +110,14 @@ public class ModernAdapter {
             model.reloadWeights();
             return model;
         }
+    }
+
+    public static byte[] compress(byte[] data) {
+        return Zstd.compress(data);
+    }
+
+    public static byte[] decompress(byte[] data) {
+        long decompressedSize = Zstd.decompressedSize(data);
+        return Zstd.decompress(data, (int) decompressedSize);
     }
 }

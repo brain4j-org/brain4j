@@ -21,6 +21,8 @@ public class XorTest {
         // Remove the comment if you would like to use the GPU
         // TensorFactory.useGPUIfAvailable();
 
+        // Remove the comment if you want to use a pre-trained model
+        // Sequential model = ModernAdapter.deserialize("xor.bin", new Sequential());
         Sequential model = getModel();
         DataSet<DataRow> dataSet = getDataSet();
 
