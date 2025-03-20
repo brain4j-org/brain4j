@@ -1,40 +1,32 @@
 plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id "java"
+    id "com.gradleup.shadow" version "9.0.0-beta10"
 }
 
 group = 'net.echo'
-version = '2.6.0'
+version = '2.7.0'
 
-repositories {
-    mavenCentral()
-}
+subprojects {
+    apply plugin: 'java'
 
-dependencies {
-    implementation 'com.github.luben:zstd-jni:1.5.7-2'
-    implementation 'com.google.guava:guava:32.1.2-jre'
-    implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'commons-io:commons-io:2.18.0'
-    implementation 'org.jocl:jocl:2.0.5'
+    repositories {
+        mavenCentral()
+    }
 
-    testImplementation 'org.apache.commons:commons-csv:1.10.0'
-    testImplementation 'org.jfree:jfreechart:1.5.3'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-}
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
 
-test {
-    useJUnitPlatform()
-}
-
-java {
-    toolchain {
-        sourceCompatibility = '21'
-        targetCompatibility = '21'
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
-shadowJar {
-    archiveBaseName.set('brain4j')
-    archiveClassifier.set('')
-    archiveVersion.set(version)
+tasks.register('buildAll') {
+    dependsOn ':brain4j-math:shadowJar', ':brain4j-core:shadowJar'
+
+    doLast {
+        println 'Completed build for both math and core.'
+    }
 }

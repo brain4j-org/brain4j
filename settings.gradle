@@ -1,2 +1,3 @@
-rootProject.name = 'Brain4J'
+rootProject.name = 'brain4j'
 
+include 'brain4j-core', 'brain4j-math', 'brain4j-test'

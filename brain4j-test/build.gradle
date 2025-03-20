@@ -1,0 +1,11 @@
+dependencies {
+    testImplementation project(":brain4j-core")
+
+    testImplementation 'org.apache.commons:commons-csv:1.10.0'
+    testImplementation 'org.jfree:jfreechart:1.5.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+}
+
+test {
+    useJUnitPlatform()
+}
