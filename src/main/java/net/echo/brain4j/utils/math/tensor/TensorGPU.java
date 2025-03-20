@@ -10,13 +10,13 @@ import java.util.Arrays;
 import static org.jocl.CL.*;
 
 public class TensorGPU extends Tensor {
-    
-    private static cl_context context;
-    private static cl_command_queue commandQueue;
-    private static cl_kernel matmulKernel;
-    private static cl_kernel elementWiseAddKernel;
-    private static cl_kernel elementWiseMulKernel;
-    private static boolean initialized = false;
+
+    private static cl_kernel MAT_MULT_KERNEL;
+    private static cl_kernel ELEMENT_WISE_ADD_KERNEL;
+    private static cl_kernel ELEMENT_WISE_MULT_KERNEL;
+    private static cl_context CONTEXT;
+    private static cl_command_queue COMMAND_QUEUE;
+    private static boolean INITIALIZED = false;
     
     static {
         try {
@@ -27,46 +27,52 @@ public class TensorGPU extends Tensor {
     }
     
     private static void initializeOpenCL() {
-        if (initialized) return;
+        if (INITIALIZED) {
+            throw new UnsupportedOperationException("OpenCL already initialized!");
+        }
         
         try {
             CL.setExceptionsEnabled(true);
             
             cl_device_id device = DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU);
+
             if (device == null) {
                 System.out.println("No GPU device found, falling back to CPU");
                 device = DeviceUtils.findDevice(DeviceUtils.DeviceType.CPU);
             }
             
             cl_device_id[] devices = {device};
-            context = clCreateContext(null, 1, devices, null, null, null);
+            CONTEXT = clCreateContext(null, 1, devices, null, null, null);
             // TODO: Replace clCreateCommandQueue with a non-deprecated call
-            commandQueue = clCreateCommandQueue(context, device, 0, null);
+            // We can't because MacBook do not support it
+            COMMAND_QUEUE = clCreateCommandQueue(CONTEXT, device, 0, null);
             
             String kernelSource = loadKernelSource("tensor_operations.cl");
-            cl_program program = clCreateProgramWithSource(context, 1, new String[] {kernelSource}, null, null);
+            cl_program program = clCreateProgramWithSource(CONTEXT, 1, new String[] {kernelSource}, null, null);
             
             try {
                 clBuildProgram(program, 0, null, null, null, null);
             } catch (CLException e) {
                 long[] logSize = new long[1];
                 clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, null, logSize);
+
                 byte[] logData = new byte[(int)logSize[0]];
                 clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, logData.length, Pointer.to(logData), null);
+
                 System.err.println("Build log: " + new String(logData));
                 throw e;
             }
             
-            matmulKernel = clCreateKernel(program, "matmul", null);
-            elementWiseAddKernel = clCreateKernel(program, "element_wise_add", null);
-            elementWiseMulKernel = clCreateKernel(program, "element_wise_mul", null);
+            MAT_MULT_KERNEL = clCreateKernel(program, "matmul", null);
+            ELEMENT_WISE_ADD_KERNEL = clCreateKernel(program, "element_wise_add", null);
+            ELEMENT_WISE_MULT_KERNEL = clCreateKernel(program, "element_wise_mul", null);
             
-            initialized = true;
+            INITIALIZED = true;
             System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
         } catch (Exception e) {
             System.err.println("Failed to initialize OpenCL: " + e.getMessage());
             e.printStackTrace();
-            initialized = false;
+            INITIALIZED = false;
         }
     }
     
@@ -101,9 +107,11 @@ public class TensorGPU extends Tensor {
     
     public static TensorGPU of(int[] shape, float... data) {
         TensorGPU tensor = new TensorGPU(shape);
+
         for (int i = 0; i < data.length; i++) {
             tensor.set(data[i], i);
         }
+
         return tensor;
     }
     
@@ -113,12 +121,12 @@ public class TensorGPU extends Tensor {
     
     
     public static boolean isGpuAvailable() {
-        return initialized;
+        return INITIALIZED;
     }
     
     @Override
     public Tensor matmul(Tensor other) {
-        if (!initialized) {
+        if (!INITIALIZED) {
             return super.matmul(other); 
         }
         
@@ -134,35 +142,33 @@ public class TensorGPU extends Tensor {
         int p = otherShape[1]; 
         
         if (n != otherShape[0]) {
-            throw new IllegalArgumentException(
-                "The inner dimensions do not match: " + n + " != " + otherShape[0]
-            );
+            throw new IllegalArgumentException("The inner dimensions do not match: " + n + " != " + otherShape[0]);
         }
         
         TensorGPU result = new TensorGPU(m, p);
         
         try {
-            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            cl_mem deviceA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * m * n, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            cl_mem deviceB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * n * p, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+            cl_mem deviceC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
                     (long) Sizeof.cl_float * m * p, null, null);
             
-            clSetKernelArg(matmulKernel, 0, Sizeof.cl_mem, Pointer.to(deviceA));
-            clSetKernelArg(matmulKernel, 1, Sizeof.cl_mem, Pointer.to(deviceB));
-            clSetKernelArg(matmulKernel, 2, Sizeof.cl_mem, Pointer.to(deviceC));
-            clSetKernelArg(matmulKernel, 3, Sizeof.cl_int, Pointer.to(new int[]{m}));
-            clSetKernelArg(matmulKernel, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
-            clSetKernelArg(matmulKernel, 5, Sizeof.cl_int, Pointer.to(new int[]{p}));
+            clSetKernelArg(MAT_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(deviceA));
+            clSetKernelArg(MAT_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
+            clSetKernelArg(MAT_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
+            clSetKernelArg(MAT_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{m}));
+            clSetKernelArg(MAT_MULT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
+            clSetKernelArg(MAT_MULT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[]{p}));
             
             long[] globalWorkSize = new long[]{m, p};
             
-            clEnqueueNDRangeKernel(commandQueue, matmulKernel, 2, null,
+            clEnqueueNDRangeKernel(COMMAND_QUEUE, MAT_MULT_KERNEL, 2, null,
                 globalWorkSize, null, 0, null, null);
             
             float[] resultBuffer = new float[m * p];
-            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0,
+            clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
                     (long) Sizeof.cl_float * m * p, Pointer.to(resultBuffer), 0, null, null);
             
             for (int i = 0; i < m * p; i++) {
@@ -189,7 +195,7 @@ public class TensorGPU extends Tensor {
         int[] thisShape = shape();
         int[] otherShape = other.shape();
         
-        if (!initialized || !Arrays.equals(thisShape, otherShape)) {
+        if (!INITIALIZED || !Arrays.equals(thisShape, otherShape)) {
             return super.add(other); 
         }
         
@@ -197,24 +203,24 @@ public class TensorGPU extends Tensor {
         long floatSize = (long) Sizeof.cl_float * size;
         
         try {
-            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            cl_mem deviceA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     floatSize, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            cl_mem deviceB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     floatSize, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY, floatSize, null, null);
+            cl_mem deviceC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY, floatSize, null, null);
             
-            clSetKernelArg(elementWiseAddKernel, 0, Sizeof.cl_mem, Pointer.to(deviceA));
-            clSetKernelArg(elementWiseAddKernel, 1, Sizeof.cl_mem, Pointer.to(deviceB));
-            clSetKernelArg(elementWiseAddKernel, 2, Sizeof.cl_mem, Pointer.to(deviceC));
-            clSetKernelArg(elementWiseAddKernel, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 0, Sizeof.cl_mem, Pointer.to(deviceA));
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
             
             long globalWorkSize = size;
             
-            clEnqueueNDRangeKernel(commandQueue, elementWiseAddKernel, 1, null, 
+            clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_ADD_KERNEL, 1, null,
                 new long[]{globalWorkSize}, null, 0, null, null);
             
             float[] resultBuffer = new float[size];
-            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0,
+            clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
                     (long) Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
             
             for (int i = 0; i < size; i++) {
@@ -243,32 +249,32 @@ public class TensorGPU extends Tensor {
         int[] thisShape = shape();
         int[] otherShape = other.shape();
         
-        if (!initialized || !Arrays.equals(thisShape, otherShape)) {
+        if (!INITIALIZED || !Arrays.equals(thisShape, otherShape)) {
             return super.mul(other); 
         }
         
         int size = numel();
         
         try {
-            cl_mem deviceA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            cl_mem deviceA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * size, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            cl_mem deviceB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * size, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+            cl_mem deviceC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
                     (long) Sizeof.cl_float * size, null, null);
             
-            clSetKernelArg(elementWiseMulKernel, 0, Sizeof.cl_mem, Pointer.to(deviceA));
-            clSetKernelArg(elementWiseMulKernel, 1, Sizeof.cl_mem, Pointer.to(deviceB));
-            clSetKernelArg(elementWiseMulKernel, 2, Sizeof.cl_mem, Pointer.to(deviceC));
-            clSetKernelArg(elementWiseMulKernel, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(deviceA));
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
             
             long globalWorkSize = size;
             
-            clEnqueueNDRangeKernel(commandQueue, elementWiseMulKernel, 1, null, 
+            clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_MULT_KERNEL, 1, null,
                 new long[]{globalWorkSize}, null, 0, null, null);
             
             float[] resultBuffer = new float[size];
-            clEnqueueReadBuffer(commandQueue, deviceC, CL_TRUE, 0,
+            clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
                     (long) Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
             
             for (int i = 0; i < size; i++) {
@@ -294,20 +300,20 @@ public class TensorGPU extends Tensor {
     
     
     public static void releaseGPUResources() {
-        if (initialized) {
+        if (INITIALIZED) {
             try {
-                if (matmulKernel != null) clReleaseKernel(matmulKernel);
-                if (elementWiseAddKernel != null) clReleaseKernel(elementWiseAddKernel);
-                if (elementWiseMulKernel != null) clReleaseKernel(elementWiseMulKernel);
-                if (commandQueue != null) clReleaseCommandQueue(commandQueue);
-                if (context != null) clReleaseContext(context);
+                if (MAT_MULT_KERNEL != null) clReleaseKernel(MAT_MULT_KERNEL);
+                if (ELEMENT_WISE_ADD_KERNEL != null) clReleaseKernel(ELEMENT_WISE_ADD_KERNEL);
+                if (ELEMENT_WISE_MULT_KERNEL != null) clReleaseKernel(ELEMENT_WISE_MULT_KERNEL);
+                if (COMMAND_QUEUE != null) clReleaseCommandQueue(COMMAND_QUEUE);
+                if (CONTEXT != null) clReleaseContext(CONTEXT);
                 
-                matmulKernel = null;
-                elementWiseAddKernel = null;
-                elementWiseMulKernel = null;
-                commandQueue = null;
-                context = null;
-                initialized = false;
+                MAT_MULT_KERNEL = null;
+                ELEMENT_WISE_ADD_KERNEL = null;
+                ELEMENT_WISE_MULT_KERNEL = null;
+                COMMAND_QUEUE = null;
+                CONTEXT = null;
+                INITIALIZED = false;
                 
                 System.out.println("GPU resources released successfully");
             } catch (Exception e) {
@@ -318,6 +324,7 @@ public class TensorGPU extends Tensor {
     
     public static void reinitializeGPU() {
         releaseGPUResources();
+
         try {
             initializeOpenCL();
         } catch (Exception e) {
@@ -327,10 +334,12 @@ public class TensorGPU extends Tensor {
     
     private static int[] linearToMultiDimIndices(int linearIndex, int[] shape) {
         int[] indices = new int[shape.length];
+
         for (int i = shape.length - 1; i >= 0; i--) {
             indices[i] = linearIndex % shape[i];
             linearIndex /= shape[i];
         }
+
         return indices;
     }
 } 

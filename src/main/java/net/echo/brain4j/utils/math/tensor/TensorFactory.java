@@ -4,16 +4,7 @@ import net.echo.brain4j.utils.math.vector.Vector;
 
 public class TensorFactory {
     
-    private static boolean useGPU = false;
-    
-    static {
-        try {
-            useGPU = TensorGPU.isGpuAvailable();
-        } catch (Throwable t) {
-            System.err.println("GPU acceleration not available: " + t.getMessage());
-            useGPU = false;
-        }
-    }
+    private static boolean useGPU;
 
     public static void forceCPU() {
         useGPU = false;
@@ -23,7 +14,6 @@ public class TensorFactory {
         try {
             useGPU = TensorGPU.isGpuAvailable();
         } catch (Throwable t) {
-            useGPU = false;
             System.err.println("GPU acceleration not available: " + t.getMessage());
         }
     }
@@ -43,9 +33,11 @@ public class TensorFactory {
     public static Tensor of(int[] shape, double... data) {
         if (useGPU) {
             float[] floatData = new float[data.length];
+
             for (int i = 0; i < data.length; i++) {
                 floatData[i] = (float) data[i];
             }
+
             return TensorGPU.of(shape, floatData);
         } else {
             return Tensor.of(shape, data);
@@ -84,7 +76,7 @@ public class TensorFactory {
     }
     
     public static Tensor random(int... shape) {
-        return useGPU ? 
+        return useGPU ?
             new TensorGPU(shape).fill(Math::random) : 
             Tensor.random(shape);
     }

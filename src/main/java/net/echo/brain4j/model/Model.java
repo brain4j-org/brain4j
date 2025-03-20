@@ -127,6 +127,7 @@ public abstract class Model<R, I, O> implements Adapter {
 
     /**
      * Evaluates the model performance on the given dataset.
+     *
      * @param dataSet dataset to evaluate
      * @return an evaluation result
      */
@@ -487,6 +488,7 @@ public abstract class Model<R, I, O> implements Adapter {
      */
     public void setSeed(int seed) {
         this.seed = seed;
+        this.generator = new Random(seed);
     }
 
     /**

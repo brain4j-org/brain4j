@@ -5,12 +5,11 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.utils.math.tensor.Tensor;
+import net.echo.brain4j.utils.math.tensor.TensorFactory;
 import net.echo.brain4j.utils.math.vector.Vector;
-import org.checkerframework.checker.units.qual.N;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,7 +17,7 @@ import java.util.List;
  */
 public class DenseLayer extends Layer<Vector, Vector> {
 
-    protected List<Vector> weights;
+    private Tensor weights;
 
     private DenseLayer() {
     }
@@ -39,19 +38,30 @@ public class DenseLayer extends Layer<Vector, Vector> {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
-        int outSize = neurons.size();
-        Vector output = new Vector(outSize);
+        Tensor zTensor = denseLayer.getWeights().matmul(input);
 
-        for (int i = 0; i < outSize; i++) {
-            double value = denseLayer.getWeights().get(i).weightedSum(input);
-            neurons.get(i).setValue(cache, value);
+        int numNeurons = zTensor.shape()[0];
+        Vector output = new Vector(numNeurons);
+
+        for (int i = 0; i < numNeurons; i++) {
+            Neuron neuron = neurons.get(i);
+
+            double z = zTensor.get(i, 0) + neuron.getBias();
+            double activatedValue = activation.activate(z);
+
+            neurons.get(i).setValue(cache, activatedValue);
+            output.set(i, activatedValue);
         }
-
-        applyFunction(cache, lastLayer);
-
-        for (int i = 0; i < getTotalNeurons(); i++) {
-            output.set(i, neurons.get(i).getValue(cache));
-        }
+//        for (int i = 0; i < outSize; i++) {
+//            double value = denseLayer.getWeights().get(i).weightedSum(input);
+//            neurons.get(i).setValue(cache, value);
+//        }
+//
+//        applyFunction(cache, lastLayer);
+//
+//        for (int i = 0; i < getTotalNeurons(); i++) {
+//            output.set(i, neurons.get(i).getValue(cache));
+//        }
 
         return output;
     }
@@ -76,11 +86,11 @@ public class DenseLayer extends Layer<Vector, Vector> {
     }
 
     @Override
-    public void updateWeights(Vector[] weights) {
-        this.weights = List.of(weights);
+    public void updateWeights(Tensor weights) {
+        this.weights = weights;
     }
 
-    public List<Vector> getWeights() {
+    public Tensor getWeights() {
         return weights;
     }
 }

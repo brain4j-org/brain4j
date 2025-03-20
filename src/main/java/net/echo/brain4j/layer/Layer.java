@@ -14,6 +14,7 @@ import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.utils.math.tensor.Tensor;
 import net.echo.brain4j.utils.math.vector.Vector;
 
 import java.io.DataInputStream;
@@ -70,7 +71,7 @@ public abstract class Layer<I, O> implements Adapter {
     public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(id);
         stream.writeInt(neurons.size());
-        stream.writeUTF(activation.getClass().toString());
+        stream.writeUTF(activation.getClass().getName());
     }
 
     @Override
@@ -123,7 +124,7 @@ public abstract class Layer<I, O> implements Adapter {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
 
-    public void updateWeights(Vector[] synapseMatrixLayer) {
+    public void updateWeights(Tensor weights) {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
 

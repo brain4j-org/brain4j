@@ -30,8 +30,6 @@ public class ModernAdapter {
         dataStream.writeUTF(model.getOptimizer().getClass().getName());
 
         model.getOptimizer().serialize(dataStream); // optimizer
-
-        dataStream.writeInt(model.getLayers().size());
         model.serialize(dataStream); // serializes layers
 
         int layers = model.getLayers().size(); // layers
@@ -77,16 +75,12 @@ public class ModernAdapter {
             Updater updater = MLUtils.newInstance(updaterClass);
             Optimizer optimizer = MLUtils.newInstance(optimizerClass);
 
-            model.setSeed(seed);
-            model.setLossFunction(lossFunction);
-            model.setWeightInit(weightInit);
-            model.setUpdater(updater);
-            model.setOptimizer(optimizer);
-
             optimizer.deserialize(dataStream);
 
+            model.setSeed(seed);
             model.deserialize(dataStream);
-            model.connect();
+
+            model.compile(weightInit, lossFunction, optimizer, updater);
 
             int layers = model.getLayers().size();
 
@@ -96,16 +90,19 @@ public class ModernAdapter {
                 List<Neuron> neurons = layer.getNeurons();
 
                 for (Neuron neuron : neurons) {
-                    neuron.setBias(dataStream.readDouble());
+                    double bias = dataStream.readDouble();
+                    neuron.setBias(bias);
                 }
 
                 List<Synapse> synapses = layer.getSynapses();
 
                 for (Synapse synapse : synapses) {
-                    synapse.setWeight(dataStream.readDouble());
+                    double weight = dataStream.readDouble();
+                    synapse.setWeight(weight);
                 }
             }
 
+            model.reloadWeights();
             return model;
         }
     }

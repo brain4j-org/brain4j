@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
 
     @SafeVarargs
-    public Transformer(Layer<List<Vector>, List<Vector>>... layers) {
+    public Transformer(Layer<List<Tensor>, List<Tensor>>... layers) {
         super(layers);
     }
 

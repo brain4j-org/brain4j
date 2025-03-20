@@ -39,9 +39,11 @@ public class Tensor implements Cloneable, Iterable<Double> {
     
     private static int computeSize(int[] shape) {
         int size = 1;
+        
         for (int dim : shape) {
             size *= dim;
         }
+        
         return size;
     }
     
@@ -70,56 +72,39 @@ public class Tensor implements Cloneable, Iterable<Double> {
                     " is out of bounds [0, " + shape[i] + ")"
                 );
             }
+
             linearIndex += indices[i] * strides[i];
         }
         return linearIndex;
     }
     
     public static Tensor of(int[] shape, float... data) {
-        int size = computeSize(shape);
-        if (data.length != size) {
-            throw new IllegalArgumentException(
-                "The length of the data (" + data.length + 
-                ") does not match the shape dimension (" + size + ")"
-            );
-        }
-        
         Tensor tensor = new Tensor(shape);
+        
         for (int i = 0; i < data.length; i++) {
             tensor.data.set(i, data[i]);
         }
+        
         return tensor;
     }
     
     public static Tensor of(int[] shape, double... data) {
-        int size = computeSize(shape);
-        if (data.length != size) {
-            throw new IllegalArgumentException(
-                "The length of the data (" + data.length + 
-                ") does not match the shape dimension (" + size + ")"
-            );
-        }
-        
         Tensor tensor = new Tensor(shape);
+        
         for (int i = 0; i < data.length; i++) {
             tensor.data.set(i, (float) data[i]);
         }
+        
         return tensor;
     }
     
     public static Tensor of(int[] shape, int... data) {
-        int size = computeSize(shape);
-        if (data.length != size) {
-            throw new IllegalArgumentException(
-                "The length of the data (" + data.length + 
-                ") does not match the shape dimension (" + size + ")"
-            );
-        }
-        
         Tensor tensor = new Tensor(shape);
+
         for (int i = 0; i < data.length; i++) {
             tensor.data.set(i, data[i]);
         }
+
         return tensor;
     }
     
@@ -610,6 +595,7 @@ public class Tensor implements Cloneable, Iterable<Double> {
         
         StringBuilder sb = new StringBuilder();
         appendTensor(sb, 0, new int[shape.length]);
+
         return sb.toString();
     }
     

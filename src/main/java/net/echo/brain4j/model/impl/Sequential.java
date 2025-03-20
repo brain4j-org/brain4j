@@ -22,6 +22,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.DataSet;
 import net.echo.brain4j.utils.MLUtils;
 import net.echo.brain4j.utils.math.tensor.Tensor;
@@ -100,32 +101,32 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
     @Override
     public Sequential compile(LossFunctions function, Optimizer optimizer) {
-        return (Sequential) super.compile(function, optimizer);
+        return compile(function.getFunction(), optimizer);
     }
 
     @Override
     public Sequential compile(LossFunction function, Optimizer optimizer) {
-        return (Sequential) super.compile(function, optimizer);
+        return compile(WeightInit.UNIFORM_XAVIER.getFunction(), function, optimizer, new StochasticUpdater());
     }
 
     @Override
     public Sequential compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        return (Sequential) super.compile(initializer, lossFunction, optimizer, updater);
-    }
-
-    @Override
-    public Sequential compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(initializer, lossFunction, optimizer, updater);
 
         this.propagation = new BackPropagation(this, optimizer, updater);
 
-        connect(initializer.getFunction(), true);
+        connect(initializer, true);
 
         this.optimizer.postInitialize(this);
         this.updater.postInitialize(this);
 
         reloadWeights();
         return this;
+    }
+
+    @Override
+    public Sequential compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+        return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
     }
 
     @Override
@@ -184,57 +185,48 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
     @Override
     public Vector predict(StatesCache cache, Vector input, boolean training) {
-        Layer<?, ?> firstLayer = layers.getFirst();
+        Layer<?, ?> workingLayer = layers.getFirst();
 
-        Preconditions.checkState(input.size() == firstLayer.getTotalNeurons(), "Input dimension does not " +
-                "match model input dimension! (Input != Expected " + input.size() + " != " + firstLayer.getTotalNeurons() + ")");
+        Preconditions.checkState(input.size() == workingLayer.getTotalNeurons(), "Input dimension does not " +
+                "match model input dimension! (Input != Expected " + input.size() + " != " + workingLayer.getTotalNeurons() + ")");
 
-        Layer<?, ?> lastLayer = firstLayer;
+        Kernel convolutionalResult = null;
+        Vector denseResult = input.clone();
 
-        Kernel convInput = null;
-        Vector denseInput = input.clone();
+        workingLayer.setInput(cache, denseResult);
 
-        firstLayer.setInput(cache, denseInput);
-
-        if (firstLayer instanceof InputLayer inputLayer) {
-            convInput = inputLayer.getImage(cache);
+        if (workingLayer instanceof InputLayer inputLayer) {
+            convolutionalResult = inputLayer.getImage(cache);
         }
 
         for (int l = 1; l < layers.size(); l++) {
             Layer<?, ?> layer = layers.get(l);
 
             if (training && layer instanceof DropoutLayer) {
-                layer.forward(cache, lastLayer, null);
+                layer.forward(cache, workingLayer, null);
                 continue;
             }
 
             if (layer instanceof ConvLayer convLayer) {
-                convInput = convLayer.forward(cache, lastLayer, convInput);
+                convolutionalResult = convLayer.forward(cache, workingLayer, convolutionalResult);
             }
 
             if (layer instanceof PoolingLayer poolingLayer) {
-                convInput = poolingLayer.forward(cache, lastLayer, convInput);
+                convolutionalResult = poolingLayer.forward(cache, workingLayer, convolutionalResult);
             }
 
             if (layer instanceof FlattenLayer flattenLayer) {
-                denseInput = flattenLayer.flatten(cache, lastLayer, convInput);
+                denseResult = flattenLayer.flatten(cache, workingLayer, convolutionalResult);
             }
 
             if (layer instanceof DenseLayer denseLayer) {
-                denseInput = denseLayer.forward(cache, lastLayer, denseInput);
+                denseResult = denseLayer.forward(cache, workingLayer, denseResult);
             }
 
-            lastLayer = layer;
+            workingLayer = layer;
         }
 
-        Layer<?, ?> outputLayer = layers.getLast();
-        Vector output = new Vector(outputLayer.getTotalNeurons());
-
-        for (int i = 0; i < output.size(); i++) {
-            output.set(i, outputLayer.getNeuronAt(i).getValue(cache));
-        }
-
-        return output;
+        return denseResult;
     }
 
     @Override
@@ -253,8 +245,8 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
                 int input = lastLayer.getTotalNeurons();
                 int output = layer.getTotalNeurons();
 
-                Vector[] synapseMatrixLayer = recalculateSynapseMatrix(lastLayer.getSynapses(), input, output);
-                lastLayer.updateWeights(synapseMatrixLayer);
+                Tensor weights = recalculateSynapseMatrix(lastLayer.getSynapses(), input, output);
+                lastLayer.updateWeights(weights);
             }
 
             lastLayer = layer;
@@ -270,27 +262,22 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
      *
      * @return the synapse matrix
      */
-    public Vector[] recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {
-        Vector[] synapseMatrix = new Vector[outSize];
+    public Tensor recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {
+        Tensor weights = TensorFactory.matrix(outSize, inSize);
 
         for (int i = 0; i < outSize; i++) {
-            Vector vector = new Vector(inSize);
-            synapseMatrix[i] = vector;
-
             for (int j = 0; j < inSize; j++) {
                 Synapse synapse = synapses.get(j * outSize + i);
-                vector.set(j, synapse.getWeight());
+                weights.set(synapse.getWeight(), i, j);
             }
         }
 
-        return synapseMatrix;
+        return weights;
     }
 
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(layers.size());
-
-        System.out.println("Writing " + layers.size());
 
         for (Layer<?, ?> layer : layers) {
             stream.writeUTF(layer.getClass().getName());
@@ -303,8 +290,6 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         int layersSize = stream.readInt();
 
         this.layers = new ArrayList<>();
-
-        System.out.println("layers size: " + layersSize);
 
         for (int i = 0; i < layersSize; i++) {
             String layerClassPath = stream.readUTF();
