@@ -66,7 +66,7 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
 
         divider = getHeader(" Confusion Matrix ");
         matrix.append(divider);
-        matrix.append("The first column is the actual class, the rows are the predicted classes.\n\n");
+        matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
         matrix.append("       ");
 
         for (int i = 0; i < classes; i++) {
