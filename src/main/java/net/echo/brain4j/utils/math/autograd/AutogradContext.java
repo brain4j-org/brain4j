@@ -3,11 +3,12 @@ package net.echo.brain4j.utils.math.autograd;
 import net.echo.brain4j.utils.math.tensor.Tensor;
 
 public class AutogradContext {
-    private boolean requiresGrad;
+
+    private final boolean requiresGrad;
+    private Tensor[] inputs;
     private Tensor grad;
     private Operation operation;
-    private Tensor[] inputs;
-    
+
     public AutogradContext(boolean requiresGrad) {
         this.requiresGrad = requiresGrad;
         this.grad = null;
@@ -43,6 +44,7 @@ public class AutogradContext {
         
         if (operation != null) {
             Tensor[] inputGrads = operation.backward(gradOutput, inputs);
+
             for (int i = 0; i < inputs.length; i++) {
                 if (inputs[i].requiresGrad()) {
                     inputs[i].backward(inputGrads[i]);
