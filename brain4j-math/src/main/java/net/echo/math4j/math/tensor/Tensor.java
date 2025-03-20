@@ -1,10 +1,10 @@
 package net.echo.math4j.math.tensor;
 
-import net.echo.math4j.math.autograd.AutogradContext;
-import net.echo.math4j.math.autograd.Operation;
+import net.echo.math4j.math.tensor.autograd.AutogradContext;
+import net.echo.math4j.math.tensor.autograd.Operation;
+import net.echo.math4j.math.tensor.autograd.operations.*;
 import net.echo.math4j.math.tensor.index.Range;
 import net.echo.math4j.math.vector.Vector;
-import net.echo.math4j.math.autograd.operations.*;
 
 import java.util.Arrays;
 import java.util.Iterator;

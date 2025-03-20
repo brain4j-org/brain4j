@@ -1,7 +1,7 @@
-package net.echo.math4j.math.autograd.operations;
+package net.echo.math4j.math.tensor.autograd.operations;
 
-import net.echo.math4j.math.autograd.Operation;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.autograd.Operation;
 
 public class MatMulOperation implements Operation {
     @Override

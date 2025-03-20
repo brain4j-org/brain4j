@@ -1,4 +1,4 @@
-package net.echo.math4j.math.autograd;
+package net.echo.math4j.math.tensor.autograd;
 
 import net.echo.math4j.math.tensor.Tensor;
 
