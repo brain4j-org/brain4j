@@ -256,7 +256,6 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
      * @param synapses list of synapses to cache
      * @param inSize input size of the vector
      * @param outSize output size of the vector
-     *
      * @return the synapse matrix
      */
     public Tensor recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {

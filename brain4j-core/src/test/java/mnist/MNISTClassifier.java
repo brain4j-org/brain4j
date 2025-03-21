@@ -1,6 +1,8 @@
 package mnist;
 
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.adapters.ModernAdapter;
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
@@ -10,6 +12,7 @@ import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.techniques.EpochListener;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 import org.apache.commons.io.FileUtils;
 
@@ -20,7 +23,9 @@ import java.util.List;
 
 public class MNISTClassifier {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
+        TensorFactory.useGPUIfAvailable();
+
         DataSet<DataRow> dataSet = getData();
         Sequential model = getModel();
 
@@ -40,22 +45,21 @@ public class MNISTClassifier {
         System.out.println("Loss: " + loss);
     }
 
-    public static void train(Sequential model, DataSet<DataRow> set) {
-        SmartTrainer<DataRow> trainer = new SmartTrainer<>(0.7, 10);
+    public static void train(Sequential model, DataSet<DataRow> set) throws Exception {
+        SmartTrainer<DataRow> trainer = new SmartTrainer<>(0.7, 1);
 
         trainer.addListener(new EpochListener<>());
-        trainer.startFor(model, set, 150, 0.01);
+        trainer.startFor(model, set, 50, 0.01);
 
-        double loss = model.loss(set);
-        model.save("mnist_" + loss + ".json");
+        ModernAdapter.serialize("mnist", model);
 
-        System.out.println("Took: " + trainer.getTook() / 1e6);
+        System.out.println("Took: " + trainer.getTook() / 1e6 + " ms");
     }
 
     public static Sequential getModel() {
         Sequential model = new Sequential(
                 new DenseLayer(784, Activations.LINEAR),
-                new DenseLayer(64, Activations.SIGMOID),
+                new DenseLayer(32, Activations.SIGMOID),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
@@ -65,7 +69,7 @@ public class MNISTClassifier {
     public static DataSet<DataRow> getData() throws IOException {
         DataSet<DataRow> dataSet = new DataSet<>();
 
-        List<String> lines = FileUtils.readLines(new File("dataset.txt"), "UTF-8");
+        List<String> lines = FileUtils.readLines(new File("dataset.csv"), "UTF-8");
 
         for (String line : lines) {
             String[] parts = line.split(",");

@@ -22,7 +22,7 @@ import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
+public class Transformer extends Model<Object, List<Tensor>, List<Tensor>> {
 
     @SafeVarargs
     public Transformer(Layer<List<Tensor>, List<Tensor>>... layers) {
@@ -74,21 +74,12 @@ public class Transformer extends Model<Object, List<Vector>, List<Vector>> {
     }
 
     @Override
-    public List<Vector> predict(StatesCache cache, List<Vector> input, boolean training) {
-        List<Vector> result = new ArrayList<>(input);
+    public List<Tensor> predict(StatesCache cache, List<Tensor> input, boolean training) {
+        List<Tensor> result = new ArrayList<>(input);
 
         for (Layer<?, ?> layer : layers) {
             if (layer instanceof TransformerEncoder encoder) {
-                // TODO: temporary fix, must be replaced
-                List<Tensor> tensorInput = input.stream()
-                    .map(TensorFactory::vector)
-                    .toList();
-                
-                List<Tensor> tensorOutput = encoder.forward(cache, layer, tensorInput);
-                
-                result = tensorOutput.stream()
-                    .map(tensor -> Vector.of(tensor.toArray()))
-                    .toList();
+                result = encoder.forward(cache, layer, result);
             }
         }
 

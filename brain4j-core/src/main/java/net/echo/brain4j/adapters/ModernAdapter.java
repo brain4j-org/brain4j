@@ -17,7 +17,8 @@ import java.util.List;
 public class ModernAdapter {
 
     public static void serialize(String path, Model<?, ?, ?> model) throws Exception {
-        serialize(new File(path), model);
+        String suffix = path.endsWith(".bin") ? "" : ".bin";
+        serialize(new File(path + suffix), model);
     }
 
     public static void serialize(File file, Model<?, ?, ?> model) throws Exception {

@@ -45,7 +45,7 @@ public class TensorGPU extends TensorCPU {
             cl_device_id[] devices = {device};
             CONTEXT = clCreateContext(null, 1, devices, null, null, null);
             // TODO: Replace clCreateCommandQueue with a non-deprecated call
-            // We can't because MacBook do not support it
+            // UPDATE: We can't because MacBook do not support it
             COMMAND_QUEUE = clCreateCommandQueue(CONTEXT, device, 0, null);
             
             String kernelSource = loadKernelSource("tensor_operations.cl");

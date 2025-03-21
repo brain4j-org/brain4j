@@ -93,8 +93,8 @@ public class TensorFactory {
         return useGPU ? TensorGPU.fromTensor(cpuTensor) : cpuTensor;
     }
 
-    public static Tensor randn(double mean, double stddev, int... shape) {
-        Tensor cpuTensor = TensorCPU.randn(mean, stddev, shape);
+    public static Tensor random(double mean, double standardDeviation, int... shape) {
+        Tensor cpuTensor = TensorCPU.randn(mean, standardDeviation, shape);
         return useGPU ? TensorGPU.fromTensor(cpuTensor) : cpuTensor;
     }
     

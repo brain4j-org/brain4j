@@ -64,8 +64,15 @@ public class Kernel {
     }
 
     public Kernel convolve(Kernel kernel, int padding, int stride) {
-        int outputWidth = (width + 2 * padding - kernel.getWidth()) + 1;
-        int outputHeight = (height + 2 * padding - kernel.getHeight()) + 1;
+        int convWidth = (width + 2 * padding - kernel.getWidth());
+        int convHeight = (height + 2 * padding - kernel.getHeight());
+
+        if (convWidth % stride != 0 || convHeight % stride != 0) {
+            throw new IllegalArgumentException("Output must be divisible by the stride! Check your kernel and filter dimensions.");
+        }
+
+        int outputWidth = convWidth / stride + 1;
+        int outputHeight = convHeight / stride + 1;
 
         if (outputWidth <= 0 || outputHeight <= 0) {
             throw new IllegalArgumentException("Kernel dimensions must be smaller than or equal to the input dimensions");
@@ -93,7 +100,7 @@ public class Kernel {
                     }
                 }
 
-                result.getValues()[i / stride].set(j / stride, sum);
+                result.getValues()[i].set(j, sum);
             }
         }
         return result;
@@ -114,11 +121,26 @@ public class Kernel {
         return paddedKernel;
     }
 
-    public void add(Kernel feature) {
-        for (int h = 0; h < height; h++) {
-            Vector add = feature.getValues()[h];
-            values[h].add(add);
+    public Kernel add(Kernel other) {
+        if (width != other.getWidth() || height != other.getHeight()) {
+            throw new IllegalArgumentException("Kernels must have the same size!");
         }
+
+        Kernel result = new Kernel(width, height);
+
+        for (int h = 0; h < height; h++) {
+            Vector otherRow = other.getValues()[h];
+            Vector thisRow = values[h];
+
+            for (int w = 0; w < width; w++) {
+                double otherW = otherRow.get(w);
+                double thisW = thisRow.get(w);
+
+                result.setValue(w, h, thisW + otherW);
+            }
+        }
+
+        return result;
     }
 
     public float getValue(int x, int y) {
@@ -157,7 +179,7 @@ public class Kernel {
         }
     }
 
-    public Kernel rotate180() {
+    public Kernel flip() {
         Kernel result = new Kernel(width, height);
 
         for (int h = 0; h < height; h++) {
@@ -184,12 +206,26 @@ public class Kernel {
         }
     }
 
-    public void subtract(Kernel other) {
-        for (int i = 0; i < height; i++) {
-            Vector row = values[i];
-
-            row.subtract(other.getValues()[i]);
+    public Kernel subtract(Kernel other) {
+        if (width != other.getWidth() || height != other.getHeight()) {
+            throw new IllegalArgumentException("Kernels must have the same size!");
         }
+
+        Kernel result = new Kernel(width, height);
+
+        for (int h = 0; h < height; h++) {
+            Vector otherRow = other.getValues()[h];
+            Vector thisRow = values[h];
+
+            for (int w = 0; w < width; w++) {
+                double otherW = otherRow.get(w);
+                double thisW = thisRow.get(w);
+
+                result.setValue(w, h, thisW - otherW);
+            }
+        }
+
+        return result;
     }
 
     public void update(int w, int h, double gradient) {
@@ -200,5 +236,18 @@ public class Kernel {
         for (int i = 0; i < updates.length; i++) {
             updates[i] = new Vector(width);
         }
+    }
+
+    public Kernel multiply(double value) {
+        Kernel result = new Kernel(width, height);
+
+        for (int h = 0; h < height; h++) {
+            for (int w = 0; w < width; w++) {
+                double multiplied = getValue(w, h) * value;
+                result.setValue(w, h, multiplied);
+            }
+        }
+
+        return result;
     }
 }

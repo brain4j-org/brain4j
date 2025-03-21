@@ -651,12 +651,15 @@ public class TensorCPU implements Cloneable, Tensor {
         return result;
     }
 
-    private void appendTensor(StringBuilder sb, int dim, int[] indices) {
+    private void appendTensor(StringBuilder sb, int dim, int[] indices, String format) {
         if (dim == shape.length - 1) {
             sb.append("[");
             for (int i = 0; i < shape[dim]; i++) {
                 indices[dim] = i;
-                sb.append(get(indices));
+
+                float value = get(indices);
+                sb.append(String.format(format, value));
+
                 if (i < shape[dim] - 1) {
                     sb.append(", ");
                 }
@@ -666,12 +669,14 @@ public class TensorCPU implements Cloneable, Tensor {
             sb.append("[");
             for (int i = 0; i < shape[dim]; i++) {
                 indices[dim] = i;
-                appendTensor(sb, dim + 1, indices);
+                appendTensor(sb, dim + 1, indices, format);
+
                 if (i < shape[dim] - 1) {
                     sb.append(",\n");
                     sb.append(" ".repeat(dim + 1));
                 }
             }
+
             sb.append("]");
         }
     }
@@ -1121,18 +1126,6 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public String toString() {
-        if (shape.length == 0) {
-            return String.valueOf(data.get(0));
-        }
-
-        StringBuilder sb = new StringBuilder();
-        appendTensor(sb, 0, new int[shape.length]);
-
-        return sb.toString();
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
@@ -1171,4 +1164,29 @@ public class TensorCPU implements Cloneable, Tensor {
             }
         };
     }
-} 
+
+
+    @Override
+    public String toString() {
+        if (shape.length == 0) {
+            return String.valueOf(data.get(0));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        appendTensor(sb, 0, new int[shape.length], "%f");
+
+        return sb.toString();
+    }
+
+    @Override
+    public String toString(String format) {
+        if (shape.length == 0) {
+            return String.format(format, data.get(0));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        appendTensor(sb, 0, new int[shape.length], format);
+
+        return sb.toString();
+    }
+}

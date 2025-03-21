@@ -34,22 +34,23 @@ public class DenseLayer extends Layer<Vector, Vector> {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
-        Tensor zTensor = denseLayer.getWeights().matmul(input);
+        Tensor result = denseLayer.getWeights().matmul(input);
 
-        int numNeurons = zTensor.shape()[0];
+        int numNeurons = result.shape()[0];
         Vector output = new Vector(numNeurons);
 
         for (int i = 0; i < numNeurons; i++) {
             Neuron neuron = neurons.get(i);
-
-            double z = zTensor.get(i, 0) + neuron.getBias();
-            double activatedValue = activation.activate(z);
-
-            neurons.get(i).setValue(cache, activatedValue);
-            output.set(i, activatedValue);
+            output.set(i, result.get(i, 0) + neuron.getBias());
         }
 
-        return output;
+        Vector activated = activation.activate(output);
+
+        for (int i = 0; i < activated.size(); i++) {
+            neurons.get(i).setValue(cache, activated.get(i));
+        }
+
+        return activated;
     }
 
     @Override

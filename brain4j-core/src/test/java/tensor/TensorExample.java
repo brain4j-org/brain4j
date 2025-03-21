@@ -69,10 +69,10 @@ public class TensorExample {
             TensorFactory.vector(0)
         };
 
-        Tensor W1 = TensorFactory.randn(0.0, 0.5, hiddenSize, inputSize);
+        Tensor W1 = TensorFactory.random(0.0, 0.5, hiddenSize, inputSize);
         Tensor b1 = TensorFactory.zeros(hiddenSize);
 
-        Tensor W2 = TensorFactory.randn(0.0, 0.5, outputSize, hiddenSize);
+        Tensor W2 = TensorFactory.random(0.0, 0.5, outputSize, hiddenSize);
         Tensor b2 = TensorFactory.zeros(outputSize);
         
         double learningRate = 0.1;

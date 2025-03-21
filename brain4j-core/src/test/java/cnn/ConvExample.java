@@ -1,6 +1,7 @@
 package cnn;
 
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.convolution.ConvLayer;
 import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
@@ -36,11 +37,10 @@ public class ConvExample {
 
         SmartTrainer<DataRow> trainer = new SmartTrainer<>(1, 1);
         trainer.addListener(new EpochListener<>());
-        trainer.startFor(model, dataSet, 100, 0.000001);
+        trainer.startFor(model, dataSet, 1, 0.000001);
 
         EvaluationResult result = model.evaluate(dataSet);
         System.out.println(result.confusionMatrix());
-
         model.save("mnist-conv.json");
     }
 

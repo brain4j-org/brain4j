@@ -206,7 +206,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         Kernel deltaCurrent = new Kernel(featureMap.getWidth(), featureMap.getHeight());
 
         for (Kernel nextKernel : nextConvLayer.getKernels()) {
-            Kernel rotatedKernel = nextKernel.rotate180();
+            Kernel rotatedKernel = nextKernel.flip();
             Kernel contribution = deltaNext.convolve(rotatedKernel, 0, 1);
 
             if (contribution.getWidth() != deltaCurrent.getWidth() || contribution.getHeight() != deltaCurrent.getHeight()) {

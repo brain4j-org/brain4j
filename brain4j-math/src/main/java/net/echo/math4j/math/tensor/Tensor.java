@@ -4,7 +4,6 @@ import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.vector.Vector;
 import net.echo.math4j.math.tensor.index.Range;
 
-import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -100,19 +99,7 @@ public interface Tensor extends Iterable<Double> {
 
     Tensor matmul(Tensor other);
 
-    @Override
-    String toString();
-
-    @Override
-    boolean equals(Object obj);
-
-    @Override
-    int hashCode();
-
     Tensor clone();
-
-    @Override
-    Iterator<Double> iterator();
 
     Tensor mul(Vector vec);
 
@@ -149,4 +136,6 @@ public interface Tensor extends Iterable<Double> {
     Tensor divWithGrad(Tensor other);
 
     Tensor subWithGrad(Tensor other);
+
+    String toString(String format);
 }
