@@ -15,7 +15,6 @@ import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

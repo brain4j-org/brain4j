@@ -41,16 +41,6 @@ public class MultiHeadAttention {
         return new AttentionHead(weightInit, modelDimension, headDimension, temperature);
     }
 
-    public List<Vector> attend(List<Vector> inputs) {
-        List<List<Vector>> headOutputs = new ArrayList<>();
-
-        for (AttentionHead head : heads) {
-            headOutputs.add(head.attend(inputs));
-        }
-
-        return concatenate(headOutputs, inputs);
-    }
-
     public List<Tensor> attendTensors(List<Tensor> inputs) {
         List<List<Tensor>> headOutputs = new ArrayList<>();
 
@@ -59,26 +49,6 @@ public class MultiHeadAttention {
         }
 
         return concatenateTensors(headOutputs, inputs);
-    }
-
-    public List<Vector> concatenate(List<List<Vector>> headOutputs, List<Vector> inputs) {
-        List<Vector> result = new ArrayList<>();
-
-        for (int i = 0; i < inputs.size(); i++) {
-            List<Vector> concatList = new ArrayList<>();
-
-            for (List<Vector> headOutput : headOutputs) {
-                concatList.add(headOutput.get(i));
-            }
-
-            Vector concatenated = concatenateVectors(concatList);
-            Vector projected = projectVector(concatenated);
-
-            projected.add(inputs.get(i));
-            result.add(projected);
-        }
-
-        return result;
     }
 
     public List<Tensor> concatenateTensors(List<List<Tensor>> headOutputs, List<Tensor> inputs) {
@@ -92,8 +62,6 @@ public class MultiHeadAttention {
             }
 
             Tensor concatenated = concatenateTensorsList(concatList);
-
-            System.out.println("CONC: " + concatenated);
             Tensor projected = concatenated.matmul(outProjectionTensor);
             
             Tensor combined = projected.add(inputs.get(i));
@@ -133,62 +101,23 @@ public class MultiHeadAttention {
         }
     }
 
-    protected Vector projectVector(Vector concatenated) {
-        Vector result = new Vector(modelDimension);
-
-        for (int j = 0; j < modelDimension; j++) {
-            double sum = 0.0;
-
-            for (int i = 0; i < concatenated.size(); i++) {
-                sum += concatenated.get(i) * outProjectionTensor.get(i, j);
-            }
-
-            result.set(j, sum);
-        }
-
-        return result;
-    }
-
-    protected Vector concatenateVectors(List<Vector> vectors) {
-        int totalSize = 0;
-
-        for (Vector v : vectors) {
-            totalSize += v.size();
-        }
-
-        Vector concatenated = new Vector(totalSize);
-        int index = 0;
-
-        for (Vector v : vectors) {
-            for (int i = 0; i < v.size(); i++) {
-                concatenated.set(index++, v.get(i));
-            }
-        }
-
-        return concatenated;
-    }
-
     protected Tensor concatenateTensorsList(List<Tensor> tensors) {
         int totalSize = 0;
 
-        for (Tensor t : tensors) {
-            totalSize += t.elements();
+        for (Tensor tensor : tensors) {
+            totalSize += tensor.elements();
         }
 
-        Tensor result = TensorFactory.create(totalSize);
+        Tensor result = TensorFactory.matrix(1, totalSize);
 
-        System.out.println("result");
-        System.out.println(result);
         int position = 0;
 
-        for (Tensor t : tensors) {
-            System.out.println(t.elements());
-            System.out.println(t);
-            for (int i = 0; i < t.elements(); i++) {
-                result.set(t.get(0, i), position++);
+        for (Tensor tensor : tensors) {
+            for (int i = 0; i < tensor.elements(); i++) {
+                result.set(tensor.get(0, i), 0, position++);
             }
         }
-        
+
         return result;
     }
 }

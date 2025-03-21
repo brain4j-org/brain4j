@@ -15,10 +15,6 @@ public class AttentionHead {
     protected final int headDimension;
     protected final double temperature;
 
-    protected final float[][] queryWeights;
-    protected final float[][] keyWeights;
-    protected final float[][] valueWeights;
-    
     protected Tensor queryWeightsTensor;
     protected Tensor keyWeightsTensor;
     protected Tensor valueWeightsTensor;
@@ -28,70 +24,58 @@ public class AttentionHead {
         this.headDimension = headDimension;
         this.temperature = temperature;
 
-        this.queryWeights = new float[inputDimension][headDimension];
-        this.keyWeights = new float[inputDimension][headDimension];
-        this.valueWeights = new float[inputDimension][headDimension];
+        this.queryWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
+        this.keyWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
+        this.valueWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
 
         initializeWeights(weightInit);
     }
 
     public int size() {
-        int total = 0;
-
-        total += queryWeights.length * queryWeights[0].length;
-        total += keyWeights.length * keyWeights[0].length;
-        total += valueWeights.length * valueWeights[0].length;
-
-        return total;
+        return 3 * inputDimension * headDimension;
     }
     
-    public List<Vector> attendVectors(List<Vector> inputs) {
-        int sequenceLength = inputs.size();
-
-        List<Vector> queries = new ArrayList<>();
-        List<Vector> keys = new ArrayList<>();
-        List<Vector> values = new ArrayList<>();
-
-        for (Vector token : inputs) {
-            queries.add(multiply(token, queryWeights));
-            keys.add(multiply(token, keyWeights));
-            values.add(multiply(token, valueWeights));
-        }
-
-        List<Vector> output = new ArrayList<>();
-        double scale = Math.sqrt(headDimension);
-
-        for (int i = 0; i < sequenceLength; i++) {
-            Vector query = queries.get(i);
-            List<Double> scoreList = new ArrayList<>();
-
-            for (int j = 0; j < sequenceLength; j++) {
-                double score = query.weightedSum(keys.get(j)) / scale;
-                scoreList.add(score);
-            }
-
-            Vector attentionWeights = softmax(scoreList);
-            Vector headOutput = new Vector(headDimension);
-
-            for (int j = 0; j < sequenceLength; j++) {
-                Vector weightedValue = values.get(j).scale(attentionWeights.get(j));
-                headOutput = headOutput.add(weightedValue);
-            }
-
-            output.add(headOutput);
-        }
-
-        return output;
-    }
-    
-    public List<Vector> attend(List<Vector> inputs) {
-        return attendVectors(inputs);
-    }
+//    public List<Vector> attendVectors(List<Vector> inputs) {
+//        int sequenceLength = inputs.size();
+//
+//        List<Vector> queries = new ArrayList<>();
+//        List<Vector> keys = new ArrayList<>();
+//        List<Vector> values = new ArrayList<>();
+//
+//        for (Vector token : inputs) {
+//            queries.add(multiply(token, queryWeights));
+//            keys.add(multiply(token, keyWeights));
+//            values.add(multiply(token, valueWeights));
+//        }
+//
+//        List<Vector> output = new ArrayList<>();
+//        double scale = Math.sqrt(headDimension);
+//
+//        for (int i = 0; i < sequenceLength; i++) {
+//            Vector query = queries.get(i);
+//            List<Double> scoreList = new ArrayList<>();
+//
+//            for (int j = 0; j < sequenceLength; j++) {
+//                double score = query.weightedSum(keys.get(j)) / scale;
+//                scoreList.add(score);
+//            }
+//
+//            Vector attentionWeights = softmax(scoreList);
+//            Vector headOutput = new Vector(headDimension);
+//
+//            for (int j = 0; j < sequenceLength; j++) {
+//                Vector weightedValue = values.get(j).scale(attentionWeights.get(j));
+//                headOutput = headOutput.add(weightedValue);
+//            }
+//
+//            output.add(headOutput);
+//        }
+//
+//        return output;
+//    }
     
     public List<Tensor> attendTensors(List<Tensor> inputs) {
         int sequenceLength = inputs.size();
-
-        ensureWeightTensors();
 
         List<Tensor> queries = new ArrayList<>();
         List<Tensor> keys = new ArrayList<>();
@@ -121,7 +105,11 @@ public class AttentionHead {
             Tensor headOutput = TensorFactory.zeros(1, headDimension);
 
             for (int j = 0; j < sequenceLength; j++) {
-                Tensor weightedValue = values.get(j).mul(attentionWeights.get(j));
+                float attention = attentionWeights.get(j);
+
+                Tensor valueTensor = values.get(j);
+                Tensor weightedValue = valueTensor.mul(attention);
+
                 headOutput = headOutput.add(weightedValue);
             }
 
@@ -138,37 +126,11 @@ public class AttentionHead {
 
         for (int i = 0; i < inputDimension; i++) {
             for (int j = 0; j < headDimension; j++) {
-                queryWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
-                keyWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
-                valueWeights[i][j] = (float) (rng.nextDouble(2 * bound) - bound);
+                queryWeightsTensor.set(rng.nextDouble(2 * bound) - bound, i, j);
+                keyWeightsTensor.set(rng.nextDouble(2 * bound) - bound, i, j);
+                valueWeightsTensor.set(rng.nextDouble(2 * bound) - bound, i, j);
             }
         }
-    }
-    
-    protected void ensureWeightTensors() {
-        if (queryWeightsTensor == null) {
-            float[] qWeights = matrixToArray(queryWeights);
-            float[] kWeights = matrixToArray(keyWeights);
-            float[] vWeights = matrixToArray(valueWeights);
-            
-            queryWeightsTensor = TensorFactory.of(new int[]{inputDimension, headDimension}, qWeights);
-            keyWeightsTensor = TensorFactory.of(new int[]{inputDimension, headDimension}, kWeights);
-            valueWeightsTensor = TensorFactory.of(new int[]{inputDimension, headDimension}, vWeights);
-        }
-    }
-    
-    private float[] matrixToArray(float[][] matrix) {
-        int rows = matrix.length;
-        int cols = matrix[0].length;
-        float[] result = new float[rows * cols];
-        
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                result[i * cols + j] = matrix[i][j];
-            }
-        }
-        
-        return result;
     }
 
     protected Vector multiply(Vector vector, float[][] weights) {
@@ -202,7 +164,6 @@ public class AttentionHead {
         for (int i = 0; i < scores.size(); i++) {
             double expVal = Math.exp((scores.get(i) - maxScore) / temperature);
             result.set(i, expVal);
-
             sum += expVal;
         }
 

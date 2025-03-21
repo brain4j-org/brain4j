@@ -111,7 +111,7 @@ public class TensorGPU extends TensorCPU {
         TensorGPU tensor = new TensorGPU(shape);
 
         for (int i = 0; i < data.length; i++) {
-            tensor.set(data[i], i);
+            tensor.getData().set(i, data[i]);
         }
 
         return tensor;

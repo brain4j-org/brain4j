@@ -63,9 +63,7 @@ public class TensorCPU implements Cloneable, Tensor {
     
     private int getLinearIndex(int... indices) {
         if (indices.length != shape.length) {
-            throw new IllegalArgumentException(
-                "The shape of the tensor does not match the number of indices"
-            );
+            throw new IllegalArgumentException("The shape of the tensor does not match the number of indices");
         }
         
         int linearIndex = 0;

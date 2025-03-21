@@ -6,7 +6,6 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.Tensor;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.cache.StatesCache;
@@ -19,21 +18,17 @@ import java.util.List;
 
 public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
 
+    private final Sequential feedForward;
+    private final LayerNorm normalizer;
+
     private final int heads;
     private final int dimension;
     private final double temperature;
-
-    private final Sequential feedForward;
-    private final LayerNorm normalizer;
 
     private MultiHeadAttention attention;
 
     public TransformerEncoder(int numHeads, int dimension, double temperature) {
         super(0, Activations.LINEAR);
-
-        this.heads = numHeads;
-        this.dimension = dimension;
-        this.temperature = temperature;
 
         this.normalizer = new LayerNorm();
         this.feedForward = new Sequential(
@@ -41,6 +36,10 @@ public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
                 new DenseLayer(4 * dimension, Activations.GELU),
                 new DenseLayer(dimension, Activations.LINEAR)
         );
+
+        this.heads = numHeads;
+        this.dimension = dimension;
+        this.temperature = temperature;
     }
 
     public int getAttentionSize() {
@@ -83,7 +82,8 @@ public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
         List<Tensor> feedForwardOutput = new ArrayList<>();
 
         for (Tensor tensor : normAttention) {
-            feedForwardOutput.add(feedForward.predict(tensor));
+            Tensor output = feedForward.predict(tensor);
+            feedForwardOutput.add(output.reshape(1, dimension));
         }
 
         List<Tensor> result = new ArrayList<>();

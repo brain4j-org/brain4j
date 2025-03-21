@@ -15,54 +15,47 @@ public class MaskedAttentionHead extends AttentionHead {
         super(weightInit, inputDimension, headDimension, temperature);
     }
 
-    @Override
-    public List<Vector> attend(List<Vector> inputs) {
-        return attendVectors(inputs);
-    }
-    
-    @Override
-    public List<Vector> attendVectors(List<Vector> inputs) {
-        int sequenceLength = inputs.size();
-
-        List<Vector> queries = new ArrayList<>();
-        List<Vector> keys = new ArrayList<>();
-        List<Vector> values = new ArrayList<>();
-
-        for (Vector token : inputs) {
-            queries.add(multiply(token, queryWeights));
-            keys.add(multiply(token, keyWeights));
-            values.add(multiply(token, valueWeights));
-        }
-
-        List<Vector> output = new ArrayList<>();
-        double scale = Math.sqrt(headDimension);
-
-        for (int i = 0; i < sequenceLength; i++) {
-            Vector query = queries.get(i);
-            List<Double> scoreList = new ArrayList<>();
-
-            for (int j = 0; j <= i; j++) {
-                double score = query.weightedSum(keys.get(j)) / scale;
-                scoreList.add(score);
-            }
-
-            Vector attentionWeights = softmax(scoreList);
-            Vector headOutput = new Vector(headDimension);
-
-            for (int j = 0; j <= i; j++) {
-                headOutput = headOutput.add(values.get(j).scale(attentionWeights.get(j)));
-            }
-
-            output.add(headOutput);
-        }
-
-        return output;
-    }
+//    @Override
+//    public List<Vector> attendVectors(List<Vector> inputs) {
+//        int sequenceLength = inputs.size();
+//
+//        List<Vector> queries = new ArrayList<>();
+//        List<Vector> keys = new ArrayList<>();
+//        List<Vector> values = new ArrayList<>();
+//
+//        for (Vector token : inputs) {
+//            queries.add(multiply(token, queryWeights));
+//            keys.add(multiply(token, keyWeights));
+//            values.add(multiply(token, valueWeights));
+//        }
+//
+//        List<Vector> output = new ArrayList<>();
+//        double scale = Math.sqrt(headDimension);
+//
+//        for (int i = 0; i < sequenceLength; i++) {
+//            Vector query = queries.get(i);
+//            List<Double> scoreList = new ArrayList<>();
+//
+//            for (int j = 0; j <= i; j++) {
+//                double score = query.weightedSum(keys.get(j)) / scale;
+//                scoreList.add(score);
+//            }
+//
+//            Vector attentionWeights = softmax(scoreList);
+//            Vector headOutput = new Vector(headDimension);
+//
+//            for (int j = 0; j <= i; j++) {
+//                headOutput = headOutput.add(values.get(j).scale(attentionWeights.get(j)));
+//            }
+//
+//            output.add(headOutput);
+//        }
+//
+//        return output;
+//    }
     
     public List<Tensor> attendTensors(List<Tensor> inputs) {
         int sequenceLength = inputs.size();
-        
-        ensureWeightTensors();
 
         List<Tensor> queries = new ArrayList<>();
         List<Tensor> keys = new ArrayList<>();
@@ -92,7 +85,11 @@ public class MaskedAttentionHead extends AttentionHead {
             Tensor headOutput = TensorFactory.zeros(headDimension);
 
             for (int j = 0; j <= i; j++) {
-                Tensor weightedValue = values.get(j).mul(attentionWeights.get(j));
+                float attention = attentionWeights.get(j);
+
+                Tensor valueTensor = values.get(j);
+                Tensor weightedValue = valueTensor.mul(attention);
+
                 headOutput = headOutput.add(weightedValue);
             }
 
