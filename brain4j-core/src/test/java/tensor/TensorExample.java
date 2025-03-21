@@ -1,9 +1,8 @@
 package tensor;
 
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorCPU;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.tensor.TensorGPU;
+import net.echo.math4j.math.tensor.impl.TensorGPU;
 
 public class TensorExample {
 

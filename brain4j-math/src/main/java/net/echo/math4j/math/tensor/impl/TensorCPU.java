@@ -1,5 +1,6 @@
-package net.echo.math4j.math.tensor;
+package net.echo.math4j.math.tensor.impl;
 
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.autograd.Operation;
 import net.echo.math4j.math.tensor.autograd.operations.*;

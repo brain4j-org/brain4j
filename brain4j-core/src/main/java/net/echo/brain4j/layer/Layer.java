@@ -9,7 +9,6 @@ import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorCPU;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;

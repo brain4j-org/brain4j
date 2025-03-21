@@ -1,7 +1,7 @@
 package net.echo.math4j.math.tensor.autograd;
 
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorCPU;
+import net.echo.math4j.math.tensor.impl.TensorCPU;
 
 public class AutogradContext {
 

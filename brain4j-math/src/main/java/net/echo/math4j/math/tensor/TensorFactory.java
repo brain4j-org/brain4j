@@ -1,5 +1,7 @@
 package net.echo.math4j.math.tensor;
 
+import net.echo.math4j.math.tensor.impl.TensorCPU;
+import net.echo.math4j.math.tensor.impl.TensorGPU;
 import net.echo.math4j.math.vector.Vector;
 
 public class TensorFactory {

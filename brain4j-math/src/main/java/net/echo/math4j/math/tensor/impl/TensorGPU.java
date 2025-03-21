@@ -1,5 +1,6 @@
-package net.echo.math4j.math.tensor;
+package net.echo.math4j.math.tensor.impl;
 
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.opencl.DeviceUtils;
 import org.jocl.*;
 
