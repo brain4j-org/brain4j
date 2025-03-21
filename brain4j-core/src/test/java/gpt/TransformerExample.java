@@ -27,11 +27,13 @@ public class TransformerExample {
     }
 
     public void start() {
-        int dimension = 10;
+        int dimension = 16;
 
         Transformer transformer = new Transformer(
-                new TransformerDecoder(2, dimension, 1.0),
-                new TransformerDecoder(2, dimension, 1.0)
+                new TransformerEncoder(4, dimension, 1.0),
+                new TransformerEncoder(4, dimension, 1.0)
+                /*new TransformerEncoder(4, dimension, 1.0),
+                new TransformerEncoder(4, dimension, 1.0)*/
         );
 
         transformer.compile(LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
@@ -44,11 +46,24 @@ public class TransformerExample {
             inputs.add(TensorFactory.random(1, dimension));
         }
 
+        long start = System.nanoTime();
         List<Tensor> output = transformer.predict(inputs);
+        double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.println("======== LIST OF TENSORS =========");
-        for (Tensor tensor : output) {
-            System.out.println(tensor.toString("%.3f"));
+        System.out.println("CPU Took " + took + " ms");
+
+        /*Tensor finalTensor = TensorFactory.matrix(output.size(), dimension);
+
+        for (int i = 0; i < output.size(); i++) {
+            Tensor tensor = output.get(i);
+            float[] data = tensor.getData().toArray();
+
+            for (int j = 0; j < dimension; j++) {
+                finalTensor.set(data[j], i, j);
+            }
         }
+
+        System.out.println("======== MERGED TENSOR ========");
+        System.out.println(finalTensor.toString("%.3f"));*/
     }
 }

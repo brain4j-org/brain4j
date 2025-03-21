@@ -19,7 +19,6 @@ public class MultiHeadAttention {
     protected final int modelDimension;
     protected final int headDimension;
 
-    protected float[][] outProjectionWeights;
     protected Tensor outProjectionTensor;
 
     public MultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension, double temperature) {
@@ -33,7 +32,6 @@ public class MultiHeadAttention {
         this.headDimension = modelDimension / headCount;
         this.heads = new ArrayList<>();
         this.outProjectionTensor = TensorFactory.matrix(headCount * headDimension, modelDimension);
-        // this.outProjectionWeights = new float[headCount * headDimension][modelDimension];
 
         initializeHeads();
         initializeOutProjectionWeights();
@@ -85,8 +83,6 @@ public class MultiHeadAttention {
 
     public List<Tensor> concatenateTensors(List<List<Tensor>> headOutputs, List<Tensor> inputs) {
         List<Tensor> result = new ArrayList<>();
-        
-        ensureOutProjectionTensor();
 
         for (int i = 0; i < inputs.size(); i++) {
             List<Tensor> concatList = new ArrayList<>();
@@ -96,7 +92,8 @@ public class MultiHeadAttention {
             }
 
             Tensor concatenated = concatenateTensorsList(concatList);
-            
+
+            System.out.println("CONC: " + concatenated);
             Tensor projected = concatenated.matmul(outProjectionTensor);
             
             Tensor combined = projected.add(inputs.get(i));
@@ -132,24 +129,7 @@ public class MultiHeadAttention {
             for (int j = 0; j < modelDimension; j++) {
                 double value = (rng.nextDouble() * 2 * bound) - bound;
                 outProjectionTensor.set(value, i, j);
-                // outProjectionWeights[i][j] = (float) value;
             }
-        }
-    }
-
-    protected void ensureOutProjectionTensor() {
-        if (outProjectionTensor == null) {
-            float[] flatWeights = new float[headCount * headDimension * modelDimension];
-            int index = 0;
-            
-            for (int i = 0; i < headCount * headDimension; i++) {
-                for (int j = 0; j < modelDimension; j++) {
-                    flatWeights[index++] = outProjectionWeights[i][j];
-                }
-            }
-
-            int[] shape = {headCount * headDimension, modelDimension};
-            outProjectionTensor = TensorFactory.of(shape, flatWeights);
         }
     }
 
@@ -190,16 +170,22 @@ public class MultiHeadAttention {
 
     protected Tensor concatenateTensorsList(List<Tensor> tensors) {
         int totalSize = 0;
+
         for (Tensor t : tensors) {
             totalSize += t.elements();
         }
-        
+
         Tensor result = TensorFactory.create(totalSize);
-        
+
+        System.out.println("result");
+        System.out.println(result);
         int position = 0;
+
         for (Tensor t : tensors) {
+            System.out.println(t.elements());
+            System.out.println(t);
             for (int i = 0; i < t.elements(); i++) {
-                result.set(t.get(i), position++);
+                result.set(t.get(0, i), position++);
             }
         }
         

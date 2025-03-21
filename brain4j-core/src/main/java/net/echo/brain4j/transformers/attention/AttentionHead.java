@@ -118,7 +118,7 @@ public class AttentionHead {
             Vector attentionWeightsVec = softmax(scoreList);
             Tensor attentionWeights = TensorFactory.vector(attentionWeightsVec);
             
-            Tensor headOutput = TensorFactory.zeros(headDimension);
+            Tensor headOutput = TensorFactory.zeros(1, headDimension);
 
             for (int j = 0; j < sequenceLength; j++) {
                 Tensor weightedValue = values.get(j).mul(attentionWeights.get(j));
