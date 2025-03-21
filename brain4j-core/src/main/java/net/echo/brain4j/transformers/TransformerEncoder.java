@@ -68,17 +68,8 @@ public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
     }
 
     /**
-     * Transforms a list of embeddings using a sequence of neural network layers.
-     * <p>
-     * The transformation is applied in the following order:
-     * <ol>
-     *     <li>Multi-Head Attention</li>
-     *     <li>Add & Norm</li>
-     *     <li>Feed-Forward</li>
-     *     <li>Add & Norm</li>
-     * </ol>
-     *
-     * @param input the list of embeddings to transform
+     * Transforms a list of embeddings using the transformer encoder architecture.
+     * @param input The list of embeddings to transform.
      */
     @Override
     public List<Tensor> forward(StatesCache cache, Layer<?, ?> lastLayer, List<Tensor> input) {
@@ -98,8 +89,9 @@ public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
         List<Tensor> result = new ArrayList<>();
 
         for (int i = 0; i < feedForwardOutput.size(); i++) {
-            Tensor tokenFF = feedForwardOutput.get(i);
-            Tensor combined = tokenFF.add(normAttention.get(i));
+            Tensor tokenForwarded = feedForwardOutput.get(i);
+            Tensor combined = tokenForwarded.add(normAttention.get(i));
+
             result.add(normalizer.normalize(combined));
         }
 

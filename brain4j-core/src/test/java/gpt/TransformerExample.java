@@ -41,11 +41,12 @@ public class TransformerExample {
         List<Tensor> inputs = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
-            inputs.add(TensorFactory.random(dimension, 1));
+            inputs.add(TensorFactory.random(1, dimension));
         }
 
         List<Tensor> output = transformer.predict(inputs);
 
+        System.out.println("======== LIST OF TENSORS =========");
         for (Tensor tensor : output) {
             System.out.println(tensor.toString("%.3f"));
         }

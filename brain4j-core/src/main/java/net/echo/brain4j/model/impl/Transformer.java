@@ -14,6 +14,7 @@ import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -80,6 +81,21 @@ public class Transformer extends Model<Object, List<Tensor>, List<Tensor>> {
                 result = encoder.forward(cache, layer, result);
             }
         }
+
+        int dimension = input.getFirst().shape()[1];
+        Tensor finalTensor = TensorFactory.matrix(input.size(), dimension);
+
+        for (int i = 0; i < input.size(); i++) {
+            Tensor tensor = result.get(i);
+            float[] data = tensor.getData().toArray();
+
+            for (int j = 0; j < dimension; j++) {
+                finalTensor.set(data[i], i, j);
+            }
+        }
+
+        System.out.println("======== MERGED TENSOR ========");
+        System.out.println(finalTensor.toString("%.3f"));
 
         return result;
     }
