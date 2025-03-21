@@ -21,9 +21,9 @@ public class TensorGPUTest {
     }
     
     private static void benchmarkMatrixMultiplication() {
-        int m = 1000;
-        int n = 1000;
-        int p = 1000;
+        int m = 1500;
+        int n = 1500;
+        int p = 1500;
         
         System.out.println("\n=== Matrix multiplication (" + m + "x" + n + ") * (" + n + "x" + p + ") ===");
 

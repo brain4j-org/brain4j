@@ -1,5 +1,6 @@
 package net.echo.math4j.opencl;
 
+import net.echo.math4j.BrainUtils;
 import org.jocl.*;
 
 import static org.jocl.CL.*;
@@ -79,16 +80,17 @@ public class GPUProfiler {
             long[] maxWorkGroupSize = new long[1];
             clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.cl_long, 
                            Pointer.to(maxWorkGroupSize), null);
-            
-            System.out.println("=== GPU INFO ===");
-            System.out.println("Name: " + deviceName);
-            System.out.println("Vendor: " + deviceVendor);
-            System.out.println("OpenCL Version: " + deviceVersion);
-            System.out.println("Global Memory: " + (globalMemSize[0] / (1024*1024)) + " MB");
-            System.out.println("Local Memory: " + (localMemSize[0] / 1024) + " KB");
-            System.out.println("Max Work Group Size: " + maxWorkGroupSize[0]);
-            System.out.println("=====================================");
-            
+
+            String specs = BrainUtils.getHeader(" GPU Specs ") +
+                    "Name: " + deviceName + "\n" +
+                    "Vendor: " + deviceVendor + "\n" +
+                    "OpenCL Version: " + deviceVersion + "\n" +
+                    "Global Memory: " + globalMemSize[0] / (1024 * 1024) + " MB\n" +
+                    "Local Memory: " + localMemSize[0] / 1024 + " KB\n" +
+                    "Max Work Group Size: " + maxWorkGroupSize[0] + "\n" +
+                    BrainUtils.getHeader("");
+
+            System.out.println(specs);
         } catch (Exception e) {
             System.err.println("Error retrieving device information: " + e.getMessage());
         }
