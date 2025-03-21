@@ -1,7 +1,7 @@
 package net.echo.brain4j.adapters;
 
 import com.github.luben.zstd.Zstd;
-import net.echo.math4j.MLUtils;
+import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
@@ -75,10 +75,10 @@ public class ModernAdapter {
             String updaterClass = dataStream.readUTF();
             String optimizerClass = dataStream.readUTF();
 
-            LossFunction lossFunction = MLUtils.newInstance(lossFunctionClass);
-            WeightInitializer weightInit = MLUtils.newInstance(weightInitClass);
-            Updater updater = MLUtils.newInstance(updaterClass);
-            Optimizer optimizer = MLUtils.newInstance(optimizerClass);
+            LossFunction lossFunction = BrainUtils.newInstance(lossFunctionClass);
+            WeightInitializer weightInit = BrainUtils.newInstance(weightInitClass);
+            Updater updater = BrainUtils.newInstance(updaterClass);
+            Optimizer optimizer = BrainUtils.newInstance(optimizerClass);
 
             optimizer.deserialize(dataStream);
 

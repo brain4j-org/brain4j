@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import net.echo.math4j.DataSet;
-import net.echo.math4j.MLUtils;
+import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.adapters.json.OptimizerAdapter;
@@ -374,7 +374,7 @@ public abstract class Model<R, I, O> implements Adapter {
 
         String header = "======================================================================\n";
         String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
-        String divider = MLUtils.getHeader(" Architecture ");
+        String divider = BrainUtils.getHeader(" Architecture ");
 
         stats.append(divider);
         stats.append(String.format(pattern, "Index", "Layer", "Neurons", "Weights", "Activation"));
@@ -412,10 +412,10 @@ public abstract class Model<R, I, O> implements Adapter {
         String parameters = format.format(params);
         String synapses = format.format(totalSynapses);
 
-        String formatted = MLUtils.formatNumber(params * 4); // 4 = float size in bytes
-        String actual = MLUtils.formatNumber(totalSynapses * 32);
+        String formatted = BrainUtils.formatNumber(params * 4); // 4 = float size in bytes
+        String actual = BrainUtils.formatNumber(totalSynapses * 32);
 
-        stats.append(MLUtils.getHeader(" Recap "));
+        stats.append(BrainUtils.getHeader(" Recap "));
         stats.append("Total parameters: ").append(parameters).append(" (").append(formatted).append(")\n");
         stats.append("Total synapses: ").append(synapses).append("\n");
         stats.append("Expected memory usage: ").append(actual).append("\n");

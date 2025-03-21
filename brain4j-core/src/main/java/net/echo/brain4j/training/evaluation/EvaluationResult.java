@@ -1,6 +1,6 @@
 package net.echo.brain4j.training.evaluation;
 
-import net.echo.math4j.MLUtils;
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.Map;
@@ -9,7 +9,7 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
 
     public String confusionMatrix() {
         StringBuilder matrix = new StringBuilder();
-        String divider = MLUtils.getHeader(" Evaluation Results ");
+        String divider = BrainUtils.getHeader(" Evaluation Results ");
 
         matrix.append(divider);
         matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
@@ -63,7 +63,7 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
         matrix.append(String.format(secondary, "Recall:", String.format("%.4f", recall)));
         matrix.append(String.format(secondary, "F1-score:", String.format("%.4f", f1Score)));
 
-        divider = MLUtils.getHeader(" Confusion Matrix ");
+        divider = BrainUtils.getHeader(" Confusion Matrix ");
         matrix.append(divider);
         matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
         matrix.append("       ");

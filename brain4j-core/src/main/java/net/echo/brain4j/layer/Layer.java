@@ -2,7 +2,7 @@ package net.echo.brain4j.layer;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.JsonAdapter;
-import net.echo.math4j.MLUtils;
+import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.Adapter;
@@ -149,11 +149,11 @@ public abstract class Layer<I, O> implements Adapter {
         Neuron output = synapse.getOutputNeuron();
 
         float delta = output.getDelta(cacheHolder);
-        float error = MLUtils.clipGradient(synapse.getWeight() * delta * derivative);
+        float error = BrainUtils.clipGradient(synapse.getWeight() * delta * derivative);
 
         input.setDelta(cacheHolder, error);
 
-        return MLUtils.clipGradient(error * input.getValue(cacheHolder));
+        return BrainUtils.clipGradient(error * input.getValue(cacheHolder));
     }
 
     public List<Neuron> getNeurons() {

@@ -1,7 +1,7 @@
 package net.echo.brain4j.layer.impl.convolution;
 
 import com.google.common.base.Preconditions;
-import net.echo.math4j.MLUtils;
+import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
@@ -173,7 +173,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         for (int h = 0; h < deltaUnpooled.getHeight(); h++) {
             for (int w = 0; w < deltaUnpooled.getWidth(); w++) {
                 double derivative = activation.getDerivative(featureMap.getValue(w, h));
-                double updatedDelta = MLUtils.clipGradient(deltaUnpooled.getValue(w, h) * derivative);
+                double updatedDelta = BrainUtils.clipGradient(deltaUnpooled.getValue(w, h) * derivative);
 
                 deltaUnpooled.setValue(w, h, updatedDelta);
             }
@@ -219,7 +219,7 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
         for (int h = 0; h < deltaCurrent.getHeight(); h++) {
             for (int w = 0; w < deltaCurrent.getWidth(); w++) {
                 double derivative = activation.getDerivative(featureMap.getValue(w, h));
-                double updatedDelta = MLUtils.clipGradient(deltaCurrent.getValue(w, h) * derivative);
+                double updatedDelta = BrainUtils.clipGradient(deltaCurrent.getValue(w, h) * derivative);
 
                 deltaCurrent.setValue(w, h, updatedDelta);
             }
@@ -238,12 +238,12 @@ public class ConvLayer extends Layer<Kernel, Kernel> {
             for (int h = 0; h < kernel.getHeight(); h++) {
                 for (int w = 0; w < kernel.getWidth(); w++) {
                     float weight = kernel.getValue(w, h);
-                    float gradient = MLUtils.clipGradient(grad.getValue(w, h));
+                    float gradient = BrainUtils.clipGradient(grad.getValue(w, h));
 
                     int id = kernel.getId() + Parameters.TOTAL_SYNAPSES;
                     float update = (float) optimizer.update(cache, id, gradient, weight);
 
-                    kernel.update(w, h, MLUtils.clipGradient(update));
+                    kernel.update(w, h, BrainUtils.clipGradient(update));
                 }
             }
         }

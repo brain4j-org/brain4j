@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Utility class for conversions and value matching.
  */
-public class MLUtils {
+public class BrainUtils {
 
     private static final double GRADIENT_CLIP = 10.0;
 

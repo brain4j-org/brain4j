@@ -2,7 +2,7 @@ package net.echo.brain4j.model.impl;
 
 import com.google.common.base.Preconditions;
 import net.echo.math4j.DataSet;
-import net.echo.math4j.MLUtils;
+import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
@@ -82,8 +82,8 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
             for (DataRow row : partition) {
                 Vector prediction = predict(row.inputs());
 
-                int predIndex = MLUtils.indexOfMaxValue(prediction);
-                int targetIndex = MLUtils.indexOfMaxValue(row.outputs());
+                int predIndex = BrainUtils.indexOfMaxValue(prediction);
+                int targetIndex = BrainUtils.indexOfMaxValue(row.outputs());
 
                 if (row.outputs().size() == 1) {
                     predIndex = prediction.get(0) > 0.5 ? 1 : 0;
@@ -151,7 +151,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
             threads.add(makeEvaluation(partition, classifications));
         }
 
-        MLUtils.waitAll(threads);
+        BrainUtils.waitAll(threads);
         return new EvaluationResult(classes, classifications);
     }
 
@@ -166,7 +166,7 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
             threads.add(predictPartition(partition, totalError));
         }
 
-        MLUtils.waitAll(threads);
+        BrainUtils.waitAll(threads);
         return totalError.get() / dataSet.size();
     }
 

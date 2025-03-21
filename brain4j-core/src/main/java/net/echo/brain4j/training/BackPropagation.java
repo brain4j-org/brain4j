@@ -1,7 +1,7 @@
 package net.echo.brain4j.training;
 
 import net.echo.math4j.DataSet;
-import net.echo.math4j.MLUtils;
+import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.impl.Sequential;
@@ -52,7 +52,7 @@ public class BackPropagation {
             threads.add(thread);
         }
 
-        MLUtils.waitAll(threads);
+        BrainUtils.waitAll(threads);
         updater.postBatch(model, optimizer.getLearningRate());
     }
 
