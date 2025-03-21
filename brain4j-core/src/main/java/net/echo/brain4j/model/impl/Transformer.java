@@ -90,7 +90,7 @@ public class Transformer extends Model<Object, List<Tensor>, List<Tensor>> {
             float[] data = tensor.getData().toArray();
 
             for (int j = 0; j < dimension; j++) {
-                finalTensor.set(data[i], i, j);
+                finalTensor.set(data[j], i, j);
             }
         }
 
