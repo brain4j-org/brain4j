@@ -3,8 +3,6 @@
 <div align="center">
     Powerful, lightweight, and easy-to-use machine learning framework written in Java.
     <br><br>
-    <a href="https://github.com/xEcho1337/brain4j-examples">🚀 Examples</a>
-    ·
     <a href="https://github.com/xEcho1337/Brain4J/blob/main/LICENSE">📄 License</a>
     ·
     <a href="https://github.com/xEcho1337/brain4j/issues/new?template=Blank+issue">🛠️ Report an issue</a>
