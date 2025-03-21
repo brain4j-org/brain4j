@@ -14,6 +14,7 @@ import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorCPU;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;

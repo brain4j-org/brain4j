@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 import static org.jocl.CL.*;
 
-public class TensorGPU extends Tensor {
+public class TensorGPU extends TensorCPU {
 
     private static cl_kernel MAT_MULT_KERNEL;
     private static cl_kernel ELEMENT_WISE_ADD_KERNEL;
@@ -71,7 +71,6 @@ public class TensorGPU extends Tensor {
             System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
         } catch (Exception e) {
             System.err.println("Failed to initialize OpenCL: " + e.getMessage());
-            e.printStackTrace();
             INITIALIZED = false;
         }
     }
@@ -88,24 +87,26 @@ public class TensorGPU extends Tensor {
     public TensorGPU(int... shape) {
         super(shape);
     }
-    
-    public static TensorGPU fromTensor(Tensor tensor) {
-        TensorGPU gpuTensor = new TensorGPU(tensor.shape());
+
+    public static Tensor fromTensor(Tensor tensor) {
+        Tensor gpuTensor = new TensorGPU(tensor.shape());
         int[] shape = tensor.shape();
         
-        for (int i = 0; i < tensor.numel(); i++) {
+        for (int i = 0; i < tensor.elements(); i++) {
             if (shape.length == 1) {
                 gpuTensor.set(tensor.get(i), i);
             } else {
                 int[] indices = linearToMultiDimIndices(i, shape);
                 float value = tensor.get(indices);
+
                 gpuTensor.set(value, indices);
             }
         }
+
         return gpuTensor;
     }
-    
-    public static TensorGPU of(int[] shape, float... data) {
+
+    public static Tensor of(int[] shape, float... data) {
         TensorGPU tensor = new TensorGPU(shape);
 
         for (int i = 0; i < data.length; i++) {
@@ -115,11 +116,54 @@ public class TensorGPU extends Tensor {
         return tensor;
     }
     
-    public static TensorGPU matrix(int rows, int cols, float... data) {
+    public static Tensor matrix(int rows, int cols, float... data) {
         return of(new int[]{rows, cols}, data);
     }
-    
-    
+
+    public static void releaseGPUResources() {
+        if (INITIALIZED) {
+            try {
+                if (MAT_MULT_KERNEL != null) clReleaseKernel(MAT_MULT_KERNEL);
+                if (ELEMENT_WISE_ADD_KERNEL != null) clReleaseKernel(ELEMENT_WISE_ADD_KERNEL);
+                if (ELEMENT_WISE_MULT_KERNEL != null) clReleaseKernel(ELEMENT_WISE_MULT_KERNEL);
+                if (COMMAND_QUEUE != null) clReleaseCommandQueue(COMMAND_QUEUE);
+                if (CONTEXT != null) clReleaseContext(CONTEXT);
+
+                MAT_MULT_KERNEL = null;
+                ELEMENT_WISE_ADD_KERNEL = null;
+                ELEMENT_WISE_MULT_KERNEL = null;
+                COMMAND_QUEUE = null;
+                CONTEXT = null;
+                INITIALIZED = false;
+
+                System.out.println("GPU resources released successfully");
+            } catch (Exception e) {
+                System.err.println("Error releasing GPU resources: " + e.getMessage());
+            }
+        }
+    }
+
+    public static void reinitializeGPU() {
+        releaseGPUResources();
+
+        try {
+            initializeOpenCL();
+        } catch (Exception e) {
+            System.err.println("Failed to reinitialize GPU: " + e.getMessage());
+        }
+    }
+
+    private static int[] linearToMultiDimIndices(int linearIndex, int[] shape) {
+        int[] indices = new int[shape.length];
+
+        for (int i = shape.length - 1; i >= 0; i--) {
+            indices[i] = linearIndex % shape[i];
+            linearIndex /= shape[i];
+        }
+
+        return indices;
+    }
+
     public static boolean isGpuAvailable() {
         return INITIALIZED;
     }
@@ -183,7 +227,6 @@ public class TensorGPU extends Tensor {
             
         } catch (Exception e) {
             System.err.println("GPU matrix multiplication failed: " + e.getMessage());
-            e.printStackTrace();
             return super.matmul(other);
         }
         
@@ -199,7 +242,7 @@ public class TensorGPU extends Tensor {
             return super.add(other); 
         }
         
-        int size = numel();
+        int size = elements();
         long floatSize = (long) Sizeof.cl_float * size;
         
         try {
@@ -213,11 +256,9 @@ public class TensorGPU extends Tensor {
             clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
             clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
             clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
-            
-            long globalWorkSize = size;
-            
+
             clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_ADD_KERNEL, 1, null,
-                new long[]{globalWorkSize}, null, 0, null, null);
+                new long[]{(long) size}, null, 0, null, null);
             
             float[] resultBuffer = new float[size];
             clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
@@ -253,7 +294,7 @@ public class TensorGPU extends Tensor {
             return super.mul(other); 
         }
         
-        int size = numel();
+        int size = elements();
         
         try {
             cl_mem deviceA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -267,11 +308,9 @@ public class TensorGPU extends Tensor {
             clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
             clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
             clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
-            
-            long globalWorkSize = size;
-            
+
             clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_MULT_KERNEL, 1, null,
-                new long[]{globalWorkSize}, null, 0, null, null);
+                new long[]{(long) size}, null, 0, null, null);
             
             float[] resultBuffer = new float[size];
             clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
@@ -296,50 +335,5 @@ public class TensorGPU extends Tensor {
         }
         
         return this;
-    }
-    
-    
-    public static void releaseGPUResources() {
-        if (INITIALIZED) {
-            try {
-                if (MAT_MULT_KERNEL != null) clReleaseKernel(MAT_MULT_KERNEL);
-                if (ELEMENT_WISE_ADD_KERNEL != null) clReleaseKernel(ELEMENT_WISE_ADD_KERNEL);
-                if (ELEMENT_WISE_MULT_KERNEL != null) clReleaseKernel(ELEMENT_WISE_MULT_KERNEL);
-                if (COMMAND_QUEUE != null) clReleaseCommandQueue(COMMAND_QUEUE);
-                if (CONTEXT != null) clReleaseContext(CONTEXT);
-                
-                MAT_MULT_KERNEL = null;
-                ELEMENT_WISE_ADD_KERNEL = null;
-                ELEMENT_WISE_MULT_KERNEL = null;
-                COMMAND_QUEUE = null;
-                CONTEXT = null;
-                INITIALIZED = false;
-                
-                System.out.println("GPU resources released successfully");
-            } catch (Exception e) {
-                System.err.println("Error releasing GPU resources: " + e.getMessage());
-            }
-        }
-    }
-    
-    public static void reinitializeGPU() {
-        releaseGPUResources();
-
-        try {
-            initializeOpenCL();
-        } catch (Exception e) {
-            System.err.println("Failed to reinitialize GPU: " + e.getMessage());
-        }
-    }
-    
-    private static int[] linearToMultiDimIndices(int linearIndex, int[] shape) {
-        int[] indices = new int[shape.length];
-
-        for (int i = shape.length - 1; i >= 0; i--) {
-            indices[i] = linearIndex % shape[i];
-            linearIndex /= shape[i];
-        }
-
-        return indices;
     }
 } 

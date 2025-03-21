@@ -1,6 +1,7 @@
 package tensor;
 
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorCPU;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.TensorGPU;
 
@@ -54,24 +55,24 @@ public class TensorExample {
         int inputSize = 2;
         int hiddenSize = 3;
         int outputSize = 1;
-        
+
         Tensor[] inputs = {
             TensorFactory.vector(0, 0),
             TensorFactory.vector(0, 1),
             TensorFactory.vector(1, 0),
             TensorFactory.vector(1, 1)
         };
-        
+
         Tensor[] labels = {
             TensorFactory.vector(0),
             TensorFactory.vector(1),
             TensorFactory.vector(1),
             TensorFactory.vector(0)
         };
-        
+
         Tensor W1 = TensorFactory.randn(0.0, 0.5, hiddenSize, inputSize);
         Tensor b1 = TensorFactory.zeros(hiddenSize);
-        
+
         Tensor W2 = TensorFactory.randn(0.0, 0.5, outputSize, hiddenSize);
         Tensor b2 = TensorFactory.zeros(outputSize);
         
@@ -84,33 +85,33 @@ public class TensorExample {
             for (int i = 0; i < inputs.length; i++) {
                 Tensor hidden = W1.matmul(inputs[i].reshape(inputSize, 1));
                 hidden.add(b1.reshape(hiddenSize, 1));
-                
+
                 Tensor hiddenActivated = hidden.clone().map(x -> Math.max(0, x));
-                
+
                 Tensor output = W2.matmul(hiddenActivated);
                 output.add(b2.reshape(outputSize, 1));
-                
+
                 Tensor predicted = output.clone().map(x -> 1.0 / (1.0 + Math.exp(-x)));
-                
+
                 Tensor error = predicted.minus(labels[i].reshape(outputSize, 1));
                 double loss = error.normSquared();
                 totalLoss += loss;
-                
+
                 Tensor gradOutput = error.times(predicted.map(x -> x * (1 - x)));
-                
+
                 Tensor gradW2 = gradOutput.matmul(hiddenActivated.transpose());
                 W2.sub(gradW2.times(learningRate));
                 b2.sub(gradOutput.reshape(outputSize).times(learningRate));
-                
+
                 Tensor gradHidden = W2.transpose().matmul(gradOutput);
-                
+
                 Tensor gradHiddenActivated = gradHidden.clone();
                 for (int j = 0; j < hiddenSize; j++) {
                     if (hidden.get(j, 0) <= 0) {
                         gradHiddenActivated.set(0, j, 0);
                     }
                 }
-                
+
                 Tensor gradW1 = gradHiddenActivated.matmul(inputs[i].reshape(1, inputSize));
                 W1.sub(gradW1.times(learningRate));
                 b1.sub(gradHiddenActivated.reshape(hiddenSize).times(learningRate));
@@ -126,12 +127,12 @@ public class TensorExample {
         for (int i = 0; i < inputs.length; i++) {
             Tensor hidden = W1.matmul(inputs[i].reshape(inputSize, 1));
             hidden.add(b1.reshape(hiddenSize, 1));
-            
+
             Tensor hiddenActivated = hidden.clone().map(x -> Math.max(0, x));
-            
+
             Tensor output = W2.matmul(hiddenActivated);
             output.add(b2.reshape(outputSize, 1));
-            
+
             Tensor predicted = output.map(x -> 1.0 / (1.0 + Math.exp(-x)));
             
             System.out.printf("Input: [%.0f, %.0f], Output: %.6f, Expected: %.0f%n",

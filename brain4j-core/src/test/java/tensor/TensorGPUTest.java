@@ -1,6 +1,7 @@
 package tensor;
 
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.TensorGPU;
 import net.echo.math4j.opencl.DeviceUtils;
@@ -96,7 +97,7 @@ public class TensorGPUTest {
     }
     
     private static boolean checkResultsMatch(Tensor a, Tensor b) {
-        if (a.numel() != b.numel()) return false;
+        if (a.elements() != b.elements()) return false;
         if (!java.util.Arrays.equals(a.shape(), b.shape())) return false;
         
         double epsilon = 1e-5;  
@@ -121,7 +122,7 @@ public class TensorGPUTest {
                 }
             }
         } else {
-            for (int i = 0; i < a.numel(); i++) {
+            for (int i = 0; i < a.elements(); i++) {
                 float valueA = getLinearElement(a, i);
                 float valueB = getLinearElement(b, i);
                 

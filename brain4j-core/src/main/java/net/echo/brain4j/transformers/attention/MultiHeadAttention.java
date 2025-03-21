@@ -187,14 +187,14 @@ public class MultiHeadAttention {
     protected Tensor concatenateTensorsList(List<Tensor> tensors) {
         int totalSize = 0;
         for (Tensor t : tensors) {
-            totalSize += t.numel();
+            totalSize += t.elements();
         }
         
         Tensor result = TensorFactory.create(totalSize);
         
         int position = 0;
         for (Tensor t : tensors) {
-            for (int i = 0; i < t.numel(); i++) {
+            for (int i = 0; i < t.elements(); i++) {
                 result.set(t.get(i), position++);
             }
         }

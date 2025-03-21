@@ -1,6 +1,7 @@
 package net.echo.math4j.math.tensor.autograd;
 
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorCPU;
 
 public class AutogradContext {
 
@@ -26,30 +27,27 @@ public class AutogradContext {
     public Tensor getGrad() {
         if (grad == null) {
             int[] shape = this.inputs[0].shape();
-            grad = Tensor.zeros(shape);
+            grad = TensorCPU.zeros(shape);
         }
+
         return grad;
     }
     
     public void backward(Tensor gradOutput) {
-        if (!requiresGrad) {
-            return;
-        }
-        
-        if (grad == null) {
-            grad = gradOutput.clone();
-        } else {
-            grad = grad.plus(gradOutput);
-        }
-        
-        if (operation != null) {
-            Tensor[] inputGrads = operation.backward(gradOutput, inputs);
+        if (!requiresGrad) return;
 
-            for (int i = 0; i < inputs.length; i++) {
-                if (inputs[i].requiresGrad()) {
-                    inputs[i].backward(inputGrads[i]);
-                }
-            }
+        grad = grad == null ? gradOutput.clone() : grad.plus(gradOutput);
+
+        if (operation == null) return;
+
+        Tensor[] inputGrads = operation.backward(gradOutput, inputs);
+
+        for (int i = 0; i < inputs.length; i++) {
+            Tensor input = inputs[i];
+
+            if (!input.requiresGrad()) continue;
+
+            input.backward(inputGrads[i]);
         }
     }
 } 

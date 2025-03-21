@@ -3,6 +3,7 @@ package net.echo.brain4j.layer.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorCPU;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.vector.Vector;
@@ -101,10 +102,10 @@ public class LayerNorm extends Layer<Vector, Vector> {
         for (Double value : input) {
             variance += Math.pow(value - mean, 2);
         }
-        variance /= input.numel();
+        variance /= input.elements();
         
         double denominator = Math.sqrt(variance + epsilon);
-        
+
         Tensor normalized = input.clone();
         
         return normalized.map(value -> (value - mean) / denominator);
