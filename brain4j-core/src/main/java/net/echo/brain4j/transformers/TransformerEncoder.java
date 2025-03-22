@@ -13,7 +13,6 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.tensor.index.Range;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,12 +69,12 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
     @Override
     public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
-        List<Tensor> inputTokens = tensorToList(input);
-        
-        List<Tensor> attentionOutput = attention.attendTensors(inputTokens);
+        Tensor attended = attention.attend(input);
+
+        List<Tensor> attendedTokens = TensorFactory.toList(attended);
         List<Tensor> normAttention = new ArrayList<>();
 
-        for (Tensor token : attentionOutput) {
+        for (Tensor token : attendedTokens) {
             normAttention.add(normalizer.normalize(token));
         }
 
@@ -95,33 +94,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
             resultTokens.add(normalizer.normalize(combined));
         }
 
-        return listToTensor(resultTokens);
-    }
-
-    private List<Tensor> tensorToList(Tensor input) {
-        List<Tensor> tokens = new ArrayList<>();
-        int sequenceLength = input.shape()[0];
-        
-        for (int i = 0; i < sequenceLength; i++) {
-            Tensor token = input.slice(new Range(i, i+1, 1)).reshape(1, dimension);
-            tokens.add(token);
-        }
-        
-        return tokens;
-    }
-    
-    private Tensor listToTensor(List<Tensor> tokens) {
-        int sequenceLength = tokens.size();
-        Tensor result = TensorFactory.zeros(sequenceLength, dimension);
-        
-        for (int i = 0; i < sequenceLength; i++) {
-            Tensor token = tokens.get(i);
-            for (int j = 0; j < dimension; j++) {
-                result.set(token.get(0, j), i, j);
-            }
-        }
-        
-        return result;
+        return TensorFactory.mergeTensors(resultTokens);
     }
 
     public Sequential getFeedForward() {

@@ -2,7 +2,11 @@ package net.echo.math4j.math.tensor;
 
 import net.echo.math4j.math.tensor.impl.TensorCPU;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
+import net.echo.math4j.math.tensor.index.Range;
 import net.echo.math4j.math.vector.Vector;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TensorFactory {
     
@@ -104,4 +108,74 @@ public class TensorFactory {
         }
         return tensor;
     }
-} 
+
+    public static Tensor concat(List<Tensor> inputs) {
+        Tensor sample = inputs.getFirst();
+
+        int rows = sample.shape()[0];
+        int columns = sample.shape()[1];
+
+        Tensor result = zeros(rows, columns * inputs.size());
+
+        for (int t = 0; t < inputs.size(); t++) {
+            Tensor tensor = inputs.get(t);
+
+            if (tensor.shape()[0] != rows || tensor.shape()[1] != columns) {
+                throw new IllegalArgumentException("All tensors must have the same shape! (" + rows + "x" + columns + ")");
+            }
+
+            int currentColumn = t * columns;
+
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < columns; c++) {
+                    float value = tensor.get(r, c);
+                    result.set(value, r, currentColumn + c);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static List<Tensor> toList(Tensor input) {
+        if (input.dimension() == 1) {
+            return List.of(input);
+        }
+
+        if (input.dimension() != 2) {
+            throw new IllegalArgumentException("Tensor must be 1D or 2D!");
+        }
+
+        List<Tensor> result = new ArrayList<>();
+        
+        int rows = input.shape()[0];
+        int columns = input.shape()[1];
+
+        for (int i = 0; i < rows; i++) {
+            Range range = new Range(i, i + 1);
+            Tensor token = input.slice(range);
+
+            token = token.reshape(1, columns);
+            result.add(token);
+        }
+
+        return result;
+    }
+
+    public static Tensor mergeTensors(List<Tensor> tokens) {
+        int rows = tokens.size();
+        int columns = tokens.getFirst().shape()[1];
+
+        Tensor result = TensorFactory.zeros(rows, columns);
+
+        for (int i = 0; i < rows; i++) {
+            Tensor token = tokens.get(i);
+
+            for (int j = 0; j < columns; j++) {
+                result.set(token.get(0, j), i, j);
+            }
+        }
+
+        return result;
+    }
+}

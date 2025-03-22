@@ -94,31 +94,33 @@ public class TensorGPU extends TensorCPU {
     }
     
     private static String loadKernelSource(String resourceName) throws IOException {
-        InputStream is = TensorGPU.class.getResourceAsStream(resourceName);
+        InputStream inputStream = TensorGPU.class.getResourceAsStream(resourceName);
         
-        if (is == null) {
-            is = TensorGPU.class.getClassLoader().getResourceAsStream(resourceName.substring(1));
-            
-            if (is == null) {
-                is = ClassLoader.getSystemResourceAsStream(resourceName);
-                
-                if (is == null) {
-                    is = ClassLoader.getSystemResourceAsStream(resourceName.substring(1));
-                    
-                    if (is == null) {
-                        throw new IOException("Error loading kernel: " + resourceName);
-                    }
-                }
-            }
+        if (inputStream == null) {
+            inputStream = TensorGPU.class.getClassLoader().getResourceAsStream(resourceName.substring(1));
         }
-        
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
-            StringBuilder sb = new StringBuilder();
+
+        if (inputStream == null) {
+            inputStream = ClassLoader.getSystemResourceAsStream(resourceName);
+        }
+
+        if (inputStream == null) {
+            inputStream = ClassLoader.getSystemResourceAsStream(resourceName.substring(1));
+        }
+
+        if (inputStream == null) {
+            throw new IOException("Error loading kernel: " + resourceName);
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            StringBuilder stringBuilder = new StringBuilder();
             String line;
+
             while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
+                stringBuilder.append(line).append("\n");
             }
-            return sb.toString();
+
+            return stringBuilder.toString();
         } catch (Exception e) {
             throw new IOException("Error loading kernel: " + resourceName, e);
         }

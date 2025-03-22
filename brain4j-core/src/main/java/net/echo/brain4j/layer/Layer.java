@@ -27,7 +27,6 @@ import java.util.Random;
 @JsonAdapter(LayerAdapter.class)
 public abstract class Layer<I, O> implements Adapter {
 
-
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
     protected Optimizer optimizer;

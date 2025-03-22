@@ -94,10 +94,11 @@ public class TransformerDecoder extends Layer<Tensor, Tensor> {
         for (int i = 0; i < feedForwardOutput.size(); i++) {
             Tensor tokenFF = feedForwardOutput.get(i);
             Tensor combined = tokenFF.add(normAttention.get(i));
+
             resultTokens.add(normalizer.normalize(combined));
         }
 
-        return listToTensor(resultTokens);
+        return TensorFactory.mergeTensors(resultTokens);
     }
     
     private List<Tensor> tensorToList(Tensor input) {
@@ -110,20 +111,6 @@ public class TransformerDecoder extends Layer<Tensor, Tensor> {
         }
         
         return tokens;
-    }
-    
-    private Tensor listToTensor(List<Tensor> tokens) {
-        int sequenceLength = tokens.size();
-        Tensor result = TensorFactory.zeros(sequenceLength, dimension);
-        
-        for (int i = 0; i < sequenceLength; i++) {
-            Tensor token = tokens.get(i);
-            for (int j = 0; j < dimension; j++) {
-                result.set(token.get(0, j), i, j);
-            }
-        }
-        
-        return result;
     }
 
     public Sequential getFeedForward() {

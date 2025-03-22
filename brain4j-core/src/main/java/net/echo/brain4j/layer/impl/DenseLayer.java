@@ -6,6 +6,7 @@ import net.echo.math4j.math.tensor.Tensor;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 /**
@@ -34,6 +35,9 @@ public class DenseLayer extends Layer<Vector, Vector> {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
+        // TODO: Fix overhead that is too high!
+        // Tensor tensor = TensorFactory.matrix(input.size(), 1, input.toArray());
+        // Tensor result = denseLayer.getWeights().matmul(tensor);
         Tensor result = denseLayer.getWeights().matmul(input);
 
         int numNeurons = result.shape()[0];

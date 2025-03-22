@@ -15,9 +15,9 @@ public class AttentionHead {
     protected final int headDimension;
     protected final double temperature;
 
-    protected Tensor queryWeightsTensor;
-    protected Tensor keyWeightsTensor;
-    protected Tensor valueWeightsTensor;
+    protected final Tensor queryWeightsTensor;
+    protected final Tensor keyWeightsTensor;
+    protected final Tensor valueWeightsTensor;
 
     public AttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension, double temperature) {
         this.inputDimension = inputDimension;
@@ -34,45 +34,19 @@ public class AttentionHead {
     public int size() {
         return 3 * inputDimension * headDimension;
     }
-    
-//    public List<Vector> attendVectors(List<Vector> inputs) {
-//        int sequenceLength = inputs.size();
-//
-//        List<Vector> queries = new ArrayList<>();
-//        List<Vector> keys = new ArrayList<>();
-//        List<Vector> values = new ArrayList<>();
-//
-//        for (Vector token : inputs) {
-//            queries.add(multiply(token, queryWeights));
-//            keys.add(multiply(token, keyWeights));
-//            values.add(multiply(token, valueWeights));
-//        }
-//
-//        List<Vector> output = new ArrayList<>();
-//        double scale = Math.sqrt(headDimension);
-//
-//        for (int i = 0; i < sequenceLength; i++) {
-//            Vector query = queries.get(i);
-//            List<Double> scoreList = new ArrayList<>();
-//
-//            for (int j = 0; j < sequenceLength; j++) {
-//                double score = query.weightedSum(keys.get(j)) / scale;
-//                scoreList.add(score);
-//            }
-//
-//            Vector attentionWeights = softmax(scoreList);
-//            Vector headOutput = new Vector(headDimension);
-//
-//            for (int j = 0; j < sequenceLength; j++) {
-//                Vector weightedValue = values.get(j).scale(attentionWeights.get(j));
-//                headOutput = headOutput.add(weightedValue);
-//            }
-//
-//            output.add(headOutput);
-//        }
-//
-//        return output;
-//    }
+
+    public Tensor attend(Tensor input) {
+        Tensor Q = input.matmul(queryWeightsTensor);
+        Tensor K = input.matmul(keyWeightsTensor);
+        Tensor V = input.matmul(valueWeightsTensor);
+
+        double normalizer = Math.sqrt(headDimension);
+
+        Tensor scores = Q.matmul(K.transpose()).div(normalizer);
+        Tensor attentionWeights = scores.softmax();
+
+        return attentionWeights.matmul(V);
+    }
     
     public List<Tensor> attendTensors(List<Tensor> inputs) {
         int sequenceLength = inputs.size();

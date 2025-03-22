@@ -41,11 +41,28 @@ public class MultiHeadAttention {
         return new AttentionHead(weightInit, modelDimension, headDimension, temperature);
     }
 
+    public Tensor attend(Tensor input) {
+        List<Tensor> headOutputs = new ArrayList<>();
+
+        for (AttentionHead head : heads) {
+            headOutputs.add(head.attend(input));
+        }
+
+        return TensorFactory.concat(headOutputs);
+    }
+
     public List<Tensor> attendTensors(List<Tensor> inputs) {
         List<List<Tensor>> headOutputs = new ArrayList<>();
 
         for (AttentionHead head : heads) {
             headOutputs.add(head.attendTensors(inputs));
+        }
+
+        for (List<Tensor> headOutput : headOutputs) {
+            for (Tensor token : headOutput) {
+                System.out.println("TOKEN");
+                System.out.println(token);
+            }
         }
 
         return concatenateTensors(headOutputs, inputs);

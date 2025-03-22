@@ -54,8 +54,8 @@ public class ModernAdapter {
         byte[] bytes = outputStream.toByteArray();
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-            //byte[] compressed = compress(bytes);
-            fileOutputStream.write(bytes);
+            byte[] compressed = compress(bytes);
+            fileOutputStream.write(compressed);
         }
     }
 
@@ -65,10 +65,9 @@ public class ModernAdapter {
 
     public static <T extends Model<?, ?, ?>> T deserialize(File file, T model) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            //byte[] bytes = decompress(fileInputStream.readAllBytes());
+            byte[] bytes = decompress(fileInputStream.readAllBytes());
 
-            // DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
-            DataInputStream dataStream = new DataInputStream(fileInputStream);
+            DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
             int seed = dataStream.readInt();
 
             String lossFunctionClass = dataStream.readUTF();

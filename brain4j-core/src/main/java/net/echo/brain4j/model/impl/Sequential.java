@@ -306,7 +306,6 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         Vector inputVector = Vector.of(data);
         
         Vector outputVector = predict(inputVector);
-        
         return TensorFactory.vector(outputVector);
     }
 
@@ -315,7 +314,6 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         Vector inputVector = Vector.of(data);
         
         Vector outputVector = predict(cache, inputVector, training);
-        
         return TensorFactory.vector(outputVector);
     }
 }

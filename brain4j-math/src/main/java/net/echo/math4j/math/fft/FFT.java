@@ -4,6 +4,7 @@ import net.echo.math4j.math.complex.Complex;
 import java.util.Arrays;
 
 public final class FFT {
+
     private static final double TWO_PI = 2 * Math.PI;
     
     private FFT() {}

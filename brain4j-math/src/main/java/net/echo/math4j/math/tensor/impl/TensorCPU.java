@@ -1,6 +1,7 @@
 package net.echo.math4j.math.tensor.impl;
 
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.autograd.Operation;
 import net.echo.math4j.math.tensor.autograd.operations.*;
@@ -10,6 +11,7 @@ import net.echo.math4j.math.vector.Vector;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -507,6 +509,7 @@ public class TensorCPU implements Cloneable, Tensor {
         
         int rows = shape[0];
         int cols = shape[1];
+
         Tensor result = new TensorCPU(cols, rows);
         
         for (int i = 0; i < rows; i++) {
@@ -532,13 +535,16 @@ public class TensorCPU implements Cloneable, Tensor {
             if (dim < 0 || dim >= shape.length) {
                 throw new IllegalArgumentException("Dimension out of bounds: " + dim);
             }
+
             if (dimUsed[dim]) {
                 throw new IllegalArgumentException("Dimension duplicate in permutation: " + dim);
             }
+
             dimUsed[dim] = true;
         }
         
         int[] newShape = new int[shape.length];
+
         for (int i = 0; i < dims.length; i++) {
             newShape[i] = shape[dims[i]];
         }
@@ -722,9 +728,11 @@ public class TensorCPU implements Cloneable, Tensor {
         
         for (int i = 0; i < m; i++) {
             float sum = 0;
+
             for (int k = 0; k < n; k++) {
                 sum += get(i, k) * vec.get(k);
             }
+
             result.set(sum, i, 0);
         }
         
@@ -1187,6 +1195,101 @@ public class TensorCPU implements Cloneable, Tensor {
         appendTensor(sb, 0, new int[shape.length], format);
 
         return sb.toString();
+    }
+
+    @Override
+    public Tensor softmax() {
+        int dim = dimension() > 1 ? 1 : 0;
+
+        if (dim < 0 || dim >= dimension()) {
+            throw new IllegalArgumentException("Dimension " + dim + " out of bounds for limits of tensor shape " + Arrays.toString(shape));
+        }
+
+        Tensor result = clone();
+
+        if (dimension() == 1) {
+            softmax1D(result);
+        } else if (dimension() == 2) {
+            if (dim == 0) {
+                softmaxColumns(result);
+            } else {
+                softmaxRows(result);
+            }
+        } else {
+            throw new UnsupportedOperationException("Softmax operation is only supported for 1D/2D tensors.");
+        }
+
+        return result;
+    }
+
+    private void softmax1D(Tensor tensor) {
+        double max = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < tensor.elements(); i++) {
+            max = Math.max(max, tensor.get(i));
+        }
+
+        double sum = 0.0;
+
+        for (int i = 0; i < tensor.elements(); i++) {
+            double expVal = Math.exp(tensor.get(i) - max);
+            tensor.set(expVal, i);
+            sum += expVal;
+        }
+
+        for (int i = 0; i < tensor.elements(); i++) {
+            tensor.set(tensor.get(i) / sum, i);
+        }
+    }
+
+    private void softmaxRows(Tensor tensor) {
+        int rows = tensor.shape()[0];
+        int cols = tensor.shape()[1];
+
+        for (int i = 0; i < rows; i++) {
+            double max = Double.NEGATIVE_INFINITY;
+
+            for (int j = 0; j < cols; j++) {
+                max = Math.max(max, tensor.get(i, j));
+            }
+
+            double sum = 0.0;
+
+            for (int j = 0; j < cols; j++) {
+                double expVal = Math.exp(tensor.get(i, j) - max);
+                tensor.set(expVal, i, j);
+                sum += expVal;
+            }
+
+            for (int j = 0; j < cols; j++) {
+                tensor.set(tensor.get(i, j) / sum, i, j);
+            }
+        }
+    }
+    
+    private void softmaxColumns(Tensor tensor) {
+        int rows = tensor.shape()[0];
+        int cols = tensor.shape()[1];
+
+        for (int j = 0; j < cols; j++) {
+            double max = Double.NEGATIVE_INFINITY;
+
+            for (int i = 0; i < rows; i++) {
+                max = Math.max(max, tensor.get(i, j));
+            }
+
+            double sum = 0.0;
+
+            for (int i = 0; i < rows; i++) {
+                double expVal = Math.exp(tensor.get(i, j) - max);
+                tensor.set(expVal, i, j);
+                sum += expVal;
+            }
+
+            for (int i = 0; i < rows; i++) {
+                tensor.set(tensor.get(i, j) / sum, i, j);
+            }
+        }
     }
 
     /**
