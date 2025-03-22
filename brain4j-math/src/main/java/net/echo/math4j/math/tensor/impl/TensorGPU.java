@@ -557,4 +557,22 @@ public class TensorGPU extends TensorCPU {
             throw e;
         }
     }
+
+    @Override
+    public Tensor softmax() {
+        TensorCPU cpuTensor = new TensorCPU(shape());
+        int dim = dimension() > 1 ? 1 : 0;
+
+        if (dim < 0 || dim >= dimension()) {
+            throw new IllegalArgumentException("Dimension " + dim + " out of bounds for limits of tensor shape " + Arrays.toString(shape()));
+        }
+
+        for (int i = 0; i < elements(); i++) {
+            cpuTensor.getData().set(i, this.getData().get(i));
+        }
+
+        Tensor result = cpuTensor.softmax();
+
+        return TensorGPU.fromTensor(result);
+    }
 } 

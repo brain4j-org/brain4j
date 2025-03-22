@@ -149,4 +149,6 @@ public interface Tensor extends Iterable<Double> {
     Tensor subWithGrad(Tensor other);
 
     String toString(String format);
+
+    Tensor softmax();
 }
