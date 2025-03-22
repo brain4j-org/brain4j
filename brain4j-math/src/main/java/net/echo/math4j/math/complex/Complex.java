@@ -1,9 +1,11 @@
 package net.echo.math4j.math.complex;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
 public final class Complex implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     
     public static final Complex ZERO = new Complex(0, 0);
