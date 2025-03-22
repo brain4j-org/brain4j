@@ -13,6 +13,8 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.masked.MaskedMultiHeadAttention;
+import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math4j.math.tensor.index.Range;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +105,7 @@ public class TransformerDecoder extends Layer<Tensor, Tensor> {
         int sequenceLength = input.shape()[0];
         
         for (int i = 0; i < sequenceLength; i++) {
-            Tensor token = input.slice(i, i+1).reshape(1, dimension);
+            Tensor token = input.slice(new Range(i, i+1, 1)).reshape(1, dimension);
             tokens.add(token);
         }
         
@@ -112,7 +114,7 @@ public class TransformerDecoder extends Layer<Tensor, Tensor> {
     
     private Tensor listToTensor(List<Tensor> tokens) {
         int sequenceLength = tokens.size();
-        Tensor result = Tensor.zeros(sequenceLength, dimension);
+        Tensor result = TensorFactory.zeros(sequenceLength, dimension);
         
         for (int i = 0; i < sequenceLength; i++) {
             Tensor token = tokens.get(i);
