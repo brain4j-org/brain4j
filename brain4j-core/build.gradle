@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     implementation project(':brain4j-math')
-    compileOnly project(':brain4j-math')
 
     implementation 'com.github.luben:zstd-jni:1.5.7-2'
     implementation 'com.google.guava:guava:32.1.2-jre'
@@ -26,11 +25,6 @@ shadowJar {
 
     enableRelocation = true
     relocationPrefix = "net.echo.shaded"
-
-    dependencies {
-        include(dependency('org.jocl:jocl:2.0.5'))
-        include(project(':brain4j-math'))
-    }
 
     relocate('net.echo.math4j', 'net.echo.math4j')
     minimize()
