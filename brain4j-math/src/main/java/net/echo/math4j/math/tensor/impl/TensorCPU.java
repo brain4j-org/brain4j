@@ -5,6 +5,7 @@ import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.autograd.Operation;
 import net.echo.math4j.math.tensor.autograd.operations.*;
 import net.echo.math4j.math.tensor.index.Range;
+import net.echo.math4j.math.tensor.ops.Convolution;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.Arrays;
@@ -1186,5 +1187,33 @@ public class TensorCPU implements Cloneable, Tensor {
         appendTensor(sb, 0, new int[shape.length], format);
 
         return sb.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Tensor convolve(Tensor kernel) {
+        int dim = this.dimension();
+        
+        if (dim > 2) {
+            throw new IllegalArgumentException("Convolution is supported only for 1D and 2D tensors");
+        }
+        if (kernel.dimension() != dim) {
+            throw new IllegalArgumentException("The kernel dimension must match the input dimension");
+        }
+        
+        Convolution.ConvolutionType convType;
+        if (this.elements() > 1000 || kernel.elements() > 100) { // convType based on tensor size
+            convType = Convolution.ConvolutionType.FFT;
+        } else {
+            convType = Convolution.ConvolutionType.DIRECT;
+        }
+        
+        if (dim == 1) {
+            return Convolution.convolve1D(this, kernel, Convolution.PaddingMode.SAME, convType);
+        } else {
+            return Convolution.convolve2D(this, kernel, Convolution.PaddingMode.SAME, convType);
+        }
     }
 }

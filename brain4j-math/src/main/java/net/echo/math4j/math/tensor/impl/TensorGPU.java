@@ -4,34 +4,40 @@ import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.opencl.DeviceUtils;
 import org.jocl.*;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import static org.jocl.CL.*;
 
 public class TensorGPU extends TensorCPU {
 
+    private static boolean INITIALIZED;
+    private static cl_device_id DEVICE_ID;
+    private static cl_context CONTEXT;
+    private static cl_command_queue COMMAND_QUEUE;
+    private static cl_program TENSOR_PROGRAM;
+    private static cl_program CONV_PROGRAM;
     private static cl_kernel MAT_MULT_KERNEL;
     private static cl_kernel ELEMENT_WISE_ADD_KERNEL;
     private static cl_kernel ELEMENT_WISE_MULT_KERNEL;
-    private static cl_context CONTEXT;
-    private static cl_command_queue COMMAND_QUEUE;
-    private static boolean INITIALIZED = false;
+    private static cl_kernel CONVOLVE_1D_KERNEL;
+    private static cl_kernel CONVOLVE_2D_KERNEL;
+    
+    private static final String TENSOR_OPS_KERNEL_PATH = "/kernels/tensor_operations.cl";
+    private static final String CONV_KERNEL_PATH = "/kernels/conv.cl";
     
     static {
         try {
-            initializeOpenCL();
+            INITIALIZED = initializeOpenCL();
         } catch (Exception e) {
             System.err.println("GPU acceleration not available: " + e.getMessage());
         }
     }
     
-    private static void initializeOpenCL() {
-        if (INITIALIZED) {
-            throw new UnsupportedOperationException("OpenCL already initialized!");
-        }
-        
+    private static boolean initializeOpenCL() {
         try {
             CL.setExceptionsEnabled(true);
             
@@ -43,45 +49,105 @@ public class TensorGPU extends TensorCPU {
             }
             
             cl_device_id[] devices = {device};
+            DEVICE_ID = device;
             CONTEXT = clCreateContext(null, 1, devices, null, null, null);
-            // TODO: Replace clCreateCommandQueue with a non-deprecated call
-            // UPDATE: We can't because MacBook do not support it
             COMMAND_QUEUE = clCreateCommandQueue(CONTEXT, device, 0, null);
             
-            String kernelSource = loadKernelSource("tensor_operations.cl");
-            cl_program program = clCreateProgramWithSource(CONTEXT, 1, new String[] {kernelSource}, null, null);
-            
             try {
-                clBuildProgram(program, 0, null, null, null, null);
-            } catch (CLException e) {
-                long[] logSize = new long[1];
-                clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, null, logSize);
-
-                byte[] logData = new byte[(int)logSize[0]];
-                clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, logData.length, Pointer.to(logData), null);
-
-                System.err.println("Build log: " + new String(logData));
-                throw e;
+                String kernelSourceTensor = loadKernelSource(TENSOR_OPS_KERNEL_PATH);
+                TENSOR_PROGRAM = clCreateProgramWithSource(CONTEXT, 1, 
+                        new String[] { kernelSourceTensor }, null, null);
+                int buildResult = clBuildProgram(TENSOR_PROGRAM, 0, null, null, null, null);
+                
+                if (buildResult != CL_SUCCESS) {
+                    checkKernelStatus(TENSOR_PROGRAM, DEVICE_ID, "tensor_operations");
+                    return false;
+                }
+                
+                MAT_MULT_KERNEL = clCreateKernel(TENSOR_PROGRAM, "matmul", null);
+                ELEMENT_WISE_ADD_KERNEL = clCreateKernel(TENSOR_PROGRAM, "element_wise_add", null);
+                ELEMENT_WISE_MULT_KERNEL = clCreateKernel(TENSOR_PROGRAM, "element_wise_mul", null);
+                
+                String convKernelSource = loadKernelSource(CONV_KERNEL_PATH);
+                CONV_PROGRAM = clCreateProgramWithSource(CONTEXT, 1, 
+                        new String[] { convKernelSource }, null, null);
+                buildResult = clBuildProgram(CONV_PROGRAM, 0, null, null, null, null);
+                
+                if (buildResult != CL_SUCCESS) {
+                    checkKernelStatus(CONV_PROGRAM, DEVICE_ID, "convolution");
+                    return false;
+                }
+                
+                CONVOLVE_1D_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve1d", null);
+                CONVOLVE_2D_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve2d", null);
+                
+                System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
+                return true;
+            } catch (Exception e) {
+                System.err.println("Error loading or compiling kernels: " + e.getMessage());
+                return false;
             }
-            
-            MAT_MULT_KERNEL = clCreateKernel(program, "matmul", null);
-            ELEMENT_WISE_ADD_KERNEL = clCreateKernel(program, "element_wise_add", null);
-            ELEMENT_WISE_MULT_KERNEL = clCreateKernel(program, "element_wise_mul", null);
-            
-            INITIALIZED = true;
-            System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
         } catch (Exception e) {
             System.err.println("Failed to initialize OpenCL: " + e.getMessage());
-            INITIALIZED = false;
+            return false;
         }
     }
     
-    private static String loadKernelSource(String filename) throws IOException {
-        try (InputStream is = TensorGPU.class.getClassLoader().getResourceAsStream("kernels/" + filename)) {
+    private static String loadKernelSource(String resourceName) throws IOException {
+        InputStream is = TensorGPU.class.getResourceAsStream(resourceName);
+        
+        if (is == null) {
+            is = TensorGPU.class.getClassLoader().getResourceAsStream(resourceName.substring(1));
+            
             if (is == null) {
-                throw new IOException("Kernel file not found: " + filename);
+                is = ClassLoader.getSystemResourceAsStream(resourceName);
+                
+                if (is == null) {
+                    is = ClassLoader.getSystemResourceAsStream(resourceName.substring(1));
+                    
+                    if (is == null) {
+                        throw new IOException("Error loading kernel: " + resourceName);
+                    }
+                }
             }
-            return new String(is.readAllBytes());
+        }
+        
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new IOException("Error loading kernel: " + resourceName, e);
+        }
+    }
+ 
+    private static boolean checkKernelStatus(cl_program program, cl_device_id device, String kernelName) {
+        try {
+            int[] buildStatus = new int[1];
+            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_STATUS, 
+                    Sizeof.cl_int, Pointer.to(buildStatus), null);
+                    
+            if (buildStatus[0] != CL_BUILD_SUCCESS) {
+                long[] logSize = new long[1];
+                clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 
+                        0, null, logSize);
+                        
+                byte[] buildLog = new byte[(int)logSize[0]];
+                clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 
+                        logSize[0], Pointer.to(buildLog), null);
+                        
+                System.err.println("Error in kernel compilation " + kernelName + ":");
+                System.err.println(new String(buildLog));
+                return false;
+            }
+            
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error during kernel verification " + kernelName + ": " + e.getMessage());
+            return false;
         }
     }
     
@@ -127,16 +193,26 @@ public class TensorGPU extends TensorCPU {
                 if (MAT_MULT_KERNEL != null) clReleaseKernel(MAT_MULT_KERNEL);
                 if (ELEMENT_WISE_ADD_KERNEL != null) clReleaseKernel(ELEMENT_WISE_ADD_KERNEL);
                 if (ELEMENT_WISE_MULT_KERNEL != null) clReleaseKernel(ELEMENT_WISE_MULT_KERNEL);
+                if (CONVOLVE_1D_KERNEL != null) clReleaseKernel(CONVOLVE_1D_KERNEL);
+                if (CONVOLVE_2D_KERNEL != null) clReleaseKernel(CONVOLVE_2D_KERNEL);
+                
+                if (TENSOR_PROGRAM != null) clReleaseProgram(TENSOR_PROGRAM);
+                if (CONV_PROGRAM != null) clReleaseProgram(CONV_PROGRAM);
+                
                 if (COMMAND_QUEUE != null) clReleaseCommandQueue(COMMAND_QUEUE);
                 if (CONTEXT != null) clReleaseContext(CONTEXT);
-
+                
                 MAT_MULT_KERNEL = null;
                 ELEMENT_WISE_ADD_KERNEL = null;
                 ELEMENT_WISE_MULT_KERNEL = null;
+                CONVOLVE_1D_KERNEL = null;
+                CONVOLVE_2D_KERNEL = null;
+                TENSOR_PROGRAM = null;
+                CONV_PROGRAM = null;
                 COMMAND_QUEUE = null;
                 CONTEXT = null;
+                
                 INITIALIZED = false;
-
                 System.out.println("GPU resources released successfully");
             } catch (Exception e) {
                 System.err.println("Error releasing GPU resources: " + e.getMessage());
@@ -336,5 +412,147 @@ public class TensorGPU extends TensorCPU {
         }
         
         return this;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Tensor convolve(Tensor kernel) {
+        int dim = this.dimension();
+        
+        if (dim > 2) {
+            throw new IllegalArgumentException("Convolution is supported only for 1D and 2D tensors");
+        }
+        if (kernel.dimension() != dim) {
+            throw new IllegalArgumentException("The kernel dimension must match the input dimension");
+        }
+        
+        if (!INITIALIZED) {
+            return super.convolve(kernel);
+        }
+        
+        try {
+            if (dim == 1) {
+                return convolve1DGPU(kernel);
+            } else {
+                return convolve2DGPU(kernel);
+            }
+        } catch (Exception e) {
+            System.err.println("Error in GPU convolution: " + e.getMessage());
+            return super.convolve(kernel);
+        }
+    }
+
+    private Tensor convolve1DGPU(Tensor kernel) {
+        int inputSize = this.shape()[0];
+        int kernelSize = kernel.shape()[0];
+        int outputSize = inputSize;  
+        int padding = kernelSize / 2;
+        int stride = 1;
+        
+        float[] result = new float[outputSize];
+        Tensor resultTensor = new TensorCPU(new int[] {outputSize});
+        
+        try {
+            cl_mem inputBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+                    Sizeof.cl_float * inputSize, Pointer.to(this.toArray()), null);
+            cl_mem kernelBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+                    Sizeof.cl_float * kernelSize, Pointer.to(kernel.toArray()), null);
+            cl_mem outputBuffer = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY, 
+                    Sizeof.cl_float * outputSize, null, null);
+            
+            int argIndex = 0;
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(inputBuffer));
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(kernelBuffer));
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(outputBuffer));
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {inputSize}));
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {kernelSize}));
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {outputSize}));
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {stride}));
+            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {padding}));
+            
+            long[] globalWorkSize = new long[] {outputSize};
+            clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_1D_KERNEL, 1, null, globalWorkSize, null, 0, null, null);
+            
+            clEnqueueReadBuffer(COMMAND_QUEUE, outputBuffer, CL_TRUE, 0, 
+                    Sizeof.cl_float * outputSize, Pointer.to(result), 0, null, null);
+            
+            for (int i = 0; i < outputSize; i++) {
+                resultTensor.set(result[i], i);
+            }
+            
+            clReleaseMemObject(inputBuffer);
+            clReleaseMemObject(kernelBuffer);
+            clReleaseMemObject(outputBuffer);
+            
+            return resultTensor;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+    
+    private Tensor convolve2DGPU(Tensor kernel) {
+        int[] inputShape = this.shape();
+        int[] kernelShape = kernel.shape();
+        
+        int inputRows = inputShape[0];
+        int inputCols = inputShape[1];
+        int kernelRows = kernelShape[0];
+        int kernelCols = kernelShape[1];
+        
+        int outputRows = inputRows;
+        int outputCols = inputCols;
+        
+        int paddingRows = kernelRows / 2;
+        int paddingCols = kernelCols / 2;
+        int stride = 1;
+        
+        float[] result = new float[outputRows * outputCols];
+        Tensor resultTensor = new TensorCPU(new int[] {outputRows, outputCols});
+        
+        try {
+            cl_mem inputBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+                    Sizeof.cl_float * inputRows * inputCols, Pointer.to(this.toArray()), null);
+            cl_mem kernelBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+                    Sizeof.cl_float * kernelRows * kernelCols, Pointer.to(kernel.toArray()), null);
+            cl_mem outputBuffer = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY, 
+                    Sizeof.cl_float * outputRows * outputCols, null, null);
+            
+            int argIndex = 0;
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(inputBuffer));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(kernelBuffer));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(outputBuffer));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {inputRows}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {inputCols}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {kernelRows}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {kernelCols}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {outputRows}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {outputCols}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {stride}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {paddingRows}));
+            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {paddingCols}));
+            
+            long[] globalWorkSize = new long[] {outputRows, outputCols};
+            clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_KERNEL, 2, null, globalWorkSize, null, 0, null, null);
+            
+            clEnqueueReadBuffer(COMMAND_QUEUE, outputBuffer, CL_TRUE, 0, 
+                    Sizeof.cl_float * outputRows * outputCols, Pointer.to(result), 0, null, null);
+            
+            for (int i = 0; i < outputRows; i++) {
+                for (int j = 0; j < outputCols; j++) {
+                    int index = i * outputCols + j;
+                    resultTensor.set(result[index], i, j);
+                }
+            }
+            
+            clReleaseMemObject(inputBuffer);
+            clReleaseMemObject(kernelBuffer);
+            clReleaseMemObject(outputBuffer);
+            
+            return resultTensor;
+        } catch (Exception e) {
+            throw e;
+        }
     }
 } 

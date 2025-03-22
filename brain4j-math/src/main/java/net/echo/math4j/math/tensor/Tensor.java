@@ -59,6 +59,17 @@ public interface Tensor extends Iterable<Double> {
 
     Tensor divide(double value);
 
+    /**
+     * Performs a convolution between this tensor and the specified kernel tensor.
+     * Implicitly uses SAME padding and FFT implementation for larger dimensions.
+     * Convolution is supported for both 1D and 2D tensors.
+     *
+     * @param kernel the kernel tensor to use for convolution
+     * @return a new tensor resulting from the convolution
+     * @throws IllegalArgumentException if tensor dimensions are not compatible
+     */
+    Tensor convolve(Tensor kernel);
+
     double sum();
 
     double mean();
