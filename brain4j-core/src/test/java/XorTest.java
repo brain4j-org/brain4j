@@ -9,6 +9,7 @@ import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,7 @@ public class XorTest {
     @Test
     void testXorModel() throws Exception {
         // Remove the comment if you would like to use the GPU
-        // TensorFactory.useGPUIfAvailable();
+        TensorFactory.useGPUIfAvailable();
 
         // Remove the comment if you want to use a pre-trained model
         // Sequential model = ModernAdapter.deserialize("xor.bin", new Sequential());
