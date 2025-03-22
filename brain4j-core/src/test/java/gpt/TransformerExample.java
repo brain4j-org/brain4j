@@ -3,7 +3,6 @@ package gpt;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -11,7 +10,7 @@ import net.echo.math4j.math.tensor.TensorFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TransformerExample {
@@ -40,16 +39,14 @@ public class TransformerExample {
 
         System.out.println(transformer.getStats());
 
-        List<Tensor> inputs = new ArrayList<>();
-
-        for (int i = 0; i < 10; i++) {
-            inputs.add(TensorFactory.random(1, dimension));
-        }
+        int sequenceLength = 10;        
+        Tensor input = TensorFactory.random(sequenceLength, dimension);
 
         long start = System.nanoTime();
-        List<Tensor> output = transformer.predict(inputs);
+        Tensor output = transformer.predict(input);
         double took = (System.nanoTime() - start) / 1e6;
 
         System.out.println("Took " + took + " ms");
+        System.out.println("Output shape: " + Arrays.toString(output.shape()));
     }
 }
