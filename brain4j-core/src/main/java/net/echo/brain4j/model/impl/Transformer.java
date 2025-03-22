@@ -18,13 +18,11 @@ import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
-public class Transformer extends Model<Object, List<Tensor>, List<Tensor>> {
+public class Transformer extends Model<Object, Tensor, Tensor> {
 
     @SafeVarargs
-    public Transformer(Layer<List<Tensor>, List<Tensor>>... layers) {
+    public Transformer(Layer<Tensor, Tensor>... layers) {
         super(layers);
     }
 
@@ -73,8 +71,8 @@ public class Transformer extends Model<Object, List<Tensor>, List<Tensor>> {
     }
 
     @Override
-    public List<Tensor> predict(StatesCache cache, List<Tensor> input, boolean training) {
-        List<Tensor> result = new ArrayList<>(input);
+    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
+        Tensor result = input;
 
         for (Layer<?, ?> layer : layers) {
             if (layer instanceof TransformerEncoder encoder) {
