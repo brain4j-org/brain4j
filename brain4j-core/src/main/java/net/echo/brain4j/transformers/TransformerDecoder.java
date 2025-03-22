@@ -17,7 +17,7 @@ import net.echo.brain4j.transformers.masked.MaskedMultiHeadAttention;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransformerDecoder extends Layer<List<Tensor>, List<Tensor>> {
+public class TransformerDecoder extends Layer<Tensor, Tensor> {
 
     private final int heads;
     private final int dimension;
@@ -71,8 +71,10 @@ public class TransformerDecoder extends Layer<List<Tensor>, List<Tensor>> {
     }
 
     @Override
-    public List<Tensor> forward(StatesCache cache, Layer<?, ?> lastLayer, List<Tensor> input) {
-        List<Tensor> attentionOutput = maskedAttention.attendTensors(input);
+    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+        List<Tensor> inputTokens = tensorToList(input);
+        
+        List<Tensor> attentionOutput = maskedAttention.attendTensors(inputTokens);
         List<Tensor> normAttention = new ArrayList<>();
 
         for (Tensor token : attentionOutput) {
@@ -85,14 +87,40 @@ public class TransformerDecoder extends Layer<List<Tensor>, List<Tensor>> {
             feedForwardOutput.add(feedForward.predict(tensor));
         }
 
-        List<Tensor> result = new ArrayList<>();
+        List<Tensor> resultTokens = new ArrayList<>();
 
         for (int i = 0; i < feedForwardOutput.size(); i++) {
             Tensor tokenFF = feedForwardOutput.get(i);
             Tensor combined = tokenFF.add(normAttention.get(i));
-            result.add(normalizer.normalize(combined));
+            resultTokens.add(normalizer.normalize(combined));
         }
 
+        return listToTensor(resultTokens);
+    }
+    
+    private List<Tensor> tensorToList(Tensor input) {
+        List<Tensor> tokens = new ArrayList<>();
+        int sequenceLength = input.shape()[0];
+        
+        for (int i = 0; i < sequenceLength; i++) {
+            Tensor token = input.slice(i, i+1).reshape(1, dimension);
+            tokens.add(token);
+        }
+        
+        return tokens;
+    }
+    
+    private Tensor listToTensor(List<Tensor> tokens) {
+        int sequenceLength = tokens.size();
+        Tensor result = Tensor.zeros(sequenceLength, dimension);
+        
+        for (int i = 0; i < sequenceLength; i++) {
+            Tensor token = tokens.get(i);
+            for (int j = 0; j < dimension; j++) {
+                result.set(token.get(0, j), i, j);
+            }
+        }
+        
         return result;
     }
 

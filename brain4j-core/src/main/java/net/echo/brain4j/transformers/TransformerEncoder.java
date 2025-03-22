@@ -16,7 +16,7 @@ import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
+public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
     private final Sequential feedForward;
     private final LayerNorm normalizer;
@@ -66,13 +66,11 @@ public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 
-    /**
-     * Transforms a list of embeddings using the transformer encoder architecture.
-     * @param input The list of embeddings to transform.
-     */
     @Override
-    public List<Tensor> forward(StatesCache cache, Layer<?, ?> lastLayer, List<Tensor> input) {
-        List<Tensor> attentionOutput = attention.attendTensors(input);
+    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+        List<Tensor> inputTokens = tensorToList(input);
+        
+        List<Tensor> attentionOutput = attention.attendTensors(inputTokens);
         List<Tensor> normAttention = new ArrayList<>();
 
         for (Tensor token : attentionOutput) {
@@ -86,15 +84,41 @@ public class TransformerEncoder extends Layer<List<Tensor>, List<Tensor>> {
             feedForwardOutput.add(output.reshape(1, dimension));
         }
 
-        List<Tensor> result = new ArrayList<>();
+        List<Tensor> resultTokens = new ArrayList<>();
 
         for (int i = 0; i < feedForwardOutput.size(); i++) {
             Tensor tokenForwarded = feedForwardOutput.get(i);
             Tensor combined = tokenForwarded.add(normAttention.get(i));
 
-            result.add(normalizer.normalize(combined));
+            resultTokens.add(normalizer.normalize(combined));
         }
 
+        return listToTensor(resultTokens);
+    }
+
+    private List<Tensor> tensorToList(Tensor input) {
+        List<Tensor> tokens = new ArrayList<>();
+        int sequenceLength = input.shape()[0];
+        
+        for (int i = 0; i < sequenceLength; i++) {
+            Tensor token = input.slice(i, i+1).reshape(1, dimension);
+            tokens.add(token);
+        }
+        
+        return tokens;
+    }
+    
+    private Tensor listToTensor(List<Tensor> tokens) {
+        int sequenceLength = tokens.size();
+        Tensor result = Tensor.zeros(sequenceLength, dimension);
+        
+        for (int i = 0; i < sequenceLength; i++) {
+            Tensor token = tokens.get(i);
+            for (int j = 0; j < dimension; j++) {
+                result.set(token.get(0, j), i, j);
+            }
+        }
+        
         return result;
     }
 
