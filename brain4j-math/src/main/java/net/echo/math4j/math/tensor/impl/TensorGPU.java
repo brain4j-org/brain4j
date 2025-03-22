@@ -575,4 +575,9 @@ public class TensorGPU extends TensorCPU {
 
         return TensorGPU.fromTensor(result);
     }
-} 
+
+    @Override
+    public Tensor gpu() {
+        return this;
+    }
+}

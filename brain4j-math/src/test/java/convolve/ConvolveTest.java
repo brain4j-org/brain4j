@@ -5,7 +5,9 @@ import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
 import net.echo.math4j.math.tensor.ops.Convolution;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ConvolveTest {
     
@@ -42,9 +44,9 @@ public class ConvolveTest {
     private static void testConvolve1DSimple() {
         System.out.println("Test: simple 1D convolution");
         try {
-            Tensor input = TensorFactory.of(new int[]{5}, new float[]{1, 2, 3, 4, 5});
+            Tensor input = TensorFactory.of(new int[]{5}, 1, 2, 3, 4, 5);
             
-            Tensor kernel = TensorFactory.of(new int[]{3}, new float[]{1, 2, 1});
+            Tensor kernel = TensorFactory.of(new int[]{3}, 1, 2, 1);
             
             Tensor result = input.convolve(kernel);
             
@@ -65,17 +67,15 @@ public class ConvolveTest {
     private static void testConvolve2DSimple() {
         System.out.println("Test: simple 2D convolution");
         try {
-            Tensor input = TensorFactory.of(new int[]{3, 3}, new float[]{
-                1, 2, 3,
-                4, 5, 6,
-                7, 8, 9
-            });
+            Tensor input = TensorFactory.matrix(3, 3,
+                    1, 2, 3,
+                    4, 5, 6,
+                    7, 8, 9);
             
-            Tensor kernel = TensorFactory.of(new int[]{3, 3}, new float[]{
-                0, 0, 0,
-                0, 1, 0,
-                0, 0, 0
-            });
+            Tensor kernel = TensorFactory.matrix(3, 3,
+                    0, 0, 0,
+                    0, 1, 0,
+                    0, 0, 0);
             
             Tensor result = input.convolve(kernel);
             
@@ -231,32 +231,30 @@ public class ConvolveTest {
                 return;
             }
             
-            int size = 512;
+            int size = 4096;
             System.out.println("  Tensor size: " + size + "x" + size);
             
             Tensor inputCPU = TensorFactory.random(size, size);
-            Tensor inputGPU = TensorGPU.fromTensor(inputCPU);
-            
-            float[][] edgeDetectionKernel = {
-                {-1, -1, -1},
-                {-1,  8, -1},
-                {-1, -1, -1}
-            };
-            Tensor kernelCPU = TensorFactory.of(new int[]{3, 3}, flattenArray(edgeDetectionKernel));
-            Tensor kernelGPU = TensorGPU.fromTensor(kernelCPU);
+            Tensor inputGPU = inputCPU.gpu();
+
+            Tensor kernelCPU = TensorFactory.matrix(3, 3,
+                    -1, -1, -1,
+                    -1, 8, -1,
+                    -1, -1, -1);
+            Tensor kernelGPU = kernelCPU.gpu();
             
             System.out.println("  Executing convolution on CPU...");
-            long startCPU = System.currentTimeMillis();
+            long startCPU = System.nanoTime();
             Tensor resultCPU = inputCPU.convolve(kernelCPU);
-            long cpuTime = System.currentTimeMillis() - startCPU;
+            long cpuTime = System.nanoTime() - startCPU;
             
             System.out.println("  Executing convolution on GPU...");
-            long startGPU = System.currentTimeMillis();
+            long startGPU = System.nanoTime();
             Tensor resultGPU = inputGPU.convolve(kernelGPU);
-            long gpuTime = System.currentTimeMillis() - startGPU;
+            long gpuTime = System.nanoTime() - startGPU;
             
-            System.out.println("  CPU time: " + cpuTime + " ms");
-            System.out.println("  GPU time: " + gpuTime + " ms");
+            System.out.println("  CPU time: " + (cpuTime / 1e6) + " ms");
+            System.out.println("  GPU time: " + (gpuTime / 1e6) + " ms");
             double speedup = (double)cpuTime / gpuTime;
             System.out.println("  Speedup: " + String.format("%.2f", speedup) + "x");
             
@@ -275,6 +273,12 @@ public class ConvolveTest {
                     }
                 }
             }
+
+//            System.out.println("RESULT CPU");
+//            System.out.println(resultCPU.toString("%.3f"));
+//
+//            System.out.println("RESULT GPU");
+//            System.out.println(resultGPU.toString("%.3f"));
             
             System.out.println("  Maximum difference: " + maxDiff + " at position [" + errorRow + "," + errorCol + "]");
             

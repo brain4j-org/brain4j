@@ -151,4 +151,6 @@ public interface Tensor extends Iterable<Double> {
     String toString(String format);
 
     Tensor softmax();
+
+    Tensor gpu();
 }
