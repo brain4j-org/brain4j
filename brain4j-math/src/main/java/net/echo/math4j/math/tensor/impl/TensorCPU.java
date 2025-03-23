@@ -975,6 +975,7 @@ public class TensorCPU implements Cloneable, Tensor {
         }
         
         int[] newShape = new int[shape.length];
+
         for (int i = 0; i < shape.length; i++) {
             if (i < ranges.length && ranges[i] != null) {
                 newShape[i] = ranges[i].size(shape[i]);

@@ -70,14 +70,9 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
     @Override
     public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
         Tensor attended = attention.attend(input);
+        Tensor normalized = normalizer.normalize(attended.add(input));
 
-        List<Tensor> attendedTokens = TensorFactory.toList(attended);
-        List<Tensor> normAttention = new ArrayList<>();
-
-        for (Tensor token : attendedTokens) {
-            normAttention.add(normalizer.normalize(token));
-        }
-
+        List<Tensor> normAttention = TensorFactory.toList(normalized);
         List<Tensor> feedForwardOutput = new ArrayList<>();
 
         for (Tensor tensor : normAttention) {
@@ -85,16 +80,8 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
             feedForwardOutput.add(output.reshape(1, dimension));
         }
 
-        List<Tensor> resultTokens = new ArrayList<>();
-
-        for (int i = 0; i < feedForwardOutput.size(); i++) {
-            Tensor tokenForwarded = feedForwardOutput.get(i);
-            Tensor combined = tokenForwarded.add(normAttention.get(i));
-
-            resultTokens.add(normalizer.normalize(combined));
-        }
-
-        return TensorFactory.mergeTensors(resultTokens);
+        Tensor merged = TensorFactory.mergeTensors(feedForwardOutput);
+        return normalizer.normalize(merged.add(normalized));
     }
 
     public Sequential getFeedForward() {

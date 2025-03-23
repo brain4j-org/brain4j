@@ -27,7 +27,7 @@ public class TransformerExample {
 
     public void start() {
         int dimension = 784;
-        // TensorFactory.useGPUIfAvailable();
+        TensorFactory.useGPUIfAvailable();
 
         Transformer transformer = new Transformer(
                 new TransformerEncoder(4, dimension, 1.0),
@@ -36,11 +36,13 @@ public class TransformerExample {
                 new TransformerEncoder(4, dimension, 1.0)
         );
 
+        transformer.setSeed(0);
         transformer.compile(LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
 
         System.out.println(transformer.getStats());
 
-        int sequenceLength = 10;        
+        int sequenceLength = 10;
+
         Tensor input = TensorFactory.random(sequenceLength, dimension);
 
         long start = System.nanoTime();
