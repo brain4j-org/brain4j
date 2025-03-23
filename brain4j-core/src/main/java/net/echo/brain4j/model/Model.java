@@ -5,8 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import net.echo.math4j.DataSet;
-import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.adapters.json.OptimizerAdapter;
@@ -33,6 +31,8 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.transformers.TransformerEncoder;
+import net.echo.math4j.BrainUtils;
+import net.echo.math4j.DataSet;
 
 import java.io.BufferedWriter;
 import java.io.File;

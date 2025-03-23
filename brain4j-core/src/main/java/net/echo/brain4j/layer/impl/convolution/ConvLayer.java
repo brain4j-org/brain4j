@@ -1,7 +1,6 @@
 package net.echo.brain4j.layer.impl.convolution;
 
 import com.google.common.base.Preconditions;
-import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
@@ -9,6 +8,7 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.math4j.BrainUtils;
 
 import java.util.ArrayList;
 import java.util.List;

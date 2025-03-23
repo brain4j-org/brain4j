@@ -1,7 +1,6 @@
 package net.echo.brain4j.adapters;
 
 import com.github.luben.zstd.Zstd;
-import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
@@ -10,6 +9,7 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.math4j.BrainUtils;
 
 import java.io.*;
 import java.util.List;

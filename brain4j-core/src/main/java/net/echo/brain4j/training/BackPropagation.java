@@ -1,7 +1,5 @@
 package net.echo.brain4j.training;
 
-import net.echo.math4j.DataSet;
-import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.impl.Sequential;
@@ -10,6 +8,8 @@ import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.math4j.BrainUtils;
+import net.echo.math4j.DataSet;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.ArrayList;

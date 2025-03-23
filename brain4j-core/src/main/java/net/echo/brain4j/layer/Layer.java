@@ -2,13 +2,11 @@ package net.echo.brain4j.layer;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.JsonAdapter;
-import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.math4j.math.tensor.Tensor;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
@@ -16,6 +14,8 @@ import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.math4j.BrainUtils;
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;

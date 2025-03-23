@@ -1,8 +1,6 @@
 package net.echo.brain4j.model.impl;
 
 import com.google.common.base.Preconditions;
-import net.echo.math4j.DataSet;
-import net.echo.math4j.BrainUtils;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
@@ -13,8 +11,6 @@ import net.echo.brain4j.layer.impl.convolution.InputLayer;
 import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
-import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
@@ -26,6 +22,10 @@ import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.math4j.BrainUtils;
+import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;

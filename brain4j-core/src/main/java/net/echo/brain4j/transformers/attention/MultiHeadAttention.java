@@ -1,10 +1,9 @@
 package net.echo.brain4j.transformers.attention;
 
 import com.google.common.base.Preconditions;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.math4j.math.vector.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,43 +50,6 @@ public class MultiHeadAttention {
         return TensorFactory.concat(headOutputs);
     }
 
-    public List<Tensor> attendTensors(List<Tensor> inputs) {
-        List<List<Tensor>> headOutputs = new ArrayList<>();
-
-        for (AttentionHead head : heads) {
-            headOutputs.add(head.attendTensors(inputs));
-        }
-
-        for (List<Tensor> headOutput : headOutputs) {
-            for (Tensor token : headOutput) {
-                System.out.println("TOKEN");
-                System.out.println(token);
-            }
-        }
-
-        return concatenateTensors(headOutputs, inputs);
-    }
-
-    public List<Tensor> concatenateTensors(List<List<Tensor>> headOutputs, List<Tensor> inputs) {
-        List<Tensor> result = new ArrayList<>();
-
-        for (int i = 0; i < inputs.size(); i++) {
-            List<Tensor> concatList = new ArrayList<>();
-
-            for (List<Tensor> headOutput : headOutputs) {
-                concatList.add(headOutput.get(i));
-            }
-
-            Tensor concatenated = concatenateTensorsList(concatList);
-            Tensor projected = concatenated.matmul(outProjectionTensor);
-            
-            Tensor combined = projected.add(inputs.get(i));
-            result.add(combined);
-        }
-
-        return result;
-    }
-
     public int getTotalNeurons() {
         int total = 0;
 
@@ -116,25 +78,5 @@ public class MultiHeadAttention {
                 outProjectionTensor.set(value, i, j);
             }
         }
-    }
-
-    protected Tensor concatenateTensorsList(List<Tensor> tensors) {
-        int totalSize = 0;
-
-        for (Tensor tensor : tensors) {
-            totalSize += tensor.elements();
-        }
-
-        Tensor result = TensorFactory.matrix(1, totalSize);
-
-        int position = 0;
-
-        for (Tensor tensor : tensors) {
-            for (int i = 0; i < tensor.elements(); i++) {
-                result.set(tensor.get(0, i), 0, position++);
-            }
-        }
-
-        return result;
     }
 }

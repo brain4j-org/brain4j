@@ -1,8 +1,8 @@
 package net.echo.brain4j.transformers.attention;
 
+import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.ArrayList;

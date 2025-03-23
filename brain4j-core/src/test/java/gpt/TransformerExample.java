@@ -3,6 +3,7 @@ package gpt;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -26,7 +27,7 @@ public class TransformerExample {
 
     public void start() {
         int dimension = 784;
-        TensorFactory.useGPUIfAvailable();
+        // TensorFactory.useGPUIfAvailable();
 
         Transformer transformer = new Transformer(
                 new TransformerEncoder(4, dimension, 1.0),

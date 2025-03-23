@@ -1,7 +1,7 @@
 package net.echo.brain4j.training.techniques;
 
-import net.echo.math4j.DataSet;
 import net.echo.brain4j.model.Model;
+import net.echo.math4j.DataSet;
 
 import java.util.ArrayList;
 import java.util.List;

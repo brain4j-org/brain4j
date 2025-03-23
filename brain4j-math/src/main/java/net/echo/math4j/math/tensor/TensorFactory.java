@@ -178,4 +178,16 @@ public class TensorFactory {
 
         return result;
     }
+
+    public static Tensor triangularMask(int dimension) {
+        Tensor mask = TensorFactory.zeros(dimension, dimension);
+
+        for (int i = 0; i < dimension; i++) {
+            for (int j = i + 1; j < dimension; j++) {
+                mask.set(Double.NEGATIVE_INFINITY, i, j);
+            }
+        }
+
+        return mask;
+    }
 }

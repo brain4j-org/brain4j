@@ -1,13 +1,9 @@
 package net.echo.brain4j.transformers.masked;
 
-import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.transformers.attention.AttentionHead;
-import net.echo.math4j.math.vector.Vector;
-
-import java.util.ArrayList;
-import java.util.List;
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 
 public class MaskedAttentionHead extends AttentionHead {
 
@@ -15,48 +11,20 @@ public class MaskedAttentionHead extends AttentionHead {
         super(weightInit, inputDimension, headDimension, temperature);
     }
 
-    public List<Tensor> attendTensors(List<Tensor> inputs) {
-        int sequenceLength = inputs.size();
+    @Override
+    public Tensor attend(Tensor input) {
+        Tensor Q = input.matmul(queryWeightsTensor);
+        Tensor K = input.matmul(keyWeightsTensor);
+        Tensor V = input.matmul(valueWeightsTensor);
 
-        List<Tensor> queries = new ArrayList<>();
-        List<Tensor> keys = new ArrayList<>();
-        List<Tensor> values = new ArrayList<>();
+        double normalizer = Math.sqrt(headDimension);
 
-        for (Tensor token : inputs) {
-            queries.add(token.matmul(queryWeightsTensor));
-            keys.add(token.matmul(keyWeightsTensor));
-            values.add(token.matmul(valueWeightsTensor));
-        }
+        Tensor scores = Q.matmul(K.transpose()).div(normalizer);
+        Tensor mask = TensorFactory.triangularMask(scores.shape()[0]);
 
-        List<Tensor> output = new ArrayList<>();
-        double scale = Math.sqrt(headDimension);
+        Tensor maskedScores = scores.add(mask);
+        Tensor attentionWeights = maskedScores.softmax();
 
-        for (int i = 0; i < sequenceLength; i++) {
-            Tensor query = queries.get(i);
-            List<Double> scoreList = new ArrayList<>();
-
-            for (int j = 0; j <= i; j++) {
-                double score = query.dot(keys.get(j)) / scale;
-                scoreList.add(score);
-            }
-
-            Vector attentionWeightsVec = softmax(scoreList);
-            Tensor attentionWeights = TensorFactory.vector(attentionWeightsVec);
-            
-            Tensor headOutput = TensorFactory.zeros(headDimension);
-
-            for (int j = 0; j <= i; j++) {
-                float attention = attentionWeights.get(j);
-
-                Tensor valueTensor = values.get(j);
-                Tensor weightedValue = valueTensor.mul(attention);
-
-                headOutput = headOutput.add(weightedValue);
-            }
-
-            output.add(headOutput);
-        }
-
-        return output;
+        return attentionWeights.matmul(V);
     }
 }
