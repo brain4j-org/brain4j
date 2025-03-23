@@ -1,6 +1,7 @@
 package net.echo.math4j.math.tensor.impl;
 
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.opencl.DeviceUtils;
 import org.jocl.*;
 
@@ -579,5 +580,10 @@ public class TensorGPU extends TensorCPU {
     @Override
     public Tensor gpu() {
         return this;
+    }
+
+    @Override
+    public Tensor cpu() {
+        return TensorCPU.of(shape(), getData());
     }
 }

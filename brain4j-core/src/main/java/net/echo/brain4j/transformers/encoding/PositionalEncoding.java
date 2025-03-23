@@ -37,14 +37,16 @@ public class PositionalEncoding {
         int rows = input.shape()[0];
         int cols = input.shape()[1];
 
-        Tensor encoded = TensorFactory.matrix(rows, cols);
+        Tensor encoded = TensorFactory.matrix(Math.min(rows, maxLength), cols);
 
-        for (int i = 0; i < rows; i++) {
+        int offset = rows > maxLength ? rows - maxLength : 0;
+
+        for (int i = offset; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 float inputValue = input.get(i, j);
-                float encoding = encodings.get(i, j);
+                float encoding = encodings.get(i - offset, j);
 
-                encoded.set(inputValue + encoding, i, j);
+                encoded.set(inputValue + encoding, i - offset, j);
             }
         }
 

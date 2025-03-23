@@ -4,11 +4,8 @@ import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class Vocabulary {
-
-    public static final Pattern PATTERN = Pattern.compile("\\s+|[,;.?!-]");
 
     private final List<String> corpus;
     private final List<String> tokens;
@@ -18,13 +15,15 @@ public class Vocabulary {
         this.corpus = corpus;
         this.dimension = dimension;
         this.tokens = new ArrayList<>();
+        this.tokens.add("<UNK>"); // The first index is for the unknown token
+        this.tokens.add("<END>"); // The second index is for the unknown token
     }
 
-    private List<String> split(String input) {
+    public List<String> split(String input) {
         List<String> result = new ArrayList<>();
 
         StringBuilder current = new StringBuilder();
-        List<Character> delimiters = Arrays.asList(' ', ',', ';', '.', '?', '!', '-', '_' );
+        List<Character> delimiters = Arrays.asList(' ', ',', ';', '.', '?', '!', '-', '_', '|');
 
         for (char c : input.toCharArray()) {
             if (delimiters.contains(c)) {
@@ -35,9 +34,7 @@ public class Vocabulary {
                     current = new StringBuilder();
                 }
 
-                if (c != ' ' && !charAsString.isEmpty()) {
-                    result.add(charAsString);
-                }
+                result.add(charAsString);
             } else {
                 current.append(c);
             }
@@ -51,26 +48,23 @@ public class Vocabulary {
     }
 
     public void tokenize() {
-        for (String sentence : corpus) {
-            List<String> tokens = split(sentence);
+        for (String token : corpus) {
+            List<String> split = split(token);
 
-            for (String token : tokens) {
-                String tok = token.toLowerCase();
+            for (String s : split) {
+                if (tokens.contains(s)) continue;
 
-                if (!this.tokens.contains(tok)) {
-                    this.tokens.add(tok);
-                }
+                tokens.add(s);
             }
         }
     }
 
     public Tensor encode(String phrase) {
-        String[] tokens = PATTERN.split(phrase);
+        List<String> tokens = split(phrase);
+        Tensor result = TensorFactory.zeros(tokens.size(), dimension);
 
-        Tensor result = TensorFactory.zeros(tokens.length, dimension);
-
-        for (int i = 0; i < tokens.length; i++) {
-            Tensor encoded = wordToVec(tokens[i]);
+        for (int i = 0; i < tokens.size(); i++) {
+            Tensor encoded = wordToVec(tokens.get(i));
 
             for (int j = 0; j < encoded.elements(); j++) {
                 result.set(encoded.get(j), i, j);
@@ -83,7 +77,7 @@ public class Vocabulary {
     public Tensor wordToVec(String word) {
         Tensor result = TensorFactory.zeros(dimension);
 
-        for (int i = 0; i < word.length(); i++) {
+        for (int i = 0; i < Math.min(word.length(), dimension); i++) {
             char c = word.charAt(i);
             result.set(Math.sin(c), i);
         }
@@ -100,6 +94,12 @@ public class Vocabulary {
     }
 
     public int wordToIndex(String expected) {
-        return tokens.indexOf(expected);
+        int index = tokens.indexOf(expected);
+
+        if (index == -1) {
+            index = 0;
+        }
+
+        return index;
     }
 }

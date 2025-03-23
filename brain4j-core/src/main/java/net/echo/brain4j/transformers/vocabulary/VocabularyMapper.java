@@ -1,6 +1,7 @@
 package net.echo.brain4j.transformers.vocabulary;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -19,8 +20,15 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public void propagate(StatesCache cache, Layer<?, ?> previous) {
-        super.propagate(cache, previous);
+    public void computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
+        Tensor delta = outputs.clone().sub(targets);
+
+        // delta as a 1 x vocabSize matrix
+        Tensor gradZ = delta.reshape(1, vocabularySize);
+        Tensor gradW = cache.getTensor(this).transpose().matmul(gradZ);
+
+        double learningRate = 0.2;
+        outProjectionWeights.sub(gradW.mul(learningRate));
     }
 
     @Override
@@ -33,11 +41,14 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
         Tensor sliced = input.reshape(columns * rows).slice(range);
         Tensor reshaped = sliced.reshape(1, columns);
 
-        Tensor result = reshaped.matmul(outProjectionWeights).reshape(vocabularySize);
-        return result.softmax(temperature);
+        cache.setTensor(this, reshaped);
+
+        Tensor result = reshaped.matmul(outProjectionWeights);
+        return result.reshape(vocabularySize).softmax(temperature);
     }
 
-    public Tensor getOutProjectionWeights() {
-        return outProjectionWeights;
+    @Override
+    public int getTotalParams() {
+        return outProjectionWeights.elements();
     }
 }

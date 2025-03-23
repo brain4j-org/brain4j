@@ -15,6 +15,7 @@ import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TransformerEncoder extends Layer<Tensor, Tensor> {
@@ -58,6 +59,11 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
     }
 
     @Override
+    public void propagate(StatesCache cache, Layer<?, ?> previous) {
+
+    }
+
+    @Override
     public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
         Tensor attended = getAttention().attend(input);
         Tensor normalized = normalizer.normalize(attended.add(input));
@@ -66,7 +72,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
         List<Tensor> feedForwardOutput = new ArrayList<>();
 
         for (Tensor tensor : normAttention) {
-            Tensor output = feedForward.predict(tensor);
+            Tensor output = feedForward.predict(tensor.reshape(dimension));
             feedForwardOutput.add(output.reshape(1, dimension));
         }
 

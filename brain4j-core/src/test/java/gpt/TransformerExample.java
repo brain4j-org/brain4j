@@ -4,11 +4,11 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.brain4j.transformers.encoding.PositionalEncoding;
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -17,85 +17,99 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Scanner;
 
 public class TransformerExample {
 
-    private final int dimension = 16;
-    private final PositionalEncoding encoding = new PositionalEncoding(100, dimension);
+    private static final int EMBEDDING_SIZE = 16;
+    private static final PositionalEncoding ENCODING = new PositionalEncoding(100, EMBEDDING_SIZE);
 
-    public static void main(String[] args) throws IOException {
-        TransformerExample example = new TransformerExample();
-        example.start();
+    public static void main(String[] args) throws Exception {
+        new TransformerExample().start();
     }
 
-    public List<String> getExamples() throws IOException {
+    private List<String> loadExamples() throws IOException {
         return Files.readAllLines(Path.of("dataset.txt"));
     }
 
-    public void start() throws IOException {
-        List<String> examples = getExamples();
+    private void start() throws Exception {
+        List<String> examples = loadExamples();
 
-        Vocabulary vocabulary = new Vocabulary(examples, dimension);
+        Vocabulary vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
         vocabulary.tokenize();
 
-        int vocabSize = vocabulary.getVocabSize();
-        int dimension = 16;
-
-        System.out.println("Vocabulary size: " + vocabSize);
-        // TensorFactory.useGPUIfAvailable();
+        System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
+        TensorFactory.useGPUIfAvailable();
 
         Transformer transformer = new Transformer(
-                new TransformerEncoder(4, dimension),
-                new TransformerDecoder(4, dimension),
-                new VocabularyMapper(vocabSize, dimension, 0.1)
+                new TransformerEncoder(4, EMBEDDING_SIZE),
+                new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 0.1)
         );
-
         transformer.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.001));
 
         System.out.println(transformer.getStats());
 
-        String phrase = "hello, how are you?";
-        String expected = "hi";
+        Scanner scanner = new Scanner(System.in);
+        String trainInput = "hello, how are you?";
+        String trainOutput = "hello, i am good.<END>";
 
-        Tensor input = vocabulary.encode(phrase);
-        Tensor encoded = encoding.encode(input);
+        trainModel(vocabulary, trainInput, trainOutput, transformer);
 
-        Tensor output = TensorFactory.zeros(vocabSize);
-        int index = vocabulary.wordToIndex(expected);
+        System.out.print("Enter a prompt: ");
+        String prompt = scanner.nextLine() + " ";
 
-        output.set(1, index);
+        generateResponse(vocabulary, transformer, prompt);
+    }
 
-        System.out.println("==== INPUT ====");
-        System.out.println(encoded);
-
+    private void trainModel(Vocabulary vocabulary, String trainInput, String trainOutput, Transformer transformer) {
         DataSet<DataRow> dataSet = new DataSet<>();
-        dataSet.add(new DataRow(encoded, output));
+        List<String> tokens = vocabulary.split(trainOutput);
+        String lastInput = trainInput + " ";
 
-        transformer.fit(dataSet);
+        for (String token : tokens) {
+            Tensor input = vocabulary.encode(lastInput);
+            Tensor encoded = ENCODING.encode(input);
 
-        System.out.println("==== EXPEC ====");
-        System.out.println(output);
+            Tensor target = TensorFactory.create(vocabulary.getVocabSize());
+            int index = vocabulary.wordToIndex(token);
 
-        StringBuilder response = new StringBuilder();
+            if (index != -1) {
+                target.set(1, index);
+            }
 
-//        for (int i = 0; i < 1; i++) {
-//            System.out.println("User: " + phrase);
-//
-//            Tensor input = vocabulary.encode(phrase);
-//            Tensor encoded = encoding.encode(input);
-//
-//            Tensor output = transformer.predict(encoded);
-//
-//            System.out.println("===== Probability Distribution =====");
-//            System.out.println(output.toString("%.3f"));
-//
-//            int indexOfMax = BrainUtils.indexOfMaxValue(Vector.of(output.toArray()));
-//
-//            String word = vocabulary.indexToWord(indexOfMax);
-//            System.out.println("Chat Bot: " + response);
-//
-//            response.append(word).append(" ");
-//            phrase += " " + word;
-//        }
+//            System.out.println("Input: " + lastInput);
+//            System.out.println("Expected: " + token);
+
+            dataSet.add(new DataRow(encoded, target));
+            lastInput += token;
+        }
+
+        long startTime = System.nanoTime();
+        transformer.fit(dataSet, 100);
+        double duration = (System.nanoTime() - startTime) / 1e6;
+
+        double loss = transformer.loss(dataSet);
+        System.out.println("Training took " + duration + " ms with loss " + loss);
+    }
+
+    private void generateResponse(Vocabulary vocabulary, Transformer transformer, String prompt) throws InterruptedException {
+        StringBuilder botResponse = new StringBuilder();
+        String lastWord = "";
+
+        while (!lastWord.equals("<END>")) {
+            Tensor input = vocabulary.encode(prompt);
+            Tensor encoded = ENCODING.encode(input);
+            Tensor output = transformer.predict(encoded);
+
+            int indexOfMax = BrainUtils.indexOfMaxValue(output);
+            String word = vocabulary.indexToWord(indexOfMax);
+
+            botResponse.append(word);
+            prompt += word;
+            lastWord = word;
+
+            System.out.print("\rChat Bot: " + botResponse);
+            Thread.sleep(250);
+        }
     }
 }

@@ -1,9 +1,8 @@
 package net.echo.brain4j.training;
 
-import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.loss.LossFunction;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.Optimizer;
@@ -11,18 +10,17 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.vector.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BackPropagation {
 
-    private final Sequential model;
+    private final Model model;
     private final Optimizer optimizer;
     private final Updater updater;
 
-    public BackPropagation(Sequential model, Optimizer optimizer, Updater updater) {
+    public BackPropagation(Model model, Optimizer optimizer, Updater updater) {
         this.model = model;
         this.optimizer = optimizer;
         this.updater = updater;
@@ -54,7 +52,7 @@ public class BackPropagation {
         }
 
         BrainUtils.waitAll(threads);
-        updater.postBatch(model, optimizer.getLearningRate());
+        // updater.postBatch(model, optimizer.getLearningRate());
     }
 
     public void iteration(DataSet<DataRow> dataSet) {
@@ -86,21 +84,10 @@ public class BackPropagation {
         updater.postIteration(model, optimizer.getLearningRate());
     }
 
-    private void initializeDeltas(StatesCache cacheHolder, List<Layer<?, ?>> layers, Tensor targets, Tensor outputs) {
+    private void initializeDeltas(StatesCache cache, List<Layer<?, ?>> layers, Tensor targets, Tensor outputs) {
         Layer<?, ?> outputLayer = layers.getLast();
+        LossFunction lossFunction = model.getLossFunction();
 
-        List<Neuron> neurons = outputLayer.getNeurons();
-        Activation function = outputLayer.getActivation();
-
-        Tensor derivative = function.getDerivative(outputs);
-
-        for (int i = 0; i < neurons.size(); i++) {
-            Neuron neuron = neurons.get(i);
-
-            double error = outputs.get(i) - targets.get(i);
-            double delta = model.getLossFunction().getDelta(error, derivative.get(i));
-
-            neuron.setDelta(cacheHolder, (float) delta);
-        }
+        outputLayer.computeLoss(cache, targets, outputs, lossFunction);
     }
 }

@@ -107,6 +107,19 @@ public abstract class Layer<I, O> implements Adapter {
         neurons.forEach(neuron -> neuron.setBias(2 * generator.nextDouble() - 1));
     }
 
+    public void computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
+        Tensor derivative = activation.getDerivative(outputs);
+
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron neuron = neurons.get(i);
+
+            double error = outputs.get(i) - targets.get(i);
+            double delta = lossFunction.getDelta(error, derivative.get(i));
+
+            neuron.setDelta(cache, (float) delta);
+        }
+    }
+
     public void connect(Random generator, Layer<?, ?> nextLayer, double bound) {
         this.nextLayer = nextLayer;
 

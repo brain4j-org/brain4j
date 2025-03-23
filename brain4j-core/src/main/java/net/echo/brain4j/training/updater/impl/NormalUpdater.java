@@ -2,6 +2,7 @@ package net.echo.brain4j.training.updater.impl;
 
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
@@ -12,7 +13,7 @@ import net.echo.math4j.math.vector.Vector;
 public class NormalUpdater extends Updater {
 
     @Override
-    public void postFit(Sequential model, double learningRate) {
+    public void postFit(Model model, double learningRate) {
         for (int i = 0; i < synapses.length; i++) {
             Synapse synapse = synapses[i];
             float gradient = gradients[i];

@@ -1231,6 +1231,11 @@ public class TensorCPU implements Cloneable, Tensor {
         return TensorGPU.fromTensor(this);
     }
 
+    @Override
+    public Tensor cpu() {
+        return this;
+    }
+
     private void softmax1D(double temperature, Tensor tensor) {
         double max = Double.NEGATIVE_INFINITY;
 

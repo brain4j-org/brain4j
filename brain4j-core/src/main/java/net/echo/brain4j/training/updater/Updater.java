@@ -5,6 +5,7 @@ import net.echo.brain4j.adapters.json.UpdaterAdapter;
 import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.convolution.ConvLayer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
@@ -42,12 +43,12 @@ public abstract class Updater {
         }
     }
 
-    public void postIteration(Sequential model, double learningRate) {
+    public void postIteration(Model model, double learningRate) {
     }
 
-    public void postFit(Sequential model, double learningRate) {
+    public void postFit(Model model, double learningRate) {
     }
 
-    public void postBatch(Sequential model, double learningRate) {
+    public void postBatch(Model model, double learningRate) {
     }
 }

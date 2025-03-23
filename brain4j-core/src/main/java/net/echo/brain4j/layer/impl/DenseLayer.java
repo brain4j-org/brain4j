@@ -35,11 +35,11 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
-        // TODO: Fix overhead that is too high!
         int numNeurons = neurons.size();
-
         Tensor reshapedInput = input.reshape(input.elements(), 1);
-        Tensor result = denseLayer.getWeights().matmul(reshapedInput).reshape(numNeurons);
+
+        // TODO: Fix overhead that is too high!
+        Tensor result = denseLayer.getWeights().cpu().matmul(reshapedInput).reshape(numNeurons);
         Tensor output = TensorFactory.create(numNeurons);
 
         for (int i = 0; i < neurons.size(); i++) {
