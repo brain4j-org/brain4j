@@ -33,7 +33,7 @@ public class TransformerExample {
                 new TransformerEncoder(4, dimension, 1.0),
                 new TransformerEncoder(4, dimension, 1.0),
                 new TransformerEncoder(4, dimension, 1.0),
-                new TransformerEncoder(4, dimension, 1.0)
+                new TransformerDecoder(4, dimension, 1.0)
         );
 
         transformer.setSeed(0);

@@ -19,12 +19,12 @@ import java.util.List;
 
 public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
-    private final Sequential feedForward;
-    private final LayerNorm normalizer;
+    protected final Sequential feedForward;
+    protected final LayerNorm normalizer;
 
-    private final int heads;
-    private final int dimension;
-    private final double temperature;
+    protected final int heads;
+    protected final int dimension;
+    protected final double temperature;
 
     private MultiHeadAttention attention;
 
@@ -41,14 +41,6 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
         this.heads = numHeads;
         this.dimension = dimension;
         this.temperature = temperature;
-    }
-
-    public int getAttentionSize() {
-        return attention.getTotalNeurons();
-    }
-
-    public int getFeedForwardSize() {
-        return feedForward.getTotalWeights();
     }
 
     @Override
@@ -69,7 +61,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
     @Override
     public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
-        Tensor attended = attention.attend(input);
+        Tensor attended = getAttention().attend(input);
         Tensor normalized = normalizer.normalize(attended.add(input));
 
         List<Tensor> normAttention = TensorFactory.toList(normalized);
@@ -84,6 +76,10 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
         return normalizer.normalize(merged.add(normalized));
     }
 
+    public MultiHeadAttention getAttention() {
+        return attention;
+    }
+
     public Sequential getFeedForward() {
         return feedForward;
     }
@@ -92,8 +88,12 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
         return normalizer;
     }
 
-    public MultiHeadAttention getAttention() {
-        return attention;
+    public int getAttentionSize() {
+        return getAttention().getTotalNeurons();
+    }
+
+    public int getFeedForwardSize() {
+        return feedForward.getTotalWeights();
     }
 }
 
