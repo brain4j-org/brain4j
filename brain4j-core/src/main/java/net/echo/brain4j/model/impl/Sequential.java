@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * It supports training using instances of {@link DataRow}.
  * </p>
  */
-public class Sequential extends Model<DataRow, Tensor, Tensor> {
+public class Sequential extends Model {
 
     protected BackPropagation propagation;
 

@@ -36,8 +36,8 @@ public class ConvExample {
 
         System.out.println(model.getStats());
 
-        SmartTrainer<DataRow> trainer = new SmartTrainer<>(1, 1);
-        trainer.addListener(new EpochListener<>());
+        SmartTrainer trainer = new SmartTrainer(1, 1);
+        trainer.addListener(new EpochListener());
         trainer.startFor(model, dataSet, 1, 0.000001);
 
         EvaluationResult result = model.evaluate(dataSet);

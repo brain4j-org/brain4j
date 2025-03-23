@@ -1,14 +1,15 @@
 package net.echo.brain4j.training.techniques;
 
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.math4j.DataSet;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SmartTrainer<R> {
+public class SmartTrainer {
 
-    private final List<TrainListener<R>> listeners;
+    private final List<TrainListener> listeners;
     private final double learningRateDecay;
     private final int evaluateEvery;
 
@@ -26,7 +27,7 @@ public class SmartTrainer<R> {
         this.evaluateEvery = evaluateEvery;
     }
 
-    public void addListener(TrainListener<R> listener) {
+    public void addListener(TrainListener listener) {
         listeners.add(listener);
     }
 
@@ -34,7 +35,7 @@ public class SmartTrainer<R> {
         this.running = false;
     }
 
-    public void start(Model<R, ?, ?> model, DataSet<R> dataSet, double lossThreshold, double lossTolerance) {
+    public void start(Model model, DataSet<DataRow> dataSet, double lossThreshold, double lossTolerance) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
@@ -67,7 +68,7 @@ public class SmartTrainer<R> {
         this.end = System.nanoTime();
     }
 
-    public void step(Model<R, ?, ?> model, DataSet<R> dataSet) {
+    public void step(Model model, DataSet dataSet) {
         long start = System.nanoTime();
         this.listeners.forEach(listener -> listener.onEpochStarted(epoches, start));
 
@@ -77,7 +78,7 @@ public class SmartTrainer<R> {
         this.listeners.forEach(listener -> listener.onEpochCompleted(epoches, took));
     }
 
-    public void startFor(Model<R, ?, ?> model, DataSet<R> dataSet, int epochesAmount, double lossTolerance) {
+    public void startFor(Model model, DataSet dataSet, int epochesAmount, double lossTolerance) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
@@ -134,7 +135,7 @@ public class SmartTrainer<R> {
         return evaluateEvery;
     }
 
-    public List<TrainListener<R>> getListeners() {
+    public List<TrainListener> getListeners() {
         return listeners;
     }
 

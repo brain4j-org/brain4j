@@ -1,14 +1,15 @@
 package net.echo.brain4j.training.techniques;
 
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.math4j.DataSet;
 
-public class TrainListener<R> {
+public class TrainListener {
 
-    protected SmartTrainer<R> trainer;
-    protected Model<?, ?, ?> model;
+    protected SmartTrainer trainer;
+    protected Model model;
 
-    public void register(SmartTrainer<R> trainer, Model<?, ?, ?> model) {
+    public void register(SmartTrainer trainer, Model model) {
         this.trainer = trainer;
         this.model = model;
     }
@@ -27,7 +28,7 @@ public class TrainListener<R> {
     public void onEpochStarted(int epoch, long start) {
     }
 
-    public void onEvaluated(DataSet<R> dataSet, int epoch, double loss, long took) {
+    public void onEvaluated(DataSet<DataRow> dataSet, int epoch, double loss, long took) {
     }
 
     public void onLossIncreased(double loss, double previousLoss) {

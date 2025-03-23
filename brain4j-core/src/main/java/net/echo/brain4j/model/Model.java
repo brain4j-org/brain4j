@@ -22,6 +22,7 @@ import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
@@ -33,6 +34,7 @@ import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -55,7 +57,7 @@ import java.util.Random;
  * @see Sequential Sequential
  * @see Transformer Transformer
  */
-public abstract class Model<R, I, O> implements Adapter {
+public abstract class Model implements Adapter {
 
     private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
     private static final UpdaterAdapter UPDATER_ADAPTER = new UpdaterAdapter();
@@ -126,7 +128,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param dataSet dataset for testing
      * @return the error of the model
      */
-    public abstract double loss(DataSet<R> dataSet);
+    public abstract double loss(DataSet<DataRow> dataSet);
 
     /**
      * Evaluates the model performance on the given dataset.
@@ -134,14 +136,14 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param dataSet dataset to evaluate
      * @return an evaluation result
      */
-    public abstract EvaluationResult evaluate(DataSet<R> dataSet);
+    public abstract EvaluationResult evaluate(DataSet<DataRow> dataSet);
 
     /**
      * Trains the model for one epoch.
      *
      * @param dataSet dataset for training
      */
-    public abstract void fit(DataSet<R> dataSet);
+    public abstract void fit(DataSet<DataRow> dataSet);
 
     /**
      * Predicts output for given input.
@@ -150,7 +152,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param cache cache used to store neuron states
      * @return predicted outputs as a vector
      */
-    public abstract O predict(StatesCache cache, I input, boolean training);
+    public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
 
     /**
      * Reloads the values inside the network.
@@ -163,7 +165,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param dataSet dataset for training
      * @param epoches number of epoches
      */
-    public void fit(DataSet<R> dataSet, int epoches) {
+    public void fit(DataSet<DataRow> dataSet, int epoches) {
         for (int i = 0; i < epoches; i++) {
             fit(dataSet);
         }
@@ -175,7 +177,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param input The input data.
      * @return The model's prediction.
      */
-    public O predict(I input) {
+    public Tensor predict(Tensor input) {
         return predict(new StatesCache(), input, false);
     }
 
@@ -186,7 +188,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param optimizer The gradient optimization algorithm to use.
      * @return The current instance of the model.
      */
-    public Model<R, I, O> compile(LossFunctions function, Optimizer optimizer) {
+    public Model compile(LossFunctions function, Optimizer optimizer) {
         return compile(function.getFunction(), optimizer);
     }
 
@@ -197,7 +199,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param optimizer The gradient optimization algorithm to use.
      * @return The current instance of the model.
      */
-    public Model<R, I, O> compile(LossFunction function, Optimizer optimizer) {
+    public Model compile(LossFunction function, Optimizer optimizer) {
         return compile(WeightInit.UNIFORM_XAVIER.getFunction(), function, optimizer, new StochasticUpdater());
     }
 
@@ -210,7 +212,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param updater The weights updating algorithm to use when training.
      * @return The current instance of the model.
      */
-    public Model<R, I, O> compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+    public Model compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         this.weightInit = initializer;
         this.lossFunction = lossFunction;
         this.optimizer = optimizer;
@@ -229,7 +231,7 @@ public abstract class Model<R, I, O> implements Adapter {
      * @param updater The weights updating algorithm to use when training.
      * @return The current instance of the model.
      */
-    public Model<R, I, O> compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+    public Model compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
         return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
     }
 

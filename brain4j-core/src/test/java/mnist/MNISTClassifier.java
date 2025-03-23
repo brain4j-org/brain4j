@@ -48,9 +48,9 @@ public class MNISTClassifier {
     }
 
     public static void train(Sequential model, DataSet<DataRow> set) throws Exception {
-        SmartTrainer<DataRow> trainer = new SmartTrainer<>(0.7, 1);
+        SmartTrainer trainer = new SmartTrainer(0.7, 1);
 
-        trainer.addListener(new EpochListener<>());
+        trainer.addListener(new EpochListener());
         trainer.startFor(model, set, 50, 0.01);
 
         ModernAdapter.serialize("mnist", model);

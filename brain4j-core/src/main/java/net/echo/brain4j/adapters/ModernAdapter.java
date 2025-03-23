@@ -16,12 +16,12 @@ import java.util.List;
 
 public class ModernAdapter {
 
-    public static void serialize(String path, Model<?, ?, ?> model) throws Exception {
+    public static void serialize(String path, Model model) throws Exception {
         String suffix = path.endsWith(".bin") ? "" : ".bin";
         serialize(new File(path + suffix), model);
     }
 
-    public static void serialize(File file, Model<?, ?, ?> model) throws Exception {
+    public static void serialize(File file, Model model) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DataOutputStream dataStream = new DataOutputStream(outputStream);
 
@@ -59,11 +59,11 @@ public class ModernAdapter {
         }
     }
 
-    public static <T extends Model<?, ?, ?>> T deserialize(String path, T model) throws Exception {
+    public static <T extends Model> T deserialize(String path, T model) throws Exception {
         return deserialize(new File(path), model);
     }
 
-    public static <T extends Model<?, ?, ?>> T deserialize(File file, T model) throws Exception {
+    public static <T extends Model> T deserialize(File file, T model) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
             byte[] bytes = decompress(fileInputStream.readAllBytes());
 

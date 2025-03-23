@@ -20,7 +20,7 @@ import net.echo.math4j.math.tensor.Tensor;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
-public class Transformer extends Model<DataRow, Tensor, Tensor> {
+public class Transformer extends Model {
 
     @SafeVarargs
     public Transformer(Layer<Tensor, Tensor>... layers) {
