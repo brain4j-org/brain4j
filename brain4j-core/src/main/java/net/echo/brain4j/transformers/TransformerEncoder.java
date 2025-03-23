@@ -11,11 +11,11 @@ import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
+import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TransformerEncoder extends Layer<Tensor, Tensor> {
@@ -60,7 +60,9 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
     @Override
     public void propagate(StatesCache cache, Layer<?, ?> previous) {
-
+        if (previous instanceof VocabularyMapper mapper) {
+            // TODO: Rework feed forward first
+        }
     }
 
     @Override
@@ -77,6 +79,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
         }
 
         Tensor merged = TensorFactory.mergeTensors(feedForwardOutput);
+        cache.setOutputTensor(this, merged);
         return normalizer.normalize(merged.add(normalized));
     }
 

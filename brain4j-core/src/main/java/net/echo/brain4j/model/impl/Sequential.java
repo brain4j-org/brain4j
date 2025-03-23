@@ -44,8 +44,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Sequential extends Model {
 
-    protected BackPropagation propagation;
-
     public Sequential(Layer<?, ?>... layers) {
         super(layers);
 
@@ -110,8 +108,6 @@ public class Sequential extends Model {
     @Override
     public Sequential compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(initializer, lossFunction, optimizer, updater);
-
-        this.propagation = new BackPropagation(this, optimizer, updater);
 
         connect(initializer, true);
 

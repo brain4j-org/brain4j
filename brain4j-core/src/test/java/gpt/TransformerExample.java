@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class TransformerExample {
@@ -50,42 +51,60 @@ public class TransformerExample {
         System.out.println(transformer.getStats());
 
         Scanner scanner = new Scanner(System.in);
-        String trainInput = "hello, how are you?";
-        String trainOutput = "hello, i am good.<END>";
 
-        trainModel(vocabulary, trainInput, trainOutput, transformer);
+        Map<String, String> samples = Map.of(
+                "hello, how are you?", "hello, i am good.<END>",
+                "how are you?", "i am good.<END>",
+                "what is your name?", "my name is brain4j.<END>"
+        );
 
-        System.out.print("Enter a prompt: ");
-        String prompt = scanner.nextLine() + " ";
+        trainModel(vocabulary, samples, transformer);
 
-        generateResponse(vocabulary, transformer, prompt);
+        while (true) {
+            System.out.print("Enter a prompt: ");
+            String prompt = scanner.nextLine() + " ";
+
+            generateResponse(vocabulary, transformer, prompt);
+            System.out.println();
+        }
     }
 
-    private void trainModel(Vocabulary vocabulary, String trainInput, String trainOutput, Transformer transformer) {
+    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) {
         DataSet<DataRow> dataSet = new DataSet<>();
-        List<String> tokens = vocabulary.split(trainOutput);
-        String lastInput = trainInput + " ";
 
-        for (String token : tokens) {
-            Tensor input = vocabulary.encode(lastInput);
-            Tensor encoded = ENCODING.encode(input);
+        for (var entry : samples.entrySet()) {
+            String trainInput = entry.getKey();
+            String trainOutput = entry.getValue();
+            List<String> tokens = vocabulary.split(trainOutput);
+            String lastInput = trainInput + " ";
 
-            Tensor target = TensorFactory.create(vocabulary.getVocabSize());
-            int index = vocabulary.wordToIndex(token);
+            for (String token : tokens) {
+                Tensor input = vocabulary.encode(lastInput);
+                Tensor encoded = ENCODING.encode(input);
 
-            if (index != -1) {
-                target.set(1, index);
+                Tensor target = TensorFactory.create(vocabulary.getVocabSize());
+                int index = vocabulary.wordToIndex(token);
+
+                if (index != -1) {
+                    target.set(1, index);
+                }
+
+                dataSet.add(new DataRow(encoded, target));
+                lastInput += token;
             }
-
-//            System.out.println("Input: " + lastInput);
-//            System.out.println("Expected: " + token);
-
-            dataSet.add(new DataRow(encoded, target));
-            lastInput += token;
         }
 
+        System.out.println("Fitting with " + dataSet.size() + " samples.");
+
         long startTime = System.nanoTime();
-        transformer.fit(dataSet, 100);
+
+        for (int i = 0; i < 30; i++) {
+            transformer.fit(dataSet, 10);
+
+            double loss = transformer.loss(dataSet);
+            System.out.println("Epoch " + i + " loss: " + loss);
+        }
+
         double duration = (System.nanoTime() - startTime) / 1e6;
 
         double loss = transformer.loss(dataSet);

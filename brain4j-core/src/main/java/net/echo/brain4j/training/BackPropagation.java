@@ -81,7 +81,6 @@ public class BackPropagation {
         }
 
         optimizer.postIteration(cacheHolder, updater, layers);
-        updater.postIteration(model, optimizer.getLearningRate());
     }
 
     private void initializeDeltas(StatesCache cache, List<Layer<?, ?>> layers, Tensor targets, Tensor outputs) {

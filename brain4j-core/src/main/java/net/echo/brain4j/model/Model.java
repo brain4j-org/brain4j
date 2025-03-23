@@ -22,6 +22,7 @@ import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
@@ -80,11 +81,14 @@ public abstract class Model implements Adapter {
 
             .create();
 
+    protected BackPropagation propagation;
     protected List<Layer<?, ?>> layers;
+
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
+
     protected Random generator;
     protected int seed;
 
@@ -213,6 +217,7 @@ public abstract class Model implements Adapter {
      * @return The current instance of the model.
      */
     public Model compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        this.propagation = new BackPropagation(this, optimizer, updater);
         this.weightInit = initializer;
         this.lossFunction = lossFunction;
         this.optimizer = optimizer;

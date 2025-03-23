@@ -107,7 +107,6 @@ public class Transformer extends Model {
 
     @Override
     public void fit(DataSet<DataRow> dataSet) {
-        BackPropagation propagation = new BackPropagation(this, optimizer, updater);
         propagation.iteration(dataSet);
     }
 

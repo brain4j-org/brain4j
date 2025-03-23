@@ -43,9 +43,6 @@ public abstract class Updater {
         }
     }
 
-    public void postIteration(Model model, double learningRate) {
-    }
-
     public void postFit(Model model, double learningRate) {
     }
 

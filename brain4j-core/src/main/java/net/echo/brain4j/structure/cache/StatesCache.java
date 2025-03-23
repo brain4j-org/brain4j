@@ -7,7 +7,10 @@ import net.echo.math4j.math.tensor.Tensor;
 
 public class StatesCache {
 
-    private final Tensor[] tensorsCache;
+    private final Tensor[] inputTensorsCache;
+    private final Tensor[] outputTensorsCache;
+    private final Tensor[] deltaTensorsCache;
+
     private final Kernel[] inputMap;
     private final Kernel[] featureMaps;
     private final Kernel[] deltaMap;
@@ -15,7 +18,9 @@ public class StatesCache {
     private final float[] deltasCache;
 
     public StatesCache() {
-        this.tensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
+        this.inputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
+        this.outputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
+        this.deltaTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
 
         this.valuesCache = new float[Parameters.TOTAL_NEURONS];
         this.deltasCache = new float[Parameters.TOTAL_NEURONS];
@@ -69,11 +74,27 @@ public class StatesCache {
         deltasCache[neuron.getId()] += delta;
     }
 
-    public void setTensor(Layer<?, ?> layer, Tensor value) {
-        tensorsCache[layer.getId()] = value;
+    public void setInputTensor(Layer<?, ?> layer, Tensor value) {
+        inputTensorsCache[layer.getId()] = value;
     }
 
-    public Tensor getTensor(Layer<?, ?> layer) {
-        return tensorsCache[layer.getId()];
+    public Tensor getInputTensor(Layer<?, ?> layer) {
+        return inputTensorsCache[layer.getId()];
+    }
+
+    public void setOutputTensor(Layer<?, ?> layer, Tensor value) {
+        outputTensorsCache[layer.getId()] = value;
+    }
+
+    public Tensor getOutputTensor(Layer<?, ?> layer) {
+        return outputTensorsCache[layer.getId()];
+    }
+
+    public void setDeltaTensor(Layer<?, ?> layer, Tensor value) {
+        deltaTensorsCache[layer.getId()] = value;
+    }
+
+    public Tensor getDeltaTensor(Layer<?, ?> layer) {
+        return deltaTensorsCache[layer.getId()];
     }
 }
