@@ -75,11 +75,6 @@ public class Transformer extends Model {
                 Tensor outputs = predict(inputs);
                 double loss = lossFunction.calculate(targets, outputs);
 
-                int targetIndex = BrainUtils.indexOfMaxValue(targets);
-                int outputIndex = BrainUtils.indexOfMaxValue(outputs);
-
-                System.out.println("Target: " + targetIndex + " Output: " + outputIndex);
-
                 totalError.updateAndGet(v -> v + loss);
             }
         });
