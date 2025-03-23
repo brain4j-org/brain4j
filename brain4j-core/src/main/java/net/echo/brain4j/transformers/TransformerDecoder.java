@@ -5,7 +5,7 @@ import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
-import net.echo.brain4j.transformers.masked.MaskedMultiHeadAttention;
+import net.echo.brain4j.transformers.attention.MaskedMultiHeadAttention;
 
 public class TransformerDecoder extends TransformerEncoder {
 

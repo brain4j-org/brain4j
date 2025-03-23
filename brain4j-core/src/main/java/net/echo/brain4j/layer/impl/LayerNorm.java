@@ -128,22 +128,22 @@ public class LayerNorm extends Layer<Vector, Vector> {
 
         return normalized;
     }
-//
-//    public Tensor normalize(Tensor input) {
-//        double mean = input.mean();
-//        double variance = 0.0;
-//
-//        for (Double value : input) {
-//            variance += Math.pow(value - mean, 2);
-//        }
-//        variance /= input.elements();
-//
-//        double denominator = Math.sqrt(variance + epsilon);
-//
-//        Tensor normalized = input.clone();
-//
-//        return normalized.map(value -> (value - mean) / denominator);
-//    }
+
+    public Tensor normalizeFull(Tensor input) {
+        double mean = input.mean();
+        double variance = 0.0;
+
+        for (Double value : input) {
+            variance += Math.pow(value - mean, 2);
+        }
+        variance /= input.elements();
+
+        double denominator = Math.sqrt(variance + epsilon);
+
+        Tensor normalized = input.clone();
+
+        return normalized.map(value -> (value - mean) / denominator);
+    }
 
     private double calculateMean(StatesCache cacheHolder, List<Neuron> inputs) {
         double sum = 0.0;

@@ -1,8 +1,8 @@
-package net.echo.brain4j.transformers.masked;
+package net.echo.brain4j.transformers.attention;
 
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.transformers.attention.AttentionHead;
-import net.echo.brain4j.transformers.attention.MultiHeadAttention;
+import net.echo.brain4j.transformers.head.AttentionHead;
+import net.echo.brain4j.transformers.head.MaskedAttentionHead;
 
 public class MaskedMultiHeadAttention extends MultiHeadAttention {
 

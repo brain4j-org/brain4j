@@ -13,6 +13,7 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
+import net.echo.brain4j.transformers.VocabularyMapper;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 
@@ -77,10 +78,8 @@ public class Transformer extends Model<Object, Tensor, Tensor> {
         for (Layer<?, ?> layer : layers) {
             if (layer instanceof TransformerEncoder encoder) {
                 result = encoder.forward(cache, layer, result);
-            }
-
-            if (layer instanceof TransformerDecoder decoder) {
-                result = decoder.forward(cache, layer, result);
+            } else if (layer instanceof VocabularyMapper mapper) {
+                result = mapper.forward(cache, layer, result);
             }
         }
 
