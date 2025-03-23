@@ -6,12 +6,12 @@ import net.echo.brain4j.transformers.head.MaskedAttentionHead;
 
 public class MaskedMultiHeadAttention extends MultiHeadAttention {
 
-    public MaskedMultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension, double temperature) {
-        super(weightInit, headCount, modelDimension, temperature);
+    public MaskedMultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension) {
+        super(weightInit, headCount, modelDimension);
     }
 
     @Override
     public AttentionHead createAttentionHead() {
-        return new MaskedAttentionHead(weightInit, modelDimension, headDimension, temperature);
+        return new MaskedAttentionHead(weightInit, modelDimension, headDimension);
     }
 }

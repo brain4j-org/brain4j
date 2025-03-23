@@ -10,10 +10,12 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
 
     private final Tensor outProjectionWeights;
     private final int vocabularySize;
+    private final double temperature;
 
-    public VocabularyMapper(int vocabularySize, int dimension) {
+    public VocabularyMapper(int vocabularySize, int dimension, double temperature) {
         this.vocabularySize = vocabularySize;
         this.outProjectionWeights = TensorFactory.random(dimension, vocabularySize); // TODO: matmul support for 1d tensors
+        this.temperature = temperature;
     }
 
     @Override
@@ -27,7 +29,7 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
         Tensor reshaped = sliced.reshape(1, columns);
 
         Tensor result = reshaped.matmul(outProjectionWeights).reshape(vocabularySize);
-        return result.softmax();
+        return result.softmax(temperature);
     }
 
     public Tensor getOutProjectionWeights() {

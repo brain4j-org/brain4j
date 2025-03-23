@@ -1200,21 +1200,26 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor softmax() {
+        return softmax(1);
+    }
+
+    @Override
+    public Tensor softmax(double temperature) {
         int dim = dimension() > 1 ? 1 : 0;
 
-        if (dim < 0 || dim >= dimension()) {
+        if (dim >= dimension()) {
             throw new IllegalArgumentException("Dimension " + dim + " out of bounds for limits of tensor shape " + Arrays.toString(shape));
         }
 
         Tensor result = clone();
 
         if (dimension() == 1) {
-            softmax1D(result);
+            softmax1D(temperature, result);
         } else if (dimension() == 2) {
             if (dim == 0) {
-                softmaxColumns(result);
+                softmaxColumns(temperature, result);
             } else {
-                softmaxRows(result);
+                softmaxRows(temperature, result);
             }
         } else {
             throw new UnsupportedOperationException("Softmax operation is only supported for 1D/2D tensors.");
@@ -1228,7 +1233,7 @@ public class TensorCPU implements Cloneable, Tensor {
         return TensorGPU.fromTensor(this);
     }
 
-    private void softmax1D(Tensor tensor) {
+    private void softmax1D(double temperature, Tensor tensor) {
         double max = Double.NEGATIVE_INFINITY;
 
         for (int i = 0; i < tensor.elements(); i++) {
@@ -1238,17 +1243,16 @@ public class TensorCPU implements Cloneable, Tensor {
         double sum = 0.0;
 
         for (int i = 0; i < tensor.elements(); i++) {
-            double expVal = Math.exp(tensor.get(i) - max);
-            tensor.set(expVal, i);
-            sum += expVal;
+            sum += Math.exp((tensor.get(i) - max) / temperature);
         }
 
         for (int i = 0; i < tensor.elements(); i++) {
-            tensor.set(tensor.get(i) / sum, i);
+            double value = Math.exp((tensor.get(i) - max) / temperature) / sum;
+            tensor.set(value, i);
         }
     }
 
-    private void softmaxRows(Tensor tensor) {
+    private void softmaxRows(double temperature, Tensor tensor) {
         int rows = tensor.shape()[0];
         int cols = tensor.shape()[1];
 
@@ -1262,18 +1266,17 @@ public class TensorCPU implements Cloneable, Tensor {
             double sum = 0.0;
 
             for (int j = 0; j < cols; j++) {
-                double expVal = Math.exp(tensor.get(i, j) - max);
-                tensor.set(expVal, i, j);
-                sum += expVal;
+                sum += Math.exp((tensor.get(i, j) - max) / temperature);
             }
 
             for (int j = 0; j < cols; j++) {
-                tensor.set(tensor.get(i, j) / sum, i, j);
+                double value = Math.exp((tensor.get(i, j) - max) / temperature) / sum;
+                tensor.set(value, i, j);
             }
         }
     }
     
-    private void softmaxColumns(Tensor tensor) {
+    private void softmaxColumns(double temperature, Tensor tensor) {
         int rows = tensor.shape()[0];
         int cols = tensor.shape()[1];
 
@@ -1287,13 +1290,12 @@ public class TensorCPU implements Cloneable, Tensor {
             double sum = 0.0;
 
             for (int i = 0; i < rows; i++) {
-                double expVal = Math.exp(tensor.get(i, j) - max);
-                tensor.set(expVal, i, j);
-                sum += expVal;
+                sum += Math.exp((tensor.get(i, j) - max) / temperature);
             }
 
             for (int i = 0; i < rows; i++) {
-                tensor.set(tensor.get(i, j) / sum, i, j);
+                double value = Math.exp((tensor.get(i, j) - max) / temperature) / sum;
+                tensor.set(value, i, j);
             }
         }
     }

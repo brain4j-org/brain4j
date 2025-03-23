@@ -152,5 +152,7 @@ public interface Tensor extends Iterable<Double> {
 
     Tensor softmax();
 
+    Tensor softmax(double temperature);
+
     Tensor gpu();
 }

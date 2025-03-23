@@ -11,13 +11,13 @@ public class TransformerDecoder extends TransformerEncoder {
 
     private MaskedMultiHeadAttention maskedAttention;
 
-    public TransformerDecoder(int numHeads, int dimension, double temperature) {
-        super(numHeads, dimension, temperature);
+    public TransformerDecoder(int numHeads, int dimension) {
+        super(numHeads, dimension);
     }
 
     @Override
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        this.maskedAttention = new MaskedMultiHeadAttention(weightInit, heads, dimension, temperature);
+        this.maskedAttention = new MaskedMultiHeadAttention(weightInit, heads, dimension);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 

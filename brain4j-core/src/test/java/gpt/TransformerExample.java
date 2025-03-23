@@ -5,20 +5,24 @@ import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
+import net.echo.brain4j.transformers.Vocabulary;
 import net.echo.brain4j.transformers.VocabularyMapper;
+import net.echo.brain4j.transformers.encoding.PositionalEncoding;
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.tensor.index.Range;
+import net.echo.math4j.math.vector.Vector;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 public class TransformerExample {
 
-    public static void main(String[] args) {
+    private final int dimension = 16;
+    private final PositionalEncoding encoding = new PositionalEncoding(100, dimension);
+
+    public static void main(String[] args) throws IOException {
         TransformerExample example = new TransformerExample();
         example.start();
     }
@@ -27,31 +31,49 @@ public class TransformerExample {
         return Files.readAllLines(Path.of("dataset.txt"));
     }
 
-    public void start() {
+    public void start() throws IOException {
+        List<String> examples = getExamples();
+
+        Vocabulary vocabulary = new Vocabulary(examples, dimension);
+        vocabulary.tokenize();
+
+        int vocabSize = vocabulary.getVocabSize();
         int dimension = 16;
+
+        System.out.println("Vocabulary size: " + vocabSize);
         // TensorFactory.useGPUIfAvailable();
 
         Transformer transformer = new Transformer(
-                new TransformerEncoder(4, dimension, 1.0),
-                new TransformerDecoder(4, dimension, 1.0),
-                new VocabularyMapper(10, dimension)
+                new TransformerEncoder(4, dimension),
+                new TransformerDecoder(4, dimension),
+                new VocabularyMapper(vocabSize, dimension, 11)
         );
 
-        transformer.setSeed(0);
         transformer.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.001));
 
         System.out.println(transformer.getStats());
-        int sequenceLength = 10;
 
-        Tensor input = TensorFactory.random(sequenceLength, dimension);
+        String phrase = "hello, how are you?";
+        StringBuilder response = new StringBuilder();
 
-        long start = System.nanoTime();
-        Tensor output = transformer.predict(input);
-        double took = (System.nanoTime() - start) / 1e6;
+        for (int i = 0; i < 5; i++) {
+            System.out.println("User: " + phrase);
 
-        System.out.println(output);
+            Tensor input = vocabulary.encode(phrase);
+            Tensor encoded = encoding.encode(input);
 
-        System.out.println("Took " + took + " ms");
-        System.out.println("Output shape: " + Arrays.toString(output.shape()));
+            Tensor output = transformer.predict(encoded);
+
+            System.out.println("===== Probability Distribution =====");
+            System.out.println(output.toString("%.3f"));
+
+            int indexOfMax = BrainUtils.indexOfMaxValue(Vector.of(output.toArray()));
+
+            String word = vocabulary.indexToWord(indexOfMax);
+            System.out.println("Chat Bot: " + response);
+
+            response.append(word).append(" ");
+            phrase += " " + word;
+        }
     }
 }

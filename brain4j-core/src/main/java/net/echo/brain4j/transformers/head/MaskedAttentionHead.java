@@ -6,8 +6,8 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 public class MaskedAttentionHead extends AttentionHead {
 
-    public MaskedAttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension, double temperature) {
-        super(weightInit, inputDimension, headDimension, temperature);
+    public MaskedAttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension) {
+        super(weightInit, inputDimension, headDimension);
     }
 
     @Override

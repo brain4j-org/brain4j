@@ -24,11 +24,10 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
     protected final int heads;
     protected final int dimension;
-    protected final double temperature;
 
     private MultiHeadAttention attention;
 
-    public TransformerEncoder(int numHeads, int dimension, double temperature) {
+    public TransformerEncoder(int numHeads, int dimension) {
         super(0, Activations.LINEAR);
 
         this.normalizer = new LayerNorm();
@@ -40,7 +39,6 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
         this.heads = numHeads;
         this.dimension = dimension;
-        this.temperature = temperature;
     }
 
     @Override
@@ -55,7 +53,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
     @Override
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        this.attention = new MultiHeadAttention(weightInit, heads, dimension, temperature);
+        this.attention = new MultiHeadAttention(weightInit, heads, dimension);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 

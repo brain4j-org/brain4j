@@ -20,19 +20,33 @@ public class PositionalEncoding {
     private void initializeEncodings() {
         for (int position = 0; position < maxLength; position++) {
             for (int i = 0; i < embeddingDim; i++) {
-                double angle = position / Math.pow(10000, (2.0 * i) / embeddingDim);
-                double value = i % 2 == 0 ? Math.sin(angle) : Math.cos(angle);
+                double exponent = (2.0 * Math.floor(i / 2.0)) / embeddingDim;
 
+                double angle = position / Math.pow(10000, exponent);
+                double value = (i % 2 == 0) ? Math.sin(angle) : Math.cos(angle);
                 encodings.set(value, position, i);
             }
         }
     }
 
-    public Vector encode(Vector input, int position) {
-        Vector encoded = new Vector(input.size());
 
-        for (int i = 0; i < input.size(); i++) {
-            encoded.set(i, input.get(i) + encodings.get(position, i));
+    public Tensor encode(Tensor input) {
+        if (input.dimension() != 2) {
+            throw new IllegalArgumentException("Input must be a 2D matrix!");
+        }
+
+        int rows = input.shape()[0];
+        int cols = input.shape()[1];
+
+        Tensor encoded = TensorFactory.matrix(rows, cols);
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                float inputValue = input.get(i, j);
+                float encoding = encodings.get(i, j);
+
+                encoded.set(inputValue + encoding, i, j);
+            }
         }
 
         return encoded;

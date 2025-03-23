@@ -14,18 +14,16 @@ public class MultiHeadAttention {
 
     protected final List<AttentionHead> heads;
     protected final WeightInitializer weightInit;
-    protected final double temperature;
     protected final int headCount;
     protected final int modelDimension;
     protected final int headDimension;
 
     protected Tensor outProjectionTensor;
 
-    public MultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension, double temperature) {
+    public MultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension) {
         this.weightInit = weightInit;
         this.headCount = headCount;
         this.modelDimension = modelDimension;
-        this.temperature = temperature;
 
         Preconditions.checkState(modelDimension % headCount == 0, "Model dimension must be divisible by head count!");
 
@@ -38,7 +36,7 @@ public class MultiHeadAttention {
     }
 
     public AttentionHead createAttentionHead() {
-        return new AttentionHead(weightInit, modelDimension, headDimension, temperature);
+        return new AttentionHead(weightInit, modelDimension, headDimension);
     }
 
     public Tensor attend(Tensor input) {
