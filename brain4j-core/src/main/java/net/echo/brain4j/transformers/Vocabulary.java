@@ -2,13 +2,14 @@ package net.echo.brain4j.transformers;
 
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class Vocabulary {
 
-    public static final Pattern PATTERN = Pattern.compile("[\\s,;.?!-]+");
+    public static final Pattern PATTERN = Pattern.compile("\\s+|[,;.?!-]");
 
     private final List<String> corpus;
     private final List<String> tokens;
@@ -20,11 +21,39 @@ public class Vocabulary {
         this.tokens = new ArrayList<>();
     }
 
+    private List<String> split(String input) {
+        List<String> result = new ArrayList<>();
+
+        StringBuilder current = new StringBuilder();
+        List<Character> delimiters = Arrays.asList(' ', ',', ';', '.', '?', '!', '-', '_' );
+
+        for (char c : input.toCharArray()) {
+            if (delimiters.contains(c)) {
+                String charAsString = String.valueOf(c);
+
+                if (!current.isEmpty()) {
+                    result.add(current.toString());
+                    current = new StringBuilder();
+                }
+
+                if (c != ' ' && !charAsString.isEmpty()) {
+                    result.add(charAsString);
+                }
+            } else {
+                current.append(c);
+            }
+        }
+
+        if (!current.isEmpty()) {
+            result.add(current.toString());
+        }
+
+        return result;
+    }
+
     public void tokenize() {
         for (String sentence : corpus) {
-            String[] tokens = PATTERN.split(sentence);
-
-            System.out.println("TOKENS: " + Arrays.toString(tokens));
+            List<String> tokens = split(sentence);
 
             for (String token : tokens) {
                 String tok = token.toLowerCase();

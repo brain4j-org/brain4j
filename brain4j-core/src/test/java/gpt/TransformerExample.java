@@ -54,6 +54,8 @@ public class TransformerExample {
         System.out.println(transformer.getStats());
 
         String phrase = "hello, how are you?";
+        String expectedResponse = "hi I am doing fine";
+
         StringBuilder response = new StringBuilder();
 
         for (int i = 0; i < 5; i++) {
