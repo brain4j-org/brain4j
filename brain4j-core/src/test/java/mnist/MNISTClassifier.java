@@ -1,10 +1,9 @@
 package mnist;
 
-import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
+import com.google.common.io.LineProcessor;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.ModernAdapter;
-import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
@@ -14,11 +13,11 @@ import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.techniques.EpochListener;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -77,14 +76,20 @@ public class MNISTClassifier {
 
         for (String line : lines) {
             String[] parts = line.split(",");
-            double[] inputs = Arrays.stream(parts, 1, parts.length).mapToDouble(Double::parseDouble).toArray();
 
-            Vector output = new Vector(10);
+            float[] inputs = new float[parts.length];
+
+            for (int i = 0; i < inputs.length; i++) {
+                inputs[i] = Float.parseFloat(parts[i]);
+            }
+
+            Tensor input = TensorFactory.vector(inputs);
+            Tensor output = TensorFactory.create(10);
 
             int value = Integer.parseInt(parts[0]);
             output.set(value, 1);
 
-            dataSet.getData().add(new DataRow(Vector.of(inputs), output));
+            dataSet.getData().add(new DataRow(input, output));
         }
 
         return dataSet;

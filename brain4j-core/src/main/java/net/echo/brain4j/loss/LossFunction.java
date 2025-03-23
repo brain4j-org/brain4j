@@ -1,6 +1,6 @@
 package net.echo.brain4j.loss;
 
-import net.echo.math4j.math.vector.Vector;
+import net.echo.math4j.math.tensor.Tensor;
 
 /**
  * Also known as cost function is used to evaluate the model's performance while training.
@@ -15,7 +15,7 @@ public interface LossFunction {
      *
      * @return a number that describes the model's loss
      */
-    double calculate(Vector actual, Vector predicted);
+    double calculate(Tensor actual, Tensor predicted);
 
     /**
      * Computes the delta for the given error and derivative.

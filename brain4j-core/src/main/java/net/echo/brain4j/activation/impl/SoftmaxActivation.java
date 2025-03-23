@@ -3,6 +3,8 @@ package net.echo.brain4j.activation.impl;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.Arrays;
@@ -17,22 +19,8 @@ public class SoftmaxActivation implements Activation {
     }
 
     @Override
-    public Vector activate(Vector input) {
-        double maxInput = Arrays.stream(input.toDoubleArray()).max().orElse(0.0);
-
-        Vector expValues = new Vector(input.size());
-        double sum = 0.0;
-
-        for (int i = 0; i < input.size(); i++) {
-            expValues.set(i, Math.exp(input.get(i) - maxInput));
-            sum += expValues.get(i);
-        }
-
-        for (int i = 0; i < expValues.size(); i++) {
-            expValues.set(i, expValues.get(i) / sum);
-        }
-
-        return expValues;
+    public Tensor activate(Tensor input) {
+        return input.softmax();
     }
 
     @Override
@@ -42,13 +30,16 @@ public class SoftmaxActivation implements Activation {
 
     @Override
     public void apply(StatesCache cacheHolder, List<Neuron> neurons) {
-        Vector vector = new Vector(neurons.size());
+        Tensor vector = TensorFactory.create(neurons.size());
 
         for (int i = 0; i < neurons.size(); i++) {
-            vector.set(i, neurons.get(i).getValue(cacheHolder) + neurons.get(i).getBias());
+            double bias = neurons.get(i).getBias();
+            double value = neurons.get(i).getValue(cacheHolder);
+
+            vector.set(value + bias, i);
         }
 
-        Vector activatedValues = activate(vector);
+        Tensor activatedValues = activate(vector);
 
         for (int i = 0; i < neurons.size(); i++) {
             neurons.get(i).setValue(cacheHolder, activatedValues.get(i));

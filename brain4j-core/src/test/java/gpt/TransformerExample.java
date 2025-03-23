@@ -2,15 +2,16 @@ package gpt;
 
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
-import net.echo.brain4j.transformers.Vocabulary;
-import net.echo.brain4j.transformers.VocabularyMapper;
+import net.echo.brain4j.transformers.vocabulary.Vocabulary;
+import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.brain4j.transformers.encoding.PositionalEncoding;
-import net.echo.math4j.BrainUtils;
+import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.vector.Vector;
+import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,7 +47,7 @@ public class TransformerExample {
         Transformer transformer = new Transformer(
                 new TransformerEncoder(4, dimension),
                 new TransformerDecoder(4, dimension),
-                new VocabularyMapper(vocabSize, dimension, 11)
+                new VocabularyMapper(vocabSize, dimension, 0.1)
         );
 
         transformer.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.001));
@@ -54,28 +55,47 @@ public class TransformerExample {
         System.out.println(transformer.getStats());
 
         String phrase = "hello, how are you?";
-        String expectedResponse = "hi I am doing fine";
+        String expected = "hi";
+
+        Tensor input = vocabulary.encode(phrase);
+        Tensor encoded = encoding.encode(input);
+
+        Tensor output = TensorFactory.zeros(vocabSize);
+        int index = vocabulary.wordToIndex(expected);
+
+        output.set(1, index);
+
+        System.out.println("==== INPUT ====");
+        System.out.println(encoded);
+
+        DataSet<DataRow> dataSet = new DataSet<>();
+        dataSet.add(new DataRow(encoded, output));
+
+        transformer.fit(dataSet);
+
+        System.out.println("==== EXPEC ====");
+        System.out.println(output);
 
         StringBuilder response = new StringBuilder();
 
-        for (int i = 0; i < 5; i++) {
-            System.out.println("User: " + phrase);
-
-            Tensor input = vocabulary.encode(phrase);
-            Tensor encoded = encoding.encode(input);
-
-            Tensor output = transformer.predict(encoded);
-
-            System.out.println("===== Probability Distribution =====");
-            System.out.println(output.toString("%.3f"));
-
-            int indexOfMax = BrainUtils.indexOfMaxValue(Vector.of(output.toArray()));
-
-            String word = vocabulary.indexToWord(indexOfMax);
-            System.out.println("Chat Bot: " + response);
-
-            response.append(word).append(" ");
-            phrase += " " + word;
-        }
+//        for (int i = 0; i < 1; i++) {
+//            System.out.println("User: " + phrase);
+//
+//            Tensor input = vocabulary.encode(phrase);
+//            Tensor encoded = encoding.encode(input);
+//
+//            Tensor output = transformer.predict(encoded);
+//
+//            System.out.println("===== Probability Distribution =====");
+//            System.out.println(output.toString("%.3f"));
+//
+//            int indexOfMax = BrainUtils.indexOfMaxValue(Vector.of(output.toArray()));
+//
+//            String word = vocabulary.indexToWord(indexOfMax);
+//            System.out.println("Chat Bot: " + response);
+//
+//            response.append(word).append(" ");
+//            phrase += " " + word;
+//        }
     }
 }

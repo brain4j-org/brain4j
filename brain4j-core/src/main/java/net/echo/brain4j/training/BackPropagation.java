@@ -10,6 +10,7 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.ArrayList;
@@ -43,8 +44,8 @@ public class BackPropagation {
             Thread thread = Thread.startVirtualThread(() -> {
                 StatesCache cacheHolder = new StatesCache();
 
-                Vector output = model.predict(cacheHolder, row.inputs(), true);
-                Vector target = row.outputs();
+                Tensor output = model.predict(cacheHolder, row.inputs(), true);
+                Tensor target = row.outputs();
 
                 backpropagation(cacheHolder, target, output);
             });
@@ -66,7 +67,7 @@ public class BackPropagation {
         updater.postFit(model, optimizer.getLearningRate());
     }
 
-    public void backpropagation(StatesCache cacheHolder, Vector targets, Vector outputs) {
+    public void backpropagation(StatesCache cacheHolder, Tensor targets, Tensor outputs) {
         List<Layer<?, ?>> layers = model.getLayers();
         initializeDeltas(cacheHolder, layers, targets, outputs);
 
@@ -85,13 +86,13 @@ public class BackPropagation {
         updater.postIteration(model, optimizer.getLearningRate());
     }
 
-    private void initializeDeltas(StatesCache cacheHolder, List<Layer<?, ?>> layers, Vector targets, Vector outputs) {
+    private void initializeDeltas(StatesCache cacheHolder, List<Layer<?, ?>> layers, Tensor targets, Tensor outputs) {
         Layer<?, ?> outputLayer = layers.getLast();
 
         List<Neuron> neurons = outputLayer.getNeurons();
         Activation function = outputLayer.getActivation();
 
-        Vector derivative = function.getDerivative(outputs);
+        Tensor derivative = function.getDerivative(outputs);
 
         for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);

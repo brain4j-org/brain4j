@@ -2,6 +2,7 @@ package net.echo.brain4j.convolution;
 
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.structure.cache.Parameters;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.Random;
@@ -172,11 +173,12 @@ public class Kernel {
     }
 
     public void apply(Activation activation) {
-        for (int h = 0; h < height; h++) {
-            Vector row = values[h];
-
-            values[h] = activation.activate(row);
-        }
+        // TODO: FIX
+//        for (int h = 0; h < height; h++) {
+//            Vector row = values[h];
+//
+//            values[h] = activation.activate(TensorFactory.vector(row));
+//        }
     }
 
     public Kernel flip() {

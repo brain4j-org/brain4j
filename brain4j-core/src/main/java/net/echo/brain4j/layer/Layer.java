@@ -130,11 +130,11 @@ public abstract class Layer<I, O> implements Adapter {
         activation.apply(cache, neurons);
     }
 
-    public void setInput(StatesCache cache, Vector input) {
-        Preconditions.checkState(input.size() == neurons.size(), "Input size does not match!" +
-                " (Input != Expected) " + input.size() + " != " + neurons.size());
+    public void setInput(StatesCache cache, Tensor input) {
+        Preconditions.checkState(input.elements() == neurons.size(), "Input size does not match!" +
+                " (Input != Expected) " + input.elements() + " != " + neurons.size());
 
-        for (int i = 0; i < input.size(); i++) {
+        for (int i = 0; i < input.elements(); i++) {
             neurons.get(i).setValue(cache, input.get(i));
         }
     }

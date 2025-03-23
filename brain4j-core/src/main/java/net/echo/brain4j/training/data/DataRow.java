@@ -1,6 +1,6 @@
 package net.echo.brain4j.training.data;
 
-import net.echo.math4j.math.vector.Vector;
+import net.echo.math4j.math.tensor.Tensor;
 
-public record DataRow(Vector inputs, Vector outputs) {
+public record DataRow(Tensor inputs, Tensor outputs) {
 }

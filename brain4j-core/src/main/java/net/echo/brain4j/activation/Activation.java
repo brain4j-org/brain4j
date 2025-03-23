@@ -2,6 +2,8 @@ package net.echo.brain4j.activation;
 
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.List;
@@ -17,14 +19,19 @@ public interface Activation {
      * Activate a vector of values.
      * Return a new vector containing the activated values.
      */
-    default Vector activate(Vector input) {
-        Vector output = new Vector(input.size());
-
-        for (int i = 0; i < input.size(); i++) {
-            output.set(i, activate(input.get(i)));
+    default Tensor activate(Tensor input) {
+        if (input.dimension() > 1) {
+            throw new IllegalArgumentException("Activation only supports 1D tensors!");
         }
 
-        return output;
+        Tensor result = TensorFactory.create(input.elements());
+
+        for (int i = 0; i < input.elements(); i++) {
+            double value = activate(input.get(i));
+            result.set(value, i);
+        }
+
+        return result;
     }
 
     /**
@@ -35,11 +42,16 @@ public interface Activation {
     /**
      * Get the derivative (vector) of the activation at a vector of values.
      */
-    default Vector getDerivative(Vector input) {
-        Vector result = new Vector(input.size());
+    default Tensor getDerivative(Tensor input) {
+        if (input.dimension() > 1) {
+            throw new IllegalArgumentException("Derivative only supports 1D tensors!");
+        }
 
-        for (int i = 0; i < input.size(); i++) {
-            result.set(i, getDerivative(input.get(i)));
+        Tensor result = TensorFactory.create(input.elements());
+
+        for (int i = 0; i < input.elements(); i++) {
+            double value = getDerivative(input.get(i));
+            result.set(value, i);
         }
 
         return result;

@@ -6,12 +6,13 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 /**
  * Represents a fully connected (dense) layer in a neural network.
  */
-public class DenseLayer extends Layer<Vector, Vector> {
+public class DenseLayer extends Layer<Tensor, Tensor> {
 
     private Tensor weights;
 
@@ -29,27 +30,26 @@ public class DenseLayer extends Layer<Vector, Vector> {
     }
 
     @Override
-    public Vector forward(StatesCache cache, Layer<?, ?> lastLayer, Vector input) {
+    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
         if (!(lastLayer instanceof DenseLayer denseLayer)) {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
         // TODO: Fix overhead that is too high!
-        // Tensor tensor = TensorFactory.matrix(input.size(), 1, input.toArray());
-        // Tensor result = denseLayer.getWeights().matmul(tensor);
-        Tensor result = denseLayer.getWeights().matmul(input);
+        int numNeurons = neurons.size();
 
-        int numNeurons = result.shape()[0];
-        Vector output = new Vector(numNeurons);
+        Tensor reshapedInput = input.reshape(input.elements(), 1);
+        Tensor result = denseLayer.getWeights().matmul(reshapedInput).reshape(numNeurons);
+        Tensor output = TensorFactory.create(numNeurons);
 
-        for (int i = 0; i < numNeurons; i++) {
+        for (int i = 0; i < neurons.size(); i++) {
             Neuron neuron = neurons.get(i);
-            output.set(i, result.get(i, 0) + neuron.getBias());
+            output.set(result.get(i) + neuron.getBias(), i);
         }
 
-        Vector activated = activation.activate(output);
+        Tensor activated = activation.activate(output);
 
-        for (int i = 0; i < activated.size(); i++) {
+        for (int i = 0; i < activated.elements(); i++) {
             neurons.get(i).setValue(cache, activated.get(i));
         }
 

@@ -1,5 +1,6 @@
 package net.echo.math4j;
 
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.vector.Vector;
 
 import java.lang.reflect.Constructor;
@@ -11,15 +12,7 @@ import java.util.List;
 public class BrainUtils {
 
     private static final double GRADIENT_CLIP = 10.0;
-
-    /**
-     * Finds the best matching enum constant based on output values.
-     *
-     * @param outputs array of output values
-     * @param clazz   the enum class
-     * @param <T>     the type of the enum
-     * @return the best matching enum constant
-     */
+    
     public static <T extends Enum<T>> T parse(Vector outputs, Class<T> clazz) {
         return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
     }
@@ -35,13 +28,7 @@ public class BrainUtils {
 
         return (result.length() != maxLength ? result + "=" : result) + "\n";
     }
-
-    /**
-     * Finds the index of the maximum value in an array.
-     *
-     * @param inputs array of input values
-     * @return index of the maximum value
-     */
+    
     public static int indexOfMaxValue(Vector inputs) {
         int index = 0;
         double max = inputs.get(0);
@@ -55,12 +42,25 @@ public class BrainUtils {
 
         return index;
     }
+    
+    public static int indexOfMaxValue(Tensor input) {
+        if (input.dimension() > 1) {
+            throw new IllegalArgumentException("Input tensor must be 1-dimensional!");
+        }
+        
+        int index = 0;
+        double max = Double.NEGATIVE_INFINITY;
 
-    /**
-     * Waits for all threads on a list to finish.
-     *
-     * @param threads list of threads
-     */
+        for (int i = 1; i < input.elements(); i++) {
+            if (input.get(i) > max) {
+                max = input.get(i);
+                index = i;
+            }
+        }
+
+        return index;
+    }
+    
     public static void waitAll(List<Thread> threads) {
         for (Thread thread : threads) {
             try {
@@ -71,12 +71,6 @@ public class BrainUtils {
         }
     }
 
-    /**
-     * Clips the gradient to avoid gradient explosion.
-     *
-     * @param gradient the gradient
-     * @return the clipped gradient
-     */
     public static float clipGradient(double gradient) {
         return (float) Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }

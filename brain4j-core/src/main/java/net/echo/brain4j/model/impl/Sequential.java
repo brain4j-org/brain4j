@@ -26,7 +26,6 @@ import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -39,11 +38,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of a sequential neural network model.
- * This model processes an input {@link Vector} and produces an output {@link Vector}.
+ * This model processes an input {@link Tensor} and produces an output {@link Tensor}.
  * It supports training using instances of {@link DataRow}.
  * </p>
  */
-public class Sequential extends Model<DataRow, Vector, Vector> {
+public class Sequential extends Model<DataRow, Tensor, Tensor> {
 
     protected BackPropagation propagation;
 
@@ -66,10 +65,10 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     private Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
         return Thread.startVirtualThread(() -> {
             for (DataRow row : partition) {
-                Vector inputs = row.inputs();
-                Vector targets = row.outputs();
+                Tensor inputs = row.inputs();
+                Tensor targets = row.outputs();
 
-                Vector outputs = predict(inputs);
+                Tensor outputs = predict(inputs);
                 double loss = lossFunction.calculate(targets, outputs);
 
                 totalError.updateAndGet(v -> v + loss);
@@ -77,21 +76,23 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
         });
     }
 
-    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Vector> classifications) {
+    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications) {
         return Thread.startVirtualThread(() -> {
             for (DataRow row : partition) {
-                Vector prediction = predict(row.inputs());
+                Tensor prediction = predict(row.inputs());
 
                 int predIndex = BrainUtils.indexOfMaxValue(prediction);
                 int targetIndex = BrainUtils.indexOfMaxValue(row.outputs());
 
-                if (row.outputs().size() == 1) {
+                if (row.outputs().dimension() == 1) {
                     predIndex = prediction.get(0) > 0.5 ? 1 : 0;
                     targetIndex = (int) row.outputs().get(0);
                 }
 
-                Vector predictions = classifications.get(targetIndex);
-                predictions.set(predIndex, predictions.get(predIndex) + 1);
+                Tensor predictions = classifications.get(targetIndex);
+                int pred = (int) predictions.get(predIndex);
+
+                predictions.set(pred + 1, predIndex);
             }
         });
     }
@@ -128,17 +129,17 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
     @Override
     public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
-        int classes = dataSet.getData().getFirst().outputs().size();
+        int classes = dataSet.getData().getFirst().outputs().elements();
 
         // Binary classification
         if (classes == 1) {
             classes = 2;
         }
 
-        Map<Integer, Vector> classifications = new ConcurrentHashMap<>();
+        Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
 
         for (int i = 0; i < classes; i++) {
-            classifications.put(i, new Vector(classes));
+            classifications.put(i, TensorFactory.create(classes));
         }
 
         List<Thread> threads = new ArrayList<>();
@@ -176,19 +177,19 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
     }
 
     @Override
-    public Vector predict(Vector input) {
+    public Tensor predict(Tensor input) {
         return predict(new StatesCache(), input, false);
     }
 
     @Override
-    public Vector predict(StatesCache cache, Vector input, boolean training) {
+    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
         Layer<?, ?> workingLayer = layers.getFirst();
 
-        Preconditions.checkState(input.size() == workingLayer.getTotalNeurons(), "Input dimension does not " +
-                "match model input dimension! (Input != Expected " + input.size() + " != " + workingLayer.getTotalNeurons() + ")");
+        Preconditions.checkState(input.elements() == workingLayer.getTotalNeurons(), "Input dimension does not " +
+                "match model input dimension! (Input != Expected " + input.elements() + " != " + workingLayer.getTotalNeurons() + ")");
 
         Kernel convolutionalResult = null;
-        Vector denseResult = input.clone();
+        Tensor denseResult = input.clone();
 
         workingLayer.setInput(cache, denseResult);
 
@@ -299,21 +300,5 @@ public class Sequential extends Model<DataRow, Vector, Vector> {
 
             layers.add(layer);
         }
-    }
-
-    public Tensor predict(Tensor input) {
-        double[] data = input.toDoubleArray();
-        Vector inputVector = Vector.of(data);
-        
-        Vector outputVector = predict(inputVector);
-        return TensorFactory.vector(outputVector);
-    }
-
-    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
-        double[] data = input.toDoubleArray();
-        Vector inputVector = Vector.of(data);
-        
-        Vector outputVector = predict(cache, inputVector, training);
-        return TensorFactory.vector(outputVector);
     }
 }

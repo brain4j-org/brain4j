@@ -1,11 +1,12 @@
 package net.echo.brain4j.training.evaluation;
 
 import net.echo.math4j.BrainUtils;
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.Map;
 
-public record EvaluationResult(int classes, Map<Integer, Vector> classifications) {
+public record EvaluationResult(int classes, Map<Integer, Tensor> classifications) {
 
     public String confusionMatrix() {
         StringBuilder matrix = new StringBuilder();
@@ -22,9 +23,9 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
         int[] falseNegatives = new int[classes];
 
         for (int i = 0; i < classifications.size(); i++) {
-            Vector vector = classifications.get(i);
+            Tensor vector = classifications.get(i);
 
-            for (int j = 0; j < vector.size(); j++) {
+            for (int j = 0; j < vector.elements(); j++) {
                 int value = (int) vector.get(j);
 
                 if (i == j) {
@@ -77,9 +78,9 @@ public record EvaluationResult(int classes, Map<Integer, Vector> classifications
 
         for (int i = 0; i < classes; i++) {
             StringBuilder text = new StringBuilder();
-            Vector predictions = classifications.get(i);
+            Tensor predictions = classifications.get(i);
 
-            for (int j = 0; j < predictions.size(); j++) {
+            for (int j = 0; j < predictions.elements(); j++) {
                 text.append(String.format("%4d", (int) predictions.get(j))).append(" ");
             }
 

@@ -1,7 +1,6 @@
 package cnn;
 
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.convolution.ConvLayer;
 import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
@@ -14,6 +13,8 @@ import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.techniques.EpochListener;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -81,10 +82,16 @@ public class ConvExample {
             String label = columns.getFirst();
             List<String> pixels = columns.subList(1, columns.size());
 
-            Vector output = new Vector(10);
-            output.set(Integer.parseInt(label), 1);
+            Tensor input = TensorFactory.create(pixels.size());
+            Tensor output = TensorFactory.create(10);
 
-            Vector input = Vector.parse(pixels).divide(255);
+            for (int i = 0; i < pixels.size(); i++) {
+                float pixel = Float.parseFloat(pixels.get(i));
+                input.set(pixel / 255, i);
+            }
+
+            output.set(1, Integer.parseInt(label));
+
             dataSet.add(new DataRow(input, output));
         });
 

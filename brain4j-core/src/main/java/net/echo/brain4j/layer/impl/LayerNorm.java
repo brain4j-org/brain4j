@@ -1,6 +1,5 @@
 package net.echo.brain4j.layer.impl;
 
-import com.google.gson.internal.bind.util.ISO8601Utils;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
@@ -11,7 +10,6 @@ import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.Arrays;
 import java.util.List;
 
 /**

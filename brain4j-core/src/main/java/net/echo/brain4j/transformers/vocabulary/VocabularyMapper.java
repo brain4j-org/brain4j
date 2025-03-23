@@ -1,4 +1,4 @@
-package net.echo.brain4j.transformers;
+package net.echo.brain4j.transformers.vocabulary;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.cache.StatesCache;
@@ -16,6 +16,11 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
         this.vocabularySize = vocabularySize;
         this.outProjectionWeights = TensorFactory.random(dimension, vocabularySize); // TODO: matmul support for 1d tensors
         this.temperature = temperature;
+    }
+
+    @Override
+    public void propagate(StatesCache cache, Layer<?, ?> previous) {
+        super.propagate(cache, previous);
     }
 
     @Override

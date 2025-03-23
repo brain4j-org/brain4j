@@ -7,20 +7,20 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
-import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
-import net.echo.brain4j.transformers.VocabularyMapper;
+import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
-public class Transformer extends Model<Object, Tensor, Tensor> {
+public class Transformer extends Model<DataRow, Tensor, Tensor> {
 
     @SafeVarargs
     public Transformer(Layer<Tensor, Tensor>... layers) {
@@ -52,7 +52,7 @@ public class Transformer extends Model<Object, Tensor, Tensor> {
     }
 
     @Override
-    public EvaluationResult evaluate(DataSet<Object> dataSet) {
+    public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
         return null;
     }
 
@@ -62,13 +62,12 @@ public class Transformer extends Model<Object, Tensor, Tensor> {
     }
 
     @Override
-    public double loss(DataSet<Object> dataSet) {
+    public double loss(DataSet<DataRow> dataSet) {
         return 0;
     }
 
     @Override
-    public void fit(DataSet<Object> dataSet) {
-        throw new UnsupportedOperationException("Not implemented yet for this class.");
+    public void fit(DataSet<DataRow> dataSet) {
     }
 
     @Override

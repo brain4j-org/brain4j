@@ -1,8 +1,8 @@
 package net.echo.math4j.math.tensor;
 
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
-import net.echo.math4j.math.vector.Vector;
 import net.echo.math4j.math.tensor.index.Range;
+import net.echo.math4j.math.vector.Vector;
 
 import java.util.function.Function;
 import java.util.function.Supplier;

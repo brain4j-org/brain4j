@@ -1,8 +1,7 @@
-package net.echo.brain4j.transformers;
+package net.echo.brain4j.transformers.vocabulary;
 
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -98,5 +97,9 @@ public class Vocabulary {
 
     public int getVocabSize() {
         return tokens.size();
+    }
+
+    public int wordToIndex(String expected) {
+        return tokens.indexOf(expected);
     }
 }

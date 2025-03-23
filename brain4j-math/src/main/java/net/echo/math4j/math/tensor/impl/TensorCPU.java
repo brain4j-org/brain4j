@@ -1,7 +1,6 @@
 package net.echo.math4j.math.tensor.impl;
 
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.autograd.Operation;
 import net.echo.math4j.math.tensor.autograd.operations.*;
@@ -11,7 +10,6 @@ import net.echo.math4j.math.vector.Vector;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.Function;

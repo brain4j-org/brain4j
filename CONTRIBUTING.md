@@ -70,7 +70,7 @@ chore (maintenance, tooling changes)
  
 feat(transformers): implement #propagate method in decoder
  
-fix(tensor): resolve error when providing null data to Tensor#of
+fix(vector): resolve error when providing null data to Tensor#of
  
 docs(examples): update with latest XOR NN tutorial
  

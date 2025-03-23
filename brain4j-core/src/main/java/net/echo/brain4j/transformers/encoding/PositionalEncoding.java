@@ -2,7 +2,6 @@ package net.echo.brain4j.transformers.encoding;
 
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.vector.Vector;
 
 public class PositionalEncoding {
 
