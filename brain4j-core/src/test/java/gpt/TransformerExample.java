@@ -39,24 +39,25 @@ public class TransformerExample {
         Vocabulary vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
         vocabulary.tokenize();
 
-        System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
-        // TensorFactory.useGPUIfAvailable();
-
-        Transformer transformer = new Transformer(
+        Transformer model = new Transformer(
                 new TransformerEncoder(4, EMBEDDING_SIZE),
                 new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 0.1)
         );
-        transformer.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.001));
 
-        System.out.println(transformer.getStats());
+        model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.1));
+
+        System.out.println(model.getStats());
+        System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
 
         Scanner scanner = new Scanner(System.in);
 
         Map<String, String> samples = Map.of(
-                "write a story", "Hi! Once upon a time, there was a fox. It was walking in the forest, thinking about the day. The sky was clear, and the moon was shining bright. It looked up and saw something strange. A star fell. The fox was curious and went closer. It touched the ground, and the star was gone. But the fox smiled, knowing that magic happens when least expected.<END>"
+                "nigger", "that is offensive!",
+                "nice guy", "thank you!"
+                //  "write a story", "Hi! Once upon a time, there was a fox. It was walking in the forest, thinking about the day. The sky was clear, and the moon was shining bright. It looked up and saw something strange. A star fell. The fox was curious and went closer. It touched the ground, and the star was gone. But the fox smiled, knowing that magic happens when least expected.<END>"
         );
 
-        trainModel(vocabulary, samples, transformer);
+        trainModel(vocabulary, samples, model);
 
         String prompt;
 
@@ -64,7 +65,7 @@ public class TransformerExample {
             System.out.print("Enter a prompt: ");
             prompt = scanner.nextLine() + " ";
 
-            generateResponse(vocabulary, transformer, prompt);
+            generateResponse(vocabulary, model, prompt);
             System.out.println();
         } while (!prompt.equals("end"));
     }
@@ -75,6 +76,11 @@ public class TransformerExample {
         for (var entry : samples.entrySet()) {
             String trainInput = entry.getKey();
             String trainOutput = entry.getValue();
+
+            if (!trainOutput.endsWith("<END>")) {
+                trainOutput += "<END>";
+            }
+
             List<String> tokens = vocabulary.split(trainOutput);
             String lastInput = trainInput + " ";
 
@@ -97,8 +103,8 @@ public class TransformerExample {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
-        for (int i = 0; i < 20; i++) {
-            transformer.fit(dataSet, 10);
+        for (int i = 0; i < 100; i++) {
+            transformer.fit(dataSet, 100);
 
             double loss = transformer.loss(dataSet);
             System.out.println("Loss " + loss);

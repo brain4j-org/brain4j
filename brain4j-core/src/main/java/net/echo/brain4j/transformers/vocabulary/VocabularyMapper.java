@@ -7,6 +7,8 @@ import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.index.Range;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 public class VocabularyMapper extends Layer<Tensor, Tensor> {
@@ -29,32 +31,34 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
         Tensor delta = outputs.clone().sub(targets);
 
-        // delta as a 1 x vocabSize matrix
+        // delta as a 1 x vocab_size matrix
         Tensor gradZ = delta.reshape(1, vocabularySize);
-        Tensor gradW = cache.getOutputTensor(this).transpose().matmul(gradZ);
+        Tensor gradW = cache.getOutputTensor(this)
+                .transpose()
+                .matmul(gradZ)
+                .mul(optimizer.getLearningRate());
 
-        double learningRate = 0.1;
-        outProjectionWeights.sub(gradW.mul(learningRate));
-
+        outProjectionWeights.sub(gradW);
         return delta;
     }
 
     @Override
     public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
-        int rows = input.shape()[0];
         int columns = input.shape()[1];
 
         cache.setInputTensor(this, input);
 
-        Range range = new Range((rows - 1) * columns, rows * columns);
+        List<Tensor> tokens = TensorFactory.toList(input);
 
-        Tensor sliced = input.reshape(columns * rows).slice(range);
-        Tensor reshaped = sliced.reshape(1, columns);
+        Tensor last = tokens.getLast();
+        Tensor reshaped = last.reshape(1, columns);
 
         cache.setOutputTensor(this, reshaped);
 
-        Tensor result = reshaped.matmul(outProjectionWeights);
-        return result.reshape(vocabularySize).softmax(temperature);
+        return reshaped
+                .matmul(outProjectionWeights)
+                .reshape(vocabularySize)
+                .softmax(temperature);
     }
 
     @Override

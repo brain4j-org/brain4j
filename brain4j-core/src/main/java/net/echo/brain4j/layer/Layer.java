@@ -92,7 +92,6 @@ public abstract class Layer<I, O> implements Adapter {
     }
 
     public void init(Random generator) {
-        System.out.println(this.getClass());
         for (int i = 0; i < bias.elements(); i++) {
             double value = 2 * generator.nextDouble() - 1;
             bias.set(value, i);
