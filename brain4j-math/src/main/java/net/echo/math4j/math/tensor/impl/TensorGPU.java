@@ -307,6 +307,7 @@ public class TensorGPU extends TensorCPU {
             
         } catch (Exception e) {
             System.err.println("GPU matrix multiplication failed: " + e.getMessage());
+            e.printStackTrace(System.err);
             return super.matmul(other);
         }
         
@@ -564,16 +565,15 @@ public class TensorGPU extends TensorCPU {
         TensorCPU cpuTensor = new TensorCPU(shape());
         int dim = dimension() > 1 ? 1 : 0;
 
-        if (dim < 0 || dim >= dimension()) {
+        if (dim >= dimension()) {
             throw new IllegalArgumentException("Dimension " + dim + " out of bounds for limits of tensor shape " + Arrays.toString(shape()));
         }
 
         for (int i = 0; i < elements(); i++) {
-            cpuTensor.getData().set(i, this.getData().get(i));
+            cpuTensor.getData().set(i, getData().get(i));
         }
 
         Tensor result = cpuTensor.softmax();
-
         return TensorGPU.fromTensor(result);
     }
 

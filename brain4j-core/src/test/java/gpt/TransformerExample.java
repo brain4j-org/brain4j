@@ -3,7 +3,7 @@ package gpt;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
@@ -40,7 +40,7 @@ public class TransformerExample {
         vocabulary.tokenize();
 
         System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
-        TensorFactory.useGPUIfAvailable();
+        // TensorFactory.useGPUIfAvailable();
 
         Transformer transformer = new Transformer(
                 new TransformerEncoder(4, EMBEDDING_SIZE),
@@ -53,9 +53,7 @@ public class TransformerExample {
         Scanner scanner = new Scanner(System.in);
 
         Map<String, String> samples = Map.of(
-                "hello, how are you?", "hello, i am good.<END>",
-                "how are you?", "i am good.<END>",
-                "what is your name?", "my name is brain4j.<END>"
+                "write a story", "Hi! Once upon a time, there was a fox. It was walking in the forest, thinking about the day. The sky was clear, and the moon was shining bright. It looked up and saw something strange. A star fell. The fox was curious and went closer. It touched the ground, and the star was gone. But the fox smiled, knowing that magic happens when least expected.<END>"
         );
 
         trainModel(vocabulary, samples, transformer);
@@ -99,7 +97,12 @@ public class TransformerExample {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
-        transformer.fit(dataSet, 100);
+        for (int i = 0; i < 20; i++) {
+            transformer.fit(dataSet, 10);
+
+            double loss = transformer.loss(dataSet);
+            System.out.println("Loss " + loss);
+        }
         double duration = (System.nanoTime() - startTime) / 1e6;
 
         double loss = transformer.loss(dataSet);

@@ -1,10 +1,10 @@
 package net.echo.brain4j.adapters.json;
 
 import com.google.gson.*;
-import net.echo.brain4j.training.optimizers.Optimizer;
-import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.AdamW;
-import net.echo.brain4j.training.optimizers.impl.GradientDescent;
+import net.echo.brain4j.training.optimizer.Optimizer;
+import net.echo.brain4j.training.optimizer.impl.Adam;
+import net.echo.brain4j.training.optimizer.impl.AdamW;
+import net.echo.brain4j.training.optimizer.impl.GradientDescent;
 
 import java.lang.reflect.Type;
 

@@ -43,32 +43,14 @@ public class SmartTrainer {
         this.listeners.forEach(listener -> listener.register(this, model));
 
         while (running && loss > lossThreshold) {
-            step(model, dataSet);
-
-            this.epoches++;
-
-            if (epoches % evaluateEvery == 0) {
-                long start = System.nanoTime();
-                this.loss = model.loss(dataSet);
-                long took = System.nanoTime() - start;
-
-                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss, took));
-
-                if ((loss - previousLoss) > lossTolerance) {
-                    // Loss increased, so decrease the learning rate
-                    model.getOptimizer().setLearningRate(model.getOptimizer().getLearningRate() * learningRateDecay);
-                    this.listeners.forEach(listener -> listener.onLossIncreased(loss, previousLoss));
-                }
-
-                previousLoss = loss;
-            }
+            iterate(model, dataSet, lossTolerance);
         }
 
         this.running = false;
         this.end = System.nanoTime();
     }
 
-    public void step(Model model, DataSet dataSet) {
+    public void step(Model model, DataSet<DataRow> dataSet) {
         long start = System.nanoTime();
         this.listeners.forEach(listener -> listener.onEpochStarted(epoches, start));
 
@@ -78,7 +60,7 @@ public class SmartTrainer {
         this.listeners.forEach(listener -> listener.onEpochCompleted(epoches, took));
     }
 
-    public void startFor(Model model, DataSet dataSet, int epochesAmount, double lossTolerance) {
+    public void startFor(Model model, DataSet<DataRow> dataSet, int epochesAmount, double lossTolerance) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
@@ -86,29 +68,33 @@ public class SmartTrainer {
         this.listeners.forEach(listener -> listener.register(this, model));
 
         for (int i = 0; i < epochesAmount && running; i++) {
-            step(model, dataSet);
-
-            this.epoches++;
-
-            if (epoches % evaluateEvery == 0) {
-                long start = System.nanoTime();
-                this.loss = model.loss(dataSet);
-                long took = System.nanoTime() - start;
-
-                this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss, took));
-
-                if ((loss - previousLoss) > lossTolerance) {
-                    // Loss increased, so decrease the learning rate
-                    model.getOptimizer().setLearningRate(model.getOptimizer().getLearningRate() * learningRateDecay);
-                    this.listeners.forEach(listener -> listener.onLossIncreased(loss, previousLoss));
-                }
-
-                previousLoss = loss;
-            }
+            iterate(model, dataSet, lossTolerance);
         }
 
         this.running = false;
         this.end = System.nanoTime();
+    }
+
+    private void iterate(Model model, DataSet<DataRow> dataSet, double lossTolerance) {
+        step(model, dataSet);
+
+        this.epoches++;
+
+        if (epoches % evaluateEvery == 0) {
+            long start = System.nanoTime();
+            this.loss = model.loss(dataSet);
+            long took = System.nanoTime() - start;
+
+            this.listeners.forEach(listener -> listener.onEvaluated(dataSet, epoches, loss, took));
+
+            if ((loss - previousLoss) > lossTolerance) {
+                // Loss increased, so decrease the learning rate
+                model.getOptimizer().setLearningRate(model.getOptimizer().getLearningRate() * learningRateDecay);
+                this.listeners.forEach(listener -> listener.onLossIncreased(loss, previousLoss));
+            }
+
+            previousLoss = loss;
+        }
     }
 
     public int getEpoches() {

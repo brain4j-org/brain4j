@@ -160,4 +160,8 @@ public interface Tensor extends Iterable<Double> {
     Tensor gpu();
 
     Tensor cpu();
+
+    boolean checkNaN();
+
+    Tensor sqrt();
 }

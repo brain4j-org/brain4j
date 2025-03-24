@@ -3,12 +3,9 @@ import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.brain4j.training.optimizers.impl.AdamW;
-import net.echo.brain4j.training.optimizers.impl.GradientDescent;
-import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -36,10 +33,10 @@ public class XorTest {
 
         System.out.println("Training took: " + took + " ms");
 
-        EvaluationResult result = model.evaluate(dataSet);
         double loss = model.loss(dataSet);
-
         System.out.println("Loss: " + loss);
+
+        EvaluationResult result = model.evaluate(dataSet);
         System.out.println(result.confusionMatrix());
 
         assertTrue(loss < 0.01, "Loss is too high! " + loss);
@@ -50,11 +47,12 @@ public class XorTest {
     private Sequential getModel() {
         Sequential model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(6, Activations.MISH),
+                new DenseLayer(32, Activations.MISH),
+                new DenseLayer(32, Activations.MISH),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new GradientDescent(0.5), new StochasticUpdater());
+        return model.compile(LossFunctions.BINARY_CROSS_ENTROPY, new AdamW(0.1));
     }
 
     private DataSet<DataRow> getDataSet() {

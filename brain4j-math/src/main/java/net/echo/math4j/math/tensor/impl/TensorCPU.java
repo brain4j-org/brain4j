@@ -1,6 +1,7 @@
 package net.echo.math4j.math.tensor.impl;
 
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.autograd.Operation;
 import net.echo.math4j.math.tensor.autograd.operations.*;
@@ -522,7 +523,7 @@ public class TensorCPU implements Cloneable, Tensor {
         int rows = shape[0];
         int cols = shape[1];
 
-        Tensor result = new TensorCPU(cols, rows);
+        Tensor result = TensorFactory.matrix(cols, rows);
         
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -1247,6 +1248,26 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor cpu() {
+        return this;
+    }
+
+    @Override
+    public boolean checkNaN() {
+        for (int i = 0; i < data.size(); i++) {
+            if (Float.isNaN(data.get(i))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public Tensor sqrt() {
+        for (int i = 0; i < data.size(); i++) {
+            data.set(i, Math.sqrt(data.get(i)));
+        }
+
         return this;
     }
 

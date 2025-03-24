@@ -3,6 +3,7 @@ package net.echo.brain4j.layer.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 
 /**
@@ -33,7 +34,7 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
 
         Tensor reshapedInput = input.reshape(input.elements(), 1);
         Tensor result = denseLayer.getWeights()
-                .cpu() // TODO: Fix overhead on GPU
+                // .cpu() // TODO: Fix the overhead on GPU
                 .matmul(reshapedInput)
                 .reshape(numNeurons)
                 .add(bias);
@@ -45,7 +46,7 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
     @Override
     public Tensor propagate(StatesCache cache, Layer<?, ?> previous, Tensor delta) {
         Tensor output = cache.getOutputTensor(this);
-        Tensor derivate = activation.getDerivative(output);
+        Tensor derivative = activation.getDerivative(output);
 
         // delta as a matrix [n_out, 1]
         Tensor deltaMatrix = delta.reshape(delta.elements(), 1);
@@ -56,10 +57,11 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
                 .reshape(output.elements());
 
         // element-wise multiplication of delta and derivative
-        Tensor deltaForThisLayer = newDelta.mul(derivate);
-        Tensor gradW = optimizer.optimize(deltaMatrix, output);
+        Tensor deltaL = newDelta.mul(derivative).map(BrainUtils::clipGradient);
+        Tensor gradient = optimizer.optimize(this, deltaMatrix, output.transpose())
+                .map(BrainUtils::clipGradient);
 
-        updater.acknowledgeChange(this, gradW, deltaForThisLayer);
-        return deltaForThisLayer;
+        updater.acknowledgeChange(this, gradient, deltaL);
+        return deltaL;
     }
 }

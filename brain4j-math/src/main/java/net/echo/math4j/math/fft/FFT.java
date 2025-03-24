@@ -7,7 +7,8 @@ public final class FFT {
 
     private static final double TWO_PI = 2 * Math.PI;
     
-    private FFT() {}
+    private FFT() {
+    }
     
     public static Complex[] transform(Complex[] input) {
         if (input == null || input.length == 0) {

@@ -8,7 +8,7 @@ import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.cache.StatesCache;
-import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
@@ -17,6 +17,7 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
@@ -29,8 +30,6 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
     private MultiHeadAttention attention;
 
     public TransformerEncoder(int numHeads, int dimension) {
-        super(0, Activations.LINEAR);
-
         this.normalizer = new LayerNorm();
         this.feedForward = new Sequential(
                 new DenseLayer(dimension, Activations.LINEAR),
@@ -40,6 +39,10 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
         this.heads = numHeads;
         this.dimension = dimension;
+    }
+
+    @Override
+    public void init(Random generator) {
     }
 
     @Override

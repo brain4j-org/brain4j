@@ -9,7 +9,7 @@ import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.transformers.TransformerEncoder;
@@ -50,7 +50,7 @@ public class Transformer extends Model {
     public Transformer compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(initializer, lossFunction, optimizer, updater);
 
-        connect(initializer, true);
+        connect(initializer);
 
         return this;
     }
@@ -61,37 +61,8 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void connect(WeightInitializer weightInit, boolean update) {
-        super.connect(weightInit, update);
-    }
-
-    private Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
-        return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
-                Tensor inputs = row.inputs();
-                Tensor targets = row.outputs();
-
-                Tensor outputs = predict(inputs);
-                double loss = lossFunction.calculate(targets, outputs);
-
-                totalError.updateAndGet(v -> v + loss);
-            }
-        });
-    }
-
-    private void partitionIfRequired(DataSet<DataRow> dataSet) {
-        if (dataSet.isPartitioned()) return;
-
-        int threads = Runtime.getRuntime().availableProcessors();
-        int partitions = Math.min(threads, dataSet.getData().size());
-
-        dataSet.partition(partitions);
-    }
-
-    @Override
     public double loss(DataSet<DataRow> dataSet) {
-        reloadWeights();
-        partitionIfRequired(dataSet);
+        propagation.partitionIfRequired(dataSet);
 
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
@@ -122,11 +93,6 @@ public class Transformer extends Model {
         }
 
         return result;
-    }
-
-    @Override
-    public void reloadWeights() {
-
     }
 
     @Override

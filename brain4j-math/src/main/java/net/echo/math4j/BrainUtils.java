@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class BrainUtils {
 
-    private static final double GRADIENT_CLIP = 10.0;
+    private static final double GRADIENT_CLIP = 5.0;
     
     public static <T extends Enum<T>> T parse(Vector outputs, Class<T> clazz) {
         return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
@@ -71,8 +71,8 @@ public class BrainUtils {
         }
     }
 
-    public static float clipGradient(double gradient) {
-        return (float) Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
+    public static double clipGradient(double gradient) {
+        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }
 
     public static String formatNumber(int params) {

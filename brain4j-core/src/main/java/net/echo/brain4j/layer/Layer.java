@@ -9,7 +9,7 @@ import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
-import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -33,7 +33,8 @@ public abstract class Layer<I, O> implements Adapter {
     protected int id;
 
     public Layer() {
-        this(Activations.LINEAR);
+        this.activation = Activations.LINEAR.getFunction();
+        this.bias = TensorFactory.zeros(0);
     }
 
     public Layer(Activation activation) {
@@ -91,6 +92,7 @@ public abstract class Layer<I, O> implements Adapter {
     }
 
     public void init(Random generator) {
+        System.out.println(this.getClass());
         for (int i = 0; i < bias.elements(); i++) {
             double value = 2 * generator.nextDouble() - 1;
             bias.set(value, i);

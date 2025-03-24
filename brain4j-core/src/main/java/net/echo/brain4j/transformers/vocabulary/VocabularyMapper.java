@@ -7,6 +7,8 @@ import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.index.Range;
 
+import java.util.Random;
+
 public class VocabularyMapper extends Layer<Tensor, Tensor> {
 
     private final Tensor outProjectionWeights;
@@ -17,6 +19,10 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
         this.vocabularySize = vocabularySize;
         this.outProjectionWeights = TensorFactory.random(dimension, vocabularySize); // TODO: matmul support for 1d tensors
         this.temperature = Math.max(1e-15, temperature);
+    }
+
+    @Override
+    public void init(Random generator) {
     }
 
     @Override

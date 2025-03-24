@@ -1,11 +1,10 @@
-package net.echo.brain4j.training.optimizers;
+package net.echo.brain4j.training.optimizer;
 
 import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;
@@ -26,19 +25,6 @@ public abstract class Optimizer implements Adapter {
         this.learningRate = learningRate;
     }
 
-    public Tensor optimize(Tensor input) {
-        return input.mul(learningRate);
-    }
-
-    public abstract Tensor optimize(Tensor delta, Tensor output);
-
-    public abstract double update(StatesCache cache, Synapse synapse);
-
-    public abstract double update(StatesCache cache, int id, float gradient, float weight);
-
-    public void postInitialize(Sequential model) {
-    }
-
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
         stream.writeDouble(learningRate);
@@ -47,6 +33,11 @@ public abstract class Optimizer implements Adapter {
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
         this.learningRate = stream.readDouble();
+    }
+
+    public abstract Tensor optimize(Layer<?, ?> layer, Tensor delta, Tensor output);
+
+    public void postInitialize(Sequential model) {
     }
 
     public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {

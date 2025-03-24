@@ -5,7 +5,6 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.index.Range;
-import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -58,28 +57,6 @@ public class LayerNorm extends Layer<Tensor, Tensor> {
     }
 
     /**
-     * Normalizes a vector with a mean of zero and variance of one.
-     *
-     * @param input the input vector to normalize
-     * @return the normalized output vector
-     */
-    public Vector normalize(Vector input) {
-        double mean = input.mean();
-        double variance = input.variance(mean);
-
-        double denominator = Math.sqrt(variance + epsilon);
-
-        for (int i = 0; i < input.size(); i++) {
-            double value = input.get(i);
-            double normalized = (value - mean) / denominator;
-
-            input.set(i, normalized);
-        }
-
-        return input;
-    }
-    
-    /**
      * Normalizes a tensor with a mean of zero and variance of one.
      *
      * @param input the input tensor to normalize
@@ -131,25 +108,5 @@ public class LayerNorm extends Layer<Tensor, Tensor> {
         Tensor normalized = input.clone();
 
         return normalized.map(value -> (value - mean) / denominator);
-    }
-
-    private double calculateMean(Tensor input) {
-        double sum = 0.0;
-
-        for (int i = 0; i < input.elements(); i++) {
-            sum += input.get(i);
-        }
-
-        return sum / input.elements();
-    }
-
-    private double calculateVariance(Tensor input, double mean) {
-        double sum = 0.0;
-
-        for (int i = 0; i < input.elements(); i++) {
-            sum += Math.pow(input.get(i) - mean, 2);
-        }
-
-        return sum / input.elements();
     }
 }

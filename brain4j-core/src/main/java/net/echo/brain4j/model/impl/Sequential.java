@@ -13,7 +13,7 @@ import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math4j.BrainUtils;
@@ -54,20 +54,6 @@ public class Sequential extends Model {
         Preconditions.checkState(!(!isInput && hasConv), "Cannot use a convolutional layer without an input layer!");
     }
 
-    private Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
-        return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
-                Tensor inputs = row.inputs();
-                Tensor targets = row.outputs();
-
-                Tensor outputs = predict(inputs);
-                double loss = lossFunction.calculate(targets, outputs);
-
-                totalError.updateAndGet(v -> v + loss);
-            }
-        });
-    }
-
     private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications) {
         return Thread.startVirtualThread(() -> {
             for (DataRow row : partition) {
@@ -103,12 +89,11 @@ public class Sequential extends Model {
     public Sequential compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(initializer, lossFunction, optimizer, updater);
 
-        connect(initializer, true);
+        connect(initializer);
 
         this.optimizer.postInitialize(this);
         this.updater.postInitialize(this);
 
-        reloadWeights();
         return this;
     }
 
@@ -148,7 +133,7 @@ public class Sequential extends Model {
 
     @Override
     public double loss(DataSet<DataRow> dataSet) {
-        reloadWeights();
+        propagation.partitionIfRequired(dataSet);
 
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
@@ -198,18 +183,18 @@ public class Sequential extends Model {
             }
 
             if (layer instanceof LayerNorm norm) {
-                denseResult = norm.normalize(denseResult);
+                denseResult = norm.forward(cache, workingLayer, denseResult);
+                continue;
             }
 
+            if (denseResult.checkNaN()) {
+                System.out.println("NaN at " + layer.getId());
+                System.out.println(denseResult);
+            }
             workingLayer = layer;
         }
 
         return denseResult;
-    }
-
-    @Override
-    public void reloadWeights() {
-        // TODO: Remove this?
     }
 
     @Override

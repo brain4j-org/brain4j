@@ -6,7 +6,8 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 public final class FFTUtils {
     
-    private FFTUtils() {}
+    private FFTUtils() {
+    }
     
     public static Complex[] tensorToComplex1D(Tensor tensor) {
         if (tensor.dimension() != 1) {

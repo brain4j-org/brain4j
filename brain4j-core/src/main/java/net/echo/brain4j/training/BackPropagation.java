@@ -5,7 +5,7 @@ import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
@@ -26,7 +26,7 @@ public class BackPropagation {
         this.updater = updater;
     }
 
-    private void partitionIfRequired(DataSet<DataRow> dataSet) {
+    public void partitionIfRequired(DataSet<DataRow> dataSet) {
         if (dataSet.isPartitioned()) return;
 
         int threads = Runtime.getRuntime().availableProcessors();
@@ -35,7 +35,7 @@ public class BackPropagation {
         dataSet.partition(partitions);
     }
 
-    private void propagatePartition(List<DataRow> partition) {
+    public void propagatePartition(List<DataRow> partition) {
         List<Thread> threads = new ArrayList<>();
 
         for (DataRow row : partition) {
