@@ -8,7 +8,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.brain4j.training.optimizer.impl.AdamW;
+import net.echo.brain4j.training.optimizer.impl.GradientDescent;
 import net.echo.brain4j.training.techniques.EpochListener;
 import net.echo.brain4j.training.techniques.SmartTrainer;
 import net.echo.math4j.DataSet;
@@ -44,7 +44,7 @@ public class MNISTClassifier {
         SmartTrainer trainer = new SmartTrainer(0.7, 1);
 
         trainer.addListener(new EpochListener());
-        trainer.startFor(model, set, 50, 0.01);
+        trainer.startFor(model, set, 300, 0.01);
 
         ModernAdapter.serialize("mnist", model);
 
@@ -58,7 +58,7 @@ public class MNISTClassifier {
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        return model.compile(LossFunctions.CROSS_ENTROPY, new AdamW(0.01));
+        return model.compile(LossFunctions.CROSS_ENTROPY, new GradientDescent(0.001));
     }
 
     public static DataSet<DataRow> getData() throws IOException {

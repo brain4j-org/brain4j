@@ -52,8 +52,9 @@ public class TransformerExample {
         Scanner scanner = new Scanner(System.in);
 
         Map<String, String> samples = Map.of(
-                "nigger", "that is offensive!",
-                "nice guy", "thank you!"
+                "nice guy", "thank you!",
+                "what is your name", "my name is brain4j",
+                "hi", "hey, what is up?"
                 //  "write a story", "Hi! Once upon a time, there was a fox. It was walking in the forest, thinking about the day. The sky was clear, and the moon was shining bright. It looked up and saw something strange. A star fell. The fox was curious and went closer. It touched the ground, and the star was gone. But the fox smiled, knowing that magic happens when least expected.<END>"
         );
 
@@ -132,7 +133,7 @@ public class TransformerExample {
             lastWord = word;
 
             System.out.print("\rChat Bot: " + botResponse);
-            Thread.sleep(250);
+            Thread.sleep(50);
         }
     }
 }
