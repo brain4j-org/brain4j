@@ -52,7 +52,7 @@ public class BackPropagation {
         }
 
         BrainUtils.waitAll(threads);
-        // updater.postBatch(model, optimizer.getLearningRate());
+        updater.postBatch(model, optimizer.getLearningRate());
     }
 
     public void iteration(DataSet<DataRow> dataSet) {
