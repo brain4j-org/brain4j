@@ -1,6 +1,7 @@
 package net.echo.math4j.math.fft;
 
 import net.echo.math4j.math.complex.Complex;
+
 import java.util.Arrays;
 
 public final class FFT {

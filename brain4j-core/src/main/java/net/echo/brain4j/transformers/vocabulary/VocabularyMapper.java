@@ -5,9 +5,7 @@ import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.tensor.index.Range;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
