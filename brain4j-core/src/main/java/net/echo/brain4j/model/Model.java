@@ -1,11 +1,8 @@
 package net.echo.brain4j.model;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 import net.echo.brain4j.adapters.Adapter;
+import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.adapters.json.OptimizerAdapter;
 import net.echo.brain4j.adapters.json.UpdaterAdapter;
@@ -19,8 +16,6 @@ import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.Synapse;
-import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
@@ -37,11 +32,6 @@ import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.lang.reflect.Type;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,7 +104,7 @@ public abstract class Model implements Adapter {
         for (int i = 1; i < layers.size(); i++) {
             Layer<?, ?> layer = layers.get(i);
 
-            if (layer.getNeurons().isEmpty() && !layer.isConvolutional()) continue;
+            if (layer.getTotalNeurons() == 0 && !layer.isConvolutional()) continue;
 
             int nIn = lastNormalLayer.getTotalNeurons();
             int nOut = layer.getTotalNeurons();
@@ -245,58 +235,8 @@ public abstract class Model implements Adapter {
      *
      * @param path path to model file
      */
-    public void load(String path) {
-        File file = new File(path);
-
-        Preconditions.checkState(file.exists(), "File does not exist: " + path);
-
-        try {
-            JsonObject parent = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
-
-            String lossFunction = parent.get("loss_function").getAsString();
-            String weightInitFunction = parent.get("weight_initialization").getAsString();
-
-            Class<?> lossClass = Class.forName(lossFunction);
-            Class<?> weightInitClass = Class.forName(weightInitFunction);
-
-            this.optimizer = GSON.fromJson(parent.get("optimizer"), Optimizer.class);
-            this.updater = GSON.fromJson(parent.get("updater"), Updater.class);
-            this.lossFunction = (LossFunction) lossClass.getDeclaredConstructor().newInstance();
-            this.weightInit = (WeightInitializer) weightInitClass.getDeclaredConstructor().newInstance();
-
-            Type listType = new TypeToken<ArrayList<Layer<?, ?>>>(){}.getType();
-
-            this.seed = parent.get("seed").getAsInt();
-            this.generator = new Random(this.seed);
-            this.layers = GSON.fromJson(parent.get("layers"), listType);
-
-            Parameters.TOTAL_SYNAPSES = 0;
-            connect(this.weightInit, false);
-
-            double[][] biases = GSON.fromJson(parent.get("biases"), double[][].class);
-
-            for (int i = 0; i < biases.length; i++) {
-                double[] layerBiases = biases[i];
-                Layer<?, ?> layer = this.layers.get(i);
-
-                for (int j = 0; j < layerBiases.length; j++) {
-                    layer.getNeuronAt(j).setBias(layerBiases[j]);
-                }
-            }
-
-            double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);
-
-            for (int i = 0; i < weights.length; i++) {
-                double[] layerWeights = weights[i];
-                Layer<?, ?> layer = this.layers.get(i);
-
-                for (int j = 0; j < layerWeights.length; j++) {
-                    layer.getSynapses().get(j).setWeight(layerWeights[j]);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public void load(String path) throws Exception {
+        ModernAdapter.deserialize(path, this);
     }
 
     /**
@@ -304,62 +244,8 @@ public abstract class Model implements Adapter {
      *
      * @param path path to save model
      */
-    public void save(String path) {
-        File file = new File(path);
-
-        JsonObject parent = new JsonObject();
-
-        JsonObject optimizerObject = GSON.toJsonTree(this.optimizer).getAsJsonObject();
-        JsonObject updaterObject = GSON.toJsonTree(this.updater).getAsJsonObject();
-
-        parent.addProperty("seed", this.seed);
-        parent.addProperty("weight_initialization", String.valueOf(this.weightInit.getClass()));
-        parent.addProperty("loss_function", String.valueOf(this.lossFunction.getClass()));
-
-        parent.add("optimizer", optimizerObject);
-        parent.add("updater", updaterObject);
-
-        List<JsonObject> layerObjects = new ArrayList<>();
-
-        for (Layer<?, ?> layer : this.layers) {
-            layerObjects.add(GSON.toJsonTree(layer).getAsJsonObject());
-        }
-
-        parent.add("layers", GSON.toJsonTree(layerObjects).getAsJsonArray());
-
-        double[][] biases = new double[this.layers.size()][];
-
-        for (int i = 0; i < this.layers.size(); i++) {
-            Layer<?, ?> layer = this.layers.get(i);
-            biases[i] = new double[layer.getNeurons().size()];
-
-            for (int j = 0; j < biases[i].length; j++) {
-                biases[i][j] = layer.getNeuronAt(j).getBias();
-            }
-        }
-
-        parent.add("biases", GSON.toJsonTree(biases));
-
-        double[][] weights = new double[this.layers.size()][];
-
-        for (int i = 0; i < this.layers.size(); i++) {
-            Layer<?, ?> layer = this.layers.get(i);
-            weights[i] = new double[layer.getSynapses().size()];
-
-            for (int j = 0; j < layer.getSynapses().size(); j++) {
-                Synapse synapse = layer.getSynapses().get(j);
-
-                weights[i][j] = synapse.getWeight();
-            }
-        }
-
-        parent.add("weights", GSON.toJsonTree(weights));
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            GSON.toJson(parent, writer);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public void save(String path) throws Exception {
+        ModernAdapter.serialize(path, this);
     }
 
     /**

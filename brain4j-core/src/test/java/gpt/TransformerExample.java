@@ -60,13 +60,15 @@ public class TransformerExample {
 
         trainModel(vocabulary, samples, transformer);
 
-        while (true) {
+        String prompt;
+
+        do {
             System.out.print("Enter a prompt: ");
-            String prompt = scanner.nextLine() + " ";
+            prompt = scanner.nextLine() + " ";
 
             generateResponse(vocabulary, transformer, prompt);
             System.out.println();
-        }
+        } while (!prompt.equals("end"));
     }
 
     private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) {
@@ -97,14 +99,7 @@ public class TransformerExample {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
-
-        for (int i = 0; i < 30; i++) {
-            transformer.fit(dataSet, 10);
-
-            double loss = transformer.loss(dataSet);
-            System.out.println("Epoch " + i + " loss: " + loss);
-        }
-
+        transformer.fit(dataSet, 100);
         double duration = (System.nanoTime() - startTime) / 1e6;
 
         double loss = transformer.loss(dataSet);

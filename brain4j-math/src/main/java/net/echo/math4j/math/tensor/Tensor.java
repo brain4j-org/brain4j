@@ -4,6 +4,7 @@ import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.index.Range;
 import net.echo.math4j.math.vector.Vector;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -89,6 +90,8 @@ public interface Tensor extends Iterable<Double> {
     double distance(Tensor other);
 
     double distanceSquared(Tensor other);
+
+    Tensor mapWithIndex(BiFunction<Integer, Double, Double> function);
 
     Tensor map(Function<Double, Double> function);
 

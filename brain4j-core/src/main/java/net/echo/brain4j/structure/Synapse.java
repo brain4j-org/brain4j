@@ -4,6 +4,7 @@ import net.echo.brain4j.structure.cache.Parameters;
 
 import java.util.Random;
 
+// TODO: Remove this
 public class Synapse {
 
     private final Neuron inputNeuron;

@@ -59,10 +59,12 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public void propagate(StatesCache cache, Layer<?, ?> previous) {
+    public Tensor propagate(StatesCache cache, Layer<?, ?> previous, Tensor delta) {
         if (previous instanceof VocabularyMapper mapper) {
             // TODO: Rework feed forward first
         }
+
+        return delta;
     }
 
     @Override
@@ -80,6 +82,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
 
         Tensor merged = TensorFactory.mergeTensors(feedForwardOutput);
         cache.setOutputTensor(this, merged);
+
         return normalizer.normalize(merged.add(normalized));
     }
 

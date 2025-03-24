@@ -76,7 +76,7 @@ public class BrainUtils {
     }
 
     public static String formatNumber(int params) {
-        String[] prefixes = {"", "KB", "MB", "GB", "TB"};
+        String[] prefixes = {"B", "KB", "MB", "GB", "TB"};
 
         if (params == 0) {
             return "0";

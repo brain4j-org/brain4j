@@ -5,14 +5,12 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.BrainUtils;
+import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.*;
-import java.util.List;
 
 public class ModernAdapter {
 
@@ -39,15 +37,17 @@ public class ModernAdapter {
         for (int i = 0; i < layers; i++) {
             Layer<?, ?> layer = model.getLayers().get(i);
 
-            for (Neuron neuron : layer.getNeurons()) {
-                dataStream.writeDouble(neuron.getBias());
+            Tensor biases = layer.getBias();
+            Tensor weights = layer.getWeights();
+
+            for (int j = 0; j < biases.elements(); j++) {
+                dataStream.writeDouble(biases.get(j));
             }
 
-            int synapses = layer.getSynapses().size();
+            Tensor reshapedWeights = weights.reshape(weights.elements());
 
-            for (int j = 0; j < synapses; j++) {
-                Synapse synapse = layer.getSynapses().get(j);
-                dataStream.writeDouble(synapse.getWeight());
+            for (int j = 0; j < reshapedWeights.elements(); j++) {
+                dataStream.writeDouble(reshapedWeights.get(j));
             }
         }
 
@@ -92,18 +92,21 @@ public class ModernAdapter {
             for (int i = 0; i < layers; i++) {
                 Layer<?, ?> layer = model.getLayers().get(i);
 
-                List<Neuron> neurons = layer.getNeurons();
+                Tensor biases = layer.getBias();
+                Tensor weights = layer.getWeights();
 
-                for (Neuron neuron : neurons) {
+                for (int j = 0; j < biases.elements(); j++) {
                     double bias = dataStream.readDouble();
-                    neuron.setBias(bias);
+                    biases.set(bias, j);
                 }
 
-                List<Synapse> synapses = layer.getSynapses();
+                int[] shape = weights.shape();
 
-                for (Synapse synapse : synapses) {
-                    double weight = dataStream.readDouble();
-                    synapse.setWeight(weight);
+                for (int j = 0; j < shape[0]; j++) {
+                    for (int k = 0; k < shape[1]; k++) {
+                        double weight = dataStream.readDouble();
+                        weights.set(weight, j, k);
+                    }
                 }
             }
 

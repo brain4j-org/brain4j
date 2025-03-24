@@ -7,6 +7,7 @@ import net.echo.brain4j.structure.cache.Parameters;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -31,6 +32,11 @@ public class Adam extends Optimizer {
 
     public Adam(double learningRate) {
         this(learningRate, 0.9, 0.999, 1e-8);
+    }
+
+    @Override
+    public Tensor optimize(Tensor delta, Tensor output) {
+        return null;
     }
 
     public Adam(double learningRate, double beta1, double beta2, double epsilon) {
@@ -110,10 +116,10 @@ public class Adam extends Optimizer {
         this.beta2Timestep = Math.pow(beta2, timestep);
 
         for (Layer<?, ?> layer : layers) {
-            for (Synapse synapse : layer.getSynapses()) {
-                float change = (float) update(cacheHolder, synapse);
-                updater.acknowledgeChange(synapse, change);
-            }
+//            for (Synapse synapse : layer.getSynapses()) {
+//                float change = (float) update(cacheHolder, synapse);
+//                updater.acknowledgeChange(synapse, change);
+//            }
         }
     }
 

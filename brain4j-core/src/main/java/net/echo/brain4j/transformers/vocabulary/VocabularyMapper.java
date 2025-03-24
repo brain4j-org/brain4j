@@ -7,9 +7,6 @@ import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.index.Range;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class VocabularyMapper extends Layer<Tensor, Tensor> {
 
     private final Tensor outProjectionWeights;
@@ -23,17 +20,17 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public void computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
+    public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
         Tensor delta = outputs.clone().sub(targets);
 
         // delta as a 1 x vocabSize matrix
         Tensor gradZ = delta.reshape(1, vocabularySize);
         Tensor gradW = cache.getOutputTensor(this).transpose().matmul(gradZ);
 
-        double learningRate = 0.01;
+        double learningRate = 0.1;
         outProjectionWeights.sub(gradW.mul(learningRate));
 
-        cache.setDeltaTensor(this, delta);
+        return delta;
     }
 
     @Override

@@ -1,12 +1,7 @@
 package net.echo.brain4j.activation;
 
-import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.vector.Vector;
-
-import java.util.List;
 
 public interface Activation {
 
@@ -55,18 +50,6 @@ public interface Activation {
         }
 
         return result;
-    }
-
-    /**
-     * Applies the activation factor to a list of neurons.
-     */
-    default void apply(StatesCache cacheHolder, List<Neuron> neurons) {
-        for (Neuron neuron : neurons) {
-            double output = neuron.getValue(cacheHolder) + neuron.getBias();
-            double activated = activate(output);
-
-            neuron.setValue(cacheHolder, activated);
-        }
     }
 
     /**

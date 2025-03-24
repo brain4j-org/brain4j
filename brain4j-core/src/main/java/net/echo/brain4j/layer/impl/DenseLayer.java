@@ -2,19 +2,13 @@ package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.vector.Vector;
 
 /**
  * Represents a fully connected (dense) layer in a neural network.
  */
 public class DenseLayer extends Layer<Tensor, Tensor> {
-
-    private Tensor weights;
 
     private DenseLayer() {
     }
@@ -22,7 +16,7 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
     /**
      * Constructs a dense layer instance.
      *
-     * @param input the number of neurons in this layer
+     * @param input      the number of neurons in this layer
      * @param activation the activation function to be applied to the output of each neuron
      */
     public DenseLayer(int input, Activations activation) {
@@ -35,52 +29,37 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
-        int numNeurons = neurons.size();
+        int numNeurons = bias.elements();
+
         Tensor reshapedInput = input.reshape(input.elements(), 1);
+        Tensor result = denseLayer.getWeights()
+                .cpu() // TODO: Fix overhead on GPU
+                .matmul(reshapedInput)
+                .reshape(numNeurons)
+                .add(bias);
 
-        // TODO: Fix overhead that is too high!
-        Tensor result = denseLayer.getWeights().cpu().matmul(reshapedInput).reshape(numNeurons);
-        Tensor output = TensorFactory.create(numNeurons);
-
-        for (int i = 0; i < neurons.size(); i++) {
-            Neuron neuron = neurons.get(i);
-            output.set(result.get(i) + neuron.getBias(), i);
-        }
-
-        Tensor activated = activation.activate(output);
-
-        for (int i = 0; i < activated.elements(); i++) {
-            neurons.get(i).setValue(cache, activated.get(i));
-        }
-
-        return activated;
+        cache.setOutputTensor(this, result);
+        return activation.activate(result);
     }
 
     @Override
-    public void propagate(StatesCache cache, Layer<?, ?> previous) {
-        int nextLayerSize = nextLayer.getNeurons().size();
+    public Tensor propagate(StatesCache cache, Layer<?, ?> previous, Tensor delta) {
+        Tensor output = cache.getOutputTensor(this);
+        Tensor derivate = activation.getDerivative(output);
 
-        for (int i = 0; i < neurons.size(); i++) {
-            Neuron neuron = neurons.get(i);
+        // delta as a matrix [n_out, 1]
+        Tensor deltaMatrix = delta.reshape(delta.elements(), 1);
+        Tensor transposedWeights = weights.transpose(); // weights as [n_in, n_out]
 
-            double value = neuron.getValue(cache);
-            double derivative = activation.getDerivative(value);
+        Tensor newDelta = transposedWeights
+                .matmul(deltaMatrix)
+                .reshape(output.elements());
 
-            for (int j = 0; j < nextLayerSize; j++) {
-                Synapse synapse = synapses.get(i * nextLayerSize + j);
+        // element-wise multiplication of delta and derivative
+        Tensor deltaForThisLayer = newDelta.mul(derivate);
+        Tensor gradW = optimizer.optimize(deltaMatrix, output);
 
-                float weightChange = calculateGradient(cache, synapse, derivative);
-                updater.acknowledgeChange(synapse, weightChange);
-            }
-        }
-    }
-
-    @Override
-    public void updateWeights(Tensor weights) {
-        this.weights = weights;
-    }
-
-    public Tensor getWeights() {
-        return weights;
+        updater.acknowledgeChange(this, gradW, deltaForThisLayer);
+        return deltaForThisLayer;
     }
 }

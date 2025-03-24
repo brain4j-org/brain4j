@@ -7,6 +7,7 @@ import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.impl.AdamW;
+import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
@@ -49,12 +50,11 @@ public class XorTest {
     private Sequential getModel() {
         Sequential model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(32, Activations.MISH),
-                new DenseLayer(32, Activations.MISH),
+                new DenseLayer(6, Activations.MISH),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new AdamW(0.1), new StochasticUpdater());
+        return model.compile(WeightInit.HE, LossFunctions.BINARY_CROSS_ENTROPY, new GradientDescent(0.5), new StochasticUpdater());
     }
 
     private DataSet<DataRow> getDataSet() {

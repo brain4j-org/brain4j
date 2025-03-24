@@ -4,8 +4,8 @@ import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.attention.MaskedMultiHeadAttention;
+import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 
 public class TransformerDecoder extends TransformerEncoder {
 

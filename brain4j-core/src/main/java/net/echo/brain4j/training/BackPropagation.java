@@ -65,28 +65,28 @@ public class BackPropagation {
         updater.postFit(model, optimizer.getLearningRate());
     }
 
-    public void backpropagation(StatesCache cacheHolder, Tensor targets, Tensor outputs) {
+    public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {
         List<Layer<?, ?>> layers = model.getLayers();
-        initializeDeltas(cacheHolder, layers, targets, outputs);
+        Tensor delta = initializeDeltas(cache, layers, targets, outputs);
 
-        Layer<?, ?> previous = null;
+        Layer<?, ?> previous = layers.getLast();
 
-        for (int l = layers.size() - 2; l > 0; l--) {
+        for (int l = layers.size() - 2; l >= 0; l--) {
             Layer<?, ?> layer = layers.get(l);
 
             if (!layer.canPropagate()) continue;
 
-            layer.propagate(cacheHolder, previous);
+            delta = layer.propagate(cache, previous, delta);
             previous = layer;
         }
 
-        optimizer.postIteration(cacheHolder, updater, layers);
+        optimizer.postIteration(cache, updater, layers);
     }
 
-    private void initializeDeltas(StatesCache cache, List<Layer<?, ?>> layers, Tensor targets, Tensor outputs) {
+    private Tensor initializeDeltas(StatesCache cache, List<Layer<?, ?>> layers, Tensor targets, Tensor outputs) {
         Layer<?, ?> outputLayer = layers.getLast();
         LossFunction lossFunction = model.getLossFunction();
 
-        outputLayer.computeLoss(cache, targets, outputs, lossFunction);
+        return outputLayer.computeLoss(cache, targets, outputs, lossFunction);
     }
 }

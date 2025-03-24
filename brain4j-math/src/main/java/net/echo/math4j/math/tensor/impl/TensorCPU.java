@@ -446,10 +446,21 @@ public class TensorCPU implements Cloneable, Tensor {
 
         return sum;
     }
-    
+
+    @Override
+    public Tensor mapWithIndex(BiFunction<Integer, Double, Double> function) {
+        for (int i = 0; i < data.size(); i++) {
+            double value = data.get(i);
+            data.set(i, function.apply(i, value));
+        }
+
+        return this;
+    }
+
     public Tensor map(Function<Double, Double> function) {
         for (int i = 0; i < data.size(); i++) {
-            data.set(i, function.apply((double) data.get(i)).floatValue());
+            double value = data.get(i);
+            data.set(i, function.apply(value));
         }
 
         return this;
@@ -499,10 +510,13 @@ public class TensorCPU implements Cloneable, Tensor {
     }
     
     public Tensor transpose() {
+        if (dimension() == 1) {
+            return reshape(1, elements());
+        }
+
         if (shape.length != 2) {
-            throw new UnsupportedOperationException(
-                "transpose() is supported only for 2D tensors, not for tensors with " + shape.length + " dimensions"
-            );
+            throw new UnsupportedOperationException("transpose() is supported only for 2D tensors, not for tensors with "
+                    + shape.length + " dimensions");
         }
         
         int rows = shape[0];

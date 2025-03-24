@@ -2,7 +2,6 @@ package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.index.Range;
@@ -10,12 +9,11 @@ import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.List;
 
 /**
  * Represents a normalization layer, used to normalize the inputs and improve training.
  */
-public class LayerNorm extends Layer<Vector, Vector> {
+public class LayerNorm extends Layer<Tensor, Tensor> {
 
     private double epsilon;
 
@@ -53,18 +51,10 @@ public class LayerNorm extends Layer<Vector, Vector> {
     }
 
     @Override
-    public void applyFunction(StatesCache cacheHolder, Layer<?, ?> previous) {
-        List<Neuron> inputs = previous.getNeurons();
-
-        double mean = calculateMean(cacheHolder, inputs);
-        double variance = calculateVariance(cacheHolder, inputs, mean);
-
-        for (Neuron input : inputs) {
-            double value = input.getValue(cacheHolder);
-            double normalized = (value - mean) / Math.sqrt(variance + epsilon);
-
-            input.setValue(cacheHolder, normalized);
-        }
+    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+        Tensor result = normalize1D(input);
+        cache.setOutputTensor(this, result);
+        return result;
     }
 
     /**
@@ -127,39 +117,39 @@ public class LayerNorm extends Layer<Vector, Vector> {
         return normalized;
     }
 
-    public Tensor normalizeFull(Tensor input) {
+    public Tensor normalize1D(Tensor input) {
         double mean = input.mean();
         double variance = 0.0;
 
         for (Double value : input) {
             variance += Math.pow(value - mean, 2);
         }
+
         variance /= input.elements();
 
         double denominator = Math.sqrt(variance + epsilon);
-
         Tensor normalized = input.clone();
 
         return normalized.map(value -> (value - mean) / denominator);
     }
 
-    private double calculateMean(StatesCache cacheHolder, List<Neuron> inputs) {
+    private double calculateMean(Tensor input) {
         double sum = 0.0;
 
-        for (Neuron value : inputs) {
-            sum += value.getValue(cacheHolder);
+        for (int i = 0; i < input.elements(); i++) {
+            sum += input.get(i);
         }
 
-        return sum / inputs.size();
+        return sum / input.elements();
     }
 
-    private double calculateVariance(StatesCache cacheHolder, List<Neuron> inputs, double mean) {
+    private double calculateVariance(Tensor input, double mean) {
         double sum = 0.0;
 
-        for (Neuron value : inputs) {
-            sum += Math.pow(value.getValue(cacheHolder) - mean, 2);
+        for (int i = 0; i < input.elements(); i++) {
+            sum += Math.pow(input.get(i) - mean, 2);
         }
 
-        return sum / inputs.size();
+        return sum / input.elements();
     }
 }

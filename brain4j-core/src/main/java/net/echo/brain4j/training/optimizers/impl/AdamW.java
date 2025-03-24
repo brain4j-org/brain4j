@@ -66,10 +66,10 @@ public class AdamW extends Adam {
         this.beta2Timestep = Math.pow(beta2, timestep);
 
         for (Layer<?, ?> layer : layers) {
-            for (Synapse synapse : layer.getSynapses()) {
-                float change = (float) update(cacheHolder, synapse);
-                updater.acknowledgeChange(synapse, change);
-            }
+//            for (Synapse synapse : layer.getSynapses()) {
+//                float change = (float) update(cacheHolder, synapse);
+//                updater.acknowledgeChange(synapse, change);
+//            }
         }
     }
 

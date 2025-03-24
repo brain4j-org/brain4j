@@ -19,7 +19,7 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
         object.addProperty("activation", layer.getActivation().getName());
 
         if (layer instanceof DenseLayer denseLayer) {
-            object.addProperty("neurons", denseLayer.getNeurons().size());
+            object.addProperty("neurons", denseLayer.getTotalNeurons());
         }
 
         if (layer instanceof DropoutLayer dropoutLayer) {

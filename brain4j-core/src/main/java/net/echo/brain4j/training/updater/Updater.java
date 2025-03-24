@@ -2,45 +2,35 @@ package net.echo.brain4j.training.updater;
 
 import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.json.UpdaterAdapter;
-import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.convolution.ConvLayer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.Parameters;
-
-import java.util.List;
+import net.echo.math4j.math.tensor.Tensor;
 
 @JsonAdapter(UpdaterAdapter.class)
 public abstract class Updater {
 
-    protected Kernel[] kernels;
-    protected Synapse[] synapses;
-    protected float[] gradients;
+    protected Tensor[] gradientsTensors;
+    protected Tensor[] biasesTensors;
 
-    public void acknowledgeChange(Synapse synapse, float change) {
-        gradients[synapse.getSynapseId()] += change;
+    public void acknowledgeChange(Layer<?, ?> layer, Tensor change, Tensor biasDelta) {
+        Tensor gradW = gradientsTensors[layer.getId()];
+        Tensor biasW = biasesTensors[layer.getId()];
+
+        if (gradW == null) gradW = change;
+        else gradW.add(change);
+
+        if (biasW == null) biasW = biasDelta;
+        else biasW.add(biasDelta);
+
+        this.gradientsTensors[layer.getId()] = gradW;
+        this.biasesTensors[layer.getId()] = biasW;
     }
 
     public void postInitialize(Sequential model) {
-        this.kernels = new Kernel[Parameters.TOTAL_KERNELS];
-        this.synapses = new Synapse[Parameters.TOTAL_SYNAPSES];
-        this.gradients = new float[Parameters.TOTAL_SYNAPSES];
-
-        for (Layer<?, ?> layer : model.getLayers()) {
-            for (Synapse synapse : layer.getSynapses()) {
-                synapses[synapse.getSynapseId()] = synapse;
-            }
-
-            if (layer instanceof ConvLayer convLayer) {
-                List<Kernel> filters = convLayer.getKernels();
-
-                for (Kernel filter : filters) {
-                    kernels[filter.getId()] = filter;
-                }
-            }
-        }
+        this.gradientsTensors = new Tensor[Parameters.TOTAL_LAYERS];
+        this.biasesTensors = new Tensor[Parameters.TOTAL_LAYERS];
     }
 
     public void postFit(Model model, double learningRate) {

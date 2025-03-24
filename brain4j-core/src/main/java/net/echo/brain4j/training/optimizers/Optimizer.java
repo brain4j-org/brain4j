@@ -8,6 +8,7 @@ import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -24,6 +25,12 @@ public abstract class Optimizer implements Adapter {
     public Optimizer(double learningRate) {
         this.learningRate = learningRate;
     }
+
+    public Tensor optimize(Tensor input) {
+        return input.mul(learningRate);
+    }
+
+    public abstract Tensor optimize(Tensor delta, Tensor output);
 
     public abstract double update(StatesCache cache, Synapse synapse);
 

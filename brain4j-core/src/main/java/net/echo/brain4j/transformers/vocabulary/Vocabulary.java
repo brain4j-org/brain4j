@@ -3,7 +3,9 @@ package net.echo.brain4j.transformers.vocabulary;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Vocabulary {
 

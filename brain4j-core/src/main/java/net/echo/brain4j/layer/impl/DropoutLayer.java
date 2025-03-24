@@ -1,11 +1,9 @@
 package net.echo.brain4j.layer.impl;
 
-import com.google.common.base.Preconditions;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.cache.StatesCache;
-import net.echo.math4j.math.vector.Vector;
+import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -14,7 +12,7 @@ import java.io.DataOutputStream;
  * Represents a Dropout layer, used to mitigate overfitting
  * by randomly deactivating a fraction of the input neurons.
  */
-public class DropoutLayer extends Layer<Vector, Vector> {
+public class DropoutLayer extends Layer<Tensor, Tensor> {
 
     private double dropout;
 
@@ -53,16 +51,22 @@ public class DropoutLayer extends Layer<Vector, Vector> {
     }
 
     @Override
-    public Vector forward(StatesCache cache, Layer<?, ?> lastLayer, Vector input) {
-        Preconditions.checkState(lastLayer instanceof DenseLayer, "Dropout layer is not preceded by a dense layer!");
-
-        for (Neuron neuron : lastLayer.getNeurons()) {
-            if (Math.random() > dropout) continue;
-
-            neuron.setValue(cache, 0);
+    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+        if (!(lastLayer instanceof DenseLayer)) {
+            throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
-        return null;
+        if (input.dimension() != 1) {
+            throw new UnsupportedOperationException("Only 1D tensors are supported!");
+        }
+
+        for (int i = 0; i < input.elements(); i++) {
+            if (Math.random() > dropout) continue;
+
+            input.set(0, i);
+        }
+
+        return input;
     }
 
     /**

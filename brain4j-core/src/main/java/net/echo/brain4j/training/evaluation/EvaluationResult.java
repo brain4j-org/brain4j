@@ -2,7 +2,6 @@ package net.echo.brain4j.training.evaluation;
 
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.vector.Vector;
 
 import java.util.Map;
 

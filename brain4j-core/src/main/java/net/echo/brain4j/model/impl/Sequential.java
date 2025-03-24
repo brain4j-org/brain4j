@@ -1,22 +1,16 @@
 package net.echo.brain4j.model.impl;
 
 import com.google.common.base.Preconditions;
-import net.echo.brain4j.convolution.Kernel;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
-import net.echo.brain4j.layer.impl.convolution.ConvLayer;
-import net.echo.brain4j.layer.impl.convolution.FlattenLayer;
-import net.echo.brain4j.layer.impl.convolution.InputLayer;
-import net.echo.brain4j.layer.impl.convolution.PoolingLayer;
+import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.structure.cache.StatesCache;
-import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizers.Optimizer;
@@ -53,7 +47,7 @@ public class Sequential extends Model {
     }
 
     private void validateCNNIfPresent() {
-        boolean isInput = layers.getFirst() instanceof InputLayer;
+        boolean isInput = false; // layers.getFirst() instanceof InputLayer;
         boolean hasConv = layers.stream().anyMatch(Layer::isConvolutional);
 
         Preconditions.checkState(!(isInput && !hasConv), "Cannot use an input layer without convolutional layers!");
@@ -184,37 +178,27 @@ public class Sequential extends Model {
         Preconditions.checkState(input.elements() == workingLayer.getTotalNeurons(), "Input dimension does not " +
                 "match model input dimension! (Input != Expected " + input.elements() + " != " + workingLayer.getTotalNeurons() + ")");
 
-        Kernel convolutionalResult = null;
         Tensor denseResult = input.clone();
 
-        workingLayer.setInput(cache, denseResult);
-
-        if (workingLayer instanceof InputLayer inputLayer) {
-            convolutionalResult = inputLayer.getImage(cache);
-        }
+        cache.setInputTensor(workingLayer, denseResult);
+        cache.setOutputTensor(workingLayer, denseResult);
 
         for (int l = 1; l < layers.size(); l++) {
             Layer<?, ?> layer = layers.get(l);
 
-            if (training && layer instanceof DropoutLayer) {
-                layer.forward(cache, workingLayer, null);
+            cache.setInputTensor(layer, denseResult);
+
+            if (training && layer instanceof DropoutLayer dropout) {
+                dropout.forward(cache, workingLayer, denseResult);
                 continue;
             }
 
-            if (layer instanceof ConvLayer convLayer) {
-                convolutionalResult = convLayer.forward(cache, workingLayer, convolutionalResult);
+            if (layer instanceof DenseLayer dense) {
+                denseResult = dense.forward(cache, workingLayer, denseResult);
             }
 
-            if (layer instanceof PoolingLayer poolingLayer) {
-                convolutionalResult = poolingLayer.forward(cache, workingLayer, convolutionalResult);
-            }
-
-            if (layer instanceof FlattenLayer flattenLayer) {
-                denseResult = flattenLayer.flatten(cache, workingLayer, convolutionalResult);
-            }
-
-            if (layer instanceof DenseLayer denseLayer) {
-                denseResult = denseLayer.forward(cache, workingLayer, denseResult);
+            if (layer instanceof LayerNorm norm) {
+                denseResult = norm.normalize(denseResult);
             }
 
             workingLayer = layer;
@@ -225,47 +209,7 @@ public class Sequential extends Model {
 
     @Override
     public void reloadWeights() {
-        Layer<?, ?> lastLayer = layers.getFirst();
-
-        for (int i = 1; i < layers.size(); i++) {
-            Layer<?, ?> layer = layers.get(i);
-
-            if (!(layer instanceof DenseLayer)) {
-                lastLayer = null;
-                continue;
-            }
-
-            if (lastLayer != null) {
-                int input = lastLayer.getTotalNeurons();
-                int output = layer.getTotalNeurons();
-
-                Tensor weights = recalculateSynapseMatrix(lastLayer.getSynapses(), input, output);
-                lastLayer.updateWeights(weights);
-            }
-
-            lastLayer = layer;
-        }
-    }
-
-    /**
-     * Recalculates the synapse matrix, used to cache the synapse weights for faster computation.
-     *
-     * @param synapses list of synapses to cache
-     * @param inSize input size of the vector
-     * @param outSize output size of the vector
-     * @return the synapse matrix
-     */
-    public Tensor recalculateSynapseMatrix(List<Synapse> synapses, int inSize, int outSize) {
-        Tensor weights = TensorFactory.matrix(outSize, inSize);
-
-        for (int i = 0; i < outSize; i++) {
-            for (int j = 0; j < inSize; j++) {
-                Synapse synapse = synapses.get(j * outSize + i);
-                weights.set(synapse.getWeight(), i, j);
-            }
-        }
-
-        return weights;
+        // TODO: Remove this?
     }
 
     @Override
