@@ -48,6 +48,8 @@ public interface Tensor extends Iterable<Double> {
 
     Tensor mul(double value);
 
+    Tensor pow(double value);
+
     Tensor times(Tensor other);
 
     Tensor times(double value);
