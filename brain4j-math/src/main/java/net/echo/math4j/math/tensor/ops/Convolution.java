@@ -30,21 +30,13 @@ public final class Convolution {
         int inputSize = input.shape()[0];
         int kernelSize = kernel.shape()[0];
         
-        int outputSize;
-        switch (paddingMode) {
-            case VALID:
-                outputSize = inputSize - kernelSize + 1;
-                break;
-            case SAME:
-                outputSize = inputSize;
-                break;
-            case FULL:
-                outputSize = inputSize + kernelSize - 1;
-                break;
-            default:
-                throw new IllegalArgumentException("Padding mode not supported");
-        }
-        
+        int outputSize = switch (paddingMode) {
+            case VALID -> inputSize - kernelSize + 1;
+            case SAME -> inputSize;
+            case FULL -> inputSize + kernelSize - 1;
+            default -> throw new IllegalArgumentException("Padding mode not supported");
+        };
+
         if (outputSize <= 0) {
             throw new IllegalArgumentException("Kernel too large for the input with the specified padding");
         }
