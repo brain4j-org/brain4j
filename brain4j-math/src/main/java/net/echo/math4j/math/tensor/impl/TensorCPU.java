@@ -719,6 +719,14 @@ public class TensorCPU implements Cloneable, Tensor {
         return of(new int[]{rows, cols}, data);
     }
 
+    public Tensor pow(double value) {
+        return map(x -> Math.pow(x, value));
+    }
+
+    public Tensor pow(Tensor other) {
+        return mapWithIndex((i, x) -> Math.pow(x, other.get(i)));
+    }
+
     public Tensor mul(Vector vec) {
         return mul(vector(vec));
     }
@@ -1264,11 +1272,7 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor sqrt() {
-        for (int i = 0; i < data.size(); i++) {
-            data.set(i, Math.sqrt(data.get(i)));
-        }
-
-        return this;
+        return pow(0.5);
     }
 
     private void softmax1D(double temperature, Tensor tensor) {
