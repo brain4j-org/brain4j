@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
+/**
+ * Represents a mathematical vector.
+ * This class is deprecated and will be completely replaced by the {@link net.echo.math4j.math.tensor.Tensor} class.
+ */
+@Deprecated(since = "2.6.0")
 public class Vector implements Cloneable, Iterable<Double> {
 
     private final float[] data;
