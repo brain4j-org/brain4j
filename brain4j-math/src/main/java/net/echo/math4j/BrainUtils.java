@@ -51,7 +51,7 @@ public class BrainUtils {
         int index = 0;
         double max = Double.NEGATIVE_INFINITY;
 
-        for (int i = 1; i < input.elements(); i++) {
+        for (int i = 0; i < input.elements(); i++) {
             if (input.get(i) > max) {
                 max = input.get(i);
                 index = i;

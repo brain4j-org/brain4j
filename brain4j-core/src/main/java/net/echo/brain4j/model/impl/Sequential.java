@@ -62,7 +62,7 @@ public class Sequential extends Model {
                 int predIndex = BrainUtils.indexOfMaxValue(prediction);
                 int targetIndex = BrainUtils.indexOfMaxValue(row.outputs());
 
-                if (row.outputs().dimension() == 1) {
+                if (row.outputs().elements() == 1) {
                     predIndex = prediction.get(0) > 0.5 ? 1 : 0;
                     targetIndex = (int) row.outputs().get(0);
                 }
@@ -119,9 +119,7 @@ public class Sequential extends Model {
 
         List<Thread> threads = new ArrayList<>();
 
-        if (!dataSet.isPartitioned()) {
-            dataSet.partition(Math.min(Runtime.getRuntime().availableProcessors(), dataSet.getData().size()));
-        }
+        propagation.partitionIfRequired(dataSet);
 
         for (List<DataRow> partition : dataSet.getPartitions()) {
             threads.add(makeEvaluation(partition, classifications));

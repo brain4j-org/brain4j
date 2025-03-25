@@ -33,14 +33,16 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
         int numNeurons = bias.elements();
 
         Tensor reshapedInput = input.reshape(input.elements(), 1);
-        Tensor result = denseLayer.getWeights()
-                // .cpu() // TODO: Fix the overhead on GPU
+        Tensor result = denseLayer
+                .getWeights()
                 .matmul(reshapedInput)
                 .reshape(numNeurons)
                 .add(bias);
 
-        cache.setOutputTensor(this, result);
-        return activation.activate(result);
+        Tensor activated = activation.activate(result);
+        cache.setOutputTensor(this, activated);
+
+        return activated;
     }
 
     @Override
@@ -57,8 +59,13 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
                 .reshape(output.elements());
 
         // element-wise multiplication of delta and derivative
-        Tensor deltaL = newDelta.mul(derivative).map(BrainUtils::clipGradient);
-        Tensor gradient = optimizer.optimize(this, deltaMatrix, output.transpose())
+        Tensor deltaL = newDelta
+                .mul(derivative)
+                .map(BrainUtils::clipGradient);
+
+        // gradient calculated by the optimizer and clamped
+        Tensor gradient = optimizer
+                .optimize(this, deltaMatrix, output.transpose())
                 .map(BrainUtils::clipGradient);
 
         updater.acknowledgeChange(this, gradient, deltaL);
