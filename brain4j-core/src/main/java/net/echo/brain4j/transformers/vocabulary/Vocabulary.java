@@ -99,6 +99,7 @@ public class Vocabulary {
         int index = tokens.indexOf(expected);
 
         if (index == -1) {
+            System.out.println(expected);// + " not found in the vocab!");
             index = 0;
         }
 

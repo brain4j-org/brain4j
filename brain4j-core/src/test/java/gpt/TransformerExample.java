@@ -1,5 +1,6 @@
 package gpt;
 
+import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.data.DataRow;
@@ -22,7 +23,7 @@ import java.util.Scanner;
 
 public class TransformerExample {
 
-    private static final int EMBEDDING_SIZE = 16;
+    private static final int EMBEDDING_SIZE = 32;
     private static final PositionalEncoding ENCODING = new PositionalEncoding(100, EMBEDDING_SIZE);
 
     public static void main(String[] args) throws Exception {
@@ -34,17 +35,18 @@ public class TransformerExample {
     }
 
     private void start() throws Exception {
+        Brain4J.setLogging(true);
         List<String> examples = loadExamples();
 
         Vocabulary vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
         vocabulary.tokenize();
 
         Transformer model = new Transformer(
-                new TransformerEncoder(4, EMBEDDING_SIZE),
-                new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 0.1)
+                new TransformerEncoder(1, EMBEDDING_SIZE),
+                new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 5)
         );
 
-        model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.1));
+        model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.05));
 
         System.out.println(model.summary());
         System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
@@ -52,10 +54,9 @@ public class TransformerExample {
         Scanner scanner = new Scanner(System.in);
 
         Map<String, String> samples = Map.of(
-                "nice guy", "thank you!",
-                "what is your name", "my name is brain4j",
-                "hi", "hey, what is up?"
-                //  "write a story", "Hi! Once upon a time, there was a fox. It was walking in the forest, thinking about the day. The sky was clear, and the moon was shining bright. It looked up and saw something strange. A star fell. The fox was curious and went closer. It touched the ground, and the star was gone. But the fox smiled, knowing that magic happens when least expected.<END>"
+//                "batocchi miglior prof", "per reale",
+//                "la neri non sa spiegare", ""
+                "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
         );
 
         trainModel(vocabulary, samples, model);
@@ -79,6 +80,10 @@ public class TransformerExample {
             String trainOutput = entry.getValue();
 
             if (!trainOutput.endsWith("<END>")) {
+                if (!trainOutput.endsWith(" ")) {
+                    trainOutput += " ";
+                }
+
                 trainOutput += "<END>";
             }
 
@@ -104,12 +109,7 @@ public class TransformerExample {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
-        for (int i = 0; i < 100; i++) {
-            transformer.fit(dataSet, 100);
-
-            double loss = transformer.loss(dataSet);
-            System.out.println("Loss " + loss);
-        }
+        transformer.fit(dataSet, 1500, 100);
         double duration = (System.nanoTime() - startTime) / 1e6;
 
         double loss = transformer.loss(dataSet);
@@ -120,7 +120,7 @@ public class TransformerExample {
         StringBuilder botResponse = new StringBuilder();
         String lastWord = "";
 
-        while (!lastWord.equals("<END>")) {
+        while (!lastWord.equals("<END>") && !lastWord.equals("<UNK>")) {
             Tensor input = vocabulary.encode(prompt);
             Tensor encoded = ENCODING.encode(input);
             Tensor output = transformer.predict(encoded);
