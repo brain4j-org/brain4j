@@ -5,9 +5,7 @@ import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
 import net.echo.math4j.math.tensor.ops.Convolution;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class ConvolveTest {
     
@@ -262,22 +260,26 @@ public class ConvolveTest {
             
             float maxDiff = 0;
             int errorRow = -1, errorCol = -1;
-//
-//            for (int i = 0; i < Math.min(10, resultCPU.shape()[0]); i++) {
-//                for (int j = 0; j < Math.min(10, resultCPU.shape()[1]); j++) {
-//                    float diff = Math.abs(resultCPU.get(i, j) - resultGPU.get(i, j));
-//                    if (diff > maxDiff) {
-//                        maxDiff = diff;
-//                        errorRow = i;
-//                        errorCol = j;
-//                    }
-//                }
-//            }
+
+            // the maximum difference allowed between the CPU and GPU results.
+            // it determines whether if the algorithm is correct.
+            double allowedDiff = 0.5f; 
+
+            for (int i = 0; i < resultCPU.shape()[0]; i++) {
+                for (int j = 0; j < resultCPU.shape()[1]; j++) {
+                    float diff = Math.abs(resultCPU.get(i, j) - resultGPU.get(i, j));
+                    if (diff > maxDiff) {
+                        maxDiff = diff;
+                        errorRow = i;
+                        errorCol = j;
+                    }
+                }
+            }
 
             System.out.println("  Maximum difference: " + maxDiff + " at position [" + errorRow + "," + errorCol + "]");
-            
-            assertTrue("Results within acceptable tolerance", maxDiff < 10.0f);
-            
+
+            assertTrue("Results within acceptable tolerance", maxDiff < allowedDiff);
+
             passTest();
         } catch (Exception e) {
             failTest("testPerformanceComparison", e);

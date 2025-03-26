@@ -11,14 +11,25 @@ public final class FFTUtils {
     
     public static Complex[] tensorToComplex1D(Tensor tensor) {
         if (tensor.dimension() != 1) {
-            throw new IllegalArgumentException("Tensor must be 1D");
+            throw new IllegalArgumentException("Input tensor must be 1D");
         }
         
         int size = tensor.shape()[0];
         Complex[] result = new Complex[size];
         
         for (int i = 0; i < size; i++) {
-            result[i] = new Complex(tensor.get(i), 0);
+            result[i] = new Complex(tensor.get(i), 0.0);
+        }
+        
+        return result;
+    }
+    
+    public static Tensor complexToTensor1D(Complex[] complex) {
+        int size = complex.length;
+        Tensor result = TensorFactory.zeros(size);
+        
+        for (int i = 0; i < size; i++) {
+            result.set(complex[i].getReal(), i);
         }
         
         return result;
@@ -26,7 +37,7 @@ public final class FFTUtils {
     
     public static Complex[][] tensorToComplex2D(Tensor tensor) {
         if (tensor.dimension() != 2) {
-            throw new IllegalArgumentException("Tensor must be 2D");
+            throw new IllegalArgumentException("Input tensor must be 2D");
         }
         
         int[] shape = tensor.shape();
@@ -37,182 +48,130 @@ public final class FFTUtils {
         
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                result[i][j] = new Complex(tensor.get(i, j), 0);
+                result[i][j] = new Complex(tensor.get(i, j), 0.0);
             }
         }
         
         return result;
     }
     
-    public static Tensor complexToRealTensor1D(Complex[] complexArray) {
-        int size = complexArray.length;
-        Tensor result = TensorFactory.zeros(size);
-        
-        for (int i = 0; i < size; i++) {
-            result.set(complexArray[i].getReal(), i);
-        }
-        
-        return result;
-    }
-    
-    public static Tensor complexToComplexTensor1D(Complex[] complexArray) {
-        int size = complexArray.length;
-        Tensor result = TensorFactory.zeros(size, 2);
-        
-        for (int i = 0; i < size; i++) {
-            result.set(complexArray[i].getReal(), i, 0);
-            result.set(complexArray[i].getImaginary(), i, 1);
-        }
-        
-        return result;
-    }
-    
-    public static Tensor complexToRealTensor2D(Complex[][] complexArray) {
-        int rows = complexArray.length;
-        int cols = (rows > 0) ? complexArray[0].length : 0;
-        
+    public static Tensor complexToTensor2D(Complex[][] complex, int rows, int cols) {
         Tensor result = TensorFactory.zeros(rows, cols);
         
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                result.set(complexArray[i][j].getReal(), i, j);
+                result.set(complex[i][j].getReal(), i, j);
             }
         }
         
         return result;
     }
     
-    public static Tensor complexToComplexTensor2D(Complex[][] complexArray) {
-        int rows = complexArray.length;
-        int cols = (rows > 0) ? complexArray[0].length : 0;
-        
-        Tensor result = TensorFactory.zeros(rows, cols, 2);
-        
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                result.set(complexArray[i][j].getReal(), i, j, 0);
-                result.set(complexArray[i][j].getImaginary(), i, j, 1);
-            }
-        }
-        
-        return result;
-    }
-    
-    public static Tensor fft1D(Tensor tensor, boolean returnComplex) {
+    public static Tensor fft1D(Tensor tensor) {
         Complex[] input = tensorToComplex1D(tensor);
         Complex[] output = FFT.transform(input);
-        
-        return returnComplex ? 
-               complexToComplexTensor1D(output) : 
-               complexToRealTensor1D(output);
+        return complexToTensor1D(output);
     }
     
-    public static Tensor ifft1D(Tensor tensor, boolean isComplex, boolean returnComplex) {
-        Complex[] input;
-        
-        if (isComplex) {
-            if (tensor.dimension() != 2 || tensor.shape()[1] != 2) {
-                throw new IllegalArgumentException("Tensor must have shape [n, 2]");
-            }
-            
-            int size = tensor.shape()[0];
-            input = new Complex[size];
-            
-            for (int i = 0; i < size; i++) {
-                input[i] = new Complex(tensor.get(i, 0), tensor.get(i, 1));
-            }
-        } else {
-            input = tensorToComplex1D(tensor);
+    public static Tensor ifft1D(Tensor tensor) {
+        Complex[] input = tensorToComplex1D(tensor);
+        Complex[] output = FFT.inverseTransform(input);
+        return complexToTensor1D(output);
+    }
+    
+    public static Tensor fft2D(Tensor tensor) {
+        Complex[][] input = tensorToComplex2D(tensor);
+        int[] shape = tensor.shape();
+        Complex[][] output = FFT.transform2D(input, shape[0], shape[1]);
+        return complexToTensor2D(output, shape[0], shape[1]);
+    }
+    
+    public static Tensor ifft2D(Tensor tensor) {
+        Complex[][] input = tensorToComplex2D(tensor);
+        int[] shape = tensor.shape();
+        Complex[][] output = FFT.inverseTransform2D(input, shape[0], shape[1]);
+        return complexToTensor2D(output, shape[0], shape[1]);
+    }
+    
+    public static Tensor zeroPad1D(Tensor tensor, int size) {
+        if (tensor.dimension() != 1) {
+            throw new IllegalArgumentException("Input tensor must be 1D");
         }
         
-        Complex[] output = FFT.inverseTransform(input);
+        int currentSize = tensor.shape()[0];
+        if (currentSize >= size) {
+            return tensor.clone();
+        }
         
-        return returnComplex ? 
-               complexToComplexTensor1D(output) : 
-               complexToRealTensor1D(output);
+        Tensor result = TensorFactory.zeros(size);
+        for (int i = 0; i < currentSize; i++) {
+            result.set(tensor.get(i), i);
+        }
+        
+        return result;
     }
     
-    public static Tensor fft2D(Tensor tensor, boolean returnComplex) {
+    public static Tensor zeroPad2D(Tensor tensor, int rows, int cols) {
         if (tensor.dimension() != 2) {
-            throw new IllegalArgumentException("Tensor must be 2D");
+            throw new IllegalArgumentException("Input tensor must be 2D");
         }
         
         int[] shape = tensor.shape();
-        int rows = shape[0];
-        int cols = shape[1];
+        int currentRows = shape[0];
+        int currentCols = shape[1];
         
-        Complex[][] intermediate = new Complex[rows][];
-        for (int i = 0; i < rows; i++) {
-            Tensor row = tensor.select(0, i);
-            Complex[] rowComplex = tensorToComplex1D(row);
-            intermediate[i] = FFT.transform(rowComplex);
+        if (currentRows >= rows && currentCols >= cols) {
+            return tensor.clone();
         }
         
-        Complex[][] result = new Complex[rows][cols];
-        for (int j = 0; j < cols; j++) {
-            Complex[] col = new Complex[rows];
-            for (int i = 0; i < rows; i++) {
-                col[i] = intermediate[i][j];
-            }
-            
-            Complex[] colTransformed = FFT.transform(col);
-            
-            for (int i = 0; i < rows; i++) {
-                result[i][j] = colTransformed[i];
+        Tensor result = TensorFactory.zeros(rows, cols);
+        for (int i = 0; i < Math.min(currentRows, rows); i++) {
+            for (int j = 0; j < Math.min(currentCols, cols); j++) {
+                result.set(tensor.get(i, j), i, j);
             }
         }
         
-        return returnComplex ? 
-               complexToComplexTensor2D(result) : 
-               complexToRealTensor2D(result);
+        return result;
     }
     
-    public static Tensor ifft2D(Tensor tensor, boolean isComplex, boolean returnComplex) {
-        Complex[][] input;
-        
-        if (isComplex) {
-            if (tensor.dimension() != 3 || tensor.shape()[2] != 2) {
-                throw new IllegalArgumentException("Tensor must have shape [rows, cols, 2]");
-            }
-            
-            int rows = tensor.shape()[0];
-            int cols = tensor.shape()[1];
-            input = new Complex[rows][cols];
-            
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < cols; j++) {
-                    input[i][j] = new Complex(tensor.get(i, j, 0), tensor.get(i, j, 1));
-                }
-            }
-        } else {
-            input = tensorToComplex2D(tensor);
+    public static Tensor removePadding1D(Tensor tensor, int size) {
+        if (tensor.dimension() != 1) {
+            throw new IllegalArgumentException("Input tensor must be 1D");
         }
         
-        int rows = input.length;
-        int cols = (rows > 0) ? input[0].length : 0;
-        
-        Complex[][] intermediate = new Complex[rows][cols];
-        for (int i = 0; i < rows; i++) {
-            Complex[] rowTransformed = FFT.inverseTransform(input[i]);
-            intermediate[i] = rowTransformed;
+        int currentSize = tensor.shape()[0];
+        if (currentSize <= size) {
+            return tensor.clone();
         }
         
-        Complex[][] result = new Complex[rows][cols];
-        for (int j = 0; j < cols; j++) {
-            Complex[] col = new Complex[rows];
-            for (int i = 0; i < rows; i++) {
-                col[i] = intermediate[i][j];
-            }
-            
-            Complex[] colTransformed = FFT.inverseTransform(col);
-            
-            for (int i = 0; i < rows; i++) {
-                result[i][j] = colTransformed[i];
+        Tensor result = TensorFactory.zeros(size);
+        for (int i = 0; i < size; i++) {
+            result.set(tensor.get(i), i);
+        }
+        
+        return result;
+    }
+    
+    public static Tensor removePadding2D(Tensor tensor, int rows, int cols) {
+        if (tensor.dimension() != 2) {
+            throw new IllegalArgumentException("Input tensor must be 2D");
+        }
+        
+        int[] shape = tensor.shape();
+        int currentRows = shape[0];
+        int currentCols = shape[1];
+        
+        if (currentRows <= rows && currentCols <= cols) {
+            return tensor.clone();
+        }
+        
+        Tensor result = TensorFactory.zeros(Math.min(currentRows, rows), Math.min(currentCols, cols));
+        for (int i = 0; i < Math.min(currentRows, rows); i++) {
+            for (int j = 0; j < Math.min(currentCols, cols); j++) {
+                result.set(tensor.get(i, j), i, j);
             }
         }
         
-        return returnComplex ? 
-               complexToComplexTensor2D(result) : 
-               complexToRealTensor2D(result);
+        return result;
     }
 } 

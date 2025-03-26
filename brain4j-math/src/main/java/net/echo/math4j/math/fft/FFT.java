@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 public final class FFT {
 
-    private static final double TWO_PI = 2 * Math.PI;
+    private static final double TWO_PI = 2.0 * Math.PI;
     
     private FFT() {
     }
@@ -18,7 +18,7 @@ public final class FFT {
         
         int n = input.length;
         
-        if ((n & (n - 1)) == 0) {
+        if (isPowerOf2(n)) {
             return transformRadix2(input);
         } else {
             return transformBluestein(input);
@@ -49,7 +49,7 @@ public final class FFT {
     private static Complex[] transformRadix2(Complex[] input) {
         int n = input.length;
         
-        if ((n & (n - 1)) != 0) {
+        if (!isPowerOf2(n)) {
             throw new IllegalArgumentException("Array size must be a power of 2");
         }
         
@@ -70,10 +70,11 @@ public final class FFT {
         Complex[] result = new Complex[n];
         for (int k = 0; k < n/2; k++) {
             double angle = -TWO_PI * k / n;
-            Complex twiddle = Complex.fromPolar(1, angle);
+            Complex twiddle = Complex.fromPolar(1.0, angle);
             
-            result[k] = evenFFT[k].add(twiddle.multiply(oddFFT[k]));
-            result[k + n/2] = evenFFT[k].subtract(twiddle.multiply(oddFFT[k]));
+            Complex t = twiddle.multiply(oddFFT[k]);
+            result[k] = evenFFT[k].add(t);
+            result[k + n/2] = evenFFT[k].subtract(t);
         }
         
         return result;
@@ -82,10 +83,7 @@ public final class FFT {
     private static Complex[] transformBluestein(Complex[] input) {
         int n = input.length;
         
-        int m = 1;
-        while (m < 2 * n - 1) {
-            m *= 2;
-        }
+        int m = nextPowerOf2(2 * n - 1);
         
         Complex[] a = new Complex[m];
         Arrays.fill(a, Complex.ZERO);
@@ -94,19 +92,22 @@ public final class FFT {
         Arrays.fill(b, Complex.ZERO);
         
         for (int i = 0; i < n; i++) {
-            double angle = Math.PI * (i * i) / n;
-            Complex chirp = Complex.fromPolar(1, -angle);
+            double angle = Math.PI * ((long)i * i % (2 * n)) / n;  // long avoids overflow
+            Complex chirp = Complex.fromPolar(1.0, -angle);
             a[i] = input[i].multiply(chirp);
             b[i] = chirp.conjugate();
-            b[m - 1 - i] = chirp.conjugate();
+            
+            if (i > 0) {
+                b[m - i] = b[i]; // symmetry
+            }
         }
         
         Complex[] c = convolveFFT(a, b);
         
         Complex[] result = new Complex[n];
         for (int i = 0; i < n; i++) {
-            double angle = Math.PI * (i * i) / n;
-            Complex chirp = Complex.fromPolar(1, -angle);
+            double angle = Math.PI * ((long)i * i % (2 * n)) / n;
+            Complex chirp = Complex.fromPolar(1.0, -angle);
             result[i] = c[i].multiply(chirp);
         }
         
@@ -176,6 +177,60 @@ public final class FFT {
         
         for (int i = input.length; i < size; i++) {
             result[i] = Complex.ZERO;
+        }
+        
+        return result;
+    }
+    
+    public static Complex[][] transform2D(Complex[][] input, int rows, int cols) {
+        if (input == null || rows <= 0 || cols <= 0) {
+            throw new IllegalArgumentException("Invalid input for 2D FFT");
+        }
+        
+        Complex[][] temp = new Complex[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            temp[i] = transform(input[i]);
+        }
+        
+        Complex[][] result = new Complex[rows][cols];
+        for (int j = 0; j < cols; j++) {
+            Complex[] column = new Complex[rows];
+            for (int i = 0; i < rows; i++) {
+                column[i] = temp[i][j];
+            }
+            
+            Complex[] transformedColumn = transform(column);
+            
+            for (int i = 0; i < rows; i++) {
+                result[i][j] = transformedColumn[i];
+            }
+        }
+        
+        return result;
+    }
+    
+    public static Complex[][] inverseTransform2D(Complex[][] input, int rows, int cols) {
+        if (input == null || rows <= 0 || cols <= 0) {
+            throw new IllegalArgumentException("Invalid input for 2D inverse FFT");
+        }
+        
+        Complex[][] temp = new Complex[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            temp[i] = inverseTransform(input[i]);
+        }
+        
+        Complex[][] result = new Complex[rows][cols];
+        for (int j = 0; j < cols; j++) {
+            Complex[] column = new Complex[rows];
+            for (int i = 0; i < rows; i++) {
+                column[i] = temp[i][j];
+            }
+            
+            Complex[] transformedColumn = inverseTransform(column);
+            
+            for (int i = 0; i < rows; i++) {
+                result[i][j] = transformedColumn[i];
+            }
         }
         
         return result;

@@ -23,11 +23,23 @@ public class TensorGPU extends TensorCPU {
     private static cl_kernel MAT_MULT_KERNEL;
     private static cl_kernel ELEMENT_WISE_ADD_KERNEL;
     private static cl_kernel ELEMENT_WISE_MULT_KERNEL;
-    private static cl_kernel CONVOLVE_1D_KERNEL;
-    private static cl_kernel CONVOLVE_2D_KERNEL;
+    
+    private static cl_kernel CONVOLVE_1D_DIRECT_KERNEL;
+    private static cl_kernel CONVOLVE_2D_DIRECT_KERNEL;
+    
+    private static cl_kernel FFT_1D_KERNEL;
+    private static cl_kernel FFT_2D_KERNEL;
+    private static cl_kernel FFT_2D_TRANSPOSE_KERNEL;
+    private static cl_kernel COMPLEX_POINTWISE_MUL_KERNEL;
+    private static cl_kernel CONVOLVE_1D_FFT_KERNEL;
+    private static cl_kernel CONVOLVE_2D_FFT_EXTRACT_KERNEL;
     
     private static final String TENSOR_OPS_KERNEL_PATH = "/kernels/tensor_operations.cl";
     private static final String CONV_KERNEL_PATH = "/kernels/conv.cl";
+    
+    private static final int OPTIMAL_WORKGROUP_SIZE = 256;
+    private static final int FFT_THRESHOLD = 32;
+    private static final int MAX_WORKGROUP_SIZE = 1024;
     
     static {
         try {
@@ -71,15 +83,22 @@ public class TensorGPU extends TensorCPU {
                 String convKernelSource = loadKernelSource(CONV_KERNEL_PATH);
                 CONV_PROGRAM = clCreateProgramWithSource(CONTEXT, 1, 
                         new String[] { convKernelSource }, null, null);
-                buildResult = clBuildProgram(CONV_PROGRAM, 0, null, null, null, null);
+                buildResult = clBuildProgram(CONV_PROGRAM, 0, null, "-cl-mad-enable -cl-fast-relaxed-math", null, null);
                 
                 if (buildResult != CL_SUCCESS) {
                     checkKernelStatus(CONV_PROGRAM, DEVICE_ID, "convolution");
                     return false;
                 }
                 
-                CONVOLVE_1D_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve1d", null);
-                CONVOLVE_2D_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve2d", null);
+                CONVOLVE_1D_DIRECT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve1d_direct", null);
+                CONVOLVE_2D_DIRECT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve2d_direct", null);
+                
+                FFT_1D_KERNEL = clCreateKernel(CONV_PROGRAM, "fft1d", null);
+                FFT_2D_KERNEL = clCreateKernel(CONV_PROGRAM, "fft2d", null);
+                FFT_2D_TRANSPOSE_KERNEL = clCreateKernel(CONV_PROGRAM, "fft2d_transpose", null);
+                COMPLEX_POINTWISE_MUL_KERNEL = clCreateKernel(CONV_PROGRAM, "complex_pointwise_mul", null);
+                CONVOLVE_1D_FFT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve1d_fft", null);
+                CONVOLVE_2D_FFT_EXTRACT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve2d_fft_extract", null);
                 
                 System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
                 return true;
@@ -195,8 +214,16 @@ public class TensorGPU extends TensorCPU {
                 if (MAT_MULT_KERNEL != null) clReleaseKernel(MAT_MULT_KERNEL);
                 if (ELEMENT_WISE_ADD_KERNEL != null) clReleaseKernel(ELEMENT_WISE_ADD_KERNEL);
                 if (ELEMENT_WISE_MULT_KERNEL != null) clReleaseKernel(ELEMENT_WISE_MULT_KERNEL);
-                if (CONVOLVE_1D_KERNEL != null) clReleaseKernel(CONVOLVE_1D_KERNEL);
-                if (CONVOLVE_2D_KERNEL != null) clReleaseKernel(CONVOLVE_2D_KERNEL);
+                
+                if (CONVOLVE_1D_DIRECT_KERNEL != null) clReleaseKernel(CONVOLVE_1D_DIRECT_KERNEL);
+                if (CONVOLVE_2D_DIRECT_KERNEL != null) clReleaseKernel(CONVOLVE_2D_DIRECT_KERNEL);
+                
+                if (FFT_1D_KERNEL != null) clReleaseKernel(FFT_1D_KERNEL);
+                if (FFT_2D_KERNEL != null) clReleaseKernel(FFT_2D_KERNEL);
+                if (FFT_2D_TRANSPOSE_KERNEL != null) clReleaseKernel(FFT_2D_TRANSPOSE_KERNEL);
+                if (COMPLEX_POINTWISE_MUL_KERNEL != null) clReleaseKernel(COMPLEX_POINTWISE_MUL_KERNEL);
+                if (CONVOLVE_1D_FFT_KERNEL != null) clReleaseKernel(CONVOLVE_1D_FFT_KERNEL);
+                if (CONVOLVE_2D_FFT_EXTRACT_KERNEL != null) clReleaseKernel(CONVOLVE_2D_FFT_EXTRACT_KERNEL);
                 
                 if (TENSOR_PROGRAM != null) clReleaseProgram(TENSOR_PROGRAM);
                 if (CONV_PROGRAM != null) clReleaseProgram(CONV_PROGRAM);
@@ -204,40 +231,30 @@ public class TensorGPU extends TensorCPU {
                 if (COMMAND_QUEUE != null) clReleaseCommandQueue(COMMAND_QUEUE);
                 if (CONTEXT != null) clReleaseContext(CONTEXT);
                 
-                MAT_MULT_KERNEL = null;
-                ELEMENT_WISE_ADD_KERNEL = null;
-                ELEMENT_WISE_MULT_KERNEL = null;
-                CONVOLVE_1D_KERNEL = null;
-                CONVOLVE_2D_KERNEL = null;
-                TENSOR_PROGRAM = null;
-                CONV_PROGRAM = null;
-                COMMAND_QUEUE = null;
-                CONTEXT = null;
-                
                 INITIALIZED = false;
-                System.out.println("GPU resources released successfully");
             } catch (Exception e) {
                 System.err.println("Error releasing GPU resources: " + e.getMessage());
             }
         }
     }
 
-    public static void reinitializeGPU() {
-        releaseGPUResources();
-
-        try {
-            initializeOpenCL();
-        } catch (Exception e) {
-            System.err.println("Failed to reinitialize GPU: " + e.getMessage());
+    public static void reinitializeGPU() {        
+        if (!INITIALIZED) {
+            try {
+                    INITIALIZED = initializeOpenCL();
+            } catch (Exception e) {
+                System.err.println("Failed to reinitialize GPU: " + e.getMessage());
+            }
         }
     }
 
     private static int[] linearToMultiDimIndices(int linearIndex, int[] shape) {
         int[] indices = new int[shape.length];
+        int remainingIndex = linearIndex;
 
         for (int i = shape.length - 1; i >= 0; i--) {
-            indices[i] = linearIndex % shape[i];
-            linearIndex /= shape[i];
+            indices[i] = remainingIndex % shape[i];
+            remainingIndex /= shape[i];
         }
 
         return indices;
@@ -253,168 +270,155 @@ public class TensorGPU extends TensorCPU {
             return super.matmul(other); 
         }
         
-        int[] thisShape = shape();
-        int[] otherShape = other.shape();
-        
-        if (thisShape.length != 2 || otherShape.length != 2) {
-            throw new IllegalArgumentException("matmul requires 2D tensors");
-        }
-        
-        int m = thisShape[0];         
-        int n = thisShape[1];         
-        int p = otherShape[1]; 
-        
-        if (n != otherShape[0]) {
-            throw new IllegalArgumentException("The inner dimensions do not match: " + n + " != " + otherShape[0]);
-        }
-        
-        TensorGPU result = new TensorGPU(m, p);
-        
         try {
-            cl_mem deviceA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    (long) Sizeof.cl_float * m * n, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    (long) Sizeof.cl_float * n * p, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
-                    (long) Sizeof.cl_float * m * p, null, null);
+            if (dimension() != 2 || other.dimension() != 2) {
+                throw new IllegalArgumentException("Both tensors must be 2D for matrix multiplication");
+            }
             
-            clSetKernelArg(MAT_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(deviceA));
-            clSetKernelArg(MAT_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
-            clSetKernelArg(MAT_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
-            clSetKernelArg(MAT_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{m}));
-            clSetKernelArg(MAT_MULT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
-            clSetKernelArg(MAT_MULT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[]{p}));
+            int[] shapeA = shape();
+            int[] shapeB = other.shape();
             
-            long[] globalWorkSize = new long[]{m, p};
+            if (shapeA[1] != shapeB[0]) {
+                throw new IllegalArgumentException("Incompatible shapes for matrix multiplication: " +
+                        Arrays.toString(shapeA) + " and " + Arrays.toString(shapeB));
+            }
             
+            int M = shapeA[0];
+            int K = shapeA[1];
+            int N = shapeB[1];
+            
+            float[] dataA = toArray();
+            float[] dataB = other.toArray();
+            
+            cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
+            cl_mem memB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
+            
+            float[] resultData = new float[M * N];
+            cl_mem memC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
+                    Sizeof.cl_float * resultData.length, null, null);
+            
+            clSetKernelArg(MAT_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memA));
+            clSetKernelArg(MAT_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memB));
+            clSetKernelArg(MAT_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memC));
+            clSetKernelArg(MAT_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { M }));
+            clSetKernelArg(MAT_MULT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { N }));
+            clSetKernelArg(MAT_MULT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { K }));
+            
+            long[] globalWorkSize = new long[] { M, N };
             clEnqueueNDRangeKernel(COMMAND_QUEUE, MAT_MULT_KERNEL, 2, null,
                 globalWorkSize, null, 0, null, null);
             
-            float[] resultBuffer = new float[m * p];
-            clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
-                    (long) Sizeof.cl_float * m * p, Pointer.to(resultBuffer), 0, null, null);
+            clEnqueueReadBuffer(COMMAND_QUEUE, memC, CL_TRUE, 0,
+                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    0, null, null);
             
-            for (int i = 0; i < m * p; i++) {
-                int row = i / p;
-                int col = i % p;
-                result.set(resultBuffer[i], row, col);
-            }
+            clReleaseMemObject(memA);
+            clReleaseMemObject(memB);
+            clReleaseMemObject(memC);
             
-            clReleaseMemObject(deviceA);
-            clReleaseMemObject(deviceB);
-            clReleaseMemObject(deviceC);
-            
+            return TensorGPU.of(new int[] { M, N }, resultData);
         } catch (Exception e) {
-            System.err.println("GPU matrix multiplication failed: " + e.getMessage());
-            e.printStackTrace(System.err);
+            System.err.println("GPU matmul failed, falling back to CPU: " + e.getMessage());
             return super.matmul(other);
         }
-        
-        return result;
     }
     
     @Override
     public Tensor add(Tensor other) {
-        int[] thisShape = shape();
-        int[] otherShape = other.shape();
-        
-        if (!INITIALIZED || !Arrays.equals(thisShape, otherShape)) {
+        if (!INITIALIZED) {
             return super.add(other); 
         }
         
-        int size = elements();
-        long floatSize = (long) Sizeof.cl_float * size;
-        
         try {
-            cl_mem deviceA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    floatSize, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    floatSize, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY, floatSize, null, null);
-            
-            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 0, Sizeof.cl_mem, Pointer.to(deviceA));
-            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
-            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
-            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
-
-            clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_ADD_KERNEL, 1, null,
-                new long[]{(long) size}, null, 0, null, null);
-            
-            float[] resultBuffer = new float[size];
-            clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
-                    (long) Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
-            
-            for (int i = 0; i < size; i++) {
-                if (thisShape.length == 1) {
-                    this.set(resultBuffer[i], i);
-                } else {
-                    int[] indices = linearToMultiDimIndices(i, thisShape);
-                    this.set(resultBuffer[i], indices);
-                }
+            if (!Arrays.equals(shape(), other.shape())) {
+                throw new IllegalArgumentException("Tensors must have the same shape for addition");
             }
             
-            clReleaseMemObject(deviceA);
-            clReleaseMemObject(deviceB);
-            clReleaseMemObject(deviceC);
+            int elements = elements();
+            float[] dataA = toArray();
+            float[] dataB = other.toArray();
             
+            cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
+            cl_mem memB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
+            
+            float[] resultData = new float[elements];
+            cl_mem memC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
+                    Sizeof.cl_float * resultData.length, null, null);
+            
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memA));
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memB));
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memC));
+            clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { elements }));
+            
+            long[] globalWorkSize = new long[] { elements };
+            clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_ADD_KERNEL, 1, null,
+                    globalWorkSize, null, 0, null, null);
+            
+            clEnqueueReadBuffer(COMMAND_QUEUE, memC, CL_TRUE, 0,
+                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    0, null, null);
+            
+            clReleaseMemObject(memA);
+            clReleaseMemObject(memB);
+            clReleaseMemObject(memC);
+            
+            return TensorGPU.of(shape(), resultData);
         } catch (Exception e) {
             System.err.println("GPU element-wise addition failed: " + e.getMessage());
             return super.add(other);
         }
-        
-        return this;
     }
     
     @Override
     public Tensor mul(Tensor other) {
-        int[] thisShape = shape();
-        int[] otherShape = other.shape();
-        
-        if (!INITIALIZED || !Arrays.equals(thisShape, otherShape)) {
+        if (!INITIALIZED) {
             return super.mul(other); 
         }
         
-        int size = elements();
-        
         try {
-            cl_mem deviceA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    (long) Sizeof.cl_float * size, Pointer.to(this.toArray()), null);
-            cl_mem deviceB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    (long) Sizeof.cl_float * size, Pointer.to(other.toArray()), null);
-            cl_mem deviceC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
-                    (long) Sizeof.cl_float * size, null, null);
-            
-            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(deviceA));
-            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(deviceB));
-            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(deviceC));
-            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[]{size}));
-
-            clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_MULT_KERNEL, 1, null,
-                new long[]{(long) size}, null, 0, null, null);
-            
-            float[] resultBuffer = new float[size];
-            clEnqueueReadBuffer(COMMAND_QUEUE, deviceC, CL_TRUE, 0,
-                    (long) Sizeof.cl_float * size, Pointer.to(resultBuffer), 0, null, null);
-            
-            for (int i = 0; i < size; i++) {
-                if (thisShape.length == 1) {
-                    this.set(resultBuffer[i], i);
-                } else {
-                    int[] indices = linearToMultiDimIndices(i, thisShape);
-                    this.set(resultBuffer[i], indices);
-                }
+            if (!Arrays.equals(shape(), other.shape())) {
+                throw new IllegalArgumentException("Tensors must have the same shape for multiplication");
             }
             
-            clReleaseMemObject(deviceA);
-            clReleaseMemObject(deviceB);
-            clReleaseMemObject(deviceC);
+            int elements = elements();
+            float[] dataA = toArray();
+            float[] dataB = other.toArray();
             
+            cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
+            cl_mem memB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
+            
+            float[] resultData = new float[elements];
+            cl_mem memC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
+                    Sizeof.cl_float * resultData.length, null, null);
+            
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memA));
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memB));
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memC));
+            clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { elements }));
+            
+            long[] globalWorkSize = new long[] { elements };
+            clEnqueueNDRangeKernel(COMMAND_QUEUE, ELEMENT_WISE_MULT_KERNEL, 1, null,
+                    globalWorkSize, null, 0, null, null);
+            
+            clEnqueueReadBuffer(COMMAND_QUEUE, memC, CL_TRUE, 0,
+                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    0, null, null);
+            
+            clReleaseMemObject(memA);
+            clReleaseMemObject(memB);
+            clReleaseMemObject(memC);
+            
+            return TensorGPU.of(shape(), resultData);
         } catch (Exception e) {
-            System.err.println("GPU element-wise multiplication failed: " + e.getMessage());
+            System.err.println("GPU mul failed, falling back to CPU: " + e.getMessage());
             return super.mul(other);
         }
-        
-        return this;
     }
     
     /**
@@ -422,24 +426,19 @@ public class TensorGPU extends TensorCPU {
      */
     @Override
     public Tensor convolve(Tensor kernel) {
-        int dim = this.dimension();
-        
-        if (dim > 2) {
-            throw new IllegalArgumentException("Convolution is supported only for 1D and 2D tensors");
-        }
-        if (kernel.dimension() != dim) {
-            throw new IllegalArgumentException("The kernel dimension must match the input dimension");
-        }
-        
         if (!INITIALIZED) {
             return super.convolve(kernel);
         }
         
         try {
-            if (dim == 1) {
+            if (dimension() == 1 && kernel.dimension() == 1) {
                 return convolve1DGPU(kernel);
-            } else {
+            } else if (dimension() == 2 && kernel.dimension() == 2) {
                 return convolve2DGPU(kernel);
+            } else {
+                throw new IllegalArgumentException(
+                    "Convolution supported only for 1D or 2D tensors, dimensions: " +
+                    dimension() + " and " + kernel.dimension());
             }
         } catch (Exception e) {
             System.err.println("Error in GPU convolution: " + e.getMessage());
@@ -448,55 +447,108 @@ public class TensorGPU extends TensorCPU {
     }
 
     private Tensor convolve1DGPU(Tensor kernel) {
-        int inputSize = this.shape()[0];
+        int inputSize = shape()[0];
         int kernelSize = kernel.shape()[0];
-        int outputSize = inputSize;  
-        int padding = kernelSize / 2;
-        int stride = 1;
         
-        float[] result = new float[outputSize];
-        Tensor resultTensor = new TensorCPU(new int[] {outputSize});
+        int outputSize = inputSize;  
+        int totalPadding = kernelSize - 1;
+        int paddingLeft = totalPadding / 2;
+        
+        boolean useFFT = kernelSize > FFT_THRESHOLD;
+        
+        float[] inputData = toArray();
+        float[] kernelData = kernel.toArray();
+        float[] resultData = new float[outputSize];
+        
+        cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
+        cl_mem memKernel = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                Sizeof.cl_float * kernelData.length, Pointer.to(kernelData), null);
+        cl_mem memOutput = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
+                Sizeof.cl_float * resultData.length, null, null);
         
         try {
-            cl_mem inputBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                    Sizeof.cl_float * inputSize, Pointer.to(this.toArray()), null);
-            cl_mem kernelBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                    Sizeof.cl_float * kernelSize, Pointer.to(kernel.toArray()), null);
-            cl_mem outputBuffer = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY, 
-                    Sizeof.cl_float * outputSize, null, null);
-            
-            int argIndex = 0;
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(inputBuffer));
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(kernelBuffer));
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(outputBuffer));
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {inputSize}));
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {kernelSize}));
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {outputSize}));
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {stride}));
-            clSetKernelArg(CONVOLVE_1D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {padding}));
-            
-            long[] globalWorkSize = new long[] {outputSize};
-            clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_1D_KERNEL, 1, null, globalWorkSize, null, 0, null, null);
-            
-            clEnqueueReadBuffer(COMMAND_QUEUE, outputBuffer, CL_TRUE, 0, 
-                    Sizeof.cl_float * outputSize, Pointer.to(result), 0, null, null);
-            
-            for (int i = 0; i < outputSize; i++) {
-                resultTensor.set(result[i], i);
+            if (!useFFT) {
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memInput));
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memKernel));
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memOutput));
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { inputSize }));
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { kernelSize }));
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { outputSize }));
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
+                
+                long[] globalWorkSize = new long[] { outputSize };
+                
+                try {
+                    long[] localWorkSize = getOptimalWorkgroupSize(outputSize);
+                    clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_1D_DIRECT_KERNEL, 1, null,
+                            globalWorkSize, localWorkSize, 0, null, null);
+                } catch (Exception e) {
+                    if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) { // shitty heuristics but it works
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_1D_DIRECT_KERNEL, 1, null,
+                                globalWorkSize, null, 0, null, null);
+                    } else {
+                        throw e;
+                    }
+                }
+            } else {
+                int fftSize = nextPowerOf2(inputSize + kernelSize - 1);
+                
+                cl_mem memBuffer1 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                        Sizeof.cl_float * 2 * fftSize, null, null);
+                cl_mem memBuffer2 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                        Sizeof.cl_float * 2 * fftSize, null, null);
+                cl_mem memBuffer3 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                        Sizeof.cl_float * 2 * fftSize, null, null);
+                
+                try {
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memInput));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memKernel));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memOutput));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 3, Sizeof.cl_mem, Pointer.to(memBuffer1));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 4, Sizeof.cl_mem, Pointer.to(memBuffer2));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 5, Sizeof.cl_mem, Pointer.to(memBuffer3));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { inputSize }));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 7, Sizeof.cl_int, Pointer.to(new int[] { kernelSize }));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 8, Sizeof.cl_int, Pointer.to(new int[] { fftSize }));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 9, Sizeof.cl_int, Pointer.to(new int[] { outputSize }));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 10, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
+                    
+                    long[] globalWorkSize = new long[] { fftSize };
+                    
+                    try {
+                        long[] localWorkSize = getOptimalWorkgroupSize(fftSize);
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_1D_FFT_KERNEL, 1, null,
+                                globalWorkSize, localWorkSize, 0, null, null);
+                    } catch (Exception e) {
+                        if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) {
+                            clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_1D_FFT_KERNEL, 1, null,
+                                    globalWorkSize, null, 0, null, null);
+                        } else {
+                            throw e;
+                        }
+                    }
+                } finally {
+                    clReleaseMemObject(memBuffer1);
+                    clReleaseMemObject(memBuffer2);
+                    clReleaseMemObject(memBuffer3);
+                }
             }
             
-            clReleaseMemObject(inputBuffer);
-            clReleaseMemObject(kernelBuffer);
-            clReleaseMemObject(outputBuffer);
-            
-            return resultTensor;
-        } catch (Exception e) {
-            throw e;
+            clEnqueueReadBuffer(COMMAND_QUEUE, memOutput, CL_TRUE, 0,
+                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    0, null, null);
+        } finally {
+            clReleaseMemObject(memInput);
+            clReleaseMemObject(memKernel);
+            clReleaseMemObject(memOutput);
         }
+        
+        return TensorGPU.of(new int[] { outputSize }, resultData);
     }
     
     private Tensor convolve2DGPU(Tensor kernel) {
-        int[] inputShape = this.shape();
+        int[] inputShape = shape();
         int[] kernelShape = kernel.shape();
         
         int inputRows = inputShape[0];
@@ -507,73 +559,227 @@ public class TensorGPU extends TensorCPU {
         int outputRows = inputRows;
         int outputCols = inputCols;
         
-        int paddingRows = kernelRows / 2;
-        int paddingCols = kernelCols / 2;
-        int stride = 1;
+        int paddingTop = (kernelRows - 1) / 2;
+        int paddingLeft = (kernelCols - 1) / 2;
         
-        float[] result = new float[outputRows * outputCols];
-        Tensor resultTensor = new TensorCPU(new int[] {outputRows, outputCols});
+        boolean useFFT = (kernelRows * kernelCols) > FFT_THRESHOLD;
+        
+        float[] inputData = toArray();
+        float[] kernelData = kernel.toArray();
+        float[] resultData = new float[outputRows * outputCols];
+        
+        cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
+        cl_mem memKernel = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                Sizeof.cl_float * kernelData.length, Pointer.to(kernelData), null);
+        cl_mem memOutput = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
+                Sizeof.cl_float * resultData.length, null, null);
         
         try {
-            cl_mem inputBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                    Sizeof.cl_float * inputRows * inputCols, Pointer.to(this.toArray()), null);
-            cl_mem kernelBuffer = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                    Sizeof.cl_float * kernelRows * kernelCols, Pointer.to(kernel.toArray()), null);
-            cl_mem outputBuffer = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY, 
-                    Sizeof.cl_float * outputRows * outputCols, null, null);
-            
-            int argIndex = 0;
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(inputBuffer));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(kernelBuffer));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_mem, Pointer.to(outputBuffer));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {inputRows}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {inputCols}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {kernelRows}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {kernelCols}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {outputRows}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {outputCols}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {stride}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {paddingRows}));
-            clSetKernelArg(CONVOLVE_2D_KERNEL, argIndex++, Sizeof.cl_int, Pointer.to(new int[] {paddingCols}));
-            
-            long[] globalWorkSize = new long[] {outputRows, outputCols};
-            clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_KERNEL, 2, null, globalWorkSize, null, 0, null, null);
-            
-            clEnqueueReadBuffer(COMMAND_QUEUE, outputBuffer, CL_TRUE, 0, 
-                    Sizeof.cl_float * outputRows * outputCols, Pointer.to(result), 0, null, null);
-            
-            for (int i = 0; i < outputRows; i++) {
-                for (int j = 0; j < outputCols; j++) {
-                    int index = i * outputCols + j;
-                    resultTensor.set(result[index], i, j);
+            if (!useFFT) {
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memInput));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memKernel));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memOutput));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { inputRows }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { inputCols }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { kernelRows }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { kernelCols }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 7, Sizeof.cl_int, Pointer.to(new int[] { outputRows }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 8, Sizeof.cl_int, Pointer.to(new int[] { outputCols }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 9, Sizeof.cl_int, Pointer.to(new int[] { paddingTop }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 10, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
+                
+                long[] globalWorkSize = new long[] { outputRows, outputCols };
+                
+                try {
+                    long[] localWorkSize = getOptimalWorkgroupSize2D(outputRows, outputCols);
+                    clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_DIRECT_KERNEL, 2, null,
+                            globalWorkSize, localWorkSize, 0, null, null);
+                } catch (Exception e) {
+                    if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) { // again :(
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_DIRECT_KERNEL, 2, null,
+                                globalWorkSize, null, 0, null, null);
+                    } else {
+                        throw e;
+                    }
+                }
+            } else {
+                int fftRows = nextPowerOf2(inputRows + kernelRows - 1);
+                int fftCols = nextPowerOf2(inputCols + kernelCols - 1);
+                
+                cl_mem memBuffer1 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                        Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
+                cl_mem memBuffer2 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                        Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
+                cl_mem memBuffer3 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                        Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
+                
+                try {
+                    clSetKernelArg(FFT_2D_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memInput));
+                    clSetKernelArg(FFT_2D_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memBuffer1));
+                    clSetKernelArg(FFT_2D_KERNEL, 2, Sizeof.cl_int, Pointer.to(new int[] { inputRows }));
+                    clSetKernelArg(FFT_2D_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { inputCols }));
+                    clSetKernelArg(FFT_2D_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { 1 })); // direction = 1 for forward FFT
+                    
+                    long[] globalWorkSize = new long[] { fftRows, fftCols };
+                    
+                    try {
+                        long[] localWorkSize = getOptimalWorkgroupSize2D(fftRows, fftCols);
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, FFT_2D_KERNEL, 2, null,
+                                globalWorkSize, localWorkSize, 0, null, null);
+                    } catch (Exception e) {
+                        if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) { 
+                            clEnqueueNDRangeKernel(COMMAND_QUEUE, FFT_2D_KERNEL, 2, null,
+                                    globalWorkSize, null, 0, null, null);
+                        } else {
+                            throw e;
+                        }
+                    }
+                    
+                    clSetKernelArg(FFT_2D_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memKernel));
+                    clSetKernelArg(FFT_2D_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memBuffer2));
+                    clSetKernelArg(FFT_2D_KERNEL, 2, Sizeof.cl_int, Pointer.to(new int[] { kernelRows }));
+                    clSetKernelArg(FFT_2D_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { kernelCols }));
+                    clSetKernelArg(FFT_2D_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { 1 })); // same as above
+                    
+                    try {
+                        long[] localWorkSize = getOptimalWorkgroupSize2D(fftRows, fftCols);
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, FFT_2D_KERNEL, 2, null,
+                                globalWorkSize, localWorkSize, 0, null, null);
+                    } catch (Exception e) {
+                        if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) {
+                            clEnqueueNDRangeKernel(COMMAND_QUEUE, FFT_2D_KERNEL, 2, null,
+                                    globalWorkSize, null, 0, null, null);
+                        } else {
+                            throw e;
+                        }
+                    }
+                    
+                    clSetKernelArg(COMPLEX_POINTWISE_MUL_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memBuffer1));
+                    clSetKernelArg(COMPLEX_POINTWISE_MUL_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memBuffer2));
+                    clSetKernelArg(COMPLEX_POINTWISE_MUL_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memBuffer3));
+                    clSetKernelArg(COMPLEX_POINTWISE_MUL_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { fftRows * fftCols }));
+                    
+                    try {
+                        long[] localWorkSize = getOptimalWorkgroupSize(fftRows * fftCols);
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, COMPLEX_POINTWISE_MUL_KERNEL, 1, null,
+                                new long[] { fftRows * fftCols }, localWorkSize, 0, null, null);
+                    } catch (Exception e) {
+                        if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) {
+                            clEnqueueNDRangeKernel(COMMAND_QUEUE, COMPLEX_POINTWISE_MUL_KERNEL, 1, null,
+                                    new long[] { fftRows * fftCols }, null, 0, null, null);
+                        } else {
+                            throw e;
+                        }
+                    }
+                    
+                    clSetKernelArg(FFT_2D_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memBuffer3));
+                    clSetKernelArg(FFT_2D_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memOutput));
+                    clSetKernelArg(FFT_2D_KERNEL, 2, Sizeof.cl_int, Pointer.to(new int[] { fftRows }));
+                    clSetKernelArg(FFT_2D_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { fftCols }));
+                    clSetKernelArg(FFT_2D_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { -1 })); // direction = -1 per IFFT
+                    
+                    try {
+                        long[] localWorkSize = getOptimalWorkgroupSize2D(fftRows, fftCols);
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, FFT_2D_KERNEL, 2, null,
+                                globalWorkSize, localWorkSize, 0, null, null);
+                    } catch (Exception e) {
+                        if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) {
+                            clEnqueueNDRangeKernel(COMMAND_QUEUE, FFT_2D_KERNEL, 2, null,
+                                    globalWorkSize, null, 0, null, null);
+                        } else {
+                            throw e;
+                        }
+                    }
+                    
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memOutput));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memOutput));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 2, Sizeof.cl_int, Pointer.to(new int[] { outputRows }));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { outputCols }));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { paddingTop }));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { fftCols }));
+                    
+                    try {
+                        long[] localWorkSize = getOptimalWorkgroupSize2D(outputRows, outputCols);
+                        clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_FFT_EXTRACT_KERNEL, 2, null,
+                                new long[] { outputRows, outputCols }, localWorkSize, 0, null, null);
+                    } catch (Exception e) {
+                        if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) {
+                            clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_FFT_EXTRACT_KERNEL, 2, null,
+                                    new long[] { outputRows, outputCols }, null, 0, null, null);
+                        } else {
+                            throw e;
+                        }
+                    }
+                } finally {
+                    clReleaseMemObject(memBuffer1);
+                    clReleaseMemObject(memBuffer2);
+                    clReleaseMemObject(memBuffer3);
                 }
             }
             
-            clReleaseMemObject(inputBuffer);
-            clReleaseMemObject(kernelBuffer);
-            clReleaseMemObject(outputBuffer);
-            
-            return resultTensor;
-        } catch (Exception e) {
-            throw e;
+            clEnqueueReadBuffer(COMMAND_QUEUE, memOutput, CL_TRUE, 0,
+                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    0, null, null);
+        } finally {
+            clReleaseMemObject(memInput);
+            clReleaseMemObject(memKernel);
+            clReleaseMemObject(memOutput);
         }
+        
+        return TensorGPU.of(new int[] { outputRows, outputCols }, resultData);
+    }
+    
+    private static int nextPowerOf2(int n) {
+        if (n <= 0) return 1;
+        n--;
+        n |= n >>> 1;
+        n |= n >>> 2;
+        n |= n >>> 4;
+        n |= n >>> 8;
+        n |= n >>> 16;
+        return n + 1;
+    }
+    
+    private static long[] getOptimalWorkgroupSize(long globalSize) {
+        int size = 1;
+        while (size < OPTIMAL_WORKGROUP_SIZE && size * 2 <= MAX_WORKGROUP_SIZE) {
+            size *= 2;
+        }
+        return new long[] { Math.min(size, globalSize) };
+    }
+    
+    private static long[] getOptimalWorkgroupSize2D(long globalSizeX, long globalSizeY) {
+        int sizeX = 16;
+        int sizeY = 16;
+        
+        while (sizeX * sizeY > 256) {
+            if (sizeX > sizeY) {
+                sizeX /= 2;
+            } else {
+                sizeY /= 2;
+            }
+        }
+        
+        sizeX = nextPowerOf2(sizeX);
+        sizeY = nextPowerOf2(sizeY);
+        
+        return new long[] { 
+            Math.min(sizeX, globalSizeX),
+            Math.min(sizeY, globalSizeY)
+        };
     }
 
     @Override
     public Tensor softmax() {
-        TensorCPU cpuTensor = new TensorCPU(shape());
-        int dim = dimension() > 1 ? 1 : 0;
-
-        if (dim >= dimension()) {
-            throw new IllegalArgumentException("Dimension " + dim + " out of bounds for limits of tensor shape " + Arrays.toString(shape()));
+        if (!INITIALIZED) {
+            return super.softmax();
         }
-
-        for (int i = 0; i < elements(); i++) {
-            cpuTensor.getData().set(i, getData().get(i));
-        }
-
+        
+        Tensor cpuTensor = cpu();
         Tensor result = cpuTensor.softmax();
-        return TensorGPU.fromTensor(result);
+        return result.gpu();
     }
 
     @Override

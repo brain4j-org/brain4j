@@ -1356,14 +1356,13 @@ public class TensorCPU implements Cloneable, Tensor {
             throw new IllegalArgumentException("The kernel dimension must match the input dimension");
         }
         
-        Convolution.ConvolutionType convType = Convolution.ConvolutionType.DIRECT;
-        // TODO: Fix Fast-Fourier Transform
-//        if (this.elements() > 1000 || kernel.elements() > 100) { // convType based on tensor size
-//            convType = Convolution.ConvolutionType.FFT;
-//        } else {
-//            convType = Convolution.ConvolutionType.DIRECT;
-//        }
-//
+        Convolution.ConvolutionType convType;
+        if (this.elements() > 1000 || kernel.elements() > 100) { // convType based on tensor size
+            convType = Convolution.ConvolutionType.FFT;
+        } else {
+            convType = Convolution.ConvolutionType.DIRECT;
+        }
+
         if (dim == 1) {
             return Convolution.convolve1D(this, kernel, Convolution.PaddingMode.SAME, convType);
         } else {

@@ -2,7 +2,6 @@ package net.echo.math4j.math.tensor.ops;
 
 import net.echo.math4j.math.complex.Complex;
 import net.echo.math4j.math.fft.FFT;
-import net.echo.math4j.math.fft.FFTUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
@@ -19,6 +18,8 @@ public final class Convolution {
         FFT      
     }
     
+    private static final int FFT_THRESHOLD = 15;
+    
     private Convolution() {}
 
     public static Tensor convolve1D(Tensor input, Tensor kernel, 
@@ -30,34 +31,36 @@ public final class Convolution {
         int inputSize = input.shape()[0];
         int kernelSize = kernel.shape()[0];
         
-        int outputSize = switch (paddingMode) {
-            case VALID -> inputSize - kernelSize + 1;
-            case SAME -> inputSize;
-            case FULL -> inputSize + kernelSize - 1;
-            default -> throw new IllegalArgumentException("Padding mode not supported");
-        };
-
-        if (outputSize <= 0) {
-            throw new IllegalArgumentException("Kernel too large for the input with the specified padding");
+        if (convType == null) {
+            convType = (kernelSize > FFT_THRESHOLD) ? ConvolutionType.FFT : ConvolutionType.DIRECT;
         }
         
+        int outputSize;
         int paddingLeft, paddingRight;
+        
         switch (paddingMode) {
             case VALID:
+                outputSize = inputSize - kernelSize + 1;
                 paddingLeft = 0;
                 paddingRight = 0;
                 break;
             case SAME:
+                outputSize = inputSize;
                 int totalPadding = kernelSize - 1;
                 paddingLeft = totalPadding / 2;
                 paddingRight = totalPadding - paddingLeft;
                 break;
             case FULL:
+                outputSize = inputSize + kernelSize - 1;
                 paddingLeft = kernelSize - 1;
                 paddingRight = kernelSize - 1;
                 break;
             default:
                 throw new IllegalArgumentException("Padding mode not supported");
+        }
+
+        if (outputSize <= 0) {
+            throw new IllegalArgumentException("Kernel too large for the input with the specified padding");
         }
         
         if (convType == ConvolutionType.DIRECT) {
@@ -75,12 +78,17 @@ public final class Convolution {
         
         Tensor output = TensorFactory.zeros(outputSize);
         
+        float[] flippedKernel = new float[kernelSize];
+        for (int i = 0; i < kernelSize; i++) {
+            flippedKernel[i] = kernel.get(kernelSize - 1 - i);
+        }
+        
         for (int i = 0; i < outputSize; i++) {
             double sum = 0;
             for (int j = 0; j < kernelSize; j++) {
                 int inputIdx = i - paddingLeft + j;
                 if (inputIdx >= 0 && inputIdx < inputSize) {
-                    sum += input.get(inputIdx) * kernel.get(j);
+                    sum += input.get(inputIdx) * flippedKernel[j];
                 }
             }
             output.set(sum, i);
@@ -89,31 +97,6 @@ public final class Convolution {
         return output;
     }
     
-    private static Tensor normalizeFFTResult(Tensor tensorFFT) {
-        float maxAbs = 0.0f;
-        for (int i = 0; i < tensorFFT.elements(); i++) {
-            float val = Math.abs(tensorFFT.get(i));
-            if (val > maxAbs) {
-                maxAbs = val;
-            }
-        }
-        
-        if (maxAbs < 1e-6f) {
-            return tensorFFT;
-        }
-        
-        Tensor result = TensorFactory.zeros(tensorFFT.shape());
-        for (int i = 0; i < result.elements(); i++) {
-            float normalizedVal = tensorFFT.get(i);
-            if (Math.abs(normalizedVal) < 1e-6f) {
-                normalizedVal = 0.0f;
-            }
-            result.set(normalizedVal, i);
-        }
-        
-        return result;
-    }
-
     private static Tensor convolve1DFFT(Tensor input, Tensor kernel, 
                                        int paddingLeft, int paddingRight) {
         int inputSize = input.shape()[0];
@@ -126,16 +109,16 @@ public final class Convolution {
         Complex[] kernelComplex = new Complex[fftSize];
         
         for (int i = 0; i < fftSize; i++) {
-            inputComplex[i] = new Complex(0, 0);
-            kernelComplex[i] = new Complex(0, 0);
+            inputComplex[i] = Complex.ZERO;
+            kernelComplex[i] = Complex.ZERO;
         }
         
         for (int i = 0; i < inputSize; i++) {
-            inputComplex[i] = new Complex(input.get(i), 0);
+            inputComplex[i] = new Complex(input.get(i), 0.0);
         }
         
         for (int i = 0; i < kernelSize; i++) {
-            kernelComplex[i] = new Complex(kernel.get(i), 0);
+            kernelComplex[i] = new Complex(kernel.get(kernelSize - 1 - i), 0.0);
         }
         
         Complex[] inputFFT = FFT.transform(inputComplex);
@@ -165,11 +148,15 @@ public final class Convolution {
         Tensor output = TensorFactory.zeros(outputSize);
         for (int i = 0; i < outputSize; i++) {
             if (startIdx + i < result.length) {
-                output.set(result[startIdx + i].getReal(), i);
+                double val = result[startIdx + i].getReal();
+                if (Math.abs(val) < 1e-10) {
+                    val = 0.0;
+                }
+                output.set(val, i);
             }
         }
         
-        return normalizeFFTResult(output);
+        return output;
     }
     
     public static Tensor convolve2D(Tensor input, Tensor kernel, 
@@ -186,43 +173,34 @@ public final class Convolution {
         int kernelRows = kernelShape[0];
         int kernelCols = kernelShape[1];
         
+        if (convType == null) {
+            boolean useFFT = (kernelRows * kernelCols) > FFT_THRESHOLD;
+            convType = useFFT ? ConvolutionType.FFT : ConvolutionType.DIRECT;
+        }
+        
         int outputRows, outputCols;
+        int paddingTop, paddingBottom, paddingLeft, paddingRight;
+        
         switch (paddingMode) {
             case VALID:
                 outputRows = inputRows - kernelRows + 1;
                 outputCols = inputCols - kernelCols + 1;
-                break;
-            case SAME:
-                outputRows = inputRows;
-                outputCols = inputCols;
-                break;
-            case FULL:
-                outputRows = inputRows + kernelRows - 1;
-                outputCols = inputCols + kernelCols - 1;
-                break;
-            default:
-                throw new IllegalArgumentException("Padding mode not supported");
-        }
-        
-        if (outputRows <= 0 || outputCols <= 0) {
-            throw new IllegalArgumentException("Kernel too large for the input with the specified padding");
-        }
-        
-        int paddingTop, paddingBottom, paddingLeft, paddingRight;
-        switch (paddingMode) {
-            case VALID:
                 paddingTop = 0;
                 paddingBottom = 0;
                 paddingLeft = 0;
                 paddingRight = 0;
                 break;
             case SAME:
+                outputRows = inputRows;
+                outputCols = inputCols;
                 paddingTop = (kernelRows - 1) / 2;
                 paddingBottom = kernelRows - 1 - paddingTop;
                 paddingLeft = (kernelCols - 1) / 2;
                 paddingRight = kernelCols - 1 - paddingLeft;
                 break;
             case FULL:
+                outputRows = inputRows + kernelRows - 1;
+                outputCols = inputCols + kernelCols - 1;
                 paddingTop = kernelRows - 1;
                 paddingBottom = kernelRows - 1;
                 paddingLeft = kernelCols - 1;
@@ -232,10 +210,18 @@ public final class Convolution {
                 throw new IllegalArgumentException("Padding mode not supported");
         }
         
+        if (outputRows <= 0 || outputCols <= 0) {
+            throw new IllegalArgumentException("Kernel too large for the input with the specified padding");
+        }
+        
         if (convType == ConvolutionType.DIRECT) {
-            return convolve2DDirect(input, kernel, paddingTop, paddingBottom, paddingLeft, paddingRight);
+            return convolve2DDirect(input, kernel, 
+                                  paddingTop, paddingBottom, 
+                                  paddingLeft, paddingRight);
         } else {
-            return convolve2DFFT(input, kernel, paddingTop, paddingBottom, paddingLeft, paddingRight);
+            return convolve2DFFT(input, kernel, 
+                               paddingTop, paddingBottom, 
+                               paddingLeft, paddingRight);
         }
     }
  
@@ -250,26 +236,28 @@ public final class Convolution {
         int kernelRows = kernelShape[0];
         int kernelCols = kernelShape[1];
         
-        int paddedRows = inputRows + paddingTop + paddingBottom;
-        int paddedCols = inputCols + paddingLeft + paddingRight;
-        
-        int outputRows = paddedRows - kernelRows + 1;
-        int outputCols = paddedCols - kernelCols + 1;
+        int outputRows = inputRows + paddingTop + paddingBottom - kernelRows + 1;
+        int outputCols = inputCols + paddingLeft + paddingRight - kernelCols + 1;
         
         Tensor output = TensorFactory.zeros(outputRows, outputCols);
+        
+        float[][] flippedKernel = new float[kernelRows][kernelCols];
+        for (int i = 0; i < kernelRows; i++) {
+            for (int j = 0; j < kernelCols; j++) {
+                flippedKernel[i][j] = kernel.get(kernelRows - 1 - i, kernelCols - 1 - j);
+            }
+        }
         
         for (int i = 0; i < outputRows; i++) {
             for (int j = 0; j < outputCols; j++) {
                 double sum = 0;
                 for (int ki = 0; ki < kernelRows; ki++) {
                     for (int kj = 0; kj < kernelCols; kj++) {
-                        int inputRowIdx = i - paddingTop + ki;
-                        int inputColIdx = j - paddingLeft + kj;
+                        int ri = i - paddingTop + ki;
+                        int cj = j - paddingLeft + kj;
                         
-                        if (inputRowIdx >= 0 && inputRowIdx < inputRows &&
-                            inputColIdx >= 0 && inputColIdx < inputCols) {
-                            sum += input.get(inputRowIdx, inputColIdx) * 
-                                  kernel.get(ki, kj);
+                        if (ri >= 0 && ri < inputRows && cj >= 0 && cj < inputCols) {
+                            sum += input.get(ri, cj) * flippedKernel[ki][kj];
                         }
                     }
                 }
@@ -291,58 +279,76 @@ public final class Convolution {
         int kernelRows = kernelShape[0];
         int kernelCols = kernelShape[1];
         
-        int paddedRows = inputRows + paddingTop + paddingBottom;
-        int paddedCols = inputCols + paddingLeft + paddingRight;
+        int fullRows = inputRows + kernelRows - 1;
+        int fullCols = inputCols + kernelCols - 1;
         
-        int fftRows = FFT.nextPowerOf2(paddedRows + kernelRows - 1);
-        int fftCols = FFT.nextPowerOf2(paddedCols + kernelCols - 1);
+        int fftRows = FFT.nextPowerOf2(fullRows);
+        int fftCols = FFT.nextPowerOf2(fullCols);
         
-        Tensor paddedInput = TensorFactory.zeros(paddedRows, paddedCols);
-        for (int i = 0; i < inputRows; i++) {
-            for (int j = 0; j < inputCols; j++) {
-                paddedInput.set(input.get(i, j), i + paddingTop, j + paddingLeft);
+        Complex[][] inputComplex = new Complex[fftRows][fftCols];
+        Complex[][] kernelComplex = new Complex[fftRows][fftCols];
+        
+        for (int i = 0; i < fftRows; i++) {
+            for (int j = 0; j < fftCols; j++) {
+                inputComplex[i][j] = Complex.ZERO;
+                kernelComplex[i][j] = Complex.ZERO;
             }
         }
         
-        Tensor fftSizeInput = TensorFactory.zeros(fftRows, fftCols);
-        Tensor fftSizeKernel = TensorFactory.zeros(fftRows, fftCols);
-        
-        for (int i = 0; i < paddedRows; i++) {
-            for (int j = 0; j < paddedCols; j++) {
-                fftSizeInput.set(paddedInput.get(i, j), i, j);
+        for (int i = 0; i < inputRows; i++) {
+            for (int j = 0; j < inputCols; j++) {
+                inputComplex[i][j] = new Complex(input.get(i, j), 0.0);
             }
         }
         
         for (int i = 0; i < kernelRows; i++) {
             for (int j = 0; j < kernelCols; j++) {
-                fftSizeKernel.set(kernel.get(i, j), i, j);
+                kernelComplex[i][j] = new Complex(
+                    kernel.get(kernelRows - 1 - i, kernelCols - 1 - j), 0.0);
             }
         }
         
-        Tensor inputFFT = FFTUtils.fft2D(fftSizeInput, true);
-        Tensor kernelFFT = FFTUtils.fft2D(fftSizeKernel, true);
+        Complex[][] inputFFT = FFT.transform2D(inputComplex, fftRows, fftCols);
+        Complex[][] kernelFFT = FFT.transform2D(kernelComplex, fftRows, fftCols);
         
-        Tensor outputFFT = TensorFactory.zeros(fftRows, fftCols, 2);
+        Complex[][] outputFFT = new Complex[fftRows][fftCols];
         for (int i = 0; i < fftRows; i++) {
             for (int j = 0; j < fftCols; j++) {
-                Complex a = new Complex(inputFFT.get(i, j, 0), inputFFT.get(i, j, 1));
-                Complex b = new Complex(kernelFFT.get(i, j, 0), kernelFFT.get(i, j, 1));
-                Complex c = a.multiply(b);
-                
-                outputFFT.set(c.getReal(), i, j, 0);
-                outputFFT.set(c.getImaginary(), i, j, 1);
+                outputFFT[i][j] = inputFFT[i][j].multiply(kernelFFT[i][j]);
             }
         }
         
-        Tensor result = FFTUtils.ifft2D(outputFFT, true, false);
+        Complex[][] result = FFT.inverseTransform2D(outputFFT, fftRows, fftCols);
         
-        int outputRows = paddedRows - kernelRows + 1;
-        int outputCols = paddedCols - kernelCols + 1;
+        int startRow, startCol;
+        int outputRows, outputCols;
+        
+        if (paddingTop == 0 && paddingBottom == 0 && paddingLeft == 0 && paddingRight == 0) {
+            startRow = kernelRows - 1;
+            startCol = kernelCols - 1;
+            outputRows = inputRows - kernelRows + 1;
+            outputCols = inputCols - kernelCols + 1;
+        } else if (paddingTop == (kernelRows - 1) / 2 && paddingBottom == (kernelRows - 1) - paddingTop &&
+                 paddingLeft == (kernelCols - 1) / 2 && paddingRight == (kernelCols - 1) - paddingLeft) {
+            startRow = paddingTop;
+            startCol = paddingLeft;
+            outputRows = inputRows;
+            outputCols = inputCols;
+        } else {
+            startRow = 0;
+            startCol = 0;
+            outputRows = fullRows;
+            outputCols = fullCols;
+        }
         
         Tensor output = TensorFactory.zeros(outputRows, outputCols);
         for (int i = 0; i < outputRows; i++) {
             for (int j = 0; j < outputCols; j++) {
-                output.set(result.get(i, j), i, j);
+                double val = result[startRow + i][startCol + j].getReal();
+                if (Math.abs(val) < 1e-10) {
+                    val = 0.0;
+                }
+                output.set(val, i, j);
             }
         }
         
@@ -350,8 +356,25 @@ public final class Convolution {
     }
     
     public static Tensor crossCorrelation2D(Tensor input, Tensor kernel, 
-                                           PaddingMode paddingMode, ConvolutionType convType) {
-        return convolve2D(input, kernel, paddingMode, convType);
+                                          PaddingMode paddingMode, ConvolutionType convType) {
+        Tensor flippedKernel = flipKernel2D(kernel);
+        return convolve2D(input, flippedKernel, paddingMode, convType);
+    }
+    
+    private static Tensor flipKernel2D(Tensor kernel) {
+        int[] shape = kernel.shape();
+        int rows = shape[0];
+        int cols = shape[1];
+        
+        Tensor flipped = TensorFactory.zeros(rows, cols);
+        
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                flipped.set(kernel.get(rows - 1 - i, cols - 1 - j), i, j);
+            }
+        }
+        
+        return flipped;
     }
     
     public static Tensor prepareKernelForFFT(Tensor kernel, int fftRows, int fftCols) {
@@ -359,14 +382,14 @@ public final class Convolution {
         int kernelRows = kernelShape[0];
         int kernelCols = kernelShape[1];
         
-        Tensor fftSizeKernel = TensorFactory.zeros(fftRows, fftCols);
+        Tensor paddedKernel = TensorFactory.zeros(fftRows, fftCols);
         
         for (int i = 0; i < kernelRows; i++) {
             for (int j = 0; j < kernelCols; j++) {
-                fftSizeKernel.set(kernel.get(i, j), i, j);
+                paddedKernel.set(kernel.get(kernelRows - 1 - i, kernelCols - 1 - j), i, j);
             }
         }
         
-        return FFTUtils.fft2D(fftSizeKernel, true);
+        return paddedKernel;
     }
 } 
