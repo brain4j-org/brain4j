@@ -2,7 +2,7 @@ package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.index.Range;
 
@@ -12,7 +12,7 @@ import java.io.DataOutputStream;
 /**
  * Represents a normalization layer, used to normalize the inputs and improve training.
  */
-public class LayerNorm extends Layer<Tensor, Tensor> {
+public class LayerNorm extends Layer {
 
     private double epsilon;
 
@@ -50,7 +50,7 @@ public class LayerNorm extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
         Tensor result = normalize1D(input);
         cache.setOutputTensor(this, result);
         return result;

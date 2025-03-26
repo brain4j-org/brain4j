@@ -46,7 +46,7 @@ public class TransformerExample {
 
         model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.1));
 
-        System.out.println(model.getStats());
+        System.out.println(model.summary());
         System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
 
         Scanner scanner = new Scanner(System.in);

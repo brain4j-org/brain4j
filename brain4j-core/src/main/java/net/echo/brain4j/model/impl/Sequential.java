@@ -10,7 +10,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.Optimizer;
@@ -38,12 +38,12 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Sequential extends Model {
 
-    public Sequential(Layer<?, ?>... layers) {
+    public Sequential(Layer... layers) {
         super(layers);
 
         if (this.layers.isEmpty()) return;
 
-        validateCNNIfPresent();
+        // validateCNNIfPresent();
     }
 
     private void validateCNNIfPresent() {
@@ -156,7 +156,7 @@ public class Sequential extends Model {
 
     @Override
     public Tensor predict(StatesCache cache, Tensor input, boolean training) {
-        Layer<?, ?> workingLayer = layers.getFirst();
+        Layer workingLayer = layers.getFirst();
 
         Preconditions.checkState(input.elements() == workingLayer.getTotalNeurons(), "Input dimension does not " +
                 "match model input dimension! (Input != Expected " + input.elements() + " != " + workingLayer.getTotalNeurons() + ")");
@@ -167,12 +167,16 @@ public class Sequential extends Model {
         cache.setOutputTensor(workingLayer, denseResult);
 
         for (int l = 1; l < layers.size(); l++) {
-            Layer<?, ?> layer = layers.get(l);
+            Layer layer = layers.get(l);
 
             cache.setInputTensor(layer, denseResult);
 
-            if (training && layer instanceof DropoutLayer dropout) {
-                dropout.forward(cache, workingLayer, denseResult);
+            if (layer instanceof DropoutLayer dropout) {
+                if (training) {
+                    dropout.forward(cache, workingLayer, denseResult);
+                } else {
+                    denseResult = dropout.scale(denseResult);
+                }
                 continue;
             }
 
@@ -185,10 +189,6 @@ public class Sequential extends Model {
                 continue;
             }
 
-            if (denseResult.checkNaN()) {
-                System.out.println("NaN at " + layer.getId());
-                System.out.println(denseResult);
-            }
             workingLayer = layer;
         }
 
@@ -199,7 +199,7 @@ public class Sequential extends Model {
     public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(layers.size());
 
-        for (Layer<?, ?> layer : layers) {
+        for (Layer layer : layers) {
             stream.writeUTF(layer.getClass().getName());
             layer.serialize(stream);
         }
@@ -218,7 +218,7 @@ public class Sequential extends Model {
             Constructor<?> constructor = layerClass.getDeclaredConstructor();
             constructor.setAccessible(true);
 
-            Layer<?, ?> layer = (Layer<?, ?>) constructor.newInstance();
+            Layer layer = (Layer) constructor.newInstance();
             layer.deserialize(stream);
 
             layers.add(layer);

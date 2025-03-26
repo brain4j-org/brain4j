@@ -2,14 +2,14 @@ package net.echo.brain4j.transformers.vocabulary;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.util.List;
 import java.util.Random;
 
-public class VocabularyMapper extends Layer<Tensor, Tensor> {
+public class VocabularyMapper extends Layer {
 
     private final Tensor outProjectionWeights;
     private final int vocabularySize;
@@ -41,7 +41,7 @@ public class VocabularyMapper extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
         int columns = input.shape()[1];
 
         cache.setInputTensor(this, input);

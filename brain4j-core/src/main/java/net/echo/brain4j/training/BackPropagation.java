@@ -3,7 +3,7 @@ package net.echo.brain4j.training;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -66,13 +66,13 @@ public class BackPropagation {
     }
 
     public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {
-        List<Layer<?, ?>> layers = model.getLayers();
+        List<Layer> layers = model.getLayers();
         Tensor delta = initializeDeltas(cache, layers, targets, outputs);
 
-        Layer<?, ?> previous = layers.getLast();
+        Layer previous = layers.getLast();
 
         for (int l = layers.size() - 2; l >= 0; l--) {
-            Layer<?, ?> layer = layers.get(l);
+            Layer layer = layers.get(l);
 
             if (!layer.canPropagate()) continue;
 
@@ -83,8 +83,8 @@ public class BackPropagation {
         optimizer.postIteration(cache, updater, layers);
     }
 
-    private Tensor initializeDeltas(StatesCache cache, List<Layer<?, ?>> layers, Tensor targets, Tensor outputs) {
-        Layer<?, ?> outputLayer = layers.getLast();
+    private Tensor initializeDeltas(StatesCache cache, List<Layer> layers, Tensor targets, Tensor outputs) {
+        Layer outputLayer = layers.getLast();
         LossFunction lossFunction = model.getLossFunction();
 
         return outputLayer.computeLoss(cache, targets, outputs, lossFunction);

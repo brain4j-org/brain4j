@@ -7,8 +7,8 @@ import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.cache.Parameters;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.Parameters;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;
@@ -19,13 +19,13 @@ import java.io.DataOutputStream;
 import java.util.Random;
 
 @JsonAdapter(LayerAdapter.class)
-public abstract class Layer<I, O> implements Adapter {
+public abstract class Layer implements Adapter {
 
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
-    protected Layer<?, ?> nextLayer;
+    protected Layer nextLayer;
 
     protected Tensor weights;
     protected Tensor bias;
@@ -108,29 +108,29 @@ public abstract class Layer<I, O> implements Adapter {
                 .mapWithIndex((i, x) -> lossFunction.getDelta(x, derivative.get(i)));
     }
 
-    public void connect(Random generator, Layer<?, ?> nextLayer, double bound) {
-        this.nextLayer = nextLayer;
+    public void preConnect(Layer previous, Layer next) {
 
-        int input = bias.elements();
-        int output = nextLayer.getTotalNeurons();
-
-        Tensor weights = TensorFactory.matrix(output, input);
-
-        for (int i = 0; i < bias.elements(); i++) {
-            for (int j = 0; j < nextLayer.getTotalNeurons(); j++) {
-                double value = (generator.nextDouble() * 2 * bound) - bound;
-                weights.set(value, j, i);
-            }
-        }
-
-        this.weights = weights;
     }
 
-    public O forward(StatesCache cache, Layer<?, ?> lastLayer, I input) {
+    public void connect(Random generator, Layer previous, Layer next, double bound) {
+        this.nextLayer = next;
+
+        int nIn = getTotalNeurons();
+        int nOut = next.getTotalNeurons();
+
+        int input = bias.elements();
+        int output = next.getTotalNeurons();
+
+        this.weights = TensorFactory
+                .matrix(output, input)
+                .fill(() -> generator.nextDouble(2 * bound) - bound);
+    }
+
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
 
-    public Tensor propagate(StatesCache cache, Layer<?, ?> previous, Tensor delta) {
+    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
 

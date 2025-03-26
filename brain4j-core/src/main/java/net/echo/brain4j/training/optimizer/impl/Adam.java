@@ -2,7 +2,7 @@ package net.echo.brain4j.training.optimizer.impl;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;
@@ -65,7 +65,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public Tensor optimize(Layer<?, ?> layer, Tensor delta, Tensor output) {
+    public Tensor optimize(Layer layer, Tensor delta, Tensor output) {
         Tensor gradient = delta.matmul(output);
 
         Tensor firstMomentum = this.firstMomentum[layer.getId()];
@@ -94,7 +94,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
         this.timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);

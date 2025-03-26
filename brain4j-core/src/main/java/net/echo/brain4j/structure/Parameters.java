@@ -1,4 +1,4 @@
-package net.echo.brain4j.structure.cache;
+package net.echo.brain4j.structure;
 
 public class Parameters {
 

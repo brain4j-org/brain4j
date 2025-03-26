@@ -7,7 +7,7 @@ import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class TransformerEncoder extends Layer<Tensor, Tensor> {
+public class TransformerEncoder extends Layer {
 
     protected final Sequential feedForward;
     protected final LayerNorm normalizer;
@@ -62,7 +62,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public Tensor propagate(StatesCache cache, Layer<?, ?> previous, Tensor delta) {
+    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
         if (previous instanceof VocabularyMapper mapper) {
             // TODO: Rework feed forward first
         }
@@ -71,7 +71,7 @@ public class TransformerEncoder extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
         Tensor attended = getAttention().attend(input);
         Tensor normalized = normalizer.normalize(attended.add(input));
 

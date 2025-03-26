@@ -4,16 +4,25 @@ import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 
 import java.util.Map;
+import java.util.Objects;
 
-public record EvaluationResult(int classes, Map<Integer, Tensor> classifications) {
+public final class EvaluationResult {
 
-    public String confusionMatrix() {
-        StringBuilder matrix = new StringBuilder();
-        String divider = BrainUtils.getHeader(" Evaluation Results ");
+    private final int classes;
+    private final Map<Integer, Tensor> classifications;
 
-        matrix.append(divider);
-        matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
+    private double accuracy;
+    private double precision;
+    private double recall;
+    private double f1Score;
 
+    public EvaluationResult(int classes, Map<Integer, Tensor> classifications) {
+        this.classes = classes;
+        this.classifications = classifications;
+        calculateStats();
+    }
+
+    private void calculateStats() {
         int totalCorrect = 0;
         int totalIncorrect = 0;
 
@@ -38,9 +47,6 @@ public record EvaluationResult(int classes, Map<Integer, Tensor> classifications
             }
         }
 
-        // Accuracy
-        double accuracy = (double) totalCorrect / (totalCorrect + totalIncorrect);
-
         double precisionSum = 0, recallSum = 0;
         for (int i = 0; i < classes; i++) {
             double precision = (truePositives[i] + falsePositives[i]) > 0 ?
@@ -53,9 +59,19 @@ public record EvaluationResult(int classes, Map<Integer, Tensor> classifications
             recallSum += recall;
         }
 
-        double precision = precisionSum / classes;
-        double recall = recallSum / classes;
-        double f1Score = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
+        this.accuracy = (double) totalCorrect / (totalCorrect + totalIncorrect);
+        this.precision = precisionSum / classes;
+        this.recall = recallSum / classes;
+        this.f1Score = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
+    }
+
+    public String confusionMatrix() {
+        StringBuilder matrix = new StringBuilder();
+        String divider = BrainUtils.getHeader(" Evaluation Results ");
+
+        matrix.append(divider);
+        matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
+
 
         String secondary = "%-20s %-10s\n";
         matrix.append(String.format(secondary, "Accuracy:", String.format("%.4f", accuracy)));
@@ -90,5 +106,29 @@ public record EvaluationResult(int classes, Map<Integer, Tensor> classifications
         matrix.append("\n");
         matrix.append("=".repeat(divider.length() - 1));
         return matrix.toString();
+    }
+
+    public int classes() {
+        return classes;
+    }
+
+    public Map<Integer, Tensor> classifications() {
+        return classifications;
+    }
+
+    public double accuracy() {
+        return accuracy;
+    }
+
+    public double precision() {
+        return precision;
+    }
+
+    public double recall() {
+        return recall;
+    }
+
+    public double f1Score() {
+        return f1Score;
     }
 }

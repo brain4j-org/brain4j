@@ -35,7 +35,7 @@ public class ModernAdapter {
         int layers = model.getLayers().size(); // layers
 
         for (int i = 0; i < layers; i++) {
-            Layer<?, ?> layer = model.getLayers().get(i);
+            Layer layer = model.getLayers().get(i);
 
             Tensor biases = layer.getBias();
             Tensor weights = layer.getWeights();
@@ -51,6 +51,7 @@ public class ModernAdapter {
             }
         }
 
+        dataStream.writeInt(outputStream.size());
         byte[] bytes = outputStream.toByteArray();
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
@@ -65,9 +66,12 @@ public class ModernAdapter {
 
     public static <T extends Model> T deserialize(File file, T model) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            byte[] bytes = decompress(fileInputStream.readAllBytes());
+            DataInputStream dataStream = new DataInputStream(fileInputStream);
+            int size = dataStream.readInt();
 
-            DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
+            byte[] bytes = decompress(size, fileInputStream.readAllBytes());
+            dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
+
             int seed = dataStream.readInt();
 
             String lossFunctionClass = dataStream.readUTF();
@@ -90,7 +94,7 @@ public class ModernAdapter {
             int layers = model.getLayers().size();
 
             for (int i = 0; i < layers; i++) {
-                Layer<?, ?> layer = model.getLayers().get(i);
+                Layer layer = model.getLayers().get(i);
 
                 Tensor biases = layer.getBias();
                 Tensor weights = layer.getWeights();
@@ -118,8 +122,7 @@ public class ModernAdapter {
         return Zstd.compress(data);
     }
 
-    public static byte[] decompress(byte[] data) {
-        long decompressedSize = Zstd.decompressedSize(data);
-        return Zstd.decompress(data, (int) decompressedSize);
+    public static byte[] decompress(int size, byte[] data) {
+        return Zstd.decompress(data, size);
     }
 }

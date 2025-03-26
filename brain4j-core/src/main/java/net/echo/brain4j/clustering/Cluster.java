@@ -1,5 +1,7 @@
 package net.echo.brain4j.clustering;
 
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.ArrayList;
@@ -7,8 +9,8 @@ import java.util.List;
 
 public class Cluster {
 
-    private Vector center;
-    private final List<Vector> vectors;
+    private Tensor center;
+    private final List<Tensor> vectors;
     private final int id;
 
     /**
@@ -18,7 +20,7 @@ public class Cluster {
      */
     public Cluster(int dimension, int id) {
         this.id = id;
-        this.center = Vector.random(dimension);
+        this.center = TensorFactory.random(dimension);
         this.vectors = new ArrayList<>();
     }
 
@@ -27,7 +29,7 @@ public class Cluster {
      *
      * @return the centroid as a Vector
      */
-    public Vector getCenter() {
+    public Tensor getCenter() {
         return center;
     }
 
@@ -36,7 +38,7 @@ public class Cluster {
      *
      * @param center the new centroid
      */
-    public void setCenter(Vector center) {
+    public void setCenter(Tensor center) {
         this.center = center;
     }
 
@@ -45,7 +47,7 @@ public class Cluster {
      *
      * @param vector the data point to add
      */
-    public void addVector(Vector vector) {
+    public void addVector(Tensor vector) {
         vectors.add(vector);
     }
 
@@ -54,7 +56,7 @@ public class Cluster {
      *
      * @return the list of data points
      */
-    public List<Vector> getVectors() {
+    public List<Tensor> getVectors() {
         return vectors;
     }
 
@@ -68,9 +70,9 @@ public class Cluster {
             return false;
         }
 
-        Vector newCenter = new Vector(center.size());
+        Tensor newCenter = TensorFactory.create(center.elements());
 
-        for (Vector row : vectors) {
+        for (Tensor row : vectors) {
             newCenter.add(row);
         }
 

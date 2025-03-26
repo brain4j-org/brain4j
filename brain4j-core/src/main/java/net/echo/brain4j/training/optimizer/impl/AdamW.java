@@ -40,7 +40,7 @@ public class AdamW extends Adam {
     }
 
     @Override
-    public Tensor optimize(Layer<?, ?> layer, Tensor delta, Tensor output) {
+    public Tensor optimize(Layer layer, Tensor delta, Tensor output) {
         Tensor adamValue = super.optimize(layer, delta, output);
         Tensor weightDecayTerm = layer.getWeights().clone().mul(weightDecay);
 

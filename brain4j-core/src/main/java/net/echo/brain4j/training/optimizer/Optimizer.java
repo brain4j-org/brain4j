@@ -5,7 +5,7 @@ import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;
 
@@ -35,12 +35,12 @@ public abstract class Optimizer implements Adapter {
         this.learningRate = stream.readDouble();
     }
 
-    public abstract Tensor optimize(Layer<?, ?> layer, Tensor delta, Tensor output);
+    public abstract Tensor optimize(Layer layer, Tensor delta, Tensor output);
 
     public void postInitialize(Sequential model) {
     }
 
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer<?, ?>> layers) {
+    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
     }
 
     public double getLearningRate() {

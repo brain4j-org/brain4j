@@ -5,6 +5,8 @@ import net.echo.math4j.math.tensor.impl.TensorGPU;
 
 public class Brain4J {
 
+    private static boolean logging;
+
     public static String version() {
         return "2.7.0";
     }
@@ -23,5 +25,13 @@ public class Brain4J {
 
     public static void useCPU() {
         TensorFactory.forceCPU();
+    }
+
+    public static void setLogging(boolean logging) {
+        Brain4J.logging = logging;
+    }
+
+    public static boolean isLogging() {
+        return logging;
     }
 }

@@ -1,5 +1,6 @@
 package net.echo.brain4j.model;
 
+import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.Layer;
@@ -10,7 +11,7 @@ import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents an abstract neural network model.
+ * Inputs and outputs are represented by n-dimensional tensors.
  *
  * @see Sequential Sequential
  * @see Transformer Transformer
@@ -38,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class Model implements Adapter {
 
     protected BackPropagation propagation;
-    protected List<Layer<?, ?>> layers;
+    protected List<Layer> layers;
 
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
@@ -48,30 +50,42 @@ public abstract class Model implements Adapter {
     protected Random generator;
     protected int seed;
 
-    public Model(Layer<?, ?>... layers) {
+    public Model(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
     public void connect(WeightInitializer weightInit) {
-        Layer<?, ?> lastNormalLayer = layers.getFirst();
+        Layer previousLayer = null;
 
-        for (Layer<?, ?> layer : layers) {
+        for (Layer layer : layers) {
             layer.compile(weightInit, lossFunction, optimizer, updater);
             layer.init(generator);
         }
 
-        for (int i = 1; i < layers.size(); i++) {
-            Layer<?, ?> layer = layers.get(i);
+        for (int i = 0; i < layers.size() - 1; i++) {
+            Layer layer = layers.get(i);
 
-            if (layer.getTotalNeurons() == 0 && !layer.isConvolutional()) continue;
+            if (!layer.canPropagate()) continue;
 
-            int nIn = lastNormalLayer.getTotalNeurons();
-            int nOut = layer.getTotalNeurons();
+            int current = i + 1;
+            Layer nextLayer = layers.get(current);
+
+            while (!(nextLayer.canPropagate()) && current < layers.size()) {
+                current++;
+                nextLayer = layers.get(current);
+            }
+
+            if (!nextLayer.canPropagate()) continue;
+
+            layer.preConnect(previousLayer, nextLayer);
+
+            int nIn = layer.getTotalNeurons();
+            int nOut = nextLayer.getTotalNeurons();
 
             double bound = weightInit.getBound(nIn, nOut);
 
-            lastNormalLayer.connect(generator, layer, bound);
-            lastNormalLayer = layer;
+            layer.connect(generator, previousLayer, nextLayer, bound);
+            previousLayer = layer;
         }
     }
 
@@ -84,8 +98,33 @@ public abstract class Model implements Adapter {
     public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
 
     public void fit(DataSet<DataRow> dataSet, int epoches) {
+        fit(dataSet, epoches, Integer.MAX_VALUE);
+    }
+
+    public void fit(DataSet<DataRow> dataSet, int epoches, int evaluateEvery) {
         for (int i = 0; i < epoches; i++) {
             fit(dataSet);
+
+            int currentEpoch = i + 1;
+
+            if (Brain4J.isLogging()) {
+                int progressBarLength = 30;
+                double percentage = (double) currentEpoch / epoches;
+
+                int repetitions = (int) (percentage * progressBarLength);
+                String progressBar = "█".repeat(repetitions);
+
+                System.out.printf("\rEpoch: %s/%s [%-" + progressBarLength + "s] %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
+
+                if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
+                    System.out.println();
+                }
+            }
+
+            if (currentEpoch % evaluateEvery == 0) {
+                double loss = loss(dataSet);
+                System.out.printf("Loss at epoch %s: %.4f\n", currentEpoch, loss);
+            }
         }
     }
 
@@ -124,12 +163,11 @@ public abstract class Model implements Adapter {
         ModernAdapter.serialize(path, this);
     }
 
-    public void add(Layer<?, ?>... layers) {
+    public void add(Layer... layers) {
         this.layers.addAll(Arrays.asList(layers));
     }
 
-    public String getStats() {
-
+    public String summary() {
         StringBuilder stats = new StringBuilder();
         DecimalFormat format = new DecimalFormat("#,###");
 
@@ -146,7 +184,7 @@ public abstract class Model implements Adapter {
         int totalBiases = 0;
 
         for (int i = 0; i < this.layers.size(); i++) {
-            Layer<?, ?> layer = this.layers.get(i);
+            Layer layer = this.layers.get(i);
 
             String layerType = layer.getClass().getSimpleName();
 
@@ -219,7 +257,7 @@ public abstract class Model implements Adapter {
         return generator;
     }
 
-    public List<Layer<?, ?>> getLayers() {
+    public List<Layer> getLayers() {
         return layers;
     }
 
@@ -235,7 +273,7 @@ public abstract class Model implements Adapter {
     public int getTotalNeurons() {
         int total = 0;
 
-        for (Layer<?, ?> layer : layers) {
+        for (Layer layer : layers) {
             total += layer.getTotalNeurons();
         }
 
@@ -245,7 +283,7 @@ public abstract class Model implements Adapter {
     public int getTotalWeights() {
         int total = 0;
 
-        for (Layer<?, ?> layer : layers) {
+        for (Layer layer : layers) {
             total += layer.getTotalParams();
         }
 

@@ -2,7 +2,7 @@ package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
@@ -12,9 +12,12 @@ import java.io.DataOutputStream;
  * Represents a Dropout layer, used to mitigate overfitting
  * by randomly deactivating a fraction of the input neurons.
  */
-public class DropoutLayer extends Layer<Tensor, Tensor> {
+public class DropoutLayer extends Layer {
 
     private double dropout;
+
+    public DropoutLayer() {
+    }
 
     /**
      * Constructs a dropout layer instance.
@@ -51,7 +54,7 @@ public class DropoutLayer extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
         if (!(lastLayer instanceof DenseLayer)) {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
@@ -67,6 +70,10 @@ public class DropoutLayer extends Layer<Tensor, Tensor> {
         }
 
         return input;
+    }
+
+    public Tensor scale(Tensor input) {
+        return input.mul(1 - dropout);
     }
 
     /**

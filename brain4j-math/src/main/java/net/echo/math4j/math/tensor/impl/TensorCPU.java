@@ -990,6 +990,48 @@ public class TensorCPU implements Cloneable, Tensor {
         return reshape(newShape);
     }
 
+    @Override
+    public Tensor setChannel(int channel, Tensor other) {
+        if (dimension() != 3) {
+            throw new IllegalArgumentException("Tensor must be 3-dimensional!");
+        }
+
+        if (channel <= 0 || channel >= shape[0]) {
+            throw new IllegalArgumentException("Invalid channel index: " + channel);
+        }
+
+        int height = shape[1];
+        int width = shape[2];
+
+        float[] sliceData = other.getData().toArray();
+        int offset = channel * height * width;
+
+        System.arraycopy(sliceData, 0, data.toArray(), offset, height * width);
+
+        return null;
+    }
+
+    @Override
+    public Tensor slice(int channel) {
+        if (dimension() != 3) {
+            throw new IllegalArgumentException("Tensor must be 3-dimensional!");
+        }
+
+        if (channel < 0 || channel >= shape[0]) {
+            throw new IllegalArgumentException("Invalid channel index: " + channel);
+        }
+
+        int height = shape[1];
+        int width = shape[2];
+
+        float[] sliceData = new float[height * width];
+        int offset = channel * height * width;
+
+        System.arraycopy(data.toArray(), offset, sliceData, 0, height * width);
+
+        return TensorFactory.of(new int[]{height, width}, sliceData);
+    }
+
     public Tensor slice(Range... ranges) {
         if (ranges.length > shape.length) {
             throw new IllegalArgumentException("Too many ranges specified");
@@ -1348,10 +1390,11 @@ public class TensorCPU implements Cloneable, Tensor {
     @Override
     public Tensor convolve(Tensor kernel) {
         int dim = this.dimension();
-        
-        if (dim > 2) {
+
+        if (dim > 3) {
             throw new IllegalArgumentException("Convolution is supported only for 1D and 2D tensors");
         }
+
         if (kernel.dimension() != dim) {
             throw new IllegalArgumentException("The kernel dimension must match the input dimension");
         }
@@ -1365,8 +1408,10 @@ public class TensorCPU implements Cloneable, Tensor {
 
         if (dim == 1) {
             return Convolution.convolve1D(this, kernel, Convolution.PaddingMode.SAME, convType);
-        } else {
+        } else if (dim == 2) {
             return Convolution.convolve2D(this, kernel, Convolution.PaddingMode.SAME, convType);
+        } else {
+            throw new UnsupportedOperationException("Not implemented yet.");
         }
     }
 }

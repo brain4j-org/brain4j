@@ -2,14 +2,14 @@ package net.echo.brain4j.layer.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 
 /**
  * Represents a fully connected (dense) layer in a neural network.
  */
-public class DenseLayer extends Layer<Tensor, Tensor> {
+public class DenseLayer extends Layer {
 
     private DenseLayer() {
     }
@@ -25,7 +25,7 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer<?, ?> lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
         if (!(lastLayer instanceof DenseLayer denseLayer)) {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
@@ -46,7 +46,7 @@ public class DenseLayer extends Layer<Tensor, Tensor> {
     }
 
     @Override
-    public Tensor propagate(StatesCache cache, Layer<?, ?> previous, Tensor delta) {
+    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
         Tensor output = cache.getOutputTensor(this);
         Tensor derivative = activation.getDerivative(output);
 

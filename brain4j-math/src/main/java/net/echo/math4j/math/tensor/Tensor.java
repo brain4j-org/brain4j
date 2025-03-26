@@ -135,6 +135,10 @@ public interface Tensor extends Iterable<Double> {
 
     Tensor unsqueeze(int dim);
 
+    Tensor setChannel(int channel, Tensor data);
+
+    Tensor slice(int channel);
+
     Tensor slice(Range... ranges);
 
     Tensor requiresGrad(boolean requiresGrad);

@@ -6,7 +6,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.cache.StatesCache;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.Optimizer;
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Transformer extends Model {
 
     @SafeVarargs
-    public Transformer(Layer<Tensor, Tensor>... layers) {
+    public Transformer(Layer... layers) {
         super(layers);
     }
 
@@ -84,7 +84,7 @@ public class Transformer extends Model {
     public Tensor predict(StatesCache cache, Tensor input, boolean training) {
         Tensor result = input;
 
-        for (Layer<?, ?> layer : layers) {
+        for (Layer layer : layers) {
             if (layer instanceof TransformerEncoder encoder) {
                 result = encoder.forward(cache, layer, result);
             } else if (layer instanceof VocabularyMapper mapper) {

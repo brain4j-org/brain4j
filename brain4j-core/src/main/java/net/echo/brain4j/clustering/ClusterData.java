@@ -1,17 +1,18 @@
 package net.echo.brain4j.clustering;
 
 import net.echo.math4j.DataSet;
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.List;
 
-public class ClusterData extends DataSet<Vector> {
+public class ClusterData extends DataSet<Tensor> {
 
-    public ClusterData(List<Vector> data) {
+    public ClusterData(List<Tensor> data) {
         super(data);
     }
 
-    public ClusterData(Vector... data) {
+    public ClusterData(Tensor... data) {
         super(data);
     }
 

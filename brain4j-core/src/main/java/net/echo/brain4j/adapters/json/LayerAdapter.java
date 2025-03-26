@@ -30,7 +30,7 @@ public class LayerAdapter implements JsonSerializer<Layer>, JsonDeserializer<Lay
     }
 
     @Override
-    public Layer<?, ?> deserialize(JsonElement element, Type type, JsonDeserializationContext context) throws JsonParseException {
+    public Layer deserialize(JsonElement element, Type type, JsonDeserializationContext context) throws JsonParseException {
         String layerType = element.getAsJsonObject().get("type").getAsString();
         String activationType = element.getAsJsonObject().get("activation").getAsString();
 

@@ -1,5 +1,6 @@
 package net.echo.brain4j.clustering;
 
+import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.vector.Vector;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class KMeans {
             cluster.clearData();
         }
 
-        for (Vector vector : data.getData()) {
+        for (Tensor vector : data.getData()) {
             Cluster closestCluster = getClosest(vector);
 
             closestCluster.addVector(vector);
@@ -92,10 +93,10 @@ public class KMeans {
      * @param set the dataset to evaluate
      * @return a map of data points to their closest clusters
      */
-    public Map<Vector, Cluster> evaluate(ClusterData set) {
-        Map<Vector, Cluster> clusterMap = new HashMap<>();
+    public Map<Tensor, Cluster> evaluate(ClusterData set) {
+        Map<Tensor, Cluster> clusterMap = new HashMap<>();
 
-        for (Vector vector : set.getData()) {
+        for (Tensor vector : set.getData()) {
             Cluster closestCluster = getClosest(vector);
 
             clusterMap.put(vector, closestCluster);
@@ -109,7 +110,7 @@ public class KMeans {
      * @param point the data point
      * @return the closest cluster
      */
-    public Cluster getClosest(Vector point) {
+    public Cluster getClosest(Tensor point) {
         double minDistance = Double.MAX_VALUE;
         Cluster closestCluster = null;
 

@@ -1,6 +1,8 @@
+import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.impl.DenseLayer;
+import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
@@ -15,44 +17,35 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class XorTest {
 
-    @Test
-    void testXorModel() throws Exception {
-        // Remove the comment if you would like to use the GPU
-        // TensorFactory.useGPUIfAvailable();
-
-        // Remove the comment if you want to use a pre-trained model
-        // Sequential model = ModernAdapter.deserialize("xor.bin", new Sequential());
-        Sequential model = getModel();
-        DataSet<DataRow> dataSet = getDataSet();
-
-        System.out.println(model.getStats());
-
-        long start = System.nanoTime();
-        model.fit(dataSet, 1000);
-        double took = (System.nanoTime() - start) / 1e6;
-
-        System.out.println("Training took: " + took + " ms");
-
-        double loss = model.loss(dataSet);
-        System.out.println("Loss: " + loss);
-
-        EvaluationResult result = model.evaluate(dataSet);
-        System.out.println(result.confusionMatrix());
-
-        assertTrue(loss < 0.01, "Loss is too high! " + loss);
-
-        ModernAdapter.serialize("xor.bin", model);
+    public static void main(String[] args) throws Exception {
+        new XorTest().testXorModel();
     }
 
-    private Sequential getModel() {
-        Sequential model = new Sequential(
+    private void testXorModel() throws Exception {
+        Brain4J.setLogging(true);
+
+        var dataSet = getDataSet();
+        var model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(32, Activations.MISH),
                 new DenseLayer(32, Activations.MISH),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        return model.compile(LossFunctions.BINARY_CROSS_ENTROPY, new AdamW(0.1));
+        model.compile(LossFunctions.BINARY_CROSS_ENTROPY, new AdamW(0.1));
+
+        System.out.println(model.summary());
+
+        model.fit(dataSet, 1000);
+
+        var result = model.evaluate(dataSet);
+        double loss = model.loss(dataSet);
+
+        System.out.println(result.confusionMatrix());
+        System.out.println("Loss: " + loss);
+
+        assertTrue(loss < 0.01, "Loss is too high! " + loss);
+
+        ModernAdapter.serialize("xor.bin", model);
     }
 
     private DataSet<DataRow> getDataSet() {

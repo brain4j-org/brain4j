@@ -2,7 +2,7 @@ package net.echo.brain4j.training.updater.impl;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.cache.Parameters;
+import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;
 
@@ -15,7 +15,7 @@ public class NormalUpdater extends Updater {
         }
 
         for (int i = 0; i < gradientsTensors.length; i++) {
-            Layer<?, ?> layer = model.getLayers().get(i);
+            Layer layer = model.getLayers().get(i);
 
             Tensor gradW = gradientsTensors[i];
             Tensor biasW = biasesTensors[i];
