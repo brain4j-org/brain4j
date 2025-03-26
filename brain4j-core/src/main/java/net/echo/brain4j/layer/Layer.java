@@ -109,14 +109,10 @@ public abstract class Layer implements Adapter {
     }
 
     public void preConnect(Layer previous, Layer next) {
-
     }
 
     public void connect(Random generator, Layer previous, Layer next, double bound) {
         this.nextLayer = next;
-
-        int nIn = getTotalNeurons();
-        int nOut = next.getTotalNeurons();
 
         int input = bias.elements();
         int output = next.getTotalNeurons();

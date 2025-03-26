@@ -2,16 +2,13 @@ import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.impl.DenseLayer;
-import net.echo.brain4j.layer.impl.DropoutLayer;
-import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,7 +28,7 @@ public class XorTest {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        model.compile(LossFunctions.BINARY_CROSS_ENTROPY, new AdamW(0.1));
+        model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.1));
 
         System.out.println(model.summary());
 

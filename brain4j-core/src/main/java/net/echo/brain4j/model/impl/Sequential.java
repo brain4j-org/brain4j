@@ -6,7 +6,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
@@ -76,7 +76,7 @@ public class Sequential extends Model {
     }
 
     @Override
-    public Sequential compile(LossFunctions function, Optimizer optimizer) {
+    public Sequential compile(Loss function, Optimizer optimizer) {
         return compile(function.getFunction(), optimizer);
     }
 
@@ -98,7 +98,7 @@ public class Sequential extends Model {
     }
 
     @Override
-    public Sequential compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+    public Sequential compile(WeightInit initializer, Loss lossFunction, Optimizer optimizer, Updater updater) {
         return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
     }
 

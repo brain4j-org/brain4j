@@ -5,7 +5,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.conv.ConvLayer;
 import net.echo.brain4j.layer.impl.conv.FlattenLayer;
 import net.echo.brain4j.layer.impl.conv.InputLayer;
-import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 
@@ -24,7 +24,7 @@ public class ConvTest {
                 new DenseLayer(10, Activations.LINEAR)
         );
 
-        model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.001));
+        model.compile(Loss.CROSS_ENTROPY, new Adam(0.001));
 
         System.out.println(model.summary());
     }

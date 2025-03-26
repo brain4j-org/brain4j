@@ -1,7 +1,7 @@
 package gpt;
 
 import net.echo.brain4j.Brain4J;
-import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.impl.Adam;
@@ -46,7 +46,7 @@ public class TransformerExample {
                 new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 5)
         );
 
-        model.compile(LossFunctions.CROSS_ENTROPY, new Adam(0.05));
+        model.compile(Loss.CROSS_ENTROPY, new Adam(0.05));
 
         System.out.println(model.summary());
         System.out.println("Vocabulary size: " + vocabulary.getVocabSize());

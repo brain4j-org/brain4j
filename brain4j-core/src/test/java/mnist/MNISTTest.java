@@ -5,7 +5,7 @@ import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.impl.DenseLayer;
-import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
@@ -33,7 +33,7 @@ public class MNISTTest {
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        model.compile(LossFunctions.CROSS_ENTROPY, new AdamW(0.01));
+        model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
 
         System.out.println(model.summary());
 

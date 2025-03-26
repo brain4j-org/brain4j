@@ -6,7 +6,7 @@ import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.brain4j.loss.LossFunctions;
+import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -132,7 +132,7 @@ public abstract class Model implements Adapter {
         return predict(new StatesCache(), input, false);
     }
 
-    public Model compile(LossFunctions function, Optimizer optimizer) {
+    public Model compile(Loss function, Optimizer optimizer) {
         return compile(function.getFunction(), optimizer);
     }
 
@@ -151,7 +151,7 @@ public abstract class Model implements Adapter {
         return this;
     }
 
-    public Model compile(WeightInit initializer, LossFunctions lossFunction, Optimizer optimizer, Updater updater) {
+    public Model compile(WeightInit initializer, Loss lossFunction, Optimizer optimizer, Updater updater) {
         return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
     }
 
