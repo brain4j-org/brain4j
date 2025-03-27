@@ -649,23 +649,23 @@ public class TensorCPU implements Cloneable, Tensor {
         int p = other.shape()[1];
         
         if (n != other.shape()[0]) {
-            throw new IllegalArgumentException(
-                "The inner dimensions do not match: " + n + " != " + other.shape()[0]
-            );
+            throw new IllegalArgumentException("The inner dimensions do not match: " + n + " != " + other.shape()[0]);
         }
         
         Tensor result = new TensorCPU(m, p);
-        
+
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < p; j++) {
                 float sum = 0;
+
                 for (int k = 0; k < n; k++) {
                     sum += get(i, k) * other.get(k, j);
                 }
+
                 result.set(sum, i, j);
             }
         }
-        
+
         return result;
     }
 

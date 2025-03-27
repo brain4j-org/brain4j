@@ -22,7 +22,6 @@ public class XorTest {
 
     private void testXorModel() throws Exception {
         Brain4J.setLogging(true);
-        Brain4J.useGPUIfAvailable();
 
         var dataSet = getDataSet();
         var model = new Sequential(
@@ -34,10 +33,12 @@ public class XorTest {
         model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.1));
 
         System.out.println(model.summary());
-        Thread.sleep(Integer.MAX_VALUE);
 
+        var start = System.nanoTime();
         model.fit(dataSet, 1000);
+        var took = (System.nanoTime() - start) / 1e6;
 
+        System.out.printf("Trained in %.5f ms%n", took);
 
         var result = model.evaluate(dataSet);
         double loss = model.loss(dataSet);

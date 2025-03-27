@@ -5,6 +5,7 @@ import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.impl.Adam;
+import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
@@ -23,7 +24,7 @@ import java.util.Scanner;
 
 public class TransformerExample {
 
-    private static final int EMBEDDING_SIZE = 32;
+    private static final int EMBEDDING_SIZE = 64;
     private static final PositionalEncoding ENCODING = new PositionalEncoding(100, EMBEDDING_SIZE);
 
     public static void main(String[] args) throws Exception {
@@ -42,11 +43,11 @@ public class TransformerExample {
         vocabulary.tokenize();
 
         Transformer model = new Transformer(
-                new TransformerEncoder(1, EMBEDDING_SIZE),
+                new TransformerDecoder(1, EMBEDDING_SIZE),
                 new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 5)
         );
 
-        model.compile(Loss.CROSS_ENTROPY, new Adam(0.05));
+        model.compile(Loss.CROSS_ENTROPY, new Adam(0.1));
 
         System.out.println(model.summary());
         System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
@@ -77,12 +78,12 @@ public class TransformerExample {
             String trainInput = entry.getKey();
             String trainOutput = entry.getValue();
 
-            if (!trainOutput.endsWith("<END>")) {
+            if (!trainOutput.endsWith("<|END|>")) {
                 if (!trainOutput.endsWith(" ")) {
                     trainOutput += " ";
                 }
 
-                trainOutput += "<END>";
+                trainOutput += "<|END|>";
             }
 
             List<String> tokens = vocabulary.split(trainOutput);
@@ -107,7 +108,7 @@ public class TransformerExample {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
-        transformer.fit(dataSet, 1500, 100);
+        transformer.fit(dataSet, 500, 50);
         double duration = (System.nanoTime() - startTime) / 1e6;
 
         double loss = transformer.loss(dataSet);
@@ -118,7 +119,7 @@ public class TransformerExample {
         StringBuilder botResponse = new StringBuilder();
         String lastWord = "";
 
-        while (!lastWord.equals("<END>") && !lastWord.equals("<UNK>")) {
+        while (!lastWord.equals("<|END|>") && !lastWord.equals("<|UNK|>")) {
             Tensor input = vocabulary.encode(prompt);
             Tensor encoded = ENCODING.encode(input);
             Tensor output = transformer.predict(encoded);
@@ -131,7 +132,7 @@ public class TransformerExample {
             lastWord = word;
 
             System.out.print("\rChat Bot: " + botResponse);
-            Thread.sleep(50);
+            Thread.sleep(5);
         }
     }
 }

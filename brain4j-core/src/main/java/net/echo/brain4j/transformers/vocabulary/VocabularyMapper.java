@@ -31,8 +31,9 @@ public class VocabularyMapper extends Layer {
 
         // delta as a 1 x vocab_size matrix
         Tensor gradZ = delta.reshape(1, vocabularySize);
+        // output shape is 1 x vocab_size
         Tensor gradW = cache.getOutputTensor(this)
-                .transpose()
+                .transpose() // transforms to vocab_size x 1
                 .matmul(gradZ)
                 .mul(optimizer.getLearningRate());
 
