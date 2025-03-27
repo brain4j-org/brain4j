@@ -288,13 +288,13 @@ public class TensorGPU extends TensorCPU {
             float[] dataB = other.toArray();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
+                    (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
             cl_mem memB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
+                    (long) Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
             
             float[] resultData = new float[M * N];
             cl_mem memC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
-                    Sizeof.cl_float * resultData.length, null, null);
+                    (long) Sizeof.cl_float * resultData.length, null, null);
             
             clSetKernelArg(MAT_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memA));
             clSetKernelArg(MAT_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memB));
@@ -308,7 +308,7 @@ public class TensorGPU extends TensorCPU {
                 globalWorkSize, null, 0, null, null);
             
             clEnqueueReadBuffer(COMMAND_QUEUE, memC, CL_TRUE, 0,
-                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    (long) Sizeof.cl_float * resultData.length, Pointer.to(resultData),
                     0, null, null);
             
             clReleaseMemObject(memA);
@@ -338,13 +338,13 @@ public class TensorGPU extends TensorCPU {
             float[] dataB = other.toArray();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
+                    (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
             cl_mem memB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
+                    (long) Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
             
             float[] resultData = new float[elements];
             cl_mem memC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
-                    Sizeof.cl_float * resultData.length, null, null);
+                    (long) Sizeof.cl_float * resultData.length, null, null);
             
             clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memA));
             clSetKernelArg(ELEMENT_WISE_ADD_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memB));
@@ -356,7 +356,7 @@ public class TensorGPU extends TensorCPU {
                     globalWorkSize, null, 0, null, null);
             
             clEnqueueReadBuffer(COMMAND_QUEUE, memC, CL_TRUE, 0,
-                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    (long) Sizeof.cl_float * resultData.length, Pointer.to(resultData),
                     0, null, null);
             
             clReleaseMemObject(memA);
@@ -386,13 +386,13 @@ public class TensorGPU extends TensorCPU {
             float[] dataB = other.toArray();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
+                    (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
             cl_mem memB = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
+                    (long) Sizeof.cl_float * dataB.length, Pointer.to(dataB), null);
             
             float[] resultData = new float[elements];
             cl_mem memC = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
-                    Sizeof.cl_float * resultData.length, null, null);
+                    (long) Sizeof.cl_float * resultData.length, null, null);
             
             clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memA));
             clSetKernelArg(ELEMENT_WISE_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memB));
@@ -404,7 +404,7 @@ public class TensorGPU extends TensorCPU {
                     globalWorkSize, null, 0, null, null);
             
             clEnqueueReadBuffer(COMMAND_QUEUE, memC, CL_TRUE, 0,
-                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    (long) Sizeof.cl_float * resultData.length, Pointer.to(resultData),
                     0, null, null);
             
             clReleaseMemObject(memA);
@@ -458,11 +458,11 @@ public class TensorGPU extends TensorCPU {
         float[] resultData = new float[outputSize];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
+                (long) Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
         cl_mem memKernel = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                Sizeof.cl_float * kernelData.length, Pointer.to(kernelData), null);
+                (long) Sizeof.cl_float * kernelData.length, Pointer.to(kernelData), null);
         cl_mem memOutput = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
-                Sizeof.cl_float * resultData.length, null, null);
+                (long) Sizeof.cl_float * resultData.length, null, null);
         
         try {
             if (!useFFT) {
@@ -492,11 +492,11 @@ public class TensorGPU extends TensorCPU {
                 int fftSize = nextPowerOf2(inputSize + kernelSize - 1);
                 
                 cl_mem memBuffer1 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                        Sizeof.cl_float * 2 * fftSize, null, null);
+                        (long) Sizeof.cl_float * 2 * fftSize, null, null);
                 cl_mem memBuffer2 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                        Sizeof.cl_float * 2 * fftSize, null, null);
+                        (long) Sizeof.cl_float * 2 * fftSize, null, null);
                 cl_mem memBuffer3 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                        Sizeof.cl_float * 2 * fftSize, null, null);
+                        (long) Sizeof.cl_float * 2 * fftSize, null, null);
                 
                 try {
                     clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memInput));
@@ -533,7 +533,7 @@ public class TensorGPU extends TensorCPU {
             }
             
             clEnqueueReadBuffer(COMMAND_QUEUE, memOutput, CL_TRUE, 0,
-                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    (long) Sizeof.cl_float * resultData.length, Pointer.to(resultData),
                     0, null, null);
         } finally {
             clReleaseMemObject(memInput);
@@ -566,11 +566,11 @@ public class TensorGPU extends TensorCPU {
         float[] resultData = new float[outputRows * outputCols];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
+                (long) Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
         cl_mem memKernel = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                Sizeof.cl_float * kernelData.length, Pointer.to(kernelData), null);
+                (long) Sizeof.cl_float * kernelData.length, Pointer.to(kernelData), null);
         cl_mem memOutput = clCreateBuffer(CONTEXT, CL_MEM_WRITE_ONLY,
-                Sizeof.cl_float * resultData.length, null, null);
+                (long) Sizeof.cl_float * resultData.length, null, null);
         
         try {
             if (!useFFT) {
@@ -605,11 +605,11 @@ public class TensorGPU extends TensorCPU {
                 int fftCols = nextPowerOf2(inputCols + kernelCols - 1);
                 
                 cl_mem memBuffer1 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                        Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
+                        (long) Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
                 cl_mem memBuffer2 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                        Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
+                        (long) Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
                 cl_mem memBuffer3 = clCreateBuffer(CONTEXT, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                        Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
+                        (long) Sizeof.cl_float * 2 * fftRows * fftCols, null, null);
                 
                 try {
                     clSetKernelArg(FFT_2D_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memInput));
@@ -658,13 +658,13 @@ public class TensorGPU extends TensorCPU {
                     clSetKernelArg(COMPLEX_POINTWISE_MUL_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { fftRows * fftCols }));
                     
                     try {
-                        long[] localWorkSize = getOptimalWorkgroupSize(fftRows * fftCols);
+                        long[] localWorkSize = getOptimalWorkgroupSize((long) fftRows * fftCols);
                         clEnqueueNDRangeKernel(COMMAND_QUEUE, COMPLEX_POINTWISE_MUL_KERNEL, 1, null,
-                                new long[] { fftRows * fftCols }, localWorkSize, 0, null, null);
+                                new long[] {(long) fftRows * fftCols }, localWorkSize, 0, null, null);
                     } catch (Exception e) {
                         if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) {
                             clEnqueueNDRangeKernel(COMMAND_QUEUE, COMPLEX_POINTWISE_MUL_KERNEL, 1, null,
-                                    new long[] { fftRows * fftCols }, null, 0, null, null);
+                                    new long[] {(long) fftRows * fftCols }, null, 0, null, null);
                         } else {
                             throw e;
                         }
@@ -717,7 +717,7 @@ public class TensorGPU extends TensorCPU {
             }
             
             clEnqueueReadBuffer(COMMAND_QUEUE, memOutput, CL_TRUE, 0,
-                    Sizeof.cl_float * resultData.length, Pointer.to(resultData),
+                    (long) Sizeof.cl_float * resultData.length, Pointer.to(resultData),
                     0, null, null);
         } finally {
             clReleaseMemObject(memInput);
