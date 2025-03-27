@@ -4,7 +4,6 @@ import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.json.UpdaterAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.Parameters;
 import net.echo.math4j.math.tensor.Tensor;
 
@@ -28,7 +27,7 @@ public abstract class Updater {
         this.biasesTensors[layer.getId()] = biasW;
     }
 
-    public void postInitialize(Sequential model) {
+    public void postInitialize() {
         this.gradientsTensors = new Tensor[Parameters.TOTAL_LAYERS];
         this.biasesTensors = new Tensor[Parameters.TOTAL_LAYERS];
     }

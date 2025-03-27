@@ -300,8 +300,8 @@ public class TensorGPU extends TensorCPU {
             clSetKernelArg(MAT_MULT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memB));
             clSetKernelArg(MAT_MULT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memC));
             clSetKernelArg(MAT_MULT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { M }));
-            clSetKernelArg(MAT_MULT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { N }));
-            clSetKernelArg(MAT_MULT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { K }));
+            clSetKernelArg(MAT_MULT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { K }));
+            clSetKernelArg(MAT_MULT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { N }));
             
             long[] globalWorkSize = new long[] { M, N };
             clEnqueueNDRangeKernel(COMMAND_QUEUE, MAT_MULT_KERNEL, 2, null,

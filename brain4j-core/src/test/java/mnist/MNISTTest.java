@@ -25,6 +25,7 @@ public class MNISTTest {
 
     private void testMNIST() throws Exception {
         Brain4J.setLogging(true);
+        Brain4J.useGPUIfAvailable();
 
         var dataSet = getDataSet();
         var model = new Sequential(

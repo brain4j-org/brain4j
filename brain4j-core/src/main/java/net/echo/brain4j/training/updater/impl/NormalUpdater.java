@@ -29,6 +29,7 @@ public class NormalUpdater extends Updater {
             }
         }
 
+        System.out.println("RESETTING!");
         this.gradientsTensors = new Tensor[Parameters.TOTAL_LAYERS];
         this.biasesTensors = new Tensor[Parameters.TOTAL_LAYERS];
     }
