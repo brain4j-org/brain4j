@@ -10,6 +10,8 @@ import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
+import javax.swing.plaf.SliderUI;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class XorTest {
@@ -20,6 +22,7 @@ public class XorTest {
 
     private void testXorModel() throws Exception {
         Brain4J.setLogging(true);
+        Brain4J.useGPUIfAvailable();
 
         var dataSet = getDataSet();
         var model = new Sequential(
@@ -31,8 +34,10 @@ public class XorTest {
         model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.1));
 
         System.out.println(model.summary());
+        Thread.sleep(Integer.MAX_VALUE);
 
         model.fit(dataSet, 1000);
+
 
         var result = model.evaluate(dataSet);
         double loss = model.loss(dataSet);

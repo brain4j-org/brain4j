@@ -6,13 +6,10 @@ import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;
 
-import java.util.Arrays;
-
 public class StochasticUpdater extends Updater {
 
     @Override
     public void postBatch(Model model, double learningRate) {
-        System.out.println("called and " + gradientsTensors[0].sum());
         if (model.getLayers().size() != gradientsTensors.length) {
             return; // TODO: Implement this for transformers
         }

@@ -108,23 +108,26 @@ public abstract class Model implements Adapter {
             int currentEpoch = i + 1;
 
             if (Brain4J.isLogging()) {
-                int progressBarLength = 30;
-                double percentage = (double) currentEpoch / epoches;
-
-                int repetitions = (int) (percentage * progressBarLength);
-                String progressBar = "█".repeat(repetitions);
-
-                System.out.printf("\rEpoch: %s/%s [%-" + progressBarLength + "s] %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
-
-                if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
-                    System.out.println();
-                }
+                printProgressBar(currentEpoch, epoches, evaluateEvery);
             }
 
             if (currentEpoch % evaluateEvery == 0) {
-                double loss = loss(dataSet);
-                System.out.printf("Loss at epoch %s: %.4f\n", currentEpoch, loss);
+                System.out.printf("Loss at epoch %s: %.4f\n", currentEpoch, loss(dataSet));
             }
+        }
+    }
+
+    private void printProgressBar(int currentEpoch, int epoches, int evaluateEvery) {
+        int progressBarLength = 30;
+        double percentage = (double) currentEpoch / epoches;
+
+        int repetitions = (int) (percentage * progressBarLength);
+        String progressBar = "█".repeat(repetitions);
+
+        System.out.printf("\rEpoch: %s/%s [%-" + progressBarLength + "s] %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
+
+        if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
+            System.out.println();
         }
     }
 

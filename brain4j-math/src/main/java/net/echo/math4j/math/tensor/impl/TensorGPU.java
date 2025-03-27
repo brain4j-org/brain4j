@@ -238,7 +238,7 @@ public class TensorGPU extends TensorCPU {
     public static void reinitializeGPU() {        
         if (!INITIALIZED) {
             try {
-                    INITIALIZED = initializeOpenCL();
+                INITIALIZED = initializeOpenCL();
             } catch (Exception e) {
                 System.err.println("Failed to reinitialize GPU: " + e.getMessage());
             }
