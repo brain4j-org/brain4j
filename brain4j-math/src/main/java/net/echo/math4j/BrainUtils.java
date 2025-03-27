@@ -1,5 +1,6 @@
 package net.echo.math4j;
 
+import static net.echo.math4j.math.constants.Constants.*;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.vector.Vector;
 
@@ -11,8 +12,6 @@ import java.util.List;
  */
 public class BrainUtils {
 
-    private static final double GRADIENT_CLIP = 5.0;
-    
     public static <T extends Enum<T>> T parse(Vector outputs, Class<T> clazz) {
         return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
     }

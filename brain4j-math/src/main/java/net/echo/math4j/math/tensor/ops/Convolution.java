@@ -1,6 +1,7 @@
 package net.echo.math4j.math.tensor.ops;
 
 import net.echo.math4j.math.complex.Complex;
+import static net.echo.math4j.math.constants.Constants.*;
 import net.echo.math4j.math.fft.FFT;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -17,8 +18,6 @@ public final class Convolution {
         DIRECT,  
         FFT      
     }
-    
-    private static final int FFT_THRESHOLD = 15;
     
     private Convolution() {}
 
@@ -149,7 +148,7 @@ public final class Convolution {
         for (int i = 0; i < outputSize; i++) {
             if (startIdx + i < result.length) {
                 double val = result[startIdx + i].getReal();
-                if (Math.abs(val) < 1e-10) {
+                if (Math.abs(val) < EPSILON) {
                     val = 0.0;
                 }
                 output.set(val, i);
@@ -345,7 +344,7 @@ public final class Convolution {
         for (int i = 0; i < outputRows; i++) {
             for (int j = 0; j < outputCols; j++) {
                 double val = result[startRow + i][startCol + j].getReal();
-                if (Math.abs(val) < 1e-10) {
+                if (Math.abs(val) < EPSILON) {
                     val = 0.0;
                 }
                 output.set(val, i, j);

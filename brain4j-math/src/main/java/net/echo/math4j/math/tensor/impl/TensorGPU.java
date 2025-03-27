@@ -1,5 +1,6 @@
 package net.echo.math4j.math.tensor.impl;
 
+import static net.echo.math4j.math.constants.Constants.*;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.opencl.DeviceUtils;
 import org.jocl.*;
@@ -36,10 +37,6 @@ public class TensorGPU extends TensorCPU {
     
     private static final String TENSOR_OPS_KERNEL_PATH = "/kernels/tensor_operations.cl";
     private static final String CONV_KERNEL_PATH = "/kernels/conv.cl";
-    
-    private static final int OPTIMAL_WORKGROUP_SIZE = 256;
-    private static final int FFT_THRESHOLD = 32;
-    private static final int MAX_WORKGROUP_SIZE = 1024;
     
     static {
         try {

@@ -1,12 +1,11 @@
 package net.echo.math4j.math.fft;
 
 import net.echo.math4j.math.complex.Complex;
+import static net.echo.math4j.math.constants.Constants.*;
 
 import java.util.Arrays;
 
 public final class FFT {
-
-    private static final double TWO_PI = 2.0 * Math.PI;
     
     private FFT() {
     }
@@ -92,7 +91,7 @@ public final class FFT {
         Arrays.fill(b, Complex.ZERO);
         
         for (int i = 0; i < n; i++) {
-            double angle = Math.PI * ((long)i * i % (2 * n)) / n;  // long avoids overflow
+            double angle = PI * ((long)i * i % (2 * n)) / n;  // long avoids overflow
             Complex chirp = Complex.fromPolar(1.0, -angle);
             a[i] = input[i].multiply(chirp);
             b[i] = chirp.conjugate();
@@ -106,7 +105,7 @@ public final class FFT {
         
         Complex[] result = new Complex[n];
         for (int i = 0; i < n; i++) {
-            double angle = Math.PI * ((long)i * i % (2 * n)) / n;
+            double angle = PI * ((long)i * i % (2 * n)) / n;
             Complex chirp = Complex.fromPolar(1.0, -angle);
             result[i] = c[i].multiply(chirp);
         }
