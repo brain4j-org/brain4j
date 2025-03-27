@@ -8,8 +8,8 @@ import net.echo.math4j.math.tensor.impl.TensorGPU;
  * This class contains various utilities to help you use the library.
  * You can find the documentation related <a href="https://github.com/xEcho1337/brain4j/wiki">here</a>.
  * 
- * @author xEcho1337
- * @author Adversing
+ * @author <a href="https://github.com/xEcho1337">xEcho1337</a>
+ * @author <a href="https://github.com/Adversing">Adversing</a>
  */
 public class Brain4J {
 
