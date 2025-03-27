@@ -54,8 +54,6 @@ public class TransformerExample {
         Scanner scanner = new Scanner(System.in);
 
         Map<String, String> samples = Map.of(
-//                "batocchi miglior prof", "per reale",
-//                "la neri non sa spiegare", ""
                 "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
         );
 
