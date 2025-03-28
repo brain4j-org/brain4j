@@ -5,7 +5,7 @@ Brain4J is a lightweight, minimal, and flexible Java library designed to simplif
 
 
 - <a href="https://github.com/xEcho1337/Brain4J/blob/main/LICENSE">📄 License</a>
-    ·
+
 - <a href="https://github.com/xEcho1337/brain4j/wiki">⚙️ Wiki</a>
 
 - <a href="https://github.com/xEcho1337/brain4j/issues/new?template=Blank+issue">🛠️ Report an issue</a>
@@ -24,7 +24,6 @@ Brain4J is a lightweight, minimal, and flexible Java library designed to simplif
 - **Explore Advanced Features**: Check out the [Advanced Usage](https://github.com/xEcho1337/brain4j/wiki/Advanced-Usage) section.
 
 ### 🔗 Useful Links
-- [GitHub Repository](https://github.com/xEcho1337/brain4j)
 - [Changelog](https://github.com/xEcho1337/brain4j/releases)
 - [Issue Tracker](https://github.com/xEcho1337/brain4j/issues)
 - [Contact](https://github.com/xEcho1337/brain4j/wiki/Contact)
