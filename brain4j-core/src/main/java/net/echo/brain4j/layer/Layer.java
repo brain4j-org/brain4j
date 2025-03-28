@@ -113,9 +113,13 @@ public abstract class Layer implements Adapter {
         int input = bias.elements();
         int output = next.getTotalNeurons();
 
-        this.weights = TensorFactory
-                .matrix(output, input)
-                .fill(() -> generator.nextDouble(2 * bound) - bound);
+        this.weights = TensorFactory.matrix(output, input);
+
+        for (int i = 0; i < output; i++) {
+            for (int j = 0; j < input; j++) {
+                this.weights.set(generator.nextDouble(2 * bound) - bound, i, j);
+            }
+        }
     }
 
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
