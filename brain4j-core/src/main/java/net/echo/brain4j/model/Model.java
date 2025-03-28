@@ -24,10 +24,7 @@ import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -149,7 +146,7 @@ public abstract class Model implements Adapter {
         this.lossFunction = lossFunction;
         this.optimizer = optimizer;
         this.updater = updater;
-        this.generator = new Random(this.seed);
+        this.generator = Random.from(new SplittableRandom(this.seed));
 
         return this;
     }
