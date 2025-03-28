@@ -10,6 +10,8 @@ import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
+import javax.swing.plaf.SliderUI;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class XorTest {
@@ -32,7 +34,11 @@ public class XorTest {
 
         System.out.println(model.summary());
 
+        var start = System.nanoTime();
         model.fit(dataSet, 1000);
+        var took = (System.nanoTime() - start) / 1e6;
+
+        System.out.printf("Trained in %.5f ms%n", took);
 
         var result = model.evaluate(dataSet);
         double loss = model.loss(dataSet);

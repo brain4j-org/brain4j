@@ -3,7 +3,6 @@ package tensor;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
-import net.echo.math4j.opencl.DeviceUtils;
 import net.echo.math4j.opencl.GPUProfiler;
 
 public class TensorGPUTest {
@@ -13,11 +12,11 @@ public class TensorGPUTest {
         System.out.println("Using GPU: " + TensorFactory.isUsingGPU());
         
         if (TensorGPU.isGpuAvailable()) {
-            GPUProfiler.printDeviceInfo(DeviceUtils.getDevice());
+            GPUProfiler.printDefaultDeviceInfo();
         }
         
         benchmarkMatrixMultiplication();
-        benchmarkLargeMatrixMultiplication(500, 500, 500);
+        benchmarkLargeMatrixMultiplication(784, 128, 32);
     }
     
     private static void benchmarkMatrixMultiplication() {
@@ -48,21 +47,25 @@ public class TensorGPUTest {
         }
         
         // CPU benchmark
-        long cpuStart = System.currentTimeMillis();
+        long cpuStart = System.nanoTime();
         Tensor cpuResult = cpuA.matmul(cpuB);
-        long cpuEnd = System.currentTimeMillis();
+        long cpuEnd = System.nanoTime();
         
         // GPU benchmark
-        long gpuStart = System.currentTimeMillis();
+        long gpuStart = System.nanoTime();
         Tensor gpuResult = gpuA.matmul(gpuB);
-        long gpuEnd = System.currentTimeMillis();
+        long gpuEnd = System.nanoTime();
         
         boolean resultsMatch = checkResultsMatch(cpuResult, gpuResult);
-        
-        System.out.println("CPU: " + (cpuEnd - cpuStart) + " ms");
-        System.out.println("GPU: " + (gpuEnd - gpuStart) + " ms");
-        System.out.println("Speedup: " + (double)(cpuEnd - cpuStart) / (gpuEnd - gpuStart) + "x");
-        System.out.println("Results match: " + resultsMatch);
+
+        double tookCPU = (cpuEnd - cpuStart) / 1e6;
+        double tookGPU = (gpuEnd - gpuStart) / 1e6;
+        double speedup = tookCPU / tookGPU;
+
+        System.out.printf("CPU: %.4f ms\n", tookCPU);
+        System.out.printf("GPU: %.4f ms\n", tookGPU);
+        System.out.printf("Speedup: %.4fx\n", speedup);
+        System.out.printf("Results match: %s\n", resultsMatch);
     }
     
     private static void benchmarkLargeMatrixMultiplication(int m, int n, int p) {
@@ -78,21 +81,25 @@ public class TensorGPUTest {
         Tensor gpuB = TensorFactory.ones(n, p);
         
         System.out.println("Benchmark CPU in progress...");
-        long cpuStart = System.currentTimeMillis();
+        long cpuStart = System.nanoTime();
         Tensor cpuResult = cpuA.matmul(cpuB);
-        long cpuEnd = System.currentTimeMillis();
+        long cpuEnd = System.nanoTime();
         
         System.out.println("Benchmark GPU in progress...");
-        long gpuStart = System.currentTimeMillis();
+        long gpuStart = System.nanoTime();
         Tensor gpuResult = gpuA.matmul(gpuB);
-        long gpuEnd = System.currentTimeMillis();
-        
-        boolean resultsMatch = Math.abs(cpuResult.get(0, 0) - gpuResult.get(0, 0)) < 0.001;
-        
-        System.out.println("CPU: " + (cpuEnd - cpuStart) + " ms");
-        System.out.println("GPU: " + (gpuEnd - gpuStart) + " ms");
-        System.out.println("Speedup: " + (double)(cpuEnd - cpuStart) / (gpuEnd - gpuStart) + "x");
-        System.out.println("Results check: " + resultsMatch);
+        long gpuEnd = System.nanoTime();
+
+        boolean resultsMatch = checkResultsMatch(cpuResult, gpuResult);
+
+        double tookCPU = (cpuEnd - cpuStart) / 1e6;
+        double tookGPU = (gpuEnd - gpuStart) / 1e6;
+        double speedup = tookCPU / tookGPU;
+
+        System.out.printf("CPU: %.4f ms\n", tookCPU);
+        System.out.printf("GPU: %.4f ms\n", tookGPU);
+        System.out.printf("Speedup: %.4fx\n", speedup);
+        System.out.printf("Results match: %s\n", resultsMatch);
     }
     
     private static boolean checkResultsMatch(Tensor a, Tensor b) {

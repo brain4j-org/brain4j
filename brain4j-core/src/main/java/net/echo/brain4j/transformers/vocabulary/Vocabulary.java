@@ -17,8 +17,8 @@ public class Vocabulary {
         this.corpus = corpus;
         this.dimension = dimension;
         this.tokens = new ArrayList<>();
-        this.tokens.add("<UNK>"); // The first index is for the unknown token
-        this.tokens.add("<END>"); // The second index is for the unknown token
+        this.tokens.add("<|UNK|>"); // The first index is for the unknown token
+        this.tokens.add("<|END|>"); // The second index is for the unknown token
     }
 
     public List<String> split(String input) {
@@ -99,7 +99,6 @@ public class Vocabulary {
         int index = tokens.indexOf(expected);
 
         if (index == -1) {
-            System.out.println(expected);// + " not found in the vocab!");
             index = 0;
         }
 
