@@ -177,6 +177,7 @@ public class Sequential extends Model {
                 } else {
                     denseResult = dropout.scale(denseResult);
                 }
+
                 continue;
             }
 

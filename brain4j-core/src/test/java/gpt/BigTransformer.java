@@ -7,6 +7,8 @@ import net.echo.brain4j.training.optimizer.impl.GradientDescent;
 import net.echo.brain4j.transformers.DecoderGroup;
 import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
+import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 
 public class BigTransformer {
 
@@ -20,7 +22,7 @@ public class BigTransformer {
         int vocabSize = 50000;
 
         var model = new Transformer(
-                new DecoderGroup(32, numHeads, dimension),
+                new DecoderGroup(16, numHeads, dimension),
 
                 new VocabularyMapper(vocabSize, dimension, 5)
         );
@@ -32,6 +34,14 @@ public class BigTransformer {
         double took = (System.nanoTime() - start) / 1e6;
 
         System.out.println(model.summary());
-        System.out.printf("Took %s ms to initialize", took);
+        System.out.printf("Took %s ms to initialize%n", took);
+
+        Tensor input = TensorFactory.random(3, dimension);
+
+        start = System.nanoTime();
+        model.predict(input);
+        took = (System.nanoTime() - start) / 1e6;
+
+        System.out.println("Took " + took + " ms to predict");
     }
 }

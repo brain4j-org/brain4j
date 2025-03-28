@@ -12,6 +12,7 @@ import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
+import net.echo.brain4j.transformers.DecoderGroup;
 import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.math4j.BrainUtils;
@@ -84,11 +85,7 @@ public class Transformer extends Model {
         Tensor result = input;
 
         for (Layer layer : layers) {
-            if (layer instanceof TransformerEncoder encoder) {
-                result = encoder.forward(cache, layer, result);
-            } else if (layer instanceof VocabularyMapper mapper) {
-                result = mapper.forward(cache, layer, result);
-            }
+            result = layer.forward(cache, layer, result);
         }
 
         return result;
