@@ -1,8 +1,8 @@
 package net.echo.brain4j.model.impl;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.Loss;
+import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInit;
 import net.echo.brain4j.model.initialization.WeightInitializer;
@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Transformer extends Model {
 
-    @SafeVarargs
     public Transformer(Layer... layers) {
         super(layers);
     }

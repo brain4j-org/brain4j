@@ -27,7 +27,7 @@ public class TransformerEncoder extends Layer {
     protected final int heads;
     protected final int dimension;
 
-    private MultiHeadAttention attention;
+    protected MultiHeadAttention attention;
 
     public TransformerEncoder(int numHeads, int dimension) {
         this.normalizer = new LayerNorm();
@@ -43,6 +43,7 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public void init(Random generator) {
+        this.attention.compile(generator, weightInit);
     }
 
     @Override
@@ -57,7 +58,8 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        this.attention = new MultiHeadAttention(weightInit, heads, dimension);
+        super.compile(weightInit, lossFunction, optimizer, updater);
+        this.attention = createAttention(); new MultiHeadAttention(heads, dimension);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 
@@ -87,6 +89,10 @@ public class TransformerEncoder extends Layer {
         cache.setOutputTensor(this, merged);
 
         return normalizer.normalize(merged.add(normalized));
+    }
+
+    public MultiHeadAttention createAttention() {
+        return new MultiHeadAttention(heads, dimension);
     }
 
     public MultiHeadAttention getAttention() {

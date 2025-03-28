@@ -84,13 +84,6 @@ public abstract class Layer implements Adapter {
         return false;
     }
 
-    public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        this.weightInit = weightInit;
-        this.lossFunction = lossFunction;
-        this.optimizer = optimizer;
-        this.updater = updater;
-    }
-
     public void init(Random generator) {
         for (int i = 0; i < bias.elements(); i++) {
             double value = 2 * generator.nextDouble() - 1;
@@ -98,17 +91,20 @@ public abstract class Layer implements Adapter {
         }
     }
 
+    public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        this.weightInit = weightInit;
+        this.lossFunction = lossFunction;
+        this.optimizer = optimizer;
+        this.updater = updater;
+    }
+
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
         Tensor derivative = activation.getDerivative(outputs);
-
         Tensor error = outputs.clone().sub(targets);
 
         return error
                 .clone()
                 .mapWithIndex((i, x) -> lossFunction.getDelta(x, derivative.get(i)));
-    }
-
-    public void preConnect(Layer previous, Layer next) {
     }
 
     public void connect(Random generator, Layer previous, Layer next, double bound) {

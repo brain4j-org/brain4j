@@ -5,8 +5,9 @@ import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
-import net.echo.brain4j.loss.LossFunction;
+import net.echo.brain4j.layer.impl.conv.FlattenLayer;
 import net.echo.brain4j.loss.Loss;
+import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.model.initialization.WeightInit;
@@ -18,7 +19,6 @@ import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
-import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
@@ -74,7 +74,9 @@ public abstract class Model implements Adapter {
 
             if (!nextLayer.canPropagate()) continue;
 
-            layer.preConnect(previousLayer, nextLayer);
+            if (layer instanceof FlattenLayer flattenLayer) {
+                flattenLayer.preConnect(previousLayer, nextLayer);
+            }
 
             int nIn = layer.getTotalNeurons();
             int nOut = nextLayer.getTotalNeurons();
@@ -146,7 +148,7 @@ public abstract class Model implements Adapter {
         this.lossFunction = lossFunction;
         this.optimizer = optimizer;
         this.updater = updater;
-        this.generator = Random.from(new SplittableRandom(this.seed));
+        this.generator = Random.from(new SplittableRandom(seed));
 
         return this;
     }
@@ -179,9 +181,8 @@ public abstract class Model implements Adapter {
         stats.append(String.format(pattern, "Index", "Layer", "Neurons", "Weights", "Activation"));
         stats.append("-".repeat(divider.length() - 1)).append("\n");
 
-        int totalWeights = 0;
-        int totalSynapses = 0;
-        int totalBiases = 0;
+        long totalWeights = 0;
+        long totalBiases = 0;
 
         for (int i = 0; i < this.layers.size(); i++) {
             Layer layer = this.layers.get(i);
@@ -196,26 +197,24 @@ public abstract class Model implements Adapter {
 
             stats.append(String.format(pattern, i, layerType, formatNeurons, formatWeights, layer.getActivation().getName()));
 
-            if (layer instanceof TransformerEncoder encoder) {
-                totalSynapses += encoder.getFeedForwardSize();
-            } else {
-                totalSynapses += weights;
-            }
-
             totalWeights += weights;
             totalBiases += neurons;
         }
 
-        int params = totalWeights + totalBiases;
+        long params = totalWeights + totalBiases;
 
         String parameters = format.format(params);
-        String synapses = format.format(totalSynapses);
+        String weights = format.format(totalWeights);
+        String biases = format.format(totalBiases);
 
-        String formatted = BrainUtils.formatNumber(params * 4); // 4 = float size in bytes
+        String sizeOfParams = BrainUtils.formatNumber(params * 4); // 4 = float size in bytes
+        String sizeOfWeights = BrainUtils.formatNumber(totalWeights * 4);
+        String sizeOfBiases = BrainUtils.formatNumber(totalBiases * 4);
 
         stats.append(BrainUtils.getHeader(" Recap "));
-        stats.append("Total parameters: ").append(parameters).append(" (").append(formatted).append(")\n");
-        stats.append("Total synapses: ").append(synapses).append("\n");
+        stats.append(String.format("Total parameters: %s (%s)\n", parameters, sizeOfParams));
+        stats.append(String.format("Total weights: %s (%s)\n", weights, sizeOfWeights));
+        stats.append(String.format("Total biases: %s (%s)\n", biases, sizeOfBiases));
         stats.append(header);
 
         return stats.toString();
@@ -263,7 +262,7 @@ public abstract class Model implements Adapter {
 
     public void setSeed(int seed) {
         this.seed = seed;
-        this.generator = new Random(seed);
+        this.generator = Random.from(new SplittableRandom(seed));
     }
 
     public int getSeed() {

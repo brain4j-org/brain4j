@@ -4,7 +4,6 @@ import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 
 import java.util.Map;
-import java.util.Objects;
 
 public final class EvaluationResult {
 

@@ -12,6 +12,7 @@ import net.echo.math4j.math.vector.Vector;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.SplittableRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -152,11 +153,11 @@ public class TensorCPU implements Cloneable, Tensor {
     }
     
     public static Tensor random(int... shape) {
-        return random(new Random(), shape);
+        return random(Random.from(new SplittableRandom()), shape);
     }
     
     public static Tensor random(long seed, int... shape) {
-        return random(new Random(seed), shape);
+        return random(Random.from(new SplittableRandom(seed)), shape);
     }
     
     private static Tensor random(Random random, int... shape) {

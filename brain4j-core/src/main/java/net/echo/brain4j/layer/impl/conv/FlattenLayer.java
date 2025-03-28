@@ -10,7 +10,6 @@ public class FlattenLayer extends Layer {
     public FlattenLayer() {
     }
 
-    @Override
     public void preConnect(Layer previous, Layer next) {
         if (!(previous instanceof ConvLayer convLayer)) {
             throw new UnsupportedOperationException("Layer before must be a convolutional layer!");

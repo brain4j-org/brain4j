@@ -15,15 +15,25 @@ public class AttentionHead {
     protected final Tensor keyWeightsTensor;
     protected final Tensor valueWeightsTensor;
 
-    public AttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension) {
+    public AttentionHead(int inputDimension, int headDimension) {
         this.inputDimension = inputDimension;
         this.headDimension = headDimension;
 
         this.queryWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
         this.keyWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
         this.valueWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
+    }
 
-        initializeWeights(weightInit);
+    public void compile(Random random, WeightInitializer initializer) {
+        double bound = initializer.getBound(inputDimension, headDimension);
+
+        for (int i = 0; i < inputDimension; i++) {
+            for (int j = 0; j < headDimension; j++) {
+                queryWeightsTensor.set(random.nextDouble(2 * bound) - bound, i, j);
+                keyWeightsTensor.set(random.nextDouble(2 * bound) - bound, i, j);
+                valueWeightsTensor.set(random.nextDouble(2 * bound) - bound, i, j);
+            }
+        }
     }
 
     public int size() {
@@ -41,19 +51,5 @@ public class AttentionHead {
         Tensor attentionWeights = scores.softmax();
 
         return attentionWeights.matmul(V);
-    }
-
-    protected void initializeWeights(WeightInitializer initializer) {
-        Random rng = new Random();
-
-        double bound = initializer.getBound(inputDimension, headDimension);
-
-        for (int i = 0; i < inputDimension; i++) {
-            for (int j = 0; j < headDimension; j++) {
-                queryWeightsTensor.set(rng.nextDouble(2 * bound) - bound, i, j);
-                keyWeightsTensor.set(rng.nextDouble(2 * bound) - bound, i, j);
-                valueWeightsTensor.set(rng.nextDouble(2 * bound) - bound, i, j);
-            }
-        }
     }
 }

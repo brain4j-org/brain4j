@@ -74,7 +74,7 @@ public class BrainUtils {
         return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }
 
-    public static String formatNumber(int params) {
+    public static String formatNumber(long params) {
         String[] prefixes = {"B", "KB", "MB", "GB", "TB"};
 
         if (params == 0) {

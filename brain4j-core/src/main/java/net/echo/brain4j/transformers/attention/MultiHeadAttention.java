@@ -13,15 +13,11 @@ import java.util.Random;
 public class MultiHeadAttention {
 
     protected final List<AttentionHead> heads;
-    protected final WeightInitializer weightInit;
     protected final int headCount;
     protected final int modelDimension;
     protected final int headDimension;
 
-    protected Tensor outProjectionTensor;
-
-    public MultiHeadAttention(WeightInitializer weightInit, int headCount, int modelDimension) {
-        this.weightInit = weightInit;
+    public MultiHeadAttention(int headCount, int modelDimension) {
         this.headCount = headCount;
         this.modelDimension = modelDimension;
 
@@ -29,14 +25,18 @@ public class MultiHeadAttention {
 
         this.headDimension = modelDimension / headCount;
         this.heads = new ArrayList<>();
-        this.outProjectionTensor = TensorFactory.matrix(headCount * headDimension, modelDimension);
 
         initializeHeads();
-        initializeOutProjectionWeights();
+    }
+
+    public void compile(Random generator, WeightInitializer initializer) {
+        for (AttentionHead head : heads) {
+            head.compile(generator, initializer);
+        }
     }
 
     public AttentionHead createAttentionHead() {
-        return new AttentionHead(weightInit, modelDimension, headDimension);
+        return new AttentionHead(modelDimension, headDimension);
     }
 
     public Tensor attend(Tensor input) {
@@ -52,8 +52,6 @@ public class MultiHeadAttention {
     public int getTotalNeurons() {
         int total = 0;
 
-        total += outProjectionTensor.elements();
-
         for (AttentionHead head : heads) {
             total += head.size();
         }
@@ -64,18 +62,6 @@ public class MultiHeadAttention {
     protected void initializeHeads() {
         for (int i = 0; i < headCount; i++) {
             heads.add(createAttentionHead());
-        }
-    }
-
-    protected void initializeOutProjectionWeights() {
-        Random rng = new Random();
-        double bound = weightInit.getBound(headCount * headDimension, modelDimension);
-
-        for (int i = 0; i < headCount * headDimension; i++) {
-            for (int j = 0; j < modelDimension; j++) {
-                double value = (rng.nextDouble() * 2 * bound) - bound;
-                outProjectionTensor.set(value, i, j);
-            }
         }
     }
 }

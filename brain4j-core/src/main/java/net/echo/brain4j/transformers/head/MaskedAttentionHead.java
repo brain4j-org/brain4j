@@ -1,13 +1,12 @@
 package net.echo.brain4j.transformers.head;
 
-import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
 public class MaskedAttentionHead extends AttentionHead {
 
-    public MaskedAttentionHead(WeightInitializer weightInit, int inputDimension, int headDimension) {
-        super(weightInit, inputDimension, headDimension);
+    public MaskedAttentionHead(int inputDimension, int headDimension) {
+        super(inputDimension, headDimension);
     }
 
     @Override
