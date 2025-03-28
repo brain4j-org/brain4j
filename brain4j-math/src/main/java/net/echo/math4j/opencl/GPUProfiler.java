@@ -57,6 +57,11 @@ public class GPUProfiler {
         clReleaseEvent(event);
     }
 
+    public static void printDefaultDeviceInfo() {
+        cl_device_id device = DeviceUtils.getDevice();
+        printDeviceInfo(device);
+    }
+
     public static void printDeviceInfo(cl_device_id device) {
         try {
             byte[] nameBytes = new byte[1024];
