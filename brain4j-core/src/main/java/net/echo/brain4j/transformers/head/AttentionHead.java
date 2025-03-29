@@ -20,7 +20,7 @@ public class AttentionHead {
     
     protected List<Tensor> keyCache;
     protected List<Tensor> valueCache;
-    protected boolean useCache;
+    protected boolean useCache = true;
 
     public AttentionHead(int inputDimension, int headDimension) {
         this.inputDimension = inputDimension;
@@ -32,7 +32,6 @@ public class AttentionHead {
         
         this.keyCache = new ArrayList<>();
         this.valueCache = new ArrayList<>();
-        this.useCache = true;
     }
 
     public void compile(Random random, WeightInitializer initializer) {
