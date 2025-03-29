@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.jocl.CL.*;
 
@@ -19,8 +21,7 @@ public class TensorGPU extends TensorCPU {
     private static cl_device_id DEVICE_ID;
     private static cl_context CONTEXT;
     private static cl_command_queue COMMAND_QUEUE;
-    private static cl_program TENSOR_PROGRAM;
-    private static cl_program CONV_PROGRAM;
+    private static cl_program MAIN_PROGRAM;
     private static cl_kernel MAT_MULT_KERNEL;
     private static cl_kernel ELEMENT_WISE_ADD_KERNEL;
     private static cl_kernel ELEMENT_WISE_MULT_KERNEL;
@@ -35,8 +36,16 @@ public class TensorGPU extends TensorCPU {
     private static cl_kernel CONVOLVE_1D_FFT_KERNEL;
     private static cl_kernel CONVOLVE_2D_FFT_EXTRACT_KERNEL;
     
-    private static final String TENSOR_OPS_KERNEL_PATH = "/kernels/tensor_operations.cl";
-    private static final String CONV_KERNEL_PATH = "/kernels/conv.cl";
+    private static final String[] KERNEL_FILES = {
+        "/kernels/common_definitions.cl",
+        "/kernels/complex/complex_ops.cl",
+        "/kernels/basic/tensor_ops.cl",
+        "/kernels/transforms/bit_operations.cl",
+        "/kernels/transforms/fft1d.cl",
+        "/kernels/transforms/fft2d.cl",
+        "/kernels/convolution/conv1d.cl",
+        "/kernels/convolution/conv2d.cl"
+    };
     
     static {
         try {
@@ -63,39 +72,30 @@ public class TensorGPU extends TensorCPU {
             COMMAND_QUEUE = clCreateCommandQueue(CONTEXT, device, 0, null);
             
             try {
-                String kernelSourceTensor = loadKernelSource(TENSOR_OPS_KERNEL_PATH);
-                TENSOR_PROGRAM = clCreateProgramWithSource(CONTEXT, 1, 
-                        new String[] { kernelSourceTensor }, null, null);
-                int buildResult = clBuildProgram(TENSOR_PROGRAM, 0, null, null, null, null);
+                String combinedKernelSource = loadAndCombineKernels();
+                
+                MAIN_PROGRAM = clCreateProgramWithSource(CONTEXT, 1, 
+                        new String[] { combinedKernelSource }, null, null);
+                int buildResult = clBuildProgram(MAIN_PROGRAM, 0, null, "-cl-mad-enable -cl-fast-relaxed-math", null, null);
                 
                 if (buildResult != CL_SUCCESS) {
-                    checkKernelStatus(TENSOR_PROGRAM, DEVICE_ID, "tensor_operations");
+                    checkKernelStatus(MAIN_PROGRAM, DEVICE_ID, "main_program");
                     return false;
                 }
                 
-                MAT_MULT_KERNEL = clCreateKernel(TENSOR_PROGRAM, "matmul", null);
-                ELEMENT_WISE_ADD_KERNEL = clCreateKernel(TENSOR_PROGRAM, "element_wise_add", null);
-                ELEMENT_WISE_MULT_KERNEL = clCreateKernel(TENSOR_PROGRAM, "element_wise_mul", null);
+                MAT_MULT_KERNEL = clCreateKernel(MAIN_PROGRAM, "matmul", null);
+                ELEMENT_WISE_ADD_KERNEL = clCreateKernel(MAIN_PROGRAM, "element_wise_add", null);
+                ELEMENT_WISE_MULT_KERNEL = clCreateKernel(MAIN_PROGRAM, "element_wise_mul", null);
                 
-                String convKernelSource = loadKernelSource(CONV_KERNEL_PATH);
-                CONV_PROGRAM = clCreateProgramWithSource(CONTEXT, 1, 
-                        new String[] { convKernelSource }, null, null);
-                buildResult = clBuildProgram(CONV_PROGRAM, 0, null, "-cl-mad-enable -cl-fast-relaxed-math", null, null);
+                CONVOLVE_1D_DIRECT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve1d_direct", null);
+                CONVOLVE_2D_DIRECT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve2d_direct", null);
                 
-                if (buildResult != CL_SUCCESS) {
-                    checkKernelStatus(CONV_PROGRAM, DEVICE_ID, "convolution");
-                    return false;
-                }
-                
-                CONVOLVE_1D_DIRECT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve1d_direct", null);
-                CONVOLVE_2D_DIRECT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve2d_direct", null);
-                
-                FFT_1D_KERNEL = clCreateKernel(CONV_PROGRAM, "fft1d", null);
-                FFT_2D_KERNEL = clCreateKernel(CONV_PROGRAM, "fft2d", null);
-                FFT_2D_TRANSPOSE_KERNEL = clCreateKernel(CONV_PROGRAM, "fft2d_transpose", null);
-                COMPLEX_POINTWISE_MUL_KERNEL = clCreateKernel(CONV_PROGRAM, "complex_pointwise_mul", null);
-                CONVOLVE_1D_FFT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve1d_fft", null);
-                CONVOLVE_2D_FFT_EXTRACT_KERNEL = clCreateKernel(CONV_PROGRAM, "convolve2d_fft_extract", null);
+                FFT_1D_KERNEL = clCreateKernel(MAIN_PROGRAM, "fft1d", null);
+                FFT_2D_KERNEL = clCreateKernel(MAIN_PROGRAM, "fft2d", null);
+                FFT_2D_TRANSPOSE_KERNEL = clCreateKernel(MAIN_PROGRAM, "fft2d_transpose", null);
+                COMPLEX_POINTWISE_MUL_KERNEL = clCreateKernel(MAIN_PROGRAM, "complex_pointwise_mul", null);
+                CONVOLVE_1D_FFT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve1d_fft", null);
+                CONVOLVE_2D_FFT_EXTRACT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve2d_fft_extract", null);
                 
                 System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
                 return true;
@@ -107,6 +107,40 @@ public class TensorGPU extends TensorCPU {
             System.err.println("Failed to initialize OpenCL: " + e.getMessage());
             return false;
         }
+    }
+    
+    private static String loadAndCombineKernels() throws IOException {
+        StringBuilder combined = new StringBuilder();
+        combined.append("// Brain4J OpenCL Kernels - automatically generated\n\n");
+        
+        Map<String, Boolean> includedFiles = new HashMap<>();
+        
+        for (String filePath : KERNEL_FILES) {
+            String content = loadKernelSource(filePath);
+            
+            content = removeIncludes(content);
+            
+            combined.append("\n// ===== BEGIN ").append(filePath).append(" =====\n\n");
+            combined.append(content);
+            combined.append("\n// ===== END ").append(filePath).append(" =====\n\n");
+            
+            includedFiles.put(filePath, true);
+        }
+        
+        return combined.toString();
+    }
+    
+    private static String removeIncludes(String source) {
+        StringBuilder result = new StringBuilder();
+        String[] lines = source.split("\n");
+        
+        for (String line : lines) {
+            if (!line.trim().startsWith("#include")) {
+                result.append(line).append("\n");
+            }
+        }
+        
+        return result.toString();
     }
     
     private static String loadKernelSource(String resourceName) throws IOException {
@@ -222,8 +256,7 @@ public class TensorGPU extends TensorCPU {
                 if (CONVOLVE_1D_FFT_KERNEL != null) clReleaseKernel(CONVOLVE_1D_FFT_KERNEL);
                 if (CONVOLVE_2D_FFT_EXTRACT_KERNEL != null) clReleaseKernel(CONVOLVE_2D_FFT_EXTRACT_KERNEL);
                 
-                if (TENSOR_PROGRAM != null) clReleaseProgram(TENSOR_PROGRAM);
-                if (CONV_PROGRAM != null) clReleaseProgram(CONV_PROGRAM);
+                if (MAIN_PROGRAM != null) clReleaseProgram(MAIN_PROGRAM);
                 
                 if (COMMAND_QUEUE != null) clReleaseCommandQueue(COMMAND_QUEUE);
                 if (CONTEXT != null) clReleaseContext(CONTEXT);
