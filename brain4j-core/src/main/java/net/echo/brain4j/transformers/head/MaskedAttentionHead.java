@@ -35,12 +35,14 @@ public class MaskedAttentionHead extends AttentionHead {
         Tensor Q = input.matmul(queryWeightsTensor);
         
         int seqLength = input.shape()[0];
+
         List<Tensor> localKeyCache = cache.getKeyCacheForHead(this);
         List<Tensor> localValueCache = cache.getValueCacheForHead(this);
         
         int cachedLength = localKeyCache.size();
         
         Tensor K, V;
+
         if (isUsingCache() && cachedLength > 0) {
             if (seqLength > cachedLength) {
                 Range range = new Range(cachedLength, seqLength);

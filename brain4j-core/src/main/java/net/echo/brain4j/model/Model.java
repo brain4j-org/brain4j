@@ -130,10 +130,12 @@ public abstract class Model implements Adapter {
         }
     }
 
-    public Tensor predict(Tensor input) {
-        StatesCache cache = new StatesCache();
-        cache.markAsNewSession();
+    public Tensor predict(StatesCache cache, Tensor input) {
         return predict(cache, input, false);
+    }
+
+    public Tensor predict(Tensor input) {
+        return predict(new StatesCache(), input, false);
     }
 
     public Model compile(Loss function, Optimizer optimizer) {

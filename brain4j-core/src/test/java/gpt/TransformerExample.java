@@ -3,6 +3,7 @@ package gpt;
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.TransformerDecoder;
@@ -119,10 +120,12 @@ public class TransformerExample {
         StringBuilder botResponse = new StringBuilder();
         String lastWord = "";
 
+        StatesCache cache = new StatesCache();
+
         while (!lastWord.equals("<|END|>") && !lastWord.equals("<|UNK|>")) {
             Tensor input = vocabulary.encode(prompt);
             Tensor encoded = ENCODING.encode(input);
-            Tensor output = transformer.predict(encoded);
+            Tensor output = transformer.predict(cache, encoded);
 
             int indexOfMax = BrainUtils.indexOfMaxValue(output);
             String word = vocabulary.indexToWord(indexOfMax);

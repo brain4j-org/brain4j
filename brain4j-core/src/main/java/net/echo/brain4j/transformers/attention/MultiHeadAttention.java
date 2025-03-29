@@ -40,16 +40,6 @@ public class MultiHeadAttention {
         return new AttentionHead(modelDimension, headDimension);
     }
 
-    public Tensor attend(Tensor input) {
-        List<Tensor> headOutputs = new ArrayList<>();
-
-        for (AttentionHead head : heads) {
-            headOutputs.add(head.attend(input));
-        }
-
-        return TensorFactory.concat(headOutputs);
-    }
-
     public Tensor attend(StatesCache cache, Tensor input) {
         List<Tensor> headOutputs = new ArrayList<>();
 
