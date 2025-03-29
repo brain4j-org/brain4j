@@ -130,21 +130,6 @@ public class Sequential extends Model {
     }
 
     @Override
-    public double loss(DataSet<DataRow> dataSet) {
-        propagation.partitionIfRequired(dataSet);
-
-        AtomicReference<Double> totalError = new AtomicReference<>(0.0);
-        List<Thread> threads = new ArrayList<>();
-
-        for (List<DataRow> partition : dataSet.getPartitions()) {
-            threads.add(predictPartition(partition, totalError));
-        }
-
-        BrainUtils.waitAll(threads);
-        return totalError.get() / dataSet.size();
-    }
-
-    @Override
     public void fit(DataSet<DataRow> dataSet) {
         propagation.iteration(dataSet);
     }

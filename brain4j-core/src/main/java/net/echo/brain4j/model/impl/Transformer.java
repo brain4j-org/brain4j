@@ -21,6 +21,7 @@ import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,21 +62,6 @@ public class Transformer extends Model {
     }
 
     @Override
-    public double loss(DataSet<DataRow> dataSet) {
-        propagation.partitionIfRequired(dataSet);
-
-        AtomicReference<Double> totalError = new AtomicReference<>(0.0);
-        List<Thread> threads = new ArrayList<>();
-
-        for (List<DataRow> partition : dataSet.getPartitions()) {
-            threads.add(predictPartition(partition, totalError));
-        }
-
-        BrainUtils.waitAll(threads);
-        return totalError.get() / dataSet.size();
-    }
-
-    @Override
     public void fit(DataSet<DataRow> dataSet) {
         propagation.iteration(dataSet);
     }
@@ -93,11 +79,23 @@ public class Transformer extends Model {
 
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet for this class.");
+        for (Layer layer : layers) {
+            stream.writeUTF(layer.getClass().getName());
+            layer.serialize(stream);
+        }
     }
 
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet for this class.");
+        layers.clear();
+        int layersSize = stream.readInt();
+
+        for (int i = 0; i < layersSize; i++) {
+            String layerClassPath = stream.readUTF();
+            Layer instance = BrainUtils.newInstance(layerClassPath);
+
+            instance.deserialize(stream);
+            layers.add(instance);
+        }
     }
 }

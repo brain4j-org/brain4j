@@ -48,7 +48,7 @@ public class XorTest {
 
         assertTrue(loss < 0.01, "Loss is too high! " + loss);
 
-        ModernAdapter.serialize("xor.bin", model);
+        ModernAdapter.serialize("xor.b4j", model);
     }
 
     private DataSet<DataRow> getDataSet() {

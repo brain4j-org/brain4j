@@ -32,7 +32,7 @@ public class TransformerExample {
         new TransformerExample().start();
     }
 
-    private List<String> loadExamples() throws IOException {
+    private List<String> loadExamples() throws Exception {
         return Files.readAllLines(Path.of("dataset.txt"));
     }
 
@@ -72,7 +72,7 @@ public class TransformerExample {
         } while (!prompt.equals("end"));
     }
 
-    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) {
+    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) throws Exception {
         DataSet<DataRow> dataSet = new DataSet<>();
 
         for (var entry : samples.entrySet()) {
@@ -114,6 +114,8 @@ public class TransformerExample {
 
         double loss = transformer.loss(dataSet);
         System.out.println("Training took " + duration + " ms with loss " + loss);
+
+        transformer.save("chat_bot");
     }
 
     private void generateResponse(Vocabulary vocabulary, Transformer transformer, String prompt) throws InterruptedException {

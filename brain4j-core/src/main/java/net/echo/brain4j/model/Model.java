@@ -88,13 +88,25 @@ public abstract class Model implements Adapter {
         }
     }
 
-    public abstract double loss(DataSet<DataRow> dataSet);
-
     public abstract EvaluationResult evaluate(DataSet<DataRow> dataSet);
 
     public abstract void fit(DataSet<DataRow> dataSet);
 
     public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
+
+    public double loss(DataSet<DataRow> dataSet) {
+        propagation.partitionIfRequired(dataSet);
+
+        AtomicReference<Double> totalError = new AtomicReference<>(0.0);
+        List<Thread> threads = new ArrayList<>();
+
+        for (List<DataRow> partition : dataSet.getPartitions()) {
+            threads.add(predictPartition(partition, totalError));
+        }
+
+        BrainUtils.waitAll(threads);
+        return totalError.get() / dataSet.size();
+    }
 
     public void fit(DataSet<DataRow> dataSet, int epoches) {
         fit(dataSet, epoches, Integer.MAX_VALUE);

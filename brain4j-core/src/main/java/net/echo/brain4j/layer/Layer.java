@@ -76,6 +76,42 @@ public abstract class Layer implements Adapter {
         this.activation = (Activation) activationClass.getDeclaredConstructor().newInstance();
     }
 
+    public void serializeWeights(DataOutputStream stream) throws Exception {
+        stream.writeInt(bias.elements());
+
+        for (int j = 0; j < bias.elements(); j++) {
+            stream.writeDouble(bias.get(j));
+        }
+
+        stream.writeInt(weights.shape()[0]);
+        stream.writeInt(weights.shape()[1]);
+
+        Tensor reshapedWeights = weights.reshape(weights.elements());
+
+        for (int j = 0; j < reshapedWeights.elements(); j++) {
+            stream.writeDouble(reshapedWeights.get(j));
+        }
+    }
+
+    public void deserializeWeights(DataInputStream stream) throws Exception {
+        this.bias = TensorFactory.zeros(stream.readInt());
+
+        for (int j = 0; j < bias.elements(); j++) {
+            bias.set(stream.readDouble(), j);
+        }
+
+        int rows = stream.readInt();
+        int columns = stream.readInt();
+
+        this.weights = TensorFactory.zeros(rows, columns);
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                weights.set(stream.readDouble(), i, j);
+            }
+        }
+    }
+
     public boolean canPropagate() {
         return true;
     }
