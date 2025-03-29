@@ -1,14 +1,14 @@
 package net.echo.brain4j.adapters;
 
 import com.github.luben.zstd.Zstd;
-import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInitializer;
+import net.echo.brain4j.structure.Parameters;
+import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.BrainUtils;
-import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.*;
 
@@ -32,15 +32,6 @@ public class ModernAdapter {
         model.getOptimizer().serialize(dataStream); // optimizer
         model.serialize(dataStream); // serializes layers
 
-        int layers = model.getLayers().size(); // layers
-
-        for (int i = 0; i < layers; i++) {
-            Layer layer = model.getLayers().get(i);
-            layer.serializeWeights(dataStream);
-        }
-
-        dataStream.writeInt(outputStream.size());
-
         byte[] bytes = outputStream.toByteArray();
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
@@ -55,11 +46,8 @@ public class ModernAdapter {
 
     public static <T extends Model> T deserialize(File file, T model) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            DataInputStream dataStream = new DataInputStream(fileInputStream);
-            int size = dataStream.readInt();
-
-            byte[] bytes = decompress(size, fileInputStream.readAllBytes());
-            dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
+            byte[] bytes = decompress(fileInputStream.readAllBytes());
+            DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
 
             int seed = dataStream.readInt();
 
@@ -78,14 +66,14 @@ public class ModernAdapter {
             model.setSeed(seed);
             model.deserialize(dataStream);
 
-            model.compile(weightInit, lossFunction, optimizer, updater);
+            model.setLossFunction(lossFunction);
+            model.setWeightInit(weightInit);
+            model.setUpdater(updater);
+            model.setOptimizer(optimizer);
 
-            int layers = model.getLayers().size();
-
-            for (int i = 0; i < layers; i++) {
-                Layer layer = model.getLayers().get(i);
-                layer.deserialize(dataStream);
-            }
+            model.getOptimizer().postInitialize(model);
+            model.getUpdater().postInitialize();
+            model.setPropagation(new BackPropagation(model, optimizer, updater));
 
             return model;
         }
@@ -95,7 +83,8 @@ public class ModernAdapter {
         return Zstd.compress(data);
     }
 
-    public static byte[] decompress(int size, byte[] data) {
+    public static byte[] decompress(byte[] data) {
+        int size = (int) Zstd.getFrameContentSize(data);
         return Zstd.decompress(data, size);
     }
 }

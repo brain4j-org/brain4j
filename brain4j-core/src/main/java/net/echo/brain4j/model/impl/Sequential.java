@@ -136,7 +136,7 @@ public class Sequential extends Model {
 
     @Override
     public Tensor predict(Tensor input) {
-        return predict(new StatesCache(), input, false);
+        return predict(new StatesCache(this), input, false);
     }
 
     @Override

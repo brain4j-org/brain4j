@@ -7,7 +7,6 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.TransformerDecoder;
-import net.echo.brain4j.transformers.TransformerEncoder;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.brain4j.transformers.encoding.PositionalEncoding;
@@ -16,7 +15,6 @@ import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -118,16 +116,16 @@ public class TransformerExample {
         transformer.save("chat_bot");
     }
 
-    private void generateResponse(Vocabulary vocabulary, Transformer transformer, String prompt) throws InterruptedException {
+    private void generateResponse(Vocabulary vocabulary, Transformer model, String prompt) throws InterruptedException {
         StringBuilder botResponse = new StringBuilder();
         String lastWord = "";
 
-        StatesCache cache = new StatesCache();
+        StatesCache cache = new StatesCache(model);
 
         while (!lastWord.equals("<|END|>") && !lastWord.equals("<|UNK|>")) {
             Tensor input = vocabulary.encode(prompt);
             Tensor encoded = ENCODING.encode(input);
-            Tensor output = transformer.predict(cache, encoded);
+            Tensor output = model.predict(cache, encoded);
 
             int indexOfMax = BrainUtils.indexOfMaxValue(output);
             String word = vocabulary.indexToWord(indexOfMax);

@@ -147,7 +147,7 @@ public abstract class Model implements Adapter {
     }
 
     public Tensor predict(Tensor input) {
-        return predict(new StatesCache(), input, false);
+        return predict(new StatesCache(this), input, false);
     }
 
     public Model compile(Loss function, Optimizer optimizer) {
@@ -234,6 +234,14 @@ public abstract class Model implements Adapter {
         stats.append(header);
 
         return stats.toString();
+    }
+
+    public void setPropagation(BackPropagation propagation) {
+        this.propagation = propagation;
+    }
+
+    public BackPropagation getPropagation() {
+        return propagation;
     }
 
     public LossFunction getLossFunction() {

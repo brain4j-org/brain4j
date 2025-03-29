@@ -1,6 +1,7 @@
 package net.echo.brain4j.structure;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.math4j.math.tensor.Tensor;
 
@@ -11,21 +12,22 @@ import java.util.Map;
 
 public class StatesCache {
 
-    private final Tensor[] inputTensorsCache;
-    private final Tensor[] outputTensorsCache;
-
     private final Map<Integer, List<Tensor>> feedForwardCache;
     private final Map<Integer, List<Tensor>> keyCache;
     private final Map<Integer, List<Tensor>> valueCache;
 
-    private boolean isNewSession = true;
+    private final Tensor[] inputTensorsCache;
+    private final Tensor[] outputTensorsCache;
 
-    public StatesCache() {
-        this.inputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
-        this.outputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
+    public StatesCache(Model model) {
+        int capacity = model.getLayers().size();
+
+        this.inputTensorsCache = new Tensor[capacity];
+        this.outputTensorsCache = new Tensor[capacity];
         this.feedForwardCache = new HashMap<>();
         this.keyCache = new HashMap<>();
         this.valueCache = new HashMap<>();
+
         markAsNewSession();
     }
 
@@ -46,8 +48,8 @@ public class StatesCache {
     }
     
     public void markAsNewSession() {
-        isNewSession = true;
-        clearKVCache();
+        keyCache.clear();
+        valueCache.clear();
     }
 
     public List<Tensor> getFeedForwardForLayer(Layer layer) {
@@ -60,10 +62,5 @@ public class StatesCache {
     
     public List<Tensor> getValueCacheForHead(AttentionHead head) {
         return valueCache.computeIfAbsent(head.hashCode(), k -> new ArrayList<>());
-    }
-    
-    public void clearKVCache() {
-        keyCache.clear();
-        valueCache.clear();
     }
 }

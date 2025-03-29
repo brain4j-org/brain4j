@@ -4,6 +4,7 @@ import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
@@ -37,7 +38,7 @@ public abstract class Optimizer implements Adapter {
 
     public abstract Tensor optimize(Layer layer, Tensor delta, Tensor output);
 
-    public void postInitialize(Sequential model) {
+    public void postInitialize(Model model) {
     }
 
     public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {

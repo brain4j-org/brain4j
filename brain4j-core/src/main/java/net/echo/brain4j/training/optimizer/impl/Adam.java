@@ -1,6 +1,7 @@
 package net.echo.brain4j.training.optimizer.impl;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
@@ -40,7 +41,8 @@ public class Adam extends Optimizer {
         this.epsilon = (float) epsilon;
     }
 
-    public void postInitialize(Sequential model) {
+    @Override
+    public void postInitialize(Model model) {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 

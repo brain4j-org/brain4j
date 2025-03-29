@@ -10,8 +10,6 @@ import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
-import javax.swing.plaf.SliderUI;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class XorTest {

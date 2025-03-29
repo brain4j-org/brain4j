@@ -28,7 +28,6 @@ public class TransformerEncoder extends Layer {
     protected final int dimension;
 
     protected MultiHeadAttention attention;
-    protected WeightInitializer weightInit;
 
     public TransformerEncoder(int numHeads, int dimension) {
         super(Activations.LINEAR.getFunction());
@@ -62,7 +61,6 @@ public class TransformerEncoder extends Layer {
     @Override
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(weightInit, lossFunction, optimizer, updater);
-        this.weightInit = weightInit;
         this.attention = createAttention();
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
@@ -70,7 +68,7 @@ public class TransformerEncoder extends Layer {
     @Override
     public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
         if (previous instanceof VocabularyMapper mapper) {
-            // TODO: Rework feed forward first
+            // TODO
         }
 
         return delta;

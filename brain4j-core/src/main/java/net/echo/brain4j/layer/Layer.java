@@ -11,11 +11,13 @@ import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Arrays;
 import java.util.Random;
 
 @JsonAdapter(LayerAdapter.class)
@@ -59,57 +61,59 @@ public abstract class Layer implements Adapter {
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(id);
-        stream.writeInt(bias.elements());
         stream.writeUTF(activation.getClass().getName());
-    }
-
-    @Override
-    public void deserialize(DataInputStream stream) throws Exception {
-        this.id = stream.readInt();
-
-        int totalNeurons = stream.readInt();
-        this.bias = TensorFactory.create(totalNeurons);
-
-        String activationClassPath = stream.readUTF();
-        Class<?> activationClass = Class.forName(activationClassPath);
-
-        this.activation = (Activation) activationClass.getDeclaredConstructor().newInstance();
-    }
-
-    public void serializeWeights(DataOutputStream stream) throws Exception {
         stream.writeInt(bias.elements());
 
         for (int j = 0; j < bias.elements(); j++) {
             stream.writeDouble(bias.get(j));
         }
 
-        stream.writeInt(weights.shape()[0]);
-        stream.writeInt(weights.shape()[1]);
+        boolean hasWeights = weights != null && weights.dimension() == 2;
 
-        Tensor reshapedWeights = weights.reshape(weights.elements());
+        stream.writeBoolean(hasWeights);
 
-        for (int j = 0; j < reshapedWeights.elements(); j++) {
-            stream.writeDouble(reshapedWeights.get(j));
+        if (hasWeights) {
+            stream.writeInt(weights.shape()[0]);
+            stream.writeInt(weights.shape()[1]);
+
+            for (int j = 0; j < weights.elements(); j++) {
+                stream.writeDouble(weights.getData().get(j));
+            }
         }
     }
 
-    public void deserializeWeights(DataInputStream stream) throws Exception {
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        this.id = stream.readInt();
+        this.activation = BrainUtils.newInstance(stream.readUTF());
         this.bias = TensorFactory.zeros(stream.readInt());
 
         for (int j = 0; j < bias.elements(); j++) {
             bias.set(stream.readDouble(), j);
         }
 
-        int rows = stream.readInt();
-        int columns = stream.readInt();
+        boolean hasWeights = stream.readBoolean();
 
-        this.weights = TensorFactory.zeros(rows, columns);
+        if (hasWeights) {
+            int rows = stream.readInt();
+            int columns = stream.readInt();
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                weights.set(stream.readDouble(), i, j);
+            this.weights = TensorFactory.zeros(rows, columns);
+
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    weights.set(stream.readDouble(), i, j);
+                }
             }
         }
+    }
+
+    public void serializeWeights(DataOutputStream stream) throws Exception {
+
+    }
+
+    public void deserializeWeights(DataInputStream stream) throws Exception {
+
     }
 
     public boolean canPropagate() {

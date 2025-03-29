@@ -17,7 +17,7 @@ public class BigTransformer {
         new BigTransformer().start();
     }
 
-    void start() {
+    private void start() {
         int dimension = 1536;
         int numHeads = 16;
         int vocabSize = 50000;
@@ -37,7 +37,7 @@ public class BigTransformer {
 
         Tensor input = TensorFactory.random(1, dimension);
 
-        StatesCache sharedCache = new StatesCache();
+        StatesCache sharedCache = new StatesCache(model);
 
         for (int i = 0; i < 10; i++) {
             Tensor finalInput = input;
