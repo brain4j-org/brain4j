@@ -28,8 +28,11 @@ public class TransformerEncoder extends Layer {
     protected final int dimension;
 
     protected MultiHeadAttention attention;
+    protected WeightInitializer weightInit;
 
     public TransformerEncoder(int numHeads, int dimension) {
+        super(Activations.LINEAR.getFunction());
+        
         this.normalizer = new LayerNorm();
         this.feedForward = new Sequential(
                 new DenseLayer(dimension, Activations.LINEAR),
@@ -59,7 +62,8 @@ public class TransformerEncoder extends Layer {
     @Override
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(weightInit, lossFunction, optimizer, updater);
-        this.attention = createAttention(); new MultiHeadAttention(heads, dimension);
+        this.weightInit = weightInit;
+        this.attention = createAttention();
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 
@@ -74,7 +78,9 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
-        Tensor attended = getAttention().attend(input);
+        cache.setInputTensor(this, input);
+        
+        Tensor attended = attention.attend(cache, input);
         Tensor normalized = normalizer.normalize(attended.add(input));
 
         List<Tensor> normAttention = TensorFactory.toList(normalized);
@@ -112,7 +118,11 @@ public class TransformerEncoder extends Layer {
     }
 
     public int getFeedForwardSize() {
-        return feedForward.getTotalWeights();
+        int total = 0;
+        for (Layer layer : feedForward.getLayers()) {
+            total += layer.getTotalParams();
+        }
+        return total;
     }
 }
 
