@@ -3,6 +3,7 @@ package gpt;
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.TransformerDecoder;
@@ -31,7 +32,7 @@ public class TransformerExample {
         new TransformerExample().start();
     }
 
-    private List<String> loadExamples() throws IOException {
+    private List<String> loadExamples() throws Exception {
         return Files.readAllLines(Path.of("dataset.txt"));
     }
 
@@ -71,7 +72,7 @@ public class TransformerExample {
         } while (!prompt.equals("end"));
     }
 
-    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) {
+    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) throws Exception {
         DataSet<DataRow> dataSet = new DataSet<>();
 
         for (var entry : samples.entrySet()) {
@@ -113,16 +114,20 @@ public class TransformerExample {
 
         double loss = transformer.loss(dataSet);
         System.out.println("Training took " + duration + " ms with loss " + loss);
+
+        transformer.save("chat_bot");
     }
 
     private void generateResponse(Vocabulary vocabulary, Transformer transformer, String prompt) throws InterruptedException {
         StringBuilder botResponse = new StringBuilder();
         String lastWord = "";
 
+        StatesCache cache = new StatesCache();
+
         while (!lastWord.equals("<|END|>") && !lastWord.equals("<|UNK|>")) {
             Tensor input = vocabulary.encode(prompt);
             Tensor encoded = ENCODING.encode(input);
-            Tensor output = transformer.predict(encoded);
+            Tensor output = transformer.predict(cache, encoded);
 
             int indexOfMax = BrainUtils.indexOfMaxValue(output);
             String word = vocabulary.indexToWord(indexOfMax);

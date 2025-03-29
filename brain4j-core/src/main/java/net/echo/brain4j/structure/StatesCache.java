@@ -13,16 +13,20 @@ public class StatesCache {
 
     private final Tensor[] inputTensorsCache;
     private final Tensor[] outputTensorsCache;
-    private boolean isNewSession = true;
-    
+
+    private final Map<Integer, List<Tensor>> feedForwardCache;
     private final Map<Integer, List<Tensor>> keyCache;
     private final Map<Integer, List<Tensor>> valueCache;
+
+    private boolean isNewSession = true;
 
     public StatesCache() {
         this.inputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
         this.outputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
+        this.feedForwardCache = new HashMap<>();
         this.keyCache = new HashMap<>();
         this.valueCache = new HashMap<>();
+        markAsNewSession();
     }
 
     public void setInputTensor(Layer layer, Tensor value) {
@@ -41,17 +45,13 @@ public class StatesCache {
         return outputTensorsCache[layer.getId()];
     }
     
-    public boolean isNewSession() {
-        if (isNewSession) {
-            isNewSession = false;
-            return true;
-        }
-        return false;
-    }
-    
     public void markAsNewSession() {
         isNewSession = true;
         clearKVCache();
+    }
+
+    public List<Tensor> getFeedForwardForLayer(Layer layer) {
+        return feedForwardCache.computeIfAbsent(layer.hashCode(), k -> new ArrayList<>());
     }
     
     public List<Tensor> getKeyCacheForHead(AttentionHead head) {

@@ -15,7 +15,7 @@ import java.io.*;
 public class ModernAdapter {
 
     public static void serialize(String path, Model model) throws Exception {
-        String suffix = path.endsWith(".bin") ? "" : ".bin";
+        String suffix = path.endsWith(".b4j") ? "" : ".b4j";
         serialize(new File(path + suffix), model);
     }
 
@@ -36,22 +36,11 @@ public class ModernAdapter {
 
         for (int i = 0; i < layers; i++) {
             Layer layer = model.getLayers().get(i);
-
-            Tensor biases = layer.getBias();
-            Tensor weights = layer.getWeights();
-
-            for (int j = 0; j < biases.elements(); j++) {
-                dataStream.writeDouble(biases.get(j));
-            }
-
-            Tensor reshapedWeights = weights.reshape(weights.elements());
-
-            for (int j = 0; j < reshapedWeights.elements(); j++) {
-                dataStream.writeDouble(reshapedWeights.get(j));
-            }
+            layer.serializeWeights(dataStream);
         }
 
         dataStream.writeInt(outputStream.size());
+
         byte[] bytes = outputStream.toByteArray();
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
@@ -95,23 +84,7 @@ public class ModernAdapter {
 
             for (int i = 0; i < layers; i++) {
                 Layer layer = model.getLayers().get(i);
-
-                Tensor biases = layer.getBias();
-                Tensor weights = layer.getWeights();
-
-                for (int j = 0; j < biases.elements(); j++) {
-                    double bias = dataStream.readDouble();
-                    biases.set(bias, j);
-                }
-
-                int[] shape = weights.shape();
-
-                for (int j = 0; j < shape[0]; j++) {
-                    for (int k = 0; k < shape[1]; k++) {
-                        double weight = dataStream.readDouble();
-                        weights.set(weight, j, k);
-                    }
-                }
+                layer.deserialize(dataStream);
             }
 
             return model;

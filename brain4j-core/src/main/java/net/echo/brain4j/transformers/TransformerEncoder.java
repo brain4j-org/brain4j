@@ -84,14 +84,19 @@ public class TransformerEncoder extends Layer {
         Tensor normalized = normalizer.normalize(attended.add(input));
 
         List<Tensor> normAttention = TensorFactory.toList(normalized);
-        List<Tensor> feedForwardOutput = new ArrayList<>();
+        List<Tensor> cached = cache.getFeedForwardForLayer(this);
 
-        for (Tensor tensor : normAttention) {
-            Tensor output = feedForward.predict(tensor.reshape(dimension));
-            feedForwardOutput.add(output.reshape(1, dimension));
+        for (int i = 0; i < normAttention.size(); i++) {
+            if (cached.size() <= i) {
+                Tensor tensor = normAttention.get(i);
+                Tensor output = feedForward.predict(tensor.reshape(dimension));
+                Tensor reshaped = output.reshape(1, dimension);
+
+                cached.add(reshaped);
+            }
         }
 
-        Tensor merged = TensorFactory.mergeTensors(feedForwardOutput);
+        Tensor merged = TensorFactory.mergeTensors(cached);
         cache.setOutputTensor(this, merged);
 
         return normalizer.normalize(merged.add(normalized));
