@@ -133,9 +133,9 @@ public abstract class Model implements Adapter {
         double percentage = (double) currentEpoch / epoches;
 
         int repetitions = (int) (percentage * progressBarLength);
-        String progressBar = "█".repeat(repetitions);
+        String progressBar = "=".repeat(repetitions);
 
-        System.out.printf("\rEpoch: %s/%s [%-" + progressBarLength + "s] %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
+        System.out.printf("\rEpoch: %s/%s [%-30s] %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
             System.out.println();
@@ -147,7 +147,7 @@ public abstract class Model implements Adapter {
     }
 
     public Tensor predict(Tensor input) {
-        return predict(new StatesCache(this), input, false);
+        return predict(new StatesCache(), input, false);
     }
 
     public Model compile(Loss function, Optimizer optimizer) {

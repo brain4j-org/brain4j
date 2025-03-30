@@ -13,7 +13,7 @@ import java.util.List;
 public class BrainUtils {
 
     public static <T extends Enum<T>> T parse(Vector outputs, Class<T> clazz) {
-        return clazz.getEnumConstants()[indexOfMaxValue(outputs)];
+        return clazz.getEnumConstants()[argmax(outputs)];
     }
 
     public static String getHeader(String middleText) {
@@ -28,7 +28,7 @@ public class BrainUtils {
         return (result.length() != maxLength ? result + "=" : result) + "\n";
     }
     
-    public static int indexOfMaxValue(Vector inputs) {
+    public static int argmax(Vector inputs) {
         int index = 0;
         double max = inputs.get(0);
 
@@ -42,7 +42,7 @@ public class BrainUtils {
         return index;
     }
     
-    public static int indexOfMaxValue(Tensor input) {
+    public static int argmax(Tensor input) {
         if (input.dimension() > 1) {
             throw new IllegalArgumentException("Input tensor must be 1-dimensional!");
         }

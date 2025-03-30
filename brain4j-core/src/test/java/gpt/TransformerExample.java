@@ -24,7 +24,7 @@ import java.util.Scanner;
 public class TransformerExample {
 
     private static final int EMBEDDING_SIZE = 64;
-    private static final PositionalEncoding ENCODING = new PositionalEncoding(100, EMBEDDING_SIZE);
+    private static final PositionalEncoding ENCODING = new PositionalEncoding(200, EMBEDDING_SIZE);
 
     public static void main(String[] args) throws Exception {
         new TransformerExample().start();
@@ -36,12 +36,12 @@ public class TransformerExample {
 
     private void start() throws Exception {
         Brain4J.setLogging(true);
-        List<String> examples = loadExamples();
+        var examples = loadExamples();
 
-        Vocabulary vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
+        var vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
         vocabulary.tokenize();
 
-        Transformer model = new Transformer(
+        var model = new Transformer(
                 new TransformerDecoder(1, EMBEDDING_SIZE),
                 new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 5)
         );
@@ -51,14 +51,12 @@ public class TransformerExample {
         System.out.println(model.summary());
         System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
 
-        Scanner scanner = new Scanner(System.in);
-
-        Map<String, String> samples = Map.of(
-                "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
+        var scanner = new Scanner(System.in);
+        var samples = Map.of(
+            "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
         );
 
         trainModel(vocabulary, samples, model);
-
         String prompt;
 
         do {
@@ -73,16 +71,17 @@ public class TransformerExample {
     private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) throws Exception {
         DataSet<DataRow> dataSet = new DataSet<>();
 
+        // TODO: Optimize training by avoiding to recalculate attention for the same input
         for (var entry : samples.entrySet()) {
             String trainInput = entry.getKey();
             String trainOutput = entry.getValue();
 
-            if (!trainOutput.endsWith("<|END|>")) {
+            if (!trainOutput.endsWith("<END>")) {
                 if (!trainOutput.endsWith(" ")) {
                     trainOutput += " ";
                 }
 
-                trainOutput += "<|END|>";
+                trainOutput += "<END>";
             }
 
             List<String> tokens = vocabulary.split(trainOutput);
@@ -107,7 +106,7 @@ public class TransformerExample {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
-        transformer.fit(dataSet, 500, 50);
+        transformer.fit(dataSet, 1500, 50);
         double duration = (System.nanoTime() - startTime) / 1e6;
 
         double loss = transformer.loss(dataSet);
@@ -116,26 +115,34 @@ public class TransformerExample {
         transformer.save("chat_bot");
     }
 
-    private void generateResponse(Vocabulary vocabulary, Transformer model, String prompt) throws InterruptedException {
-        StringBuilder botResponse = new StringBuilder();
-        String lastWord = "";
+    private void generateResponse(Vocabulary vocabulary, Transformer model, String prompt) {
+        var botResponse = new StringBuilder();
+        var cache = new StatesCache();
 
-        StatesCache cache = new StatesCache(model);
+        var lastWord = "";
+        var modeCollapse = " ".repeat(10);
+        var totalTime = 0.0;
 
-        while (!lastWord.equals("<|END|>") && !lastWord.equals("<|UNK|>")) {
+        while (!lastWord.equals("<END>") && !lastWord.equals("<UNK>") && !botResponse.toString().endsWith(modeCollapse)) {
             Tensor input = vocabulary.encode(prompt);
             Tensor encoded = ENCODING.encode(input);
-            Tensor output = model.predict(cache, encoded);
 
-            int indexOfMax = BrainUtils.indexOfMaxValue(output);
-            String word = vocabulary.indexToWord(indexOfMax);
+            var start = System.nanoTime();
+            Tensor output = model.predict(cache, encoded);
+            var took = (System.nanoTime() - start) / 1e6;
+
+            var argmax = BrainUtils.argmax(output);
+            var word = vocabulary.indexToWord(argmax);
 
             botResponse.append(word);
             prompt += word;
             lastWord = word;
+            totalTime += took;
 
-            System.out.print("\rChat Bot: " + botResponse);
-            Thread.sleep(5);
+            System.out.printf("\rTook %.2f ms > %s", took, botResponse);
         }
+
+        System.out.println();
+        System.out.println("Total time: " + totalTime + " ms");
     }
 }

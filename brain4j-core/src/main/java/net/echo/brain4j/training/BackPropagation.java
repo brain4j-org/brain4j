@@ -40,7 +40,7 @@ public class BackPropagation {
 
         for (DataRow row : partition) {
             Thread thread = Thread.startVirtualThread(() -> {
-                StatesCache cacheHolder = new StatesCache(model);
+                StatesCache cacheHolder = new StatesCache();
 
                 Tensor output = model.predict(cacheHolder, row.inputs(), true);
                 Tensor target = row.outputs();

@@ -35,7 +35,7 @@ public class TransformerEncoder extends Layer {
         this.normalizer = new LayerNorm();
         this.feedForward = new Sequential(
                 new DenseLayer(dimension, Activations.LINEAR),
-                new DenseLayer(4 * dimension, Activations.GELU),
+                new DenseLayer(4 * dimension, Activations.RELU),
                 new DenseLayer(dimension, Activations.LINEAR)
         );
 

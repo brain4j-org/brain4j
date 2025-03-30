@@ -37,7 +37,7 @@ public class BigTransformer {
 
         Tensor input = TensorFactory.random(1, dimension);
 
-        StatesCache sharedCache = new StatesCache(model);
+        StatesCache sharedCache = new StatesCache();
 
         for (int i = 0; i < 10; i++) {
             Tensor finalInput = input;

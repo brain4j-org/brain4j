@@ -1,7 +1,6 @@
 package net.echo.brain4j.structure;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.model.Model;
 import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.math4j.math.tensor.Tensor;
 
@@ -19,11 +18,9 @@ public class StatesCache {
     private final Tensor[] inputTensorsCache;
     private final Tensor[] outputTensorsCache;
 
-    public StatesCache(Model model) {
-        int capacity = model.getLayers().size();
-
-        this.inputTensorsCache = new Tensor[capacity];
-        this.outputTensorsCache = new Tensor[capacity];
+    public StatesCache() {
+        this.inputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
+        this.outputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
         this.feedForwardCache = new HashMap<>();
         this.keyCache = new HashMap<>();
         this.valueCache = new HashMap<>();

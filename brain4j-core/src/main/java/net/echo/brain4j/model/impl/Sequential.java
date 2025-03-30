@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of a sequential neural network model.
@@ -59,8 +58,8 @@ public class Sequential extends Model {
             for (DataRow row : partition) {
                 Tensor prediction = predict(row.inputs());
 
-                int predIndex = BrainUtils.indexOfMaxValue(prediction);
-                int targetIndex = BrainUtils.indexOfMaxValue(row.outputs());
+                int predIndex = BrainUtils.argmax(prediction);
+                int targetIndex = BrainUtils.argmax(row.outputs());
 
                 if (row.outputs().elements() == 1) {
                     predIndex = prediction.get(0) > 0.5 ? 1 : 0;
@@ -136,7 +135,7 @@ public class Sequential extends Model {
 
     @Override
     public Tensor predict(Tensor input) {
-        return predict(new StatesCache(this), input, false);
+        return predict(new StatesCache(), input, false);
     }
 
     @Override
