@@ -41,36 +41,55 @@ public class TransformerExample {
     private void start() throws Exception {
         Brain4J.setLogging(true);
 
-        var examples = loadExamples();
-        var vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
+        List<String> examples = loadExamples();
+        Vocabulary vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
 
         vocabulary.tokenize();
 
-        var model = new Transformer(
+        Transformer model = new Transformer(
                 new TransformerDecoder(1, EMBEDDING_SIZE),
                 new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 5)
         );
 
         model.compile(Loss.CROSS_ENTROPY, new Adam(0.1));
 
-        var samples = Map.of(
+        Map<String, String> samples = Map.of(
             "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
         );
 
         DataSet<DataRow> dataSet = getDataSet(vocabulary, samples);
+        Scanner scanner = new Scanner(System.in);
 
-        model.load("chatbot.b4j");
+        System.out.print("Have you got a pre-trained model? (y/n): ");
+        String shouldLoad = scanner.nextLine();
+
+        if (shouldLoad.equals("y")) {
+            System.out.print("What's the model name? ");
+            String name = scanner.nextLine();
+
+            model.load(name + (!name.endsWith(".b4j") ? ".b4j" : ""));
+        }
+
         System.out.println(model.summary());
 
-        double loss = model.loss(dataSet);
-        System.out.println("Starting loss: " + loss);
+        System.out.print("Train model? (y/n): ");
+        String shouldTrain = scanner.nextLine();
 
-        trainModel(dataSet, model);
+        if (shouldTrain.equals("y")) {
+            trainModel(dataSet, model);
 
-        model.save("chatbot.b4j");
-        System.out.printf("Saved model inside chatbot.b4j! Loss: %.3f%n", model.loss(dataSet));
+            System.out.print("Insert a name for the model: ");
 
-        var scanner = new Scanner(System.in);
+            String name = scanner.nextLine();
+            String path = name + (!name.endsWith(".b4j") ? ".b4j" : "");
+
+            model.save(path);
+            System.out.printf("Saved model inside %s!%n", path);
+        }
+
+        EvaluationResult result = model.evaluate(dataSet);
+        System.out.printf("Accuracy: %.3f%% Loss: %.3f%n", result.accuracy() * 100, result.loss());
+
         inference(vocabulary, model, scanner);
     }
 
@@ -78,7 +97,7 @@ public class TransformerExample {
         System.out.print("Enter a prompt (Enter 'end' to exit): ");
         String prompt = scanner.nextLine() + " ";
 
-        if (prompt.equals("end")) {
+        if (prompt.startsWith("end")) {
             return;
         }
 
@@ -151,23 +170,23 @@ public class TransformerExample {
     }
 
     private void generateResponse(Vocabulary vocabulary, Transformer model, String prompt) {
-        var botResponse = new StringBuilder();
-        var cache = new StatesCache();
+        StringBuilder botResponse = new StringBuilder();
+        StatesCache cache = new StatesCache();
 
-        var lastWord = "";
-        var modeCollapse = " ".repeat(10);
-        var totalTime = 0.0;
+        String lastWord = "";
+        String modeCollapse = " ".repeat(10);
+        double totalTime = 0.0;
 
         while (!lastWord.equals("<END>") && !lastWord.equals("<UNK>") && !botResponse.toString().endsWith(modeCollapse)) {
             Tensor input = vocabulary.encode(prompt);
             Tensor encoded = ENCODING.encode(input);
 
-            var start = System.nanoTime();
+            long start = System.nanoTime();
             Tensor output = model.predict(cache, encoded);
-            var took = (System.nanoTime() - start) / 1e6;
+            double took = (System.nanoTime() - start) / 1e6;
 
-            var argmax = BrainUtils.argmax(output);
-            var word = vocabulary.indexToWord(argmax);
+            int argmax = BrainUtils.argmax(output);
+            String word = vocabulary.indexToWord(argmax);
 
             botResponse.append(word);
             prompt += word;
@@ -177,8 +196,7 @@ public class TransformerExample {
             System.out.printf("\rTook %.2f ms > %s", took, botResponse);
         }
 
-        System.out.println();
-        System.out.println("Total time: " + totalTime + " ms");
+        System.out.printf("\nTotal time: %.3f ms", totalTime);
     }
 
     static class Evaluator extends TrainListener {
