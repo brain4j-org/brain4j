@@ -144,7 +144,7 @@ public class Vector implements Cloneable, Iterable<Double> {
         double length = lengthSquared();
 
         for (int i = 0; i < data.length; i++) {
-            data[i] /= length;
+            data[i] /= (float) length;
         }
 
         return this;
@@ -167,7 +167,7 @@ public class Vector implements Cloneable, Iterable<Double> {
         double length = length();
 
         for (int i = 0; i < data.length; i++) {
-            data[i] /= length;
+            data[i] /= (float) length;
         }
 
         return this;
@@ -208,7 +208,7 @@ public class Vector implements Cloneable, Iterable<Double> {
 
     public Vector add(double value) {
         for (int i = 0; i < data.length; i++) {
-            data[i] += value;
+            data[i] += (float) value;
         }
 
         return this;
@@ -224,7 +224,7 @@ public class Vector implements Cloneable, Iterable<Double> {
 
     public Vector divide(double value) {
         for (int i = 0; i < data.length; i++) {
-            data[i] /= value;
+            data[i] /= (float) value;
         }
 
         return this;
