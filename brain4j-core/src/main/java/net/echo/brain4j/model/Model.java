@@ -113,8 +113,10 @@ public abstract class Model implements Adapter {
     }
 
     public void fit(DataSet<DataRow> dataSet, int epoches, int evaluateEvery) {
+        propagation.partitionIfRequired(dataSet);
+     
         for (int i = 0; i < epoches; i++) {
-            fit(dataSet);
+            propagation.iteration(dataSet);
 
             int currentEpoch = i + 1;
 

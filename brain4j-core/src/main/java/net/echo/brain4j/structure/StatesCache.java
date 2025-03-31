@@ -49,6 +49,25 @@ public class StatesCache {
         valueCache.clear();
     }
 
+
+    // avoid shape mismatch errors
+    public boolean isCompatibleWithCache(Tensor tensor) {
+        if (keyCache.isEmpty() && valueCache.isEmpty()) {
+            return true;
+        }
+        
+        for (List<Tensor> tensors : keyCache.values()) {
+            if (!tensors.isEmpty()) {
+                Tensor cached = tensors.get(0);
+                if (cached.shape()[0] != tensor.shape()[0]) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+
     public List<Tensor> getFeedForwardForLayer(Layer layer) {
         return feedForwardCache.computeIfAbsent(layer.hashCode(), k -> new ArrayList<>());
     }

@@ -61,6 +61,10 @@ public class Transformer extends Model {
 
     @Override
     public Tensor predict(StatesCache cache, Tensor input, boolean training) {
+        if (!cache.isCompatibleWithCache(input)) {
+            cache.markAsNewSession();
+        }
+
         Tensor result = input;
 
         for (Layer layer : layers) {

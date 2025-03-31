@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.HashMap;
 
 public class TransformerExample {
 
@@ -31,7 +32,7 @@ public class TransformerExample {
     }
 
     private List<String> loadExamples() throws Exception {
-        return Files.readAllLines(Path.of("dataset.txt"));
+        return Files.readAllLines(Path.of("brain4j-core/src/test/java/gpt/dataset.txt"));
     }
 
     private void start() throws Exception {
@@ -70,8 +71,9 @@ public class TransformerExample {
 
     private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) throws Exception {
         DataSet<DataRow> dataSet = new DataSet<>();
-
-        // TODO: Optimize training by avoiding to recalculate attention for the same input
+        
+        Map<String, Tensor> inputEncodingCache = new HashMap<>();
+        
         for (var entry : samples.entrySet()) {
             String trainInput = entry.getKey();
             String trainOutput = entry.getValue();
@@ -88,8 +90,16 @@ public class TransformerExample {
             String lastInput = trainInput + " ";
 
             for (String token : tokens) {
-                Tensor input = vocabulary.encode(lastInput);
-                Tensor encoded = ENCODING.encode(input);
+                Tensor encoded;
+                if (inputEncodingCache.containsKey(lastInput)) {
+                    encoded = inputEncodingCache.get(lastInput);
+                } else {
+                    Tensor input = vocabulary.encode(lastInput);
+                    encoded = ENCODING.encode(input);
+                    if (lastInput.length() < 50) {
+                        inputEncodingCache.put(lastInput, encoded);
+                    }
+                }
 
                 Tensor target = TensorFactory.create(vocabulary.getVocabSize());
                 int index = vocabulary.wordToIndex(token);

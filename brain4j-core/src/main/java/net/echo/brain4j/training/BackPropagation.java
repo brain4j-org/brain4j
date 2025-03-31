@@ -55,6 +55,27 @@ public class BackPropagation {
         updater.postBatch(model, optimizer.getLearningRate());
     }
 
+    public void propagatePartition(List<DataRow> partition, StatesCache sharedCache) {
+        List<Thread> threads = new ArrayList<>();
+        
+        for (DataRow row : partition) {
+            Thread thread = Thread.startVirtualThread(() -> {
+                StatesCache threadLocalCache = new StatesCache();
+                
+                // maybe there should be a dependency injection for the training boolean value
+                Tensor output = model.predict(threadLocalCache, row.inputs(), true); 
+                Tensor target = row.outputs();
+                
+                backpropagation(threadLocalCache, target, output);
+            });
+            
+            threads.add(thread);
+        }
+        
+        BrainUtils.waitAll(threads);
+        updater.postBatch(model, optimizer.getLearningRate());
+    }
+
     public void iteration(DataSet<DataRow> dataSet) {
         partitionIfRequired(dataSet);
 
@@ -62,6 +83,16 @@ public class BackPropagation {
             propagatePartition(partition);
         }
 
+        updater.postFit(model, optimizer.getLearningRate());
+    }
+    
+    public void iteration(DataSet<DataRow> dataSet, StatesCache sharedCache) {
+        partitionIfRequired(dataSet);
+        
+        for (List<DataRow> partition : dataSet.getPartitions()) {
+            propagatePartition(partition, sharedCache);
+        }
+        
         updater.postFit(model, optimizer.getLearningRate());
     }
 
