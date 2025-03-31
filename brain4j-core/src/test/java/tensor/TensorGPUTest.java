@@ -3,7 +3,7 @@ package tensor;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
-import net.echo.native4j.opencl.GPUProfiler;
+import net.echo.math4j.opencl.GPUProfiler;
 
 public class TensorGPUTest {
 

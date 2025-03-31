@@ -24,9 +24,9 @@ subprojects {
 }
 
 tasks.register('buildAll') {
-    dependsOn ':brain4j-math:shadowJar', ':brain4j-core:shadowJar', ':brain4j-native:shadowJar'
+    dependsOn ':brain4j-math:shadowJar', ':brain4j-core:shadowJar'
 
     doLast {
-        println 'Completed build for math, core and native.'
+        println 'Completed build for both math and core.'
     }
 }
