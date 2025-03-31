@@ -636,20 +636,71 @@ public class TensorCPU implements Cloneable, Tensor {
             }
         }
     }
+
+    public Tensor matmulFast(Tensor other) {
+        if (shape.length != 2 || other.shape().length != 2) {
+            throw new IllegalArgumentException("matmul richiede tensori 2D");
+        }
+
+        final int m = shape[0];
+        final int n = shape[1];
+        final int p = other.shape()[1];
+
+        if (n != other.shape()[0]) {
+            throw new IllegalArgumentException("Le dimensioni interne non corrispondono: " + n + " != " + other.shape()[0]);
+        }
+
+        float[] A = this.getData().toArray();
+        float[] B = other.getData().toArray();
+        Tensor result = new TensorCPU(m, p);
+        float[] C = result.getData().toArray();
+
+        final int blockSize = 64;
+
+        for (int iBlock = 0; iBlock < m; iBlock += blockSize) {
+            int iMax = Math.min(iBlock + blockSize, m);
+
+            for (int kBlock = 0; kBlock < n; kBlock += blockSize) {
+                int kMax = Math.min(kBlock + blockSize, n);
+
+                for (int jBlock = 0; jBlock < p; jBlock += blockSize) {
+                    int jMax = Math.min(jBlock + blockSize, p);
+
+                    for (int i = iBlock; i < iMax; i++) {
+                        int indexA_i = i * n;
+                        int indexC_i = i * p + jBlock;
+
+                        for (int k = kBlock; k < kMax; k++) {
+                            float aVal = A[indexA_i + k];
+
+                            int indexB_k = k * p + jBlock;
+                            int indexC = indexC_i;
+
+                            for (int j = jBlock; j < jMax; j++) {
+                                C[indexC++] += aVal * B[indexB_k++];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
     
     public Tensor matmul(Tensor other) {
         if (shape.length != 2 || other.shape().length != 2) {
             throw new IllegalArgumentException("matmul requires 2D tensors");
         }
-        
+
         int m = shape[0];
         int n = shape[1];
         int p = other.shape()[1];
-        
+
         if (n != other.shape()[0]) {
             throw new IllegalArgumentException("The inner dimensions do not match: " + n + " != " + other.shape()[0]);
         }
-        
+
         Tensor result = new TensorCPU(m, p);
 
         for (int i = 0; i < m; i++) {

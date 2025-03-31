@@ -7,6 +7,8 @@ import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Random;
+import java.util.SplittableRandom;
 
 /**
  * Represents a Dropout layer, used to mitigate overfitting
@@ -14,6 +16,7 @@ import java.io.DataOutputStream;
  */
 public class DropoutLayer extends Layer {
 
+    private Random fastRandom = Random.from(new SplittableRandom());
     private double dropout;
 
     public DropoutLayer() {
@@ -64,7 +67,7 @@ public class DropoutLayer extends Layer {
         }
 
         for (int i = 0; i < input.elements(); i++) {
-            if (Math.random() > dropout) continue;
+            if (fastRandom.nextDouble() > dropout) continue;
 
             input.set(0, i);
         }

@@ -65,7 +65,8 @@ public interface Tensor extends Iterable<Double> {
     //=============================================================
     // Linear algebra operations
     //=============================================================
-    
+
+    Tensor matmulFast(Tensor other);
     Tensor matmul(Tensor other);
     Tensor matmul(Vector vec);
     double dot(Tensor other);
