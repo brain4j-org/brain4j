@@ -4,6 +4,9 @@ import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.index.Range;
 import net.echo.math4j.math.vector.Vector;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -164,4 +167,6 @@ public interface Tensor extends Iterable<Double> {
     Tensor cpu();
     boolean checkNaN();
     String toString(String format);
+    void serialize(DataOutputStream stream) throws IOException;
+    Tensor deserialize(DataInputStream stream) throws IOException;
 }

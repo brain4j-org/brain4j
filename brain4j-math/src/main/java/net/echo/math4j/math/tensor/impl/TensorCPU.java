@@ -9,6 +9,9 @@ import net.echo.math4j.math.tensor.index.Range;
 import net.echo.math4j.math.tensor.ops.Convolution;
 import net.echo.math4j.math.vector.Vector;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
@@ -1254,6 +1257,39 @@ public class TensorCPU implements Cloneable, Tensor {
         appendTensor(sb, 0, new int[shape.length], format);
 
         return sb.toString();
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws IOException {
+        stream.writeInt(dimension());
+        
+        for (int i = 0; i < shape.length; i++) {
+            stream.writeInt(shape[i]);
+        }
+
+        stream.writeInt(data.size());
+
+        for (int i = 0; i < data.size(); i++) {
+            stream.writeDouble(data.get(i));
+        }
+    }
+
+    @Override
+    public Tensor deserialize(DataInputStream stream) throws IOException {
+        int[] shape = new int[stream.readInt()];
+
+        for (int i = 0; i < shape.length; i++) {
+            shape[i] = stream.readInt();
+        }
+
+        Tensor data = of(shape);
+        int dataSize = stream.readInt();
+
+        for (int i = 0; i < dataSize; i++) {
+            data.getData().set(i, stream.readDouble());
+        }
+
+        return data;
     }
 
     @Override

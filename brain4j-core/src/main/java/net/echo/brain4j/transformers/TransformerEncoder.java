@@ -11,22 +11,29 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
+import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.List;
 import java.util.Random;
 
 public class TransformerEncoder extends Layer {
 
-    protected final Sequential feedForward;
-    protected final LayerNorm normalizer;
-
-    protected final int heads;
-    protected final int dimension;
+    protected Sequential feedForward;
+    protected LayerNorm normalizer;
 
     protected MultiHeadAttention attention;
+    protected int heads;
+    protected int dimension;
+
+    TransformerEncoder() {
+        this.normalizer = new LayerNorm();
+    }
 
     public TransformerEncoder(int numHeads, int dimension) {
         super(Activations.LINEAR.getFunction());
@@ -40,6 +47,51 @@ public class TransformerEncoder extends Layer {
 
         this.heads = numHeads;
         this.dimension = dimension;
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        stream.writeInt(dimension);
+        stream.writeInt(heads);
+
+        for (AttentionHead head : attention.getHeads()) {
+            Tensor Q = head.getQueryWeightsTensor();
+            Tensor K = head.getKeyWeightsTensor();
+            Tensor V = head.getValueWeightsTensor();
+
+            Q.serialize(stream);
+            K.serialize(stream);
+            V.serialize(stream);
+        }
+
+        feedForward.serialize(stream);
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        this.dimension = stream.readInt();
+        this.heads = stream.readInt();
+        this.attention = createAttention(heads, dimension);
+
+        this.feedForward = new Sequential(
+                new DenseLayer(dimension, Activations.LINEAR),
+                new DenseLayer(4 * dimension, Activations.RELU),
+                new DenseLayer(dimension, Activations.LINEAR)
+        );
+
+        for (int i = 0; i < heads; i++) {
+            AttentionHead head = attention.getHeads().get(i);
+
+            Tensor Q = TensorFactory.zeros(0).deserialize(stream);
+            Tensor K = TensorFactory.zeros(0).deserialize(stream);
+            Tensor V = TensorFactory.zeros(0).deserialize(stream);
+
+            head.setQueryWeightsTensor(Q);
+            head.setKeyWeightsTensor(K);
+            head.setValueWeightsTensor(V);
+        }
+
+        feedForward.deserialize(stream);
     }
 
     @Override
@@ -60,7 +112,7 @@ public class TransformerEncoder extends Layer {
     @Override
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(weightInit, lossFunction, optimizer, updater);
-        this.attention = createAttention();
+        this.attention = createAttention(heads, dimension);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 
@@ -99,7 +151,7 @@ public class TransformerEncoder extends Layer {
         return normalizer.normalize(merged.add(normalized));
     }
 
-    public MultiHeadAttention createAttention() {
+    public MultiHeadAttention createAttention(int heads, int dimension) {
         return new MultiHeadAttention(heads, dimension);
     }
 

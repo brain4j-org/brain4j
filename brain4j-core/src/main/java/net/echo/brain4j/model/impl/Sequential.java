@@ -55,18 +55,22 @@ public class Sequential extends Model {
     }
 
     @Override
-    public Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> loss) {
+    public Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
         return Thread.startVirtualThread(() -> {
             for (DataRow row : partition) {
                 Tensor prediction = predict(row.inputs());
+                Tensor expected = row.outputs();
 
                 int predIndex = BrainUtils.argmax(prediction);
-                int targetIndex = BrainUtils.argmax(row.outputs());
+                int targetIndex = BrainUtils.argmax(expected);
 
                 if (row.outputs().elements() == 1) {
                     predIndex = prediction.get(0) > 0.5 ? 1 : 0;
                     targetIndex = (int) row.outputs().get(0);
                 }
+
+                double loss = lossFunction.calculate(expected, prediction);
+                totalLoss.updateAndGet(v -> v + loss);
 
                 Tensor predictions = classifications.get(targetIndex);
                 int pred = (int) predictions.get(predIndex);

@@ -60,7 +60,17 @@ public class TransformerExample {
             "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
         );
 
-        trainModel(vocabulary, samples, model);
+        DataSet<DataRow> dataSet = getDataSet(vocabulary, samples);
+        trainModel(dataSet, model);
+
+        // model.load("chatbot.b4j");
+        double loss = model.loss(dataSet);
+
+        System.out.println("Loss: " + loss);
+
+        model.save("chatbot.b4j");
+        System.out.println("Saved model inside chatbot.b4j!");
+
         String prompt;
 
         do {
@@ -72,11 +82,10 @@ public class TransformerExample {
         } while (!prompt.equals("end"));
     }
 
-    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer model) throws Exception {
+    private DataSet<DataRow> getDataSet(Vocabulary vocabulary, Map<String, String> samples) {
         DataSet<DataRow> dataSet = new DataSet<>();
-        
         Map<String, Tensor> inputEncodingCache = new HashMap<>();
-        
+
         for (var entry : samples.entrySet()) {
             String trainInput = entry.getKey();
             String trainOutput = entry.getValue();
@@ -94,11 +103,13 @@ public class TransformerExample {
 
             for (String token : tokens) {
                 Tensor encoded;
+
                 if (inputEncodingCache.containsKey(lastInput)) {
                     encoded = inputEncodingCache.get(lastInput);
                 } else {
                     Tensor input = vocabulary.encode(lastInput);
                     encoded = ENCODING.encode(input);
+
                     if (lastInput.length() < 50) {
                         inputEncodingCache.put(lastInput, encoded);
                     }
@@ -116,6 +127,10 @@ public class TransformerExample {
             }
         }
 
+        return dataSet;
+    }
+
+    private void trainModel(DataSet<DataRow> dataSet, Transformer model) {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
@@ -123,14 +138,10 @@ public class TransformerExample {
         SmartTrainer trainer = new SmartTrainer(0.01, 50);
 
         trainer.addListener(new Evaluator());
-        trainer.startFor(model, dataSet, 1500);
+        trainer.startFor(model, dataSet, 500);
 
         double duration = (System.nanoTime() - startTime) / 1e6;
-
-        double loss = model.loss(dataSet);
-        System.out.println("Training took " + duration + " ms with loss " + loss);
-
-        model.save("chat_bot");
+        System.out.println("Training took " + duration + " ms");
     }
 
     private void generateResponse(Vocabulary vocabulary, Transformer model, String prompt) {
@@ -175,7 +186,7 @@ public class TransformerExample {
 
         @Override
         public void onEvaluated(DataSet<DataRow> dataSet, EvaluationResult evaluation, int epoch, long took) {
-            if (evaluation.accuracy() > 0.95 && evaluation.loss() < 0.2) {
+            if (evaluation.accuracy() == 1 && evaluation.loss() < 0.2) {
                 trainer.abort();
             }
 

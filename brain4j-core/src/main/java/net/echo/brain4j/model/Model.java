@@ -90,7 +90,7 @@ public abstract class Model implements Adapter {
         }
     }
 
-    public abstract Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> loss);
+    public abstract Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss);
 
     public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
         int classes = dataSet.getData().getFirst().outputs().elements();

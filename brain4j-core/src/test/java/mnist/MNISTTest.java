@@ -8,6 +8,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.TensorFactory;
@@ -25,7 +26,6 @@ public class MNISTTest {
 
     private void testMNIST() throws Exception {
         Brain4J.setLogging(true);
-        Brain4J.useGPUIfAvailable();
 
         var dataSet = getDataSet();
         var model = new Sequential(
@@ -40,8 +40,8 @@ public class MNISTTest {
 
         model.fit(dataSet, 100, 10);
 
-        var result = model.evaluate(dataSet);
-        double loss = model.loss(dataSet);
+        EvaluationResult result = model.evaluate(dataSet);
+        double loss = result.loss();
 
         System.out.println(result.confusionMatrix());
         System.out.println("Loss: " + loss);

@@ -77,8 +77,6 @@ public class BackPropagation {
     }
 
     public void iteration(DataSet<DataRow> dataSet) {
-        partitionIfRequired(dataSet);
-
         for (List<DataRow> partition : dataSet.getPartitions()) {
             propagatePartition(partition);
         }

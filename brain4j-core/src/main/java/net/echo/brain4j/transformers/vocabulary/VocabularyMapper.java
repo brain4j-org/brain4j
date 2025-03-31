@@ -6,14 +6,19 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.List;
 import java.util.Random;
 
 public class VocabularyMapper extends Layer {
 
-    private final Tensor outProjectionWeights;
-    private final int vocabularySize;
-    private final double temperature;
+    private Tensor outProjectionWeights;
+    private int vocabularySize;
+    private double temperature;
+
+    private VocabularyMapper() {
+    }
 
     public VocabularyMapper(int vocabularySize, int dimension, double temperature) {
         this.vocabularySize = vocabularySize;
@@ -22,7 +27,18 @@ public class VocabularyMapper extends Layer {
     }
 
     @Override
-    public void init(Random generator) {
+    public void serialize(DataOutputStream stream) throws Exception {
+        stream.writeInt(vocabularySize);
+        stream.writeDouble(temperature);
+
+        outProjectionWeights.serialize(stream);
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        this.vocabularySize = stream.readInt();
+        this.temperature = stream.readDouble();
+        this.outProjectionWeights = TensorFactory.zeros(0).deserialize(stream);
     }
 
     @Override

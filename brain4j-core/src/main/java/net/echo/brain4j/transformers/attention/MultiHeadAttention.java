@@ -71,4 +71,8 @@ public class MultiHeadAttention {
             heads.add(createAttentionHead());
         }
     }
+
+    public List<AttentionHead> getHeads() {
+        return heads;
+    }
 }

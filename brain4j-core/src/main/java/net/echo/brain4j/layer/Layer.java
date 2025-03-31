@@ -107,14 +107,6 @@ public abstract class Layer implements Adapter {
         }
     }
 
-    public void serializeWeights(DataOutputStream stream) throws Exception {
-
-    }
-
-    public void deserializeWeights(DataInputStream stream) throws Exception {
-
-    }
-
     public boolean canPropagate() {
         return true;
     }

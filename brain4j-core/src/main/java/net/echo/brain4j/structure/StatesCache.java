@@ -49,7 +49,6 @@ public class StatesCache {
         valueCache.clear();
     }
 
-
     // avoid shape mismatch errors
     public boolean isCompatibleWithCache(Tensor tensor) {
         if (keyCache.isEmpty() && valueCache.isEmpty()) {
@@ -58,7 +57,8 @@ public class StatesCache {
         
         for (List<Tensor> tensors : keyCache.values()) {
             if (!tensors.isEmpty()) {
-                Tensor cached = tensors.get(0);
+                Tensor cached = tensors.getFirst();
+
                 if (cached.shape()[0] != tensor.shape()[0]) {
                     return false;
                 }

@@ -11,12 +11,12 @@ import java.util.Random;
 
 public class AttentionHead {
 
-    protected final int inputDimension;
-    protected final int headDimension;
+    protected int inputDimension;
+    protected int headDimension;
 
-    protected final Tensor queryWeightsTensor;
-    protected final Tensor keyWeightsTensor;
-    protected final Tensor valueWeightsTensor;
+    protected Tensor queryWeightsTensor;
+    protected Tensor keyWeightsTensor;
+    protected Tensor valueWeightsTensor;
     
     protected boolean useCache = true;
 
@@ -39,6 +39,30 @@ public class AttentionHead {
                 valueWeightsTensor.set(random.nextDouble(2 * bound) - bound, i, j);
             }
         }
+    }
+
+    public Tensor getQueryWeightsTensor() {
+        return queryWeightsTensor;
+    }
+
+    public void setQueryWeightsTensor(Tensor queryWeightsTensor) {
+        this.queryWeightsTensor = queryWeightsTensor;
+    }
+
+    public Tensor getKeyWeightsTensor() {
+        return keyWeightsTensor;
+    }
+
+    public void setKeyWeightsTensor(Tensor keyWeightsTensor) {
+        this.keyWeightsTensor = keyWeightsTensor;
+    }
+
+    public Tensor getValueWeightsTensor() {
+        return valueWeightsTensor;
+    }
+
+    public void setValueWeightsTensor(Tensor valueWeightsTensor) {
+        this.valueWeightsTensor = valueWeightsTensor;
     }
 
     public int size() {
