@@ -684,6 +684,7 @@ public class TensorCPU implements Cloneable, Tensor {
 
         float[] A = this.getData().toArray();
         float[] B = other.getData().toArray();
+
         Tensor result = new TensorCPU(m, p);
         float[] C = result.getData().toArray();
 
