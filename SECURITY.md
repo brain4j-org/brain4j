@@ -21,11 +21,10 @@ If you believe you've found a security vulnerability in brain4j, please follow t
 - **Vulnerability Fix**: The timeline for fixing the vulnerability will depend on its severity and complexity
 
 ## Supported Versions
-
 | Version | Supported          |
-| ------- | ------------------ |
-| $\geq$ 2.5.3   | :white_check_mark: |
-| $\lt$ 2.5.3 | :x:                |
+|---------|--------------------|
+| ≥ 2.5.3 | :white_check_mark: |
+| < 2.5.3 | :x:                |
 
 ## Security Best Practices for Using brain4j
 
