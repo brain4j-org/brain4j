@@ -36,12 +36,6 @@ public class TensorCPU implements Cloneable, Tensor {
         this.data = new Vector(size);
     }
     
-    private TensorCPU(Vector data, int[] shape, int[] strides) {
-        this.data = data;
-        this.shape = shape;
-        this.strides = strides;
-    }
-    
     private static int computeSize(int[] shape) {
         int size = 1;
         

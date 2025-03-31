@@ -15,7 +15,6 @@ import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 

@@ -5,7 +5,6 @@ import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.math.tensor.Tensor;

@@ -4,7 +4,6 @@ import com.github.luben.zstd.Zstd;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInitializer;
-import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;

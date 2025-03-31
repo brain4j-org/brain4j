@@ -17,7 +17,6 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.Arrays;
 import java.util.Random;
 
 @JsonAdapter(LayerAdapter.class)
