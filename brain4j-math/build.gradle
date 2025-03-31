@@ -4,7 +4,9 @@ plugins {
 }
 
 dependencies {
-    implementation 'org.jocl:jocl:2.0.5'
+    implementation project(':brain4j-native')
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
 }
 
 shadowJar {
@@ -13,4 +15,8 @@ shadowJar {
 
 tasks.named("jar") {
     enabled = false
+}
+
+test {
+    useJUnitPlatform()
 }

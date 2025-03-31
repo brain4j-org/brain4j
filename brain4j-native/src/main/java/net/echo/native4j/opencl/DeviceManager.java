@@ -1,10 +1,10 @@
-package net.echo.math4j.opencl;
+package net.echo.native4j.opencl;
 
 import org.jocl.*;
 
 import static org.jocl.CL.*;
 
-public class DeviceUtils {
+public class DeviceManager {
 
     private static cl_device_id device;
 
@@ -22,18 +22,24 @@ public class DeviceUtils {
     public static cl_device_id findDevice(DeviceType deviceType) {
         cl_platform_id platform = getPlatform();
 
-        cl_device_id[] devices = new cl_device_id[1];
-        clGetDeviceIDs(platform, deviceType.mask, 2, devices, null);
-
-        return device = devices[0];
+        try {
+            cl_device_id[] devices = new cl_device_id[1];
+            clGetDeviceIDs(platform, deviceType.mask, 2, devices, null);
+            return device = devices[0];
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static String getDeviceName() {
+        if (device == null) {
+            return "No device selected";
+        }
+
         long[] size = new long[1];
         clGetDeviceInfo(device, CL_DEVICE_NAME, 0, null, size);
 
         byte[] buffer = new byte[(int) size[0]];
-
         clGetDeviceInfo(device, CL.CL_DEVICE_NAME, buffer.length, Pointer.to(buffer), null);
 
         return new String(buffer, 0, buffer.length - 1).trim();
@@ -87,15 +93,12 @@ public class DeviceUtils {
 
     public static long getInfoLong(int flag, int arraySize, int size) {
         long[] memory = new long[arraySize];
-
         clGetDeviceInfo(device, flag, size, Pointer.to(memory), null);
-
         return memory[0];
     }
 
-    public static String getOpenCLVersion(){
+    public static String getOpenCLVersion() {
         cl_platform_id[] platforms = new cl_platform_id[1];
-
         CL.clGetPlatformIDs(1, platforms, null);
         cl_platform_id platform = platforms[0];
 
@@ -121,6 +124,10 @@ public class DeviceUtils {
     }
 
     public static String getExtensions() {
+        if (device == null) {
+            return "";
+        }
+        
         long[] size = new long[1];
         clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, 0, null, size);
 
@@ -131,9 +138,13 @@ public class DeviceUtils {
     }
 
     public static long getMaxLocalWorkSize() {
+        cl_device_id device = findDevice(DeviceType.GPU);
+        if (device == null) {
+            return 0;
+        }
+        
         long[] maxLocalWorkSize = new long[1];
-
-        clGetDeviceInfo(DeviceUtils.findDevice(DeviceType.GPU), CL_DEVICE_MAX_WORK_GROUP_SIZE,
+        clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE,
                 Sizeof.cl_long, Pointer.to(maxLocalWorkSize), null);
 
         return maxLocalWorkSize[0];
@@ -152,4 +163,4 @@ public class DeviceUtils {
             this.mask = mask;
         }
     }
-}
+} 

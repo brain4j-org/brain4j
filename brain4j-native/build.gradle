@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow'
+}
+
+dependencies {
+    implementation project(':brain4j-math')
+    implementation 'org.jocl:jocl:2.0.4'
+    
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+shadowJar {
+    archiveBaseName.set('brain4j-native')
+    archiveClassifier.set('')
+    archiveVersion.set(project.version)
+} 

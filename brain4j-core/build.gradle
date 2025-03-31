@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation project(path: ":brain4j-math", configuration: "shadow")
+    implementation project(':brain4j-native')
 
     implementation 'com.github.luben:zstd-jni:1.5.7-2'
     implementation 'com.google.guava:guava:32.1.2-jre'
