@@ -92,6 +92,10 @@ public class TransformerEncoder extends Layer {
         }
 
         feedForward.deserialize(stream);
+
+        for (Layer layer : feedForward.getLayers()) {
+            layer.compile(weightInit, lossFunction, optimizer, updater);
+        }
     }
 
     @Override
@@ -173,9 +177,11 @@ public class TransformerEncoder extends Layer {
 
     public int getFeedForwardSize() {
         int total = 0;
+
         for (Layer layer : feedForward.getLayers()) {
             total += layer.getTotalParams();
         }
+
         return total;
     }
 }

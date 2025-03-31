@@ -1,6 +1,7 @@
 package net.echo.brain4j.adapters;
 
 import com.github.luben.zstd.Zstd;
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.WeightInitializer;
@@ -73,6 +74,10 @@ public class ModernAdapter {
             model.getOptimizer().postInitialize(model);
             model.getUpdater().postInitialize();
             model.setPropagation(new BackPropagation(model, optimizer, updater));
+
+            for (Layer layer : model.getLayers()) {
+                layer.compile(weightInit, lossFunction, optimizer, updater);
+            }
 
             return model;
         }

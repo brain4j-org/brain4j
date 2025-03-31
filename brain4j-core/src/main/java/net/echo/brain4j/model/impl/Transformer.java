@@ -113,7 +113,6 @@ public class Transformer extends Model {
 
         for (int i = 0; i < layersSize; i++) {
             String layerClassPath = stream.readUTF();
-            System.out.println(layerClassPath);
             Layer instance = BrainUtils.newInstance(layerClassPath);
 
             instance.deserialize(stream);

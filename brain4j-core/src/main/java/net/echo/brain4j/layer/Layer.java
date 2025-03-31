@@ -72,12 +72,7 @@ public abstract class Layer implements Adapter {
         stream.writeBoolean(hasWeights);
 
         if (hasWeights) {
-            stream.writeInt(weights.shape()[0]);
-            stream.writeInt(weights.shape()[1]);
-
-            for (int j = 0; j < weights.elements(); j++) {
-                stream.writeDouble(weights.getData().get(j));
-            }
+            weights.serialize(stream);
         }
     }
 
@@ -92,18 +87,10 @@ public abstract class Layer implements Adapter {
         }
 
         boolean hasWeights = stream.readBoolean();
+        this.weights = TensorFactory.zeros(0);
 
         if (hasWeights) {
-            int rows = stream.readInt();
-            int columns = stream.readInt();
-
-            this.weights = TensorFactory.zeros(rows, columns);
-
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
-                    weights.set(stream.readDouble(), i, j);
-                }
-            }
+            this.weights = weights.deserialize(stream);
         }
     }
 

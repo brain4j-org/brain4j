@@ -40,9 +40,10 @@ public class TransformerExample {
 
     private void start() throws Exception {
         Brain4J.setLogging(true);
-        var examples = loadExamples();
 
+        var examples = loadExamples();
         var vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
+
         vocabulary.tokenize();
 
         var model = new Transformer(
@@ -52,34 +53,39 @@ public class TransformerExample {
 
         model.compile(Loss.CROSS_ENTROPY, new Adam(0.1));
 
-        System.out.println(model.summary());
-        System.out.println("Vocabulary size: " + vocabulary.getVocabSize());
-
-        var scanner = new Scanner(System.in);
         var samples = Map.of(
             "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
         );
 
         DataSet<DataRow> dataSet = getDataSet(vocabulary, samples);
+
+        model.load("chatbot.b4j");
+        System.out.println(model.summary());
+
+        double loss = model.loss(dataSet);
+        System.out.println("Starting loss: " + loss);
+
         trainModel(dataSet, model);
 
-        // model.load("chatbot.b4j");
-        double loss = model.loss(dataSet);
-
-        System.out.println("Loss: " + loss);
-
         model.save("chatbot.b4j");
-        System.out.println("Saved model inside chatbot.b4j!");
+        System.out.printf("Saved model inside chatbot.b4j! Loss: %.3f%n", model.loss(dataSet));
 
-        String prompt;
+        var scanner = new Scanner(System.in);
+        inference(vocabulary, model, scanner);
+    }
 
-        do {
-            System.out.print("Enter a prompt: ");
-            prompt = scanner.nextLine() + " ";
+    private void inference(Vocabulary vocabulary, Transformer model, Scanner scanner) {
+        System.out.print("Enter a prompt (Enter 'end' to exit): ");
+        String prompt = scanner.nextLine() + " ";
 
-            generateResponse(vocabulary, model, prompt);
-            System.out.println();
-        } while (!prompt.equals("end"));
+        if (prompt.equals("end")) {
+            return;
+        }
+
+        generateResponse(vocabulary, model, prompt);
+        System.out.println();
+
+        inference(vocabulary, model, scanner);
     }
 
     private DataSet<DataRow> getDataSet(Vocabulary vocabulary, Map<String, String> samples) {
