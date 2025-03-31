@@ -66,7 +66,7 @@ public interface Tensor extends Iterable<Double> {
     // Linear algebra operations
     //=============================================================
 
-    Tensor matmulFast(Tensor other);
+    Tensor oldMatmul(Tensor other);
     Tensor matmul(Tensor other);
     Tensor matmul(Vector vec);
     double dot(Tensor other);
@@ -147,7 +147,6 @@ public interface Tensor extends Iterable<Double> {
      * @throws IllegalArgumentException if tensor dimensions are not compatible
      */
     Tensor convolve(Tensor kernel);
-    
     Tensor softmax();
     Tensor softmax(double temperature);
     

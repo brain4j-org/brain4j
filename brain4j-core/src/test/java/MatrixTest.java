@@ -31,7 +31,7 @@ public class MatrixTest {
         Tensor tensorB = TensorFactory.matrix(m, p).fill(1);
 
         long b4jStartFast = System.nanoTime();
-        Tensor tensorResult = tensorA.matmulFast(tensorB);
+        Tensor tensorResult = tensorA.oldMatmul(tensorB);
         long b4jEndFast = System.nanoTime();
 
         long b4jStartNormal = System.nanoTime();

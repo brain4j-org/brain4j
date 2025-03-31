@@ -193,7 +193,7 @@ public class TransformerExample {
             lastWord = word;
             totalTime += took;
 
-            System.out.printf("\rTook %.2f ms > %s", took, botResponse);
+            System.out.printf("\r%.2fms/token - %s", took, botResponse);
         }
 
         System.out.printf("\nTotal time: %.3f ms", totalTime);
