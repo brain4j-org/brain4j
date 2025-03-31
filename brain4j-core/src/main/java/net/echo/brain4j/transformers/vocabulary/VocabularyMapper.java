@@ -22,7 +22,7 @@ public class VocabularyMapper extends Layer {
 
     public VocabularyMapper(int vocabularySize, int dimension, double temperature) {
         this.vocabularySize = vocabularySize;
-        this.outProjectionWeights = TensorFactory.random(dimension, vocabularySize); // TODO: matmul support for 1d tensors
+        this.outProjectionWeights = TensorFactory.random(dimension, vocabularySize);
         this.temperature = Math.max(1e-15, temperature);
     }
 
@@ -54,7 +54,8 @@ public class VocabularyMapper extends Layer {
                 .mul(optimizer.getLearningRate());
 
         outProjectionWeights.sub(gradW);
-        return delta;
+
+        return gradZ.matmul(outProjectionWeights.transpose());
     }
 
     @Override

@@ -14,6 +14,6 @@ public class TransformerDecoder extends TransformerEncoder {
 
     @Override
     public MaskedMultiHeadAttention createAttention(int heads, int dimension) {
-        return new MaskedMultiHeadAttention(weightInit, heads, dimension);
+        return new MaskedMultiHeadAttention(heads, dimension);
     }
 }
