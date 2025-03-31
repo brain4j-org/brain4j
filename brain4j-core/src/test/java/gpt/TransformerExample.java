@@ -32,7 +32,7 @@ public class TransformerExample {
     }
 
     private List<String> loadExamples() throws Exception {
-        return Files.readAllLines(Path.of("brain4j-core/src/test/java/gpt/dataset.txt"));
+        return Files.readAllLines(Path.of("dataset.txt"));
     }
 
     private void start() throws Exception {
