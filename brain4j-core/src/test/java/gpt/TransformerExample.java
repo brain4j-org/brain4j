@@ -5,7 +5,10 @@ import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.Adam;
+import net.echo.brain4j.training.techniques.SmartTrainer;
+import net.echo.brain4j.training.techniques.TrainListener;
 import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
@@ -69,7 +72,7 @@ public class TransformerExample {
         } while (!prompt.equals("end"));
     }
 
-    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer transformer) throws Exception {
+    private void trainModel(Vocabulary vocabulary, Map<String, String> samples, Transformer model) throws Exception {
         DataSet<DataRow> dataSet = new DataSet<>();
         
         Map<String, Tensor> inputEncodingCache = new HashMap<>();
@@ -116,13 +119,18 @@ public class TransformerExample {
         System.out.println("Fitting with " + dataSet.size() + " samples.");
 
         long startTime = System.nanoTime();
-        transformer.fit(dataSet, 1500, 50);
+
+        SmartTrainer trainer = new SmartTrainer(0.01, 50);
+
+        trainer.addListener(new Evaluator());
+        trainer.startFor(model, dataSet, 1500);
+
         double duration = (System.nanoTime() - startTime) / 1e6;
 
-        double loss = transformer.loss(dataSet);
+        double loss = model.loss(dataSet);
         System.out.println("Training took " + duration + " ms with loss " + loss);
 
-        transformer.save("chat_bot");
+        model.save("chat_bot");
     }
 
     private void generateResponse(Vocabulary vocabulary, Transformer model, String prompt) {
@@ -154,5 +162,25 @@ public class TransformerExample {
 
         System.out.println();
         System.out.println("Total time: " + totalTime + " ms");
+    }
+
+    static class Evaluator extends TrainListener {
+
+        @Override
+        public void onEpochCompleted(int epoch, int totalEpoches, long took) {
+            if (totalEpoches == Integer.MAX_VALUE) return;
+
+            model.printProgressBar(epoch + 1, totalEpoches, trainer.getEvaluateEvery());
+        }
+
+        @Override
+        public void onEvaluated(DataSet<DataRow> dataSet, EvaluationResult evaluation, int epoch, long took) {
+            if (evaluation.accuracy() > 0.95 && evaluation.loss() < 0.2) {
+                trainer.abort();
+            }
+
+            System.out.printf("Loss at epoch %s: %.4f | Accuracy: %.2f%%\n", epoch, evaluation.loss(),
+                    evaluation.accuracy() * 100);
+        }
     }
 }

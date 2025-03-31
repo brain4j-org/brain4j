@@ -15,14 +15,41 @@ import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Transformer extends Model {
 
     public Transformer(Layer... layers) {
         super(layers);
+    }
+
+    @Override
+    public Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+        return Thread.startVirtualThread(() -> {
+            for (DataRow row : partition) {
+                Tensor prediction = predict(row.inputs());
+                Tensor outputs = row.outputs();
+
+                double loss = lossFunction.calculate(outputs, prediction);
+                totalLoss.updateAndGet(v -> v + loss);
+
+                int predIndex = BrainUtils.argmax(prediction);
+                int targetIndex = BrainUtils.argmax(outputs);
+
+                Tensor predictions = classifications.get(targetIndex);
+                int pred = (int) predictions.get(predIndex);
+
+                predictions.set(pred + 1, predIndex);
+            }
+        });
     }
 
     @Override
@@ -47,11 +74,6 @@ public class Transformer extends Model {
         connect(initializer);
 
         return this;
-    }
-
-    @Override
-    public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
-        return null;
     }
 
     @Override

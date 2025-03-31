@@ -22,9 +22,11 @@ import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -88,7 +90,34 @@ public abstract class Model implements Adapter {
         }
     }
 
-    public abstract EvaluationResult evaluate(DataSet<DataRow> dataSet);
+    public abstract Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> loss);
+
+    public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
+        int classes = dataSet.getData().getFirst().outputs().elements();
+
+        // Binary classification
+        if (classes == 1) {
+            classes = 2;
+        }
+
+        Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
+
+        for (int i = 0; i < classes; i++) {
+            classifications.put(i, TensorFactory.create(classes));
+        }
+
+        List<Thread> threads = new ArrayList<>();
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+
+        propagation.partitionIfRequired(dataSet);
+
+        for (List<DataRow> partition : dataSet.getPartitions()) {
+            threads.add(makeEvaluation(partition, classifications, totalLoss));
+        }
+
+        BrainUtils.waitAll(threads);
+        return new EvaluationResult(totalLoss.get() / dataSet.size() , classes, classifications);
+    }
 
     public abstract void fit(DataSet<DataRow> dataSet);
 
@@ -125,12 +154,13 @@ public abstract class Model implements Adapter {
             }
 
             if (currentEpoch % evaluateEvery == 0) {
-                System.out.printf("Loss at epoch %s: %.4f\n", currentEpoch, loss(dataSet));
+                EvaluationResult result = evaluate(dataSet);
+                System.out.printf("Loss at epoch %s: %.4f | Accuracy: %.2f%%\n", currentEpoch, result.loss(), result.accuracy() * 100);
             }
         }
     }
 
-    private void printProgressBar(int currentEpoch, int epoches, int evaluateEvery) {
+    public void printProgressBar(int currentEpoch, int epoches, int evaluateEvery) {
         int progressBarLength = 30;
         double percentage = (double) currentEpoch / epoches;
 

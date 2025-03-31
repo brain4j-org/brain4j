@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of a sequential neural network model.
@@ -53,7 +54,8 @@ public class Sequential extends Model {
         Preconditions.checkState(!(!isInput && hasConv), "Cannot use a convolutional layer without an input layer!");
     }
 
-    private Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications) {
+    @Override
+    public Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> loss) {
         return Thread.startVirtualThread(() -> {
             for (DataRow row : partition) {
                 Tensor prediction = predict(row.inputs());
@@ -99,33 +101,6 @@ public class Sequential extends Model {
     @Override
     public Sequential compile(WeightInit initializer, Loss lossFunction, Optimizer optimizer, Updater updater) {
         return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
-    }
-
-    @Override
-    public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
-        int classes = dataSet.getData().getFirst().outputs().elements();
-
-        // Binary classification
-        if (classes == 1) {
-            classes = 2;
-        }
-
-        Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
-
-        for (int i = 0; i < classes; i++) {
-            classifications.put(i, TensorFactory.create(classes));
-        }
-
-        List<Thread> threads = new ArrayList<>();
-
-        propagation.partitionIfRequired(dataSet);
-
-        for (List<DataRow> partition : dataSet.getPartitions()) {
-            threads.add(makeEvaluation(partition, classifications));
-        }
-
-        BrainUtils.waitAll(threads);
-        return new EvaluationResult(classes, classifications);
     }
 
     @Override

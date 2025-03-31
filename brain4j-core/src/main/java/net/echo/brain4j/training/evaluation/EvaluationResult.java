@@ -7,6 +7,7 @@ import java.util.Map;
 
 public final class EvaluationResult {
 
+    private final double loss;
     private final int classes;
     private final Map<Integer, Tensor> classifications;
 
@@ -15,7 +16,8 @@ public final class EvaluationResult {
     private double recall;
     private double f1Score;
 
-    public EvaluationResult(int classes, Map<Integer, Tensor> classifications) {
+    public EvaluationResult(double loss, int classes, Map<Integer, Tensor> classifications) {
+        this.loss = loss;
         this.classes = classes;
         this.classifications = classifications;
         calculateStats();
@@ -107,12 +109,12 @@ public final class EvaluationResult {
         return matrix.toString();
     }
 
-    public int classes() {
-        return classes;
+    public double loss() {
+        return loss;
     }
 
-    public Map<Integer, Tensor> classifications() {
-        return classifications;
+    public int classes() {
+        return classes;
     }
 
     public double accuracy() {
@@ -129,5 +131,9 @@ public final class EvaluationResult {
 
     public double f1Score() {
         return f1Score;
+    }
+
+    public Map<Integer, Tensor> classifications() {
+        return classifications;
     }
 }
