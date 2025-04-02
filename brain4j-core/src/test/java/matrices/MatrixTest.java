@@ -1,3 +1,5 @@
+package matrices;
+
 import org.ejml.simple.SimpleMatrix;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;

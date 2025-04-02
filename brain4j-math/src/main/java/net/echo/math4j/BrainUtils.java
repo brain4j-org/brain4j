@@ -2,6 +2,7 @@ package net.echo.math4j;
 
 import static net.echo.math4j.math.constants.Constants.*;
 import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.vector.Vector;
 
 import java.lang.reflect.Constructor;
@@ -11,6 +12,23 @@ import java.util.List;
  * Utility class for conversions and value matching.
  */
 public class BrainUtils {
+
+    public static double estimateMaxLearningRate(Tensor X) {
+        if (X.dimension() == 1) {
+            throw new UnsupportedOperationException("Operation is not supported for 1D inputs yet!");
+        }
+
+        Tensor XtX = X.transpose().matmul(X);
+        Tensor v = TensorFactory.random(XtX.shape()[1], 1);
+
+        for (int i = 0; i < 10; i++) {
+            v = XtX.matmul(v);
+            v = v.div(v.norm());
+        }
+
+        double lambdaMax = v.transpose().matmul(XtX).matmul(v).get(0, 0);
+        return 2.0 / lambdaMax;
+    }
 
     public static <T extends Enum<T>> T parse(Vector outputs, Class<T> clazz) {
         return clazz.getEnumConstants()[argmax(outputs)];

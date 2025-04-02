@@ -33,7 +33,7 @@ public class XorTest {
         System.out.println(model.summary());
 
         var start = System.nanoTime();
-        model.fit(dataSet, 1000);
+        model.fit(dataSet, 1000, 100);
         var took = (System.nanoTime() - start) / 1e6;
 
         System.out.printf("Trained in %.5f ms%n", took);
