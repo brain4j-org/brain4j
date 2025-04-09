@@ -9,7 +9,6 @@ import net.echo.math4j.math.tensor.TensorFactory;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.List;
-import java.util.Random;
 
 public class VocabularyMapper extends Layer {
 

@@ -13,7 +13,6 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
-import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 

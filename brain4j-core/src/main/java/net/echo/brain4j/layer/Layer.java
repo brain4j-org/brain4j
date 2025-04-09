@@ -18,7 +18,6 @@ import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.Random;
 
 @JsonAdapter(LayerAdapter.class)

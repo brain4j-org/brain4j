@@ -4,10 +4,6 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.math4j.math.tensor.Tensor;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 public class GradientDescent extends Optimizer {
 
     public GradientDescent(double learningRate) {

@@ -2,7 +2,6 @@ package net.echo.brain4j.adapters;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 
 public interface Adapter {
 
