@@ -27,12 +27,12 @@ public abstract class Optimizer implements Adapter {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws IOException {
+    public void serialize(DataOutputStream stream) throws Exception {
         stream.writeDouble(learningRate);
     }
 
     @Override
-    public void deserialize(DataInputStream stream) throws IOException {
+    public void deserialize(DataInputStream stream) throws Exception {
         this.learningRate = stream.readDouble();
     }
 

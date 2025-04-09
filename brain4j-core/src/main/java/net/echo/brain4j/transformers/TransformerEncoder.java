@@ -50,7 +50,7 @@ public class TransformerEncoder extends Layer {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws SerializationException {
+    public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(dimension);
         stream.writeInt(heads);
 

@@ -29,13 +29,13 @@ public class AdamW extends Adam {
     }
 
     @Override
-    public void serialize(DataOutputStream dataOutputStream) throws IOException {
+    public void serialize(DataOutputStream dataOutputStream) throws Exception {
         super.serialize(dataOutputStream);
         dataOutputStream.writeDouble(weightDecay);
     }
 
     @Override
-    public void deserialize(DataInputStream dataInputStream) throws IOException {
+    public void deserialize(DataInputStream dataInputStream) throws Exception {
         super.deserialize(dataInputStream);
         this.weightDecay = dataInputStream.readDouble();
     }

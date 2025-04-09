@@ -51,7 +51,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws IOException {
+    public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeFloat(timestep);
         stream.writeFloat(beta1);
@@ -60,7 +60,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void deserialize(DataInputStream dataInputStream) throws IOException {
+    public void deserialize(DataInputStream dataInputStream) throws Exception {
         super.deserialize(dataInputStream);
         this.timestep = dataInputStream.readInt();
         this.beta1 = dataInputStream.readFloat();

@@ -1314,7 +1314,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws IOException {
+    public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(dimension());
         
         for (int i = 0; i < shape.length; i++) {
@@ -1329,7 +1329,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor deserialize(DataInputStream stream) throws IOException {
+    public Tensor deserialize(DataInputStream stream) throws Exception {
         int[] shape = new int[stream.readInt()];
 
         for (int i = 0; i < shape.length; i++) {

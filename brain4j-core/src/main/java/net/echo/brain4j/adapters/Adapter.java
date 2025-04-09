@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public interface Adapter {
 
-    void serialize(DataOutputStream stream) throws IOException;
+    void serialize(DataOutputStream stream) throws Exception;
 
-    void deserialize(DataInputStream stream) throws IOException;
+    void deserialize(DataInputStream stream) throws Exception;
 }

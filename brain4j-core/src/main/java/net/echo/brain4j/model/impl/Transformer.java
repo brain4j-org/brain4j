@@ -97,7 +97,7 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws SerializationException {
+    public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(layers.size());
 
         for (Layer layer : layers) {

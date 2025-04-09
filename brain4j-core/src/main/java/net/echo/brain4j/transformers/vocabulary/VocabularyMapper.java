@@ -27,7 +27,7 @@ public class VocabularyMapper extends Layer {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws SerializationException {
+    public void serialize(DataOutputStream stream) throws Exception {
         stream.writeInt(vocabularySize);
         stream.writeDouble(temperature);
 

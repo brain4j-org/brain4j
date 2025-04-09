@@ -167,6 +167,6 @@ public interface Tensor extends Iterable<Double> {
     Tensor cpu();
     boolean checkNaN();
     String toString(String format);
-    void serialize(DataOutputStream stream) throws IOException;
-    Tensor deserialize(DataInputStream stream) throws IOException;
+    void serialize(DataOutputStream stream) throws Exception;
+    Tensor deserialize(DataInputStream stream) throws Exception;
 }
