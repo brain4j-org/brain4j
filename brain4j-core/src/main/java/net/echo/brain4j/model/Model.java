@@ -165,9 +165,10 @@ public abstract class Model implements Adapter {
         double percentage = (double) currentEpoch / epoches;
 
         int repetitions = (int) (percentage * progressBarLength);
-        String progressBar = "=".repeat(repetitions);
+        int remaining = progressBarLength - repetitions;
 
-        System.out.printf("\rEpoch: %s/%s [%-30s] %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
+        String progressBar = "\u001B[32m" + "━".repeat(repetitions) + "\u001B[0m" + "━".repeat(remaining);
+        System.out.printf("\rEpoch: %s/%s %-30s %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
             System.out.println();
