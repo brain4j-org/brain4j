@@ -40,7 +40,7 @@ public class DropoutLayer extends Layer {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws Exception {
+    public void serialize(DataOutputStream stream) throws SerializationException {
         super.serialize(stream);
         stream.writeDouble(dropout);
     }

@@ -18,14 +18,4 @@ public class GradientDescent extends Optimizer {
     public Tensor optimize(Layer layer, Tensor delta, Tensor output) {
         return delta.matmul(output).mul(learningRate);
     }
-
-    @Override
-    public void serialize(DataOutputStream dataOutputStream) throws IOException {
-        dataOutputStream.writeDouble(learningRate);
-    }
-
-    @Override
-    public void deserialize(DataInputStream dataInputStream) throws IOException {
-        this.learningRate = dataInputStream.readDouble();
-    }
 }

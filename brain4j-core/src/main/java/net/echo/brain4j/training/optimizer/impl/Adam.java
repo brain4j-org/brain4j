@@ -9,6 +9,7 @@ import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 public class Adam extends Optimizer {
@@ -50,16 +51,16 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void serialize(DataOutputStream dataOutputStream) throws Exception {
-        super.serialize(dataOutputStream);
-        dataOutputStream.writeFloat(timestep);
-        dataOutputStream.writeFloat(beta1);
-        dataOutputStream.writeFloat(beta2);
-        dataOutputStream.writeFloat(epsilon);
+    public void serialize(DataOutputStream stream) throws IOException {
+        super.serialize(stream);
+        stream.writeFloat(timestep);
+        stream.writeFloat(beta1);
+        stream.writeFloat(beta2);
+        stream.writeFloat(epsilon);
     }
 
     @Override
-    public void deserialize(DataInputStream dataInputStream) throws Exception {
+    public void deserialize(DataInputStream dataInputStream) throws IOException {
         super.deserialize(dataInputStream);
         this.timestep = dataInputStream.readInt();
         this.beta1 = dataInputStream.readFloat();

@@ -5,6 +5,7 @@ import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class AdamW extends Adam {
 
@@ -28,13 +29,13 @@ public class AdamW extends Adam {
     }
 
     @Override
-    public void serialize(DataOutputStream dataOutputStream) throws Exception {
+    public void serialize(DataOutputStream dataOutputStream) throws IOException {
         super.serialize(dataOutputStream);
         dataOutputStream.writeDouble(weightDecay);
     }
 
     @Override
-    public void deserialize(DataInputStream dataInputStream) throws Exception {
+    public void deserialize(DataInputStream dataInputStream) throws IOException {
         super.deserialize(dataInputStream);
         this.weightDecay = dataInputStream.readDouble();
     }

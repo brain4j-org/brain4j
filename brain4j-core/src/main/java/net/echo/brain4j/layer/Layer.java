@@ -59,7 +59,7 @@ public abstract class Layer implements Adapter {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws Exception {
+    public void serialize(DataOutputStream stream) throws SerializationException {
         stream.writeInt(id);
         stream.writeUTF(activation.getClass().getName());
         stream.writeInt(bias.elements());

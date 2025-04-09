@@ -1,6 +1,8 @@
 package net.echo.math4j.math.tensor.impl;
 
 import static net.echo.math4j.math.constants.Constants.*;
+
+import net.echo.math4j.exceptions.NativeException;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.opencl.DeviceUtils;
 import org.jocl.*;
@@ -50,12 +52,12 @@ public class TensorGPU extends TensorCPU {
     static {
         try {
             INITIALIZED = initializeOpenCL();
-        } catch (Exception e) {
+        } catch (NativeException e) {
             System.err.println("GPU acceleration not available: " + e.getMessage());
         }
     }
     
-    private static boolean initializeOpenCL() {
+    private static boolean initializeOpenCL() throws NativeException {
         try {
             CL.setExceptionsEnabled(true);
             
@@ -96,20 +98,18 @@ public class TensorGPU extends TensorCPU {
                 COMPLEX_POINTWISE_MUL_KERNEL = clCreateKernel(MAIN_PROGRAM, "complex_pointwise_mul", null);
                 CONVOLVE_1D_FFT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve1d_fft", null);
                 CONVOLVE_2D_FFT_EXTRACT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve2d_fft_extract", null);
-                
+
                 System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
                 return true;
             } catch (Exception e) {
-                System.err.println("Error loading or compiling kernels: " + e.getMessage());
-                return false;
+                throw new NativeException("Exception caught loading or compiling kernels! " + e.getMessage());
             }
         } catch (Exception e) {
-            System.err.println("Failed to initialize OpenCL: " + e.getMessage());
-            return false;
+            throw new NativeException("Failed to initialize OpenCL! " + e.getMessage());
         }
     }
     
-    private static String loadAndCombineKernels() throws IOException {
+    private static String loadAndCombineKernels() throws NativeException {
         StringBuilder combined = new StringBuilder();
         combined.append("// Brain4J OpenCL Kernels - automatically generated\n\n");
         
@@ -143,7 +143,7 @@ public class TensorGPU extends TensorCPU {
         return result.toString();
     }
     
-    private static String loadKernelSource(String resourceName) throws IOException {
+    private static String loadKernelSource(String resourceName) throws NativeException {
         InputStream inputStream = TensorGPU.class.getResourceAsStream(resourceName);
         
         if (inputStream == null) {
@@ -159,7 +159,7 @@ public class TensorGPU extends TensorCPU {
         }
 
         if (inputStream == null) {
-            throw new IOException("Error loading kernel: " + resourceName);
+            throw new NativeException("Resource not found: " + resourceName);
         }
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
@@ -172,7 +172,7 @@ public class TensorGPU extends TensorCPU {
 
             return stringBuilder.toString();
         } catch (Exception e) {
-            throw new IOException("Error loading kernel: " + resourceName, e);
+            throw new NativeException("Exception caught reading kernel: " + resourceName + "! " + e.getMessage());
         }
     }
  

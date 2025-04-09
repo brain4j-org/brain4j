@@ -11,6 +11,7 @@ import net.echo.math4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 @JsonAdapter(OptimizerAdapter.class)
@@ -26,12 +27,12 @@ public abstract class Optimizer implements Adapter {
     }
 
     @Override
-    public void serialize(DataOutputStream stream) throws Exception {
+    public void serialize(DataOutputStream stream) throws IOException {
         stream.writeDouble(learningRate);
     }
 
     @Override
-    public void deserialize(DataInputStream stream) throws Exception {
+    public void deserialize(DataInputStream stream) throws IOException {
         this.learningRate = stream.readDouble();
     }
 
