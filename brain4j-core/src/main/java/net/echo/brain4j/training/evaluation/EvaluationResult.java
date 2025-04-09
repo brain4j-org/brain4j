@@ -5,7 +5,7 @@ import net.echo.math4j.math.tensor.Tensor;
 
 import java.util.Map;
 
-public final class EvaluationResult {
+public class EvaluationResult {
 
     private final double loss;
     private final int classes;

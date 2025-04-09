@@ -51,15 +51,10 @@ public class ModernAdapter {
 
             int seed = dataStream.readInt();
 
-            String lossFunctionClass = dataStream.readUTF();
-            String weightInitClass = dataStream.readUTF();
-            String updaterClass = dataStream.readUTF();
-            String optimizerClass = dataStream.readUTF();
-
-            LossFunction lossFunction = BrainUtils.newInstance(lossFunctionClass);
-            WeightInitializer weightInit = BrainUtils.newInstance(weightInitClass);
-            Updater updater = BrainUtils.newInstance(updaterClass);
-            Optimizer optimizer = BrainUtils.newInstance(optimizerClass);
+            LossFunction lossFunction = BrainUtils.newInstance(dataStream.readUTF());
+            WeightInitializer weightInit = BrainUtils.newInstance(dataStream.readUTF());
+            Updater updater = BrainUtils.newInstance(dataStream.readUTF());
+            Optimizer optimizer = BrainUtils.newInstance(dataStream.readUTF());
 
             optimizer.deserialize(dataStream);
 

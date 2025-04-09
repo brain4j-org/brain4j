@@ -55,27 +55,6 @@ public class BackPropagation {
         updater.postBatch(model, optimizer.getLearningRate());
     }
 
-    public void propagatePartition(List<DataRow> partition, StatesCache sharedCache) {
-        List<Thread> threads = new ArrayList<>();
-        
-        for (DataRow row : partition) {
-            Thread thread = Thread.startVirtualThread(() -> {
-                StatesCache threadLocalCache = new StatesCache();
-                
-                // maybe there should be a dependency injection for the training boolean value
-                Tensor output = model.predict(threadLocalCache, row.inputs(), true); 
-                Tensor target = row.outputs();
-                
-                backpropagation(threadLocalCache, target, output);
-            });
-            
-            threads.add(thread);
-        }
-        
-        BrainUtils.waitAll(threads);
-        updater.postBatch(model, optimizer.getLearningRate());
-    }
-
     public void iteration(DataSet<DataRow> dataSet) {
         for (List<DataRow> partition : dataSet.getPartitions()) {
             propagatePartition(partition);
@@ -83,21 +62,12 @@ public class BackPropagation {
 
         updater.postFit(model, optimizer.getLearningRate());
     }
-    
-    public void iteration(DataSet<DataRow> dataSet, StatesCache sharedCache) {
-        partitionIfRequired(dataSet);
-        
-        for (List<DataRow> partition : dataSet.getPartitions()) {
-            propagatePartition(partition, sharedCache);
-        }
-        
-        updater.postFit(model, optimizer.getLearningRate());
-    }
 
     public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {
-        List<Layer> layers = model.getLayers();
-        Tensor delta = initializeDeltas(cache, layers, targets, outputs);
+        List<Layer> layers = model.getLayers();Layer outputLayer = layers.getLast();
+        LossFunction lossFunction = model.getLossFunction();
 
+        Tensor delta = outputLayer.computeLoss(cache, targets, outputs, lossFunction);
         Layer previous = layers.getLast();
 
         for (int l = layers.size() - 2; l >= 0; l--) {
@@ -110,12 +80,5 @@ public class BackPropagation {
         }
 
         optimizer.postIteration(cache, updater, layers);
-    }
-
-    private Tensor initializeDeltas(StatesCache cache, List<Layer> layers, Tensor targets, Tensor outputs) {
-        Layer outputLayer = layers.getLast();
-        LossFunction lossFunction = model.getLossFunction();
-
-        return outputLayer.computeLoss(cache, targets, outputs, lossFunction);
     }
 }

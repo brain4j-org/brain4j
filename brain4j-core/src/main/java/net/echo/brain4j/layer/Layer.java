@@ -14,6 +14,7 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -117,12 +118,21 @@ public abstract class Layer implements Adapter {
     }
 
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
-        Tensor derivative = activation.getDerivative(outputs);
+        Tensor derivatives = activation.getDerivative(outputs);
         Tensor error = outputs.clone().sub(targets);
 
-        return error
-                .clone()
-                .mapWithIndex((i, x) -> lossFunction.getDelta(x, derivative.get(i)));
+        Tensor loss = error.clone();
+        Vector lossValues = loss.getData();
+
+        for (int i = 0; i < lossValues.size(); i++) {
+            double data = lossValues.get(i);
+            double derivative = derivatives.get(i);
+
+            double value = lossFunction.getDelta(data, derivative);
+            lossValues.set(i, value);
+        }
+
+        return loss;
     }
 
     public void connect(Random generator, Layer previous, Layer next, double bound) {

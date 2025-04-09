@@ -1,4 +1,4 @@
-package net.echo.brain4j.training.techniques;
+package net.echo.brain4j.training.advanced;
 
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.training.data.DataRow;
