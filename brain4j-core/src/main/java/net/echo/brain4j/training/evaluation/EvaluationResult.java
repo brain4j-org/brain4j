@@ -1,5 +1,6 @@
 package net.echo.brain4j.training.evaluation;
 
+import net.echo.brain4j.Brain4J;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 
@@ -68,7 +69,7 @@ public class EvaluationResult {
 
     public String confusionMatrix() {
         StringBuilder matrix = new StringBuilder();
-        String divider = BrainUtils.getHeader(" Evaluation Results ", "━");
+        String divider = BrainUtils.getHeader(" Evaluation Results ", Brain4J.getHeaderChar());
 
         matrix.append(divider);
         matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
@@ -80,7 +81,7 @@ public class EvaluationResult {
         matrix.append(secondary.formatted("Recall:", "%.4f".formatted(recall)));
         matrix.append(secondary.formatted("F1-score:", "%.4f".formatted(f1Score)));
 
-        divider = BrainUtils.getHeader(" Confusion Matrix ", "━");
+        divider = BrainUtils.getHeader(" Confusion Matrix ", Brain4J.getHeaderChar());
         matrix.append(divider);
         matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
         matrix.append(" ");
@@ -106,7 +107,7 @@ public class EvaluationResult {
         }
 
         matrix.append("\n");
-        matrix.append(BrainUtils.getHeader("", "━"));
+        matrix.append(BrainUtils.getHeader("", Brain4J.getHeaderChar()));
 
         return matrix.toString();
     }

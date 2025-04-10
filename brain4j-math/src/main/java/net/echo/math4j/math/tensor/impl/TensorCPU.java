@@ -728,7 +728,7 @@ public class TensorCPU implements Cloneable, Tensor {
                 indices[dim] = i;
 
                 float value = get(indices);
-                sb.append(String.format(format, value));
+                sb.append(format.formatted(value));
 
                 if (i < shape[dim] - 1) {
                     sb.append(", ");
@@ -1304,7 +1304,7 @@ public class TensorCPU implements Cloneable, Tensor {
     @Override
     public String toString(String format) {
         if (shape.length == 0) {
-            return String.format(format, data.get(0));
+            return format.formatted(data.get(0));
         }
 
         StringBuilder sb = new StringBuilder();

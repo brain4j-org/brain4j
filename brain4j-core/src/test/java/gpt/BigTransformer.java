@@ -1,5 +1,6 @@
 package gpt;
 
+import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.structure.StatesCache;
@@ -18,13 +19,13 @@ public class BigTransformer {
     }
 
     private void start() {
+        Brain4J.setLogging(true);
         int dimension = 1536;
         int numHeads = 16;
         int vocabSize = 50000;
 
         var model = new Transformer(
                 new DecoderGroup(16, numHeads, dimension),
-
                 new VocabularyMapper(vocabSize, dimension, 5)
         );
 

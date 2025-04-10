@@ -1,8 +1,10 @@
 package tensor;
 
+import net.echo.brain4j.Brain4J;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
+import net.echo.math4j.opencl.GPUInfo;
 import net.echo.math4j.opencl.GPUProfiler;
 
 public class TensorGPUTest {
@@ -12,7 +14,8 @@ public class TensorGPUTest {
         System.out.println("Using GPU: " + TensorFactory.isUsingGPU());
         
         if (TensorGPU.isGpuAvailable()) {
-            GPUProfiler.printDefaultDeviceInfo();
+            GPUInfo info = GPUProfiler.getDeviceInfo();
+            Brain4J.printDeviceInfo(info);
         }
         
         benchmarkMatrixMultiplication();

@@ -340,7 +340,7 @@ public class Vector implements Cloneable, Iterable<Double> {
         builder.append('[');
 
         for (int i = 0; ; i++) {
-            builder.append(String.format(format, data[i]));
+            builder.append(format.formatted(data[i]));
 
             if (i == iMax) return builder.append(']').toString();
 

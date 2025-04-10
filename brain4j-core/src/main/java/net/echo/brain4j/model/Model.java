@@ -167,7 +167,7 @@ public abstract class Model implements Adapter {
         int repetitions = (int) (percentage * progressBarLength);
         int remaining = progressBarLength - repetitions;
 
-        String progressBar = "\u001B[32m" + "━".repeat(repetitions) + "\u001B[0m" + "━".repeat(remaining);
+        String progressBar = "\u001B[32m" + Brain4J.getHeaderChar().repeat(repetitions) + "\u001B[0m" + "━".repeat(remaining);
         System.out.printf("\rEpoch: %s/%s %-30s %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
@@ -223,11 +223,10 @@ public abstract class Model implements Adapter {
         DecimalFormat format = new DecimalFormat("#,###");
 
         String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
-        String divider = BrainUtils.getHeader(" Architecture ", "━");
+        String divider = BrainUtils.getHeader(" Architecture ", Brain4J.getHeaderChar());
 
         stats.append(divider);
-        stats.append(String.format(pattern, "Index", "Layer", "Neurons", "Weights", "Activation"));
-        stats.append("-".repeat(divider.length() - 1)).append("\n");
+        stats.append(pattern.formatted("Index", "Layer", "Neurons", "Weights", "Activation")).append("\n");
 
         long totalWeights = 0;
         long totalBiases = 0;
@@ -243,7 +242,7 @@ public abstract class Model implements Adapter {
             String formatNeurons = layer instanceof DropoutLayer ? "-" : format.format(neurons);
             String formatWeights = format.format(weights);
 
-            stats.append(String.format(pattern, i, layerType, formatNeurons, formatWeights, layer.getActivation().getName()));
+            stats.append(pattern.formatted(i, layerType, formatNeurons, formatWeights, layer.getActivation().getName()));
 
             totalWeights += weights;
             totalBiases += neurons;
@@ -259,11 +258,11 @@ public abstract class Model implements Adapter {
         String sizeOfWeights = BrainUtils.formatNumber(totalWeights * 4);
         String sizeOfBiases = BrainUtils.formatNumber(totalBiases * 4);
 
-        stats.append(BrainUtils.getHeader(" Recap ", "━"));
-        stats.append(String.format("Total weights: %s (%s)\n", weights, sizeOfWeights));
-        stats.append(String.format("Total biases: %s (%s)\n", biases, sizeOfBiases));
-        stats.append(String.format("Total parameters: %s (%s)\n", parameters, sizeOfParams));
-        stats.append(BrainUtils.getHeader("", "━"));
+        stats.append(BrainUtils.getHeader(" Recap ", Brain4J.getHeaderChar()));
+        stats.append("Total weights: %s (%s)\n".formatted(weights, sizeOfWeights));
+        stats.append("Total biases: %s (%s)\n".formatted(biases, sizeOfBiases));
+        stats.append("Total parameters: %s (%s)\n".formatted(parameters, sizeOfParams));
+        stats.append(BrainUtils.getHeader("", Brain4J.getHeaderChar()));
 
         return stats.toString();
     }

@@ -1,7 +1,9 @@
 package net.echo.brain4j;
 
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
+import net.echo.math4j.opencl.GPUInfo;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +18,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class Brain4J {
 
+    private static boolean initialized;
     private static boolean logging;
 
     /**
@@ -67,6 +70,35 @@ public class Brain4J {
             // Required to make the progress bar work on windows
             System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
         }
+    }
+
+    /**
+     * Gets the header char for the progress bar. Initializes the print stream if needed.
+     * @return The header char.
+     */
+    public static String getHeaderChar() {
+        if (!initialized) {
+            System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+            initialized = true;
+        }
+
+        return "━";
+    }
+
+    /**
+     * Prints the device info of the GPU.
+     * @param info The GPU info.
+     */
+    public static void printDeviceInfo(GPUInfo info) {
+        String builder = BrainUtils.getHeader(" Device Information ", getHeaderChar()) +
+                "Name: " + info.name() + "\n" +
+                "Vendor: " + info.vendor() + "\n" +
+                "OpenCL Version: " + info.version() + "\n" +
+                "Global Memory: " + info.globalMemory() / (1024 * 1024) + " MB\n" +
+                "Local Memory: " + info.localMemory() / 1024 + " KB\n" +
+                "Max Work Group Size: " + info.maxWorkGroupSize() + "\n";
+
+        System.out.println(builder);
     }
 
     /**

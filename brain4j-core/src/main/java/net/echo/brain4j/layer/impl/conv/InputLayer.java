@@ -22,8 +22,8 @@ public class InputLayer extends Layer {
         int[] shape = input.shape();
 
         if (input.elements() != width * height) {
-            throw new IllegalArgumentException(String.format("Input dimension does not match! (%sx%s) != (%sx%s)",
-                    width, height, shape[0], shape[1]));
+            throw new IllegalArgumentException("Input dimension does not match! (%sx%s) != (%sx%s)"
+                    .formatted(width, height, shape[0], shape[1]));
         }
 
         return input.reshape(1, width, height);

@@ -1,6 +1,7 @@
 package net.echo.math4j.opencl;
 
 import net.echo.math4j.BrainUtils;
+import net.echo.math4j.exceptions.NativeException;
 import org.jocl.*;
 
 import static org.jocl.CL.*;
@@ -57,12 +58,11 @@ public class GPUProfiler {
         clReleaseEvent(event);
     }
 
-    public static void printDefaultDeviceInfo() {
-        cl_device_id device = DeviceUtils.getDevice();
-        printDeviceInfo(device);
+    public static GPUInfo getDeviceInfo() {
+        return getDeviceInfo(DeviceUtils.getDevice());
     }
 
-    public static void printDeviceInfo(cl_device_id device) {
+    public static GPUInfo getDeviceInfo(cl_device_id device) {
         try {
             byte[] nameBytes = new byte[1024];
             clGetDeviceInfo(device, CL_DEVICE_NAME, nameBytes.length, Pointer.to(nameBytes), null);
@@ -86,18 +86,10 @@ public class GPUProfiler {
             clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.cl_long, 
                            Pointer.to(maxWorkGroupSize), null);
 
-            String specs = BrainUtils.getHeader(" GPU Specs ", "━") +
-                    "Name: " + deviceName + "\n" +
-                    "Vendor: " + deviceVendor + "\n" +
-                    "OpenCL Version: " + deviceVersion + "\n" +
-                    "Global Memory: " + globalMemSize[0] / (1024 * 1024) + " MB\n" +
-                    "Local Memory: " + localMemSize[0] / 1024 + " KB\n" +
-                    "Max Work Group Size: " + maxWorkGroupSize[0] + "\n" +
-                    BrainUtils.getHeader("", "━");
-
-            System.out.println(specs);
+            return new GPUInfo(deviceName, deviceVendor, deviceVersion, globalMemSize[0], localMemSize[0], (int) maxWorkGroupSize[0]);
         } catch (Exception e) {
-            System.err.println("Error retrieving device information: " + e.getMessage());
+            System.err.println("Failed to retrieve device information! " + e.getMessage());
+            return null;
         }
     }
 } 

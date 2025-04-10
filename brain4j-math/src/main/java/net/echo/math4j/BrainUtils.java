@@ -100,7 +100,7 @@ public class BrainUtils {
         double divisor = Math.pow(1000, ciphers);
         double normalized = params / divisor;
 
-        return String.format("%.2f %s", normalized, prefixes[ciphers]);
+        return "%.2f %s".formatted(normalized, prefixes[ciphers]);
     }
 
     @SuppressWarnings("all")
