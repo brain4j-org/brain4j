@@ -150,10 +150,9 @@ public abstract class Layer implements Adapter {
         }
     }
 
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
-        throw new UnsupportedOperationException("Not implemented for this class.");
-    }
+    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Tensor input);
 
+    // TODO: Eventually implement this for every class and make it abstract
     public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
         throw new UnsupportedOperationException("Not implemented for this class.");
     }
