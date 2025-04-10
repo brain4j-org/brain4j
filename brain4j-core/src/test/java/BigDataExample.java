@@ -4,15 +4,16 @@ import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
-public class BigData {
+public class BigDataExample {
 
     public static void main(String[] args) {
-        new BigData().start();
+        new BigDataExample().start();
     }
 
     private void start() {
@@ -20,19 +21,18 @@ public class BigData {
         DataSet<DataRow> dataSet = getDataSet(300_000);
 
         System.out.printf("Loaded dataset with %s samples %n", dataSet.size());
-
         System.out.println(model.summary());
 
-        double loss = model.loss(dataSet);
-        System.out.println("Loss: " + loss);
+        EvaluationResult result = model.evaluate(dataSet);
+        System.out.println(result.confusionMatrix());
 
         long start = System.nanoTime();
         model.fit(dataSet);
         long took = System.nanoTime() - start;
 
-        loss = model.loss(dataSet);
-        System.out.println("Loss: " + loss);
-        System.out.printf("Took %s ms to complete 1 epoch.", took / 1e6);
+        result = model.evaluate(dataSet);
+        System.out.println(result.confusionMatrix());
+        System.out.printf("Took %s ms to complete one epoch.", took / 1e6);
     }
 
     private Sequential getModel() {

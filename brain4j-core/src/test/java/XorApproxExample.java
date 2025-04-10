@@ -5,6 +5,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
@@ -12,17 +13,17 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class XorTest {
+public class XorApproxExample {
 
     public static void main(String[] args) throws Exception {
-        new XorTest().testXorModel();
+        new XorApproxExample().testXorModel();
     }
 
     private void testXorModel() throws Exception {
         Brain4J.setLogging(true);
 
-        var dataSet = getDataSet();
-        var model = new Sequential(
+        DataSet<DataRow> dataSet = getDataSet();
+        Sequential model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR),
                 new DenseLayer(32, Activations.MISH),
                 new DenseLayer(1, Activations.SIGMOID)
@@ -32,21 +33,18 @@ public class XorTest {
 
         System.out.println(model.summary());
 
-        var start = System.nanoTime();
+        long start = System.nanoTime();
         model.fit(dataSet, 1000, 100);
-        var took = (System.nanoTime() - start) / 1e6;
+        double took = (System.nanoTime() - start) / 1e6;
 
         System.out.printf("Trained in %.5f ms%n", took);
 
-        var result = model.evaluate(dataSet);
-        double loss = model.loss(dataSet);
-
+        EvaluationResult result = model.evaluate(dataSet);
         System.out.println(result.confusionMatrix());
-        System.out.println("Loss: " + loss);
-
-        assertTrue(loss < 0.01, "Loss is too high! " + loss);
 
         ModernAdapter.serialize("xor.b4j", model);
+
+        assertTrue(result.loss() < 0.01, "Loss is too high! " + result.loss());
     }
 
     private DataSet<DataRow> getDataSet() {

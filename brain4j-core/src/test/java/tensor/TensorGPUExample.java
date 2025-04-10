@@ -7,7 +7,7 @@ import net.echo.math4j.math.tensor.impl.TensorGPU;
 import net.echo.math4j.opencl.GPUInfo;
 import net.echo.math4j.opencl.GPUProfiler;
 
-public class TensorGPUTest {
+public class TensorGPUExample {
 
     public static void main(String[] args) {
         System.out.println("GPU acceleration available: " + TensorGPU.isGpuAvailable());

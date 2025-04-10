@@ -9,14 +9,14 @@ import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 
-public class ConvTest {
+public class CNNExample {
 
     public static void main(String[] args) {
-        new ConvTest().start();
+        new CNNExample().start();
     }
 
     private void start() {
-        var model = new Sequential(
+        Sequential model = new Sequential(
                 new InputLayer(28, 28),
                 new ConvLayer(16, 3, 3),
                 new ConvLayer(24, 5, 5),

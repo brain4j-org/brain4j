@@ -23,13 +23,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class TransformerExample {
+public class ChatBotExample {
 
     private static final int EMBEDDING_SIZE = 64;
     private static final PositionalEncoding ENCODING = new PositionalEncoding(200, EMBEDDING_SIZE);
 
     public static void main(String[] args) throws Exception {
-        new TransformerExample().start();
+        new ChatBotExample().start();
     }
 
     private List<String> loadExamples() throws Exception {
@@ -109,7 +109,7 @@ public class TransformerExample {
         DataSet<DataRow> dataSet = new DataSet<>();
         Map<String, Tensor> inputEncodingCache = new HashMap<>();
 
-        for (var entry : samples.entrySet()) {
+        for (Map.Entry<String, String> entry : samples.entrySet()) {
             String trainInput = entry.getKey();
             String trainOutput = entry.getValue();
 

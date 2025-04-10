@@ -18,17 +18,17 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MNISTTest {
+public class MNISTExample {
 
     public static void main(String[] args) throws Exception {
-        new MNISTTest().testMNIST();
+        new MNISTExample().testMNIST();
     }
 
     private void testMNIST() throws Exception {
         Brain4J.setLogging(true);
 
-        var dataSet = getDataSet();
-        var model = new Sequential(
+        DataSet<DataRow> dataSet = getDataSet();
+        Sequential model = new Sequential(
                 new DenseLayer(784, Activations.LINEAR),
                 new DenseLayer(64, Activations.SIGMOID),
                 new DenseLayer(10, Activations.SOFTMAX)

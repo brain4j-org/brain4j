@@ -11,10 +11,10 @@ import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 
-public class BigTransformer {
+public class BigTransformerExample {
 
     public static void main(String[] args) {
-        new BigTransformer().start();
+        new BigTransformerExample().start();
     }
 
     private void start() {
@@ -25,7 +25,7 @@ public class BigTransformer {
         int numHeads = 16;
         int vocabSize = 50000;
 
-        var model = new Transformer(
+        Transformer model = new Transformer(
                 new DecoderGroup(16, numHeads, dimension),
                 new VocabularyMapper(vocabSize, dimension, 5)
         );
