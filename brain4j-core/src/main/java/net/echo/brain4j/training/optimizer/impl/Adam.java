@@ -93,7 +93,7 @@ public class Adam extends Optimizer {
         Tensor mHat = firstMomentum.clone().div(biasCorrection1);
         Tensor vHat = secondMomentum.clone().div(biasCorrection2);
 
-        return mHat.mul(learningRate).div(vHat.sqrt().add(epsilon));
+        return mHat.div(vHat.sqrt().add(epsilon));
     }
 
     @Override

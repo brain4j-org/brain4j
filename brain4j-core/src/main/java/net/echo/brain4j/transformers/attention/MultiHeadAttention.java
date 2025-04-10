@@ -1,6 +1,7 @@
 package net.echo.brain4j.transformers.attention;
 
 import com.google.common.base.Preconditions;
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.transformers.head.AttentionHead;
@@ -29,6 +30,33 @@ public class MultiHeadAttention {
 
         initializeHeads();
     }
+
+//    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
+//        // Supponiamo che 'delta' abbia forma [batch, modelDimension]
+//        // dove 'modelDimension' = headCount * headDimension.
+//        // Per propagare il gradiente, lo dividiamo lungo l'ultima dimensione in 'headCount' parti.
+//
+//        // Split del delta in una lista di gradienti per ogni head.
+//        List<Tensor> headDeltas = TensorFactory.split(delta, headCount);
+//
+//        // Inizializza il gradiente complessivo rispetto all'input
+//        // Si assume che il TensorFactory possa creare un tensore di zeri con la stessa forma dell'input originario.
+//        Tensor gradInput = TensorFactory.zerosLike(cache.getInputTensor(previous));
+//
+//        // Per ogni head, propaga il gradiente e accumula il gradiente rispetto all'input.
+//        for (int i = 0; i < headCount; i++) {
+//            AttentionHead head = heads.get(i);
+//            Tensor headDelta = headDeltas.get(i);
+//
+//            // Assumiamo che ogni AttentionHead implementi un metodo propagate
+//            // che ritorna il gradiente rispetto al suo input.
+//            Tensor headInputGrad = head.propagate(cache, previous, headDelta);
+//
+//            gradInput = gradInput.add(headInputGrad);
+//        }
+//
+//        return gradInput;
+//    }
 
     public void compile(Random generator, WeightInitializer initializer) {
         for (AttentionHead head : heads) {

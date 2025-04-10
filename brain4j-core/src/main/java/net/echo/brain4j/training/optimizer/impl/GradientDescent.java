@@ -12,6 +12,6 @@ public class GradientDescent extends Optimizer {
 
     @Override
     public Tensor optimize(Layer layer, Tensor delta, Tensor output) {
-        return delta.matmul(output).mul(learningRate);
+        return delta.matmul(output);
     }
 }

@@ -52,7 +52,7 @@ public class BackPropagation {
         }
 
         BrainUtils.waitAll(threads);
-        updater.postBatch(model, optimizer.getLearningRate());
+        updater.postBatch(model, optimizer.getLearningRate(), partition.size());
     }
 
     public void iteration(DataSet<DataRow> dataSet) {
@@ -60,7 +60,7 @@ public class BackPropagation {
             propagatePartition(partition);
         }
 
-        updater.postFit(model, optimizer.getLearningRate());
+        updater.postFit(model, optimizer.getLearningRate(), dataSet.getData().size());
     }
 
     public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {

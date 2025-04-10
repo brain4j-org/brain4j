@@ -18,6 +18,7 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -121,11 +122,50 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
-        if (previous instanceof VocabularyMapper mapper) {
-            // TODO
-        }
-
-        return delta;
+        System.out.println("Propagating");
+        System.out.println(Arrays.toString(delta.shape()));
+//        // Il delta qui rappresenta l'errore proveniente dal layer successivo (es. VocabularyMapper)
+//        // Supponiamo che la forward abbia effettuato:
+//        // attended = attention.attend(cache, input)
+//        // normalized = normalizer.normalize(attended.add(input))
+//        // merged = merge(feedForward outputs) (per ogni token)
+//        // finalOutput = normalizer.normalize(merged.add(normalized))
+//
+//        // 1. Propaga il gradiente attraverso l'ultimo layer di normalizzazione
+//        // (questo layer restituisce il gradiente rispetto all'input della normalizzazione)
+//
+//        // 2. Dato che nella forward hai effettuato una somma (merged + normalized),
+//        // il gradiente deltaAfterLastNorm deve essere "smistato" alle due parti.
+//        // Qui si assume un semplice "pass-through" (potrebbe essere una somma, a seconda di come hai salvato gli stati intermedi)
+//        // Ad esempio, se hai salvato in cache gli output intermedi:
+//        Tensor mergedOutput = cache.getOutputTensor(this); // ipoteticamente l'output "merged"
+//        Tensor normalizedOutput = cache.getInputTensor(this); // ipoteticamente l'output "normalized" ottenuto da attention + input
+//
+//        // Il gradiente "smistato" (questa è una scelta progettuale: potresti decidere di suddividerlo o combinarlo diversamente)
+//        // Per ora, distribuiamo lo stesso gradiente a entrambi i rami.
+//        Tensor deltaMerged = delta.clone();
+//        Tensor deltaNormalized = delta.clone();
+//
+//        // 3. Retropropaga il gradiente attraverso il ramo feed-forward.
+//        // Il metodo propagate del Sequential dovrebbe propagare il gradiente attraverso ciascun layer della feed-forward.
+//        Tensor deltaFeedForward = feedForward.propagate(cache, this, deltaMerged);
+//
+//        // 4. Retropropaga il gradiente attraverso il ramo dell'attenzione.
+//        // Supponiamo che l'oggetto 'attention' (di tipo MultiHeadAttention) implementi un metodo propagate.
+//        Tensor deltaAttention = attention.propagate(cache, this, deltaNormalized);
+//
+//        // 5. Combina i gradienti provenienti dai due rami (e dalla connection residua) per ottenere il gradiente rispetto all'input
+//        // La somma qui riflette la residual connection (input originario è stato sommato a 'attended')
+//        Tensor deltaInput = deltaFeedForward.add(deltaAttention);
+//
+//        // Se hai usato una residual connection anche per l'input originale,
+//        // il gradiente rispetto all'input del layer sarà la somma del gradiente dalla feed-forward,
+//        // dell'attenzione e dell'input residuo.
+//        // Adattare in base all'architettura esatta:
+//        deltaInput = deltaInput.add(delta);
+//
+//        return deltaInput;
+        return null;
     }
 
     @Override
