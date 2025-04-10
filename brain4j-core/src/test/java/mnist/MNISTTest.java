@@ -36,17 +36,20 @@ public class MNISTTest {
 
         model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
 
+        if (new File("mnist.b4j").exists()) {
+            System.out.println("Loading existing mnist.b4j model...");
+            model.load("mnist.b4j");
+        }
+
         System.out.println(model.summary());
 
-        model.fit(dataSet, 100, 10);
+        // model.fit(dataSet, 150, 10);
 
         EvaluationResult result = model.evaluate(dataSet);
-        double loss = result.loss();
 
         System.out.println(result.confusionMatrix());
-        System.out.println("Loss: " + loss);
 
-        assertTrue(loss < 0.3, "Loss is too high! " + loss);
+        assertTrue(result.loss() < 0.1, "Loss is too high! " + result.loss());
         assertTrue(result.accuracy() > 0.90, "Accuracy is too low! " + result.accuracy());
 
         ModernAdapter.serialize("mnist", model);

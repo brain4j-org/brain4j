@@ -21,10 +21,8 @@ public class BrainUtils {
         Tensor XtX = X.transpose().matmul(X);
         Tensor v = TensorFactory.random(XtX.shape()[1], 1);
 
-        for (int i = 0; i < 10; i++) {
-            v = XtX.matmul(v);
-            v = v.div(v.norm());
-        }
+        v = XtX.matmul(v);
+        v = v.div(v.norm());
 
         double lambdaMax = v.transpose().matmul(XtX).matmul(v).get(0, 0);
         return 2.0 / lambdaMax;
@@ -34,16 +32,14 @@ public class BrainUtils {
         return clazz.getEnumConstants()[argmax(outputs)];
     }
 
-    public static String getHeader(String middleText) {
-        String base = "=";
-
+    public static String getHeader(String middleText, String character) {
         int maxLength = 70;
         int middleLength = middleText.length();
 
-        String repeated = base.repeat((maxLength - middleLength) / 2);
+        String repeated = character.repeat((maxLength - middleLength) / 2);
         String result = repeated + middleText + repeated;
 
-        return (result.length() != maxLength ? result + "=" : result) + "\n";
+        return (result.length() != maxLength ? result + character : result) + "\n";
     }
     
     public static int argmax(Vector inputs) {

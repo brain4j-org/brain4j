@@ -68,25 +68,25 @@ public class EvaluationResult {
 
     public String confusionMatrix() {
         StringBuilder matrix = new StringBuilder();
-        String divider = BrainUtils.getHeader(" Evaluation Results ");
+        String divider = BrainUtils.getHeader(" Evaluation Results ", "━");
 
         matrix.append(divider);
         matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
 
+        String secondary = "%-15s %-10s\n";
+        matrix.append(secondary.formatted("Loss:", "%.4f".formatted(loss)));
+        matrix.append(secondary.formatted("Accuracy:", "%.4f".formatted(accuracy)));
+        matrix.append(secondary.formatted("Precision:", "%.4f".formatted(precision)));
+        matrix.append(secondary.formatted("Recall:", "%.4f".formatted(recall)));
+        matrix.append(secondary.formatted("F1-score:", "%.4f".formatted(f1Score)));
 
-        String secondary = "%-20s %-10s\n";
-        matrix.append(String.format(secondary, "Accuracy:", String.format("%.4f", accuracy)));
-        matrix.append(String.format(secondary, "Precision:", String.format("%.4f", precision)));
-        matrix.append(String.format(secondary, "Recall:", String.format("%.4f", recall)));
-        matrix.append(String.format(secondary, "F1-score:", String.format("%.4f", f1Score)));
-
-        divider = BrainUtils.getHeader(" Confusion Matrix ");
+        divider = BrainUtils.getHeader(" Confusion Matrix ", "━");
         matrix.append(divider);
         matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
-        matrix.append("       ");
+        matrix.append(" ");
 
         for (int i = 0; i < classes; i++) {
-            matrix.append(String.format("%4d", i)).append(" ");
+            matrix.append("%4d".formatted(i)).append(" ");
         }
 
         matrix.append("\n  ");
@@ -97,15 +97,17 @@ public class EvaluationResult {
             Tensor predictions = classifications.get(i);
 
             for (int j = 0; j < predictions.elements(); j++) {
-                text.append(String.format("%4d", (int) predictions.get(j))).append(" ");
+                int prediction = (int) predictions.get(j);
+                text.append("%4d".formatted(prediction)).append(" ");
             }
 
-            matrix.append(String.format("%4d | ", i));
+            matrix.append("%4d | ".formatted(i));
             matrix.append(text).append("\n");
         }
 
         matrix.append("\n");
-        matrix.append("=".repeat(divider.length() - 1));
+        matrix.append(BrainUtils.getHeader("", "━"));
+
         return matrix.toString();
     }
 

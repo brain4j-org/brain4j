@@ -3,6 +3,9 @@ package net.echo.brain4j;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
 
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+
 /**
  * Welcome to Brain4J!
  * This class contains various utilities to help you use the library.
@@ -59,6 +62,11 @@ public class Brain4J {
      */
     public static void setLogging(boolean logging) {
         Brain4J.logging = logging;
+
+        if (logging) {
+            // Required to make the progress bar work on windows
+            System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+        }
     }
 
     /**

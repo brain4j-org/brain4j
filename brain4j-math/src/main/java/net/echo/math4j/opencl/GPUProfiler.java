@@ -86,14 +86,14 @@ public class GPUProfiler {
             clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.cl_long, 
                            Pointer.to(maxWorkGroupSize), null);
 
-            String specs = BrainUtils.getHeader(" GPU Specs ") +
+            String specs = BrainUtils.getHeader(" GPU Specs ", "━") +
                     "Name: " + deviceName + "\n" +
                     "Vendor: " + deviceVendor + "\n" +
                     "OpenCL Version: " + deviceVersion + "\n" +
                     "Global Memory: " + globalMemSize[0] / (1024 * 1024) + " MB\n" +
                     "Local Memory: " + localMemSize[0] / 1024 + " KB\n" +
                     "Max Work Group Size: " + maxWorkGroupSize[0] + "\n" +
-                    BrainUtils.getHeader("");
+                    BrainUtils.getHeader("", "━");
 
             System.out.println(specs);
         } catch (Exception e) {

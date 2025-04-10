@@ -222,9 +222,8 @@ public abstract class Model implements Adapter {
         StringBuilder stats = new StringBuilder();
         DecimalFormat format = new DecimalFormat("#,###");
 
-        String header = "======================================================================\n";
         String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
-        String divider = BrainUtils.getHeader(" Architecture ");
+        String divider = BrainUtils.getHeader(" Architecture ", "━");
 
         stats.append(divider);
         stats.append(String.format(pattern, "Index", "Layer", "Neurons", "Weights", "Activation"));
@@ -260,11 +259,11 @@ public abstract class Model implements Adapter {
         String sizeOfWeights = BrainUtils.formatNumber(totalWeights * 4);
         String sizeOfBiases = BrainUtils.formatNumber(totalBiases * 4);
 
-        stats.append(BrainUtils.getHeader(" Recap "));
-        stats.append(String.format("Total parameters: %s (%s)\n", parameters, sizeOfParams));
+        stats.append(BrainUtils.getHeader(" Recap ", "━"));
         stats.append(String.format("Total weights: %s (%s)\n", weights, sizeOfWeights));
         stats.append(String.format("Total biases: %s (%s)\n", biases, sizeOfBiases));
-        stats.append(header);
+        stats.append(String.format("Total parameters: %s (%s)\n", parameters, sizeOfParams));
+        stats.append(BrainUtils.getHeader("", "━"));
 
         return stats.toString();
     }
