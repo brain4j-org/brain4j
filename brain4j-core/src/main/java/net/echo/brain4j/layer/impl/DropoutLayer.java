@@ -39,6 +39,14 @@ public class DropoutLayer extends Layer {
         this.dropout = dropout;
     }
 
+    public Tensor apply(Tensor input, boolean training) {
+        if (training) {
+            return forward(null, null, input);
+        } else {
+            return scale(input);
+        }
+    }
+
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
@@ -58,16 +66,14 @@ public class DropoutLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
-        if (!(lastLayer instanceof DenseLayer)) {
-            throw new UnsupportedOperationException("Layer before must be a dense layer!");
-        }
-
         if (input.dimension() != 1) {
             throw new UnsupportedOperationException("Only 1D tensors are supported!");
         }
 
         for (int i = 0; i < input.elements(); i++) {
-            if (fastRandom.nextDouble() > dropout) continue;
+            if (fastRandom.nextDouble() > dropout) {
+                continue;
+            }
 
             input.set(0, i);
         }

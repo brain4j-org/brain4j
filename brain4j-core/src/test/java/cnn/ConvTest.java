@@ -18,8 +18,9 @@ public class ConvTest {
     private void start() {
         var model = new Sequential(
                 new InputLayer(28, 28),
-                new ConvLayer(16, 7, 7),
-                new ConvLayer(24, 7, 7),
+                new ConvLayer(16, 3, 3),
+                new ConvLayer(24, 5, 5),
+                new ConvLayer(32, 7, 7),
                 new FlattenLayer(),
                 new DenseLayer(10, Activations.LINEAR)
         );

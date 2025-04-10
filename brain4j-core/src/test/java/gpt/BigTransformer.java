@@ -5,12 +5,11 @@ import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.impl.GradientDescent;
-import net.echo.brain4j.transformers.DecoderGroup;
+import net.echo.brain4j.transformers.ContextWindow;
+import net.echo.brain4j.transformers.group.DecoderGroup;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-
-import java.util.List;
 
 public class BigTransformer {
 
@@ -20,6 +19,8 @@ public class BigTransformer {
 
     private void start() {
         Brain4J.setLogging(true);
+        Brain4J.useGPUIfAvailable();
+
         int dimension = 1536;
         int numHeads = 16;
         int vocabSize = 50000;
@@ -36,19 +37,21 @@ public class BigTransformer {
         System.out.println(model.summary());
         System.out.printf("Took %s ms to initialize%n", took);
 
-        Tensor input = TensorFactory.random(1, dimension);
+        ContextWindow window = new ContextWindow(100, dimension);
+        window.append(TensorFactory.zeros(dimension));
 
         StatesCache sharedCache = new StatesCache();
 
         for (int i = 0; i < 10; i++) {
-            Tensor finalInput = input;
-            took = evaluate(() -> model.predict(sharedCache, finalInput, false));
+            Tensor finalInput = window.toInput();
+
+            long start = System.nanoTime();
+            Tensor output = model.predict(sharedCache, finalInput, false);
+
+            took = (System.nanoTime() - start) / 1e6;
             System.out.printf("Took %s ms to predict%n", took);
 
-            List<Tensor> tokens = TensorFactory.toList(input);
-            tokens.add(TensorFactory.random(1, dimension));
-
-            input = TensorFactory.mergeTensors(tokens);
+            window.append(output);
         }
     }
 

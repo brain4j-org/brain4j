@@ -9,6 +9,7 @@ import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.training.advanced.SmartTrainer;
 import net.echo.brain4j.training.advanced.TrainListener;
+import net.echo.brain4j.transformers.ContextWindow;
 import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
@@ -20,10 +21,7 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.HashMap;
+import java.util.*;
 
 public class TransformerExample {
 
@@ -170,28 +168,36 @@ public class TransformerExample {
     }
 
     private void generateResponse(Vocabulary vocabulary, Transformer model, String prompt) {
+        ContextWindow window = new ContextWindow(256, EMBEDDING_SIZE);
+        Tensor start = vocabulary.encode(prompt);
+
+        window.setContext(start);
+
         StringBuilder botResponse = new StringBuilder();
         StatesCache cache = new StatesCache();
 
-        String lastWord = "";
         String modeCollapse = " ".repeat(10);
         double totalTime = 0.0;
 
-        while (!lastWord.equals("<END>") && !lastWord.equals("<UNK>") && !botResponse.toString().endsWith(modeCollapse)) {
-            Tensor input = vocabulary.encode(prompt);
-            Tensor encoded = ENCODING.encode(input);
+        while (true) {
+            long startTime = System.nanoTime();
 
-            long start = System.nanoTime();
-            Tensor output = model.predict(cache, encoded);
-            double took = (System.nanoTime() - start) / 1e6;
+            Tensor context = ENCODING.encode(window.toInput());
+            Tensor output = model.predict(cache, context);
+
+            double took = (System.nanoTime() - startTime) / 1e6;
 
             int argmax = BrainUtils.argmax(output);
             String word = vocabulary.indexToWord(argmax);
+            Tensor encoded = vocabulary.wordToVec(word);
 
+            window.append(encoded);
             botResponse.append(word);
-            prompt += word;
-            lastWord = word;
             totalTime += took;
+
+            if (word.equals("<END>") || word.equals("<UNK>") || botResponse.toString().endsWith(modeCollapse)) {
+                break;
+            }
 
             System.out.printf("\r%.2fms/token - %s", took, botResponse);
         }

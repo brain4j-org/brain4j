@@ -76,7 +76,7 @@ public class ConvLayer extends Layer {
 
             for (int j = 0; j < kernel.elements(); j++) {
                 double value = 2 * generator.nextDouble() * bound - bound;
-                kernel.getData().set(value, j);
+                kernel.getData().set(j, value);
             }
 
             kernels.add(kernel);
@@ -105,7 +105,6 @@ public class ConvLayer extends Layer {
                 Tensor kernelSlice = kernel.slice(c);
 
                 Tensor convResult = inputSlice.convolve(kernelSlice); // TODO: add stride and padding
-
                 filterOutput.add(convResult);
             }
 

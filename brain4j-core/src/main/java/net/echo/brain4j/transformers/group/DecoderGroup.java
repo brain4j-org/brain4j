@@ -1,4 +1,4 @@
-package net.echo.brain4j.transformers;
+package net.echo.brain4j.transformers.group;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
@@ -6,6 +6,7 @@ import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
+import net.echo.brain4j.transformers.TransformerDecoder;
 import net.echo.math4j.math.tensor.Tensor;
 
 import java.util.ArrayList;

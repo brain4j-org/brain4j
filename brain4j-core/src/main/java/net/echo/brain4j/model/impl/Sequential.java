@@ -5,6 +5,7 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
+import net.echo.brain4j.layer.impl.conv.InputLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
@@ -40,11 +41,11 @@ public class Sequential extends Model {
 
         if (this.layers.isEmpty()) return;
 
-        // validateCNNIfPresent();
+        validateCNNIfPresent();
     }
 
     private void validateCNNIfPresent() {
-        boolean isInput = false; // layers.getFirst() instanceof InputLayer;
+        boolean isInput = layers.getFirst() instanceof InputLayer;
         boolean hasConv = layers.stream().anyMatch(Layer::isConvolutional);
 
         Preconditions.checkState(!(isInput && !hasConv), "Cannot use an input layer without convolutional layers!");
@@ -118,8 +119,10 @@ public class Sequential extends Model {
     public Tensor predict(StatesCache cache, Tensor input, boolean training) {
         Layer workingLayer = layers.getFirst();
 
-        Preconditions.checkState(input.elements() == workingLayer.getTotalNeurons(), "Input dimension does not " +
-                "match model input dimension! (Input != Expected " + input.elements() + " != " + workingLayer.getTotalNeurons() + ")");
+        if (input.elements() != workingLayer.getTotalNeurons()) {
+            throw new IllegalArgumentException("Input dimensions do not match! (Input != Expected): %s != %s"
+                    .formatted(input.elements(), workingLayer.getTotalNeurons()));
+        }
 
         Tensor denseResult = input.clone();
 
@@ -131,18 +134,13 @@ public class Sequential extends Model {
 
             cache.setInputTensor(layer, denseResult);
 
-            if (layer instanceof DropoutLayer dropout) {
-                if (training) {
-                    dropout.forward(cache, workingLayer, denseResult);
-                } else {
-                    denseResult = dropout.scale(denseResult);
-                }
-
-                continue;
-            }
-
             if (layer instanceof DenseLayer dense) {
                 denseResult = dense.forward(cache, workingLayer, denseResult);
+            }
+
+            if (layer instanceof DropoutLayer dropout) {
+                denseResult = dropout.apply(denseResult, training);
+                continue;
             }
 
             if (layer instanceof LayerNorm norm) {

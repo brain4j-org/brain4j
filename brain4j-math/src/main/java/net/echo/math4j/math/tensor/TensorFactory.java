@@ -162,14 +162,14 @@ public class TensorFactory {
         return result;
     }
 
-    public static Tensor mergeTensors(List<Tensor> tokens) {
-        int rows = tokens.size();
-        int columns = tokens.getFirst().shape()[1];
+    public static Tensor mergeTensors(List<Tensor> tensors) {
+        int rows = tensors.size();
+        int columns = tensors.getFirst().shape()[1];
 
         Tensor result = TensorFactory.zeros(rows, columns);
 
         for (int i = 0; i < rows; i++) {
-            Tensor token = tokens.get(i);
+            Tensor token = tensors.get(i);
 
             for (int j = 0; j < columns; j++) {
                 result.set(token.get(0, j), i, j);
