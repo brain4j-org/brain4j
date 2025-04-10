@@ -11,16 +11,18 @@ import java.util.Random;
 
 public class ConvLayer extends Layer {
 
-    private final List<Tensor> kernels;
-    private final int filters;
-    private final int kernelWidth;
-    private final int kernelHeight;
-    private final int stride;
-    private final int padding;
-
+    private List<Tensor> kernels;
+    private int filters;
+    private int kernelWidth;
+    private int kernelHeight;
+    private int stride;
+    private int padding;
     private int outputWidth;
     private int outputHeight;
 
+    private ConvLayer() {
+    }
+    
     public ConvLayer(int filters, int kernelWidth, int kernelHeight) {
         this(filters, kernelWidth, kernelHeight, 1, 0);
     }
@@ -70,9 +72,12 @@ public class ConvLayer extends Layer {
         }
 
         for (int i = 0; i < filters; i++) {
-            Tensor kernel = TensorFactory
-                    .create(channels, kernelHeight, kernelWidth)
-                    .fill(() -> 2 * generator.nextDouble() * bound - bound);
+            Tensor kernel = TensorFactory.create(channels, kernelHeight, kernelWidth);
+
+            for (int j = 0; j < kernel.elements(); j++) {
+                double value = 2 * generator.nextDouble() * bound - bound;
+                kernel.getData().set(value, j);
+            }
 
             kernels.add(kernel);
         }
