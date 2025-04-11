@@ -1,4 +1,4 @@
-package net.echo.math4j.opencl;
+package net.echo.math4j.device;
 
 import org.jocl.*;
 
@@ -23,7 +23,7 @@ public class DeviceUtils {
         cl_platform_id platform = getPlatform();
 
         cl_device_id[] devices = new cl_device_id[1];
-        clGetDeviceIDs(platform, deviceType.mask, 2, devices, null);
+        clGetDeviceIDs(platform, deviceType.getMask(), 2, devices, null);
 
         return device = devices[0];
     }
@@ -41,19 +41,5 @@ public class DeviceUtils {
 
     public static cl_device_id getDevice() {
         return device;
-    }
-
-    public enum DeviceType {
-        DEFAULT(1),
-        CPU(1 << 1),
-        GPU(1 << 2),
-        ACCELERATOR(1 << 3),
-        CUSTOM(1 << 4);
-
-        private final long mask;
-
-        DeviceType(long mask) {
-            this.mask = mask;
-        }
     }
 }

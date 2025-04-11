@@ -79,7 +79,7 @@ public class ChatBotExample {
             System.out.print("Insert a name for the model: ");
 
             String name = scanner.nextLine();
-            String path = name + (!name.endsWith(".b4j") ? ".b4j" : "");
+            String path = name + (!name.endsWith("chatbot.b4j") ? "chatbot.b4j" : "");
 
             model.save(path);
             System.out.printf("Saved model inside %s!%n", path);

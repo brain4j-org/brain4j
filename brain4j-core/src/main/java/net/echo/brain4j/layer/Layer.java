@@ -14,7 +14,6 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -150,11 +149,11 @@ public abstract class Layer implements Adapter {
         }
     }
 
-    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training);
+    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training);
 
     // TODO: Eventually implement this for every class and make it abstract
     public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
-        throw new UnsupportedOperationException("Not implemented for this class.");
+        throw new UnsupportedOperationException("Not implemented for " + this.getClass().getSimpleName());
     }
 
     public Activation getActivation() {

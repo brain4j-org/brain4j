@@ -23,7 +23,7 @@ public class FlattenLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
         return input.reshape(input.elements());
     }
 }

@@ -1,7 +1,6 @@
 package net.echo.math4j.opencl;
 
-import net.echo.math4j.BrainUtils;
-import net.echo.math4j.exceptions.NativeException;
+import net.echo.math4j.device.DeviceUtils;
 import org.jocl.*;
 
 import static org.jocl.CL.*;

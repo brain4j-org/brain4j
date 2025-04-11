@@ -27,7 +27,7 @@ public class AutogradContext {
     public Tensor getGrad() {
         if (grad == null) {
             int[] shape = this.inputs[0].shape();
-            grad = TensorCPU.zeros(shape);
+            grad = new TensorCPU(shape);
         }
 
         return grad;

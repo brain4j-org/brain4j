@@ -3,7 +3,7 @@ package net.echo.math4j.math.tensor;
 import net.echo.math4j.math.tensor.impl.TensorCPU;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
 import net.echo.math4j.math.tensor.index.Range;
-import net.echo.math4j.math.vector.Vector;
+import net.echo.math4j.device.DeviceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,11 +59,12 @@ public class TensorFactory {
     }
     
     public static Tensor zeros(int... shape) {
-        return useGPU ? new TensorGPU(shape).fill(0.0) : TensorCPU.zeros(shape);
+        return useGPU ? new TensorGPU(shape) : new TensorCPU(shape);
     }
     
     public static Tensor ones(int... shape) {
-        return useGPU ? new TensorGPU(shape).fill(1.0) : TensorCPU.ones(shape);
+        DeviceType device = useGPU ? DeviceType.GPU : DeviceType.CPU;
+        return TensorCPU.ones(shape).to(device);
     }
     
     public static Tensor random(int... shape) {

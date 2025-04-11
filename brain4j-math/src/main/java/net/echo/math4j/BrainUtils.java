@@ -28,7 +28,11 @@ public class BrainUtils {
         return 2.0 / lambdaMax;
     }
 
-    public static <T extends Enum<T>> T parse(Vector outputs, Class<T> clazz) {
+    public static <T extends Enum<T>> T parse(Tensor outputs, Class<T> clazz) {
+        if (outputs.dimension() != 1) {
+            throw new IllegalArgumentException("Output tensor must be 1-dimensional!");
+        }
+
         return clazz.getEnumConstants()[argmax(outputs)];
     }
 
@@ -41,21 +45,7 @@ public class BrainUtils {
 
         return (result.length() != maxLength ? result + character : result) + "\n";
     }
-    
-    public static int argmax(Vector inputs) {
-        int index = 0;
-        double max = inputs.get(0);
 
-        for (int i = 1; i < inputs.size(); i++) {
-            if (inputs.get(i) > max) {
-                max = inputs.get(i);
-                index = i;
-            }
-        }
-
-        return index;
-    }
-    
     public static int argmax(Tensor input) {
         if (input.dimension() > 1) {
             throw new IllegalArgumentException("Input tensor must be 1-dimensional!");

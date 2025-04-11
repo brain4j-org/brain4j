@@ -2,6 +2,7 @@ import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.impl.DenseLayer;
+import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
@@ -25,7 +26,9 @@ public class XorApproxExample {
         DataSet<DataRow> dataSet = getDataSet();
         Sequential model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR),
+                new LayerNorm(),
                 new DenseLayer(32, Activations.MISH),
+                new LayerNorm(),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -34,7 +37,7 @@ public class XorApproxExample {
         System.out.println(model.summary());
 
         long start = System.nanoTime();
-        model.fit(dataSet, 1000, 100);
+        model.fit(dataSet, 100, 20);
         double took = (System.nanoTime() - start) / 1e6;
 
         System.out.printf("Trained in %.5f ms%n", took);

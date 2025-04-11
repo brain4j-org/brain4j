@@ -46,11 +46,11 @@ public class EncoderGroup extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
         Tensor output = input;
 
         for (TransformerEncoder layer : layers) {
-            output = layer.forward(cache, lastLayer, output, training);
+            output = layer.forward(cache, lastLayer, null, output, training);
         }
 
         return output;

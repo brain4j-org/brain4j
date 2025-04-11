@@ -1,6 +1,5 @@
 package net.echo.brain4j.transformers;
 
-import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
@@ -13,16 +12,11 @@ import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.head.AttentionHead;
-import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
-import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -51,6 +45,37 @@ public class TransformerEncoder extends Layer {
 
         this.heads = numHeads;
         this.dimension = dimension;
+    }
+
+    @Override
+    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
+        cache.setInputTensor(this, input);
+
+        Tensor attended = attention.attend(cache, input, training);
+        Tensor normalized = normalizer.normalize(attended.add(input));
+
+        List<Tensor> normAttention = TensorFactory.toList(normalized);
+        List<Tensor> cached = cache.getFeedForwardForLayer(this);
+
+        for (int i = 0; i < normAttention.size(); i++) {
+            if (cached.size() <= i) {
+                Tensor tensor = normAttention.get(i);
+                Tensor output = feedForward.predict(tensor.reshape(dimension));
+                Tensor reshaped = output.reshape(1, dimension);
+
+                cached.add(reshaped);
+            }
+        }
+
+        Tensor merged = TensorFactory.mergeTensors(cached);
+        cache.setOutputTensor(this, merged);
+
+        return normalizer.normalize(merged.add(normalized));
+    }
+
+    @Override
+    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
+        return null;
     }
 
     @Override
@@ -122,32 +147,6 @@ public class TransformerEncoder extends Layer {
         super.compile(weightInit, lossFunction, optimizer, updater);
         this.attention = createAttention(heads, dimension);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
-    }
-    
-    @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        cache.setInputTensor(this, input);
-        
-        Tensor attended = attention.attend(cache, input, training);
-        Tensor normalized = normalizer.normalize(attended.add(input));
-
-        List<Tensor> normAttention = TensorFactory.toList(normalized);
-        List<Tensor> cached = cache.getFeedForwardForLayer(this);
-
-        for (int i = 0; i < normAttention.size(); i++) {
-            if (cached.size() <= i) {
-                Tensor tensor = normAttention.get(i);
-                Tensor output = feedForward.predict(tensor.reshape(dimension));
-                Tensor reshaped = output.reshape(1, dimension);
-
-                cached.add(reshaped);
-            }
-        }
-
-        Tensor merged = TensorFactory.mergeTensors(cached);
-        cache.setOutputTensor(this, merged);
-
-        return normalizer.normalize(merged.add(normalized));
     }
 
     public MultiHeadAttention createAttention(int heads, int dimension) {

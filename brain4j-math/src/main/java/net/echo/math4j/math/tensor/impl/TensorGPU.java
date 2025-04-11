@@ -4,11 +4,11 @@ import static net.echo.math4j.math.constants.Constants.*;
 
 import net.echo.math4j.exceptions.NativeException;
 import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.opencl.DeviceUtils;
+import net.echo.math4j.device.DeviceType;
+import net.echo.math4j.device.DeviceUtils;
 import org.jocl.*;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
@@ -61,11 +61,11 @@ public class TensorGPU extends TensorCPU {
         try {
             CL.setExceptionsEnabled(true);
             
-            cl_device_id device = DeviceUtils.findDevice(DeviceUtils.DeviceType.GPU);
+            cl_device_id device = DeviceUtils.findDevice(DeviceType.GPU);
 
             if (device == null) {
                 System.out.println("No GPU device found, falling back to CPU");
-                device = DeviceUtils.findDevice(DeviceUtils.DeviceType.CPU);
+                device = DeviceUtils.findDevice(DeviceType.CPU);
             }
             
             cl_device_id[] devices = {device};
@@ -227,11 +227,7 @@ public class TensorGPU extends TensorCPU {
 
     public static Tensor of(int[] shape, float... data) {
         TensorGPU tensor = new TensorGPU(shape);
-
-        for (int i = 0; i < data.length; i++) {
-            tensor.getData().set(i, data[i]);
-        }
-
+        System.arraycopy(data, 0, tensor.getData(), 0, data.length);
         return tensor;
     }
     
@@ -479,8 +475,7 @@ public class TensorGPU extends TensorCPU {
     private Tensor convolve1DGPU(Tensor kernel) {
         int inputSize = shape()[0];
         int kernelSize = kernel.shape()[0];
-        
-        int outputSize = inputSize;  
+
         int totalPadding = kernelSize - 1;
         int paddingLeft = totalPadding / 2;
         
@@ -488,7 +483,7 @@ public class TensorGPU extends TensorCPU {
         
         float[] inputData = toArray();
         float[] kernelData = kernel.toArray();
-        float[] resultData = new float[outputSize];
+        float[] resultData = new float[inputSize];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                 (long) Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
@@ -504,13 +499,13 @@ public class TensorGPU extends TensorCPU {
                 clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 2, Sizeof.cl_mem, Pointer.to(memOutput));
                 clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { inputSize }));
                 clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { kernelSize }));
-                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { outputSize }));
+                clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] {inputSize}));
                 clSetKernelArg(CONVOLVE_1D_DIRECT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
                 
-                long[] globalWorkSize = new long[] { outputSize };
+                long[] globalWorkSize = new long[] {inputSize};
                 
                 try {
-                    long[] localWorkSize = getOptimalWorkgroupSize(outputSize);
+                    long[] localWorkSize = getOptimalWorkgroupSize(inputSize);
                     clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_1D_DIRECT_KERNEL, 1, null,
                             globalWorkSize, localWorkSize, 0, null, null);
                 } catch (Exception e) {
@@ -541,7 +536,7 @@ public class TensorGPU extends TensorCPU {
                     clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { inputSize }));
                     clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 7, Sizeof.cl_int, Pointer.to(new int[] { kernelSize }));
                     clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 8, Sizeof.cl_int, Pointer.to(new int[] { fftSize }));
-                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 9, Sizeof.cl_int, Pointer.to(new int[] { outputSize }));
+                    clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 9, Sizeof.cl_int, Pointer.to(new int[] {inputSize}));
                     clSetKernelArg(CONVOLVE_1D_FFT_KERNEL, 10, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
                     
                     long[] globalWorkSize = new long[] { fftSize };
@@ -574,7 +569,7 @@ public class TensorGPU extends TensorCPU {
             clReleaseMemObject(memOutput);
         }
         
-        return TensorGPU.of(new int[] { outputSize }, resultData);
+        return TensorGPU.of(new int[] {inputSize}, resultData);
     }
     
     private Tensor convolve2DGPU(Tensor kernel) {
@@ -585,10 +580,7 @@ public class TensorGPU extends TensorCPU {
         int inputCols = inputShape[1];
         int kernelRows = kernelShape[0];
         int kernelCols = kernelShape[1];
-        
-        int outputRows = inputRows;
-        int outputCols = inputCols;
-        
+
         int paddingTop = (kernelRows - 1) / 2;
         int paddingLeft = (kernelCols - 1) / 2;
         
@@ -596,7 +588,7 @@ public class TensorGPU extends TensorCPU {
         
         float[] inputData = toArray();
         float[] kernelData = kernel.toArray();
-        float[] resultData = new float[outputRows * outputCols];
+        float[] resultData = new float[inputRows * inputCols];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                 (long) Sizeof.cl_float * inputData.length, Pointer.to(inputData), null);
@@ -614,15 +606,15 @@ public class TensorGPU extends TensorCPU {
                 clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { inputCols }));
                 clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { kernelRows }));
                 clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { kernelCols }));
-                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 7, Sizeof.cl_int, Pointer.to(new int[] { outputRows }));
-                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 8, Sizeof.cl_int, Pointer.to(new int[] { outputCols }));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 7, Sizeof.cl_int, Pointer.to(new int[] {inputRows}));
+                clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 8, Sizeof.cl_int, Pointer.to(new int[] {inputCols}));
                 clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 9, Sizeof.cl_int, Pointer.to(new int[] { paddingTop }));
                 clSetKernelArg(CONVOLVE_2D_DIRECT_KERNEL, 10, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
                 
-                long[] globalWorkSize = new long[] { outputRows, outputCols };
+                long[] globalWorkSize = new long[] {inputRows, inputCols};
                 
                 try {
-                    long[] localWorkSize = getOptimalWorkgroupSize2D(outputRows, outputCols);
+                    long[] localWorkSize = getOptimalWorkgroupSize2D(inputRows, inputCols);
                     clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_DIRECT_KERNEL, 2, null,
                             globalWorkSize, localWorkSize, 0, null, null);
                 } catch (Exception e) {
@@ -724,20 +716,20 @@ public class TensorGPU extends TensorCPU {
                     
                     clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 0, Sizeof.cl_mem, Pointer.to(memOutput));
                     clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 1, Sizeof.cl_mem, Pointer.to(memOutput));
-                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 2, Sizeof.cl_int, Pointer.to(new int[] { outputRows }));
-                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] { outputCols }));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 2, Sizeof.cl_int, Pointer.to(new int[] {inputRows}));
+                    clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 3, Sizeof.cl_int, Pointer.to(new int[] {inputCols}));
                     clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 4, Sizeof.cl_int, Pointer.to(new int[] { paddingTop }));
                     clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 5, Sizeof.cl_int, Pointer.to(new int[] { paddingLeft }));
                     clSetKernelArg(CONVOLVE_2D_FFT_EXTRACT_KERNEL, 6, Sizeof.cl_int, Pointer.to(new int[] { fftCols }));
                     
                     try {
-                        long[] localWorkSize = getOptimalWorkgroupSize2D(outputRows, outputCols);
+                        long[] localWorkSize = getOptimalWorkgroupSize2D(inputRows, inputCols);
                         clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_FFT_EXTRACT_KERNEL, 2, null,
-                                new long[] { outputRows, outputCols }, localWorkSize, 0, null, null);
+                                new long[] {inputRows, inputCols}, localWorkSize, 0, null, null);
                     } catch (Exception e) {
                         if (e.getMessage().contains("CL_INVALID_WORK_GROUP_SIZE")) {
                             clEnqueueNDRangeKernel(COMMAND_QUEUE, CONVOLVE_2D_FFT_EXTRACT_KERNEL, 2, null,
-                                    new long[] { outputRows, outputCols }, null, 0, null, null);
+                                    new long[] {inputRows, inputCols}, null, 0, null, null);
                         } else {
                             throw e;
                         }
@@ -758,7 +750,7 @@ public class TensorGPU extends TensorCPU {
             clReleaseMemObject(memOutput);
         }
         
-        return TensorGPU.of(new int[] { outputRows, outputCols }, resultData);
+        return TensorGPU.of(new int[] {inputRows, inputCols}, resultData);
     }
     
     private static int nextPowerOf2(int n) {
@@ -783,15 +775,7 @@ public class TensorGPU extends TensorCPU {
     private static long[] getOptimalWorkgroupSize2D(long globalSizeX, long globalSizeY) {
         int sizeX = 16;
         int sizeY = 16;
-        
-        while (sizeX * sizeY > 256) {
-            if (sizeX > sizeY) {
-                sizeX /= 2;
-            } else {
-                sizeY /= 2;
-            }
-        }
-        
+
         sizeX = nextPowerOf2(sizeX);
         sizeY = nextPowerOf2(sizeY);
         
@@ -799,17 +783,6 @@ public class TensorGPU extends TensorCPU {
             Math.min(sizeX, globalSizeX),
             Math.min(sizeY, globalSizeY)
         };
-    }
-
-    @Override
-    public Tensor softmax() {
-        if (!INITIALIZED) {
-            return super.softmax();
-        }
-        
-        Tensor cpuTensor = cpu();
-        Tensor result = cpuTensor.softmax();
-        return result.gpu();
     }
 
     @Override

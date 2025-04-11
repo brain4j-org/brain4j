@@ -18,8 +18,8 @@ public class TensorGPUExample {
             Brain4J.printDeviceInfo(info);
         }
         
-        benchmarkMatrixMultiplication();
-        benchmarkLargeMatrixMultiplication(784, 128, 32);
+        // benchmarkMatrixMultiplication();
+        benchmarkLargeMatrixMultiplication(784, 300, 256);
     }
     
     private static void benchmarkMatrixMultiplication() {
@@ -76,12 +76,12 @@ public class TensorGPUExample {
 
         TensorFactory.forceCPU();
         System.out.println("Creating matrices...");
-        Tensor cpuA = TensorFactory.ones(m, n);
-        Tensor cpuB = TensorFactory.ones(n, p);
+        Tensor cpuA = TensorFactory.random(m, n);
+        Tensor cpuB = TensorFactory.random(n, p);
 
         TensorFactory.useGPUIfAvailable();
-        Tensor gpuA = TensorFactory.ones(m, n);
-        Tensor gpuB = TensorFactory.ones(n, p);
+        Tensor gpuA = cpuA.gpu();
+        Tensor gpuB = cpuB.gpu();
         
         System.out.println("Benchmark CPU in progress...");
         long cpuStart = System.nanoTime();
@@ -103,12 +103,19 @@ public class TensorGPUExample {
         System.out.printf("GPU: %.4f ms\n", tookGPU);
         System.out.printf("Speedup: %.4fx\n", speedup);
         System.out.printf("Results match: %s\n", resultsMatch);
+
+//        System.out.println("CPU MATRIX:");
+//        System.out.println(cpuResult.toString("%.2f"));
+//
+//        System.out.println("GPU MATRIX:");
+//        System.out.println(gpuResult.toString("%.2f"));
     }
     
     private static boolean checkResultsMatch(Tensor a, Tensor b) {
         if (a.elements() != b.elements()) return false;
         if (!java.util.Arrays.equals(a.shape(), b.shape())) return false;
-        
+
+        boolean match = true;
         double epsilon = 1e-5;  
         
         int[] shape = a.shape();
@@ -117,7 +124,7 @@ public class TensorGPUExample {
             for (int i = 0; i < shape[0]; i++) {
                 if (Math.abs(a.get(i) - b.get(i)) > epsilon) {
                     System.out.println("Mismatch at index " + i + ": " + a.get(i) + " vs " + b.get(i));
-                    return false;
+                    match = false;
                 }
             }
         } else if (shape.length == 2) {
@@ -126,7 +133,7 @@ public class TensorGPUExample {
                     if (Math.abs(a.get(i, j) - b.get(i, j)) > epsilon) {
                         System.out.println("Mismatch at [" + i + "," + j + "]: " + 
                                            a.get(i, j) + " vs " + b.get(i, j));
-                        return false;
+                        match = false;
                     }
                 }
             }
@@ -137,12 +144,12 @@ public class TensorGPUExample {
                 
                 if (Math.abs(valueA - valueB) > epsilon) {
                     System.out.println("Mismatch at linear index " + i + ": " + valueA + " vs " + valueB);
-                    return false;
+                    match = false;
                 }
             }
         }
         
-        return true;
+        return match;
     }
     
     private static float getLinearElement(Tensor tensor, int linearIndex) {

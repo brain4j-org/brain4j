@@ -50,10 +50,8 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        Tensor result = normalize1D(input);
-        cache.setOutputTensor(this, result);
-        return result;
+    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
+        return normalize1D(input);
     }
 
     /**
@@ -75,7 +73,7 @@ public class LayerNorm extends Layer {
             double mean = token.mean();
             double variance = 0.0;
 
-            for (Double value : token) {
+            for (float value : token) {
                 variance += Math.pow(value - mean, 2);
             }
 
@@ -98,7 +96,7 @@ public class LayerNorm extends Layer {
         double mean = input.mean();
         double variance = 0.0;
 
-        for (Double value : input) {
+        for (float value : input) {
             variance += Math.pow(value - mean, 2);
         }
 

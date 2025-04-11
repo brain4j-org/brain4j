@@ -25,7 +25,7 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
         if (!(lastLayer instanceof DenseLayer denseLayer)) {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
@@ -38,6 +38,10 @@ public class DenseLayer extends Layer {
                 .matmul(reshapedInput)
                 .reshape(numNeurons)
                 .add(bias);
+
+        if (nextLayer instanceof LayerNorm layerNorm) {
+            result = layerNorm.forward(cache, this, null, result, training);
+        }
 
         Tensor activated = activation.activate(result);
         cache.setOutputTensor(this, activated);

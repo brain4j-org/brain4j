@@ -19,7 +19,7 @@ public class BigTransformerExample {
 
     private void start() {
         Brain4J.setLogging(true);
-        // Brain4J.useGPUIfAvailable();
+        Brain4J.useGPUIfAvailable();
 
         int dimension = 1536;
         int numHeads = 16;

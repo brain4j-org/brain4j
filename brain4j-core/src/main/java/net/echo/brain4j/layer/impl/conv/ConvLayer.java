@@ -76,7 +76,7 @@ public class ConvLayer extends Layer {
 
             for (int j = 0; j < kernel.elements(); j++) {
                 double value = 2 * generator.nextDouble() * bound - bound;
-                kernel.getData().set(j, value);
+                kernel.getData()[j] = (float) value;
             }
 
             kernels.add(kernel);
@@ -84,7 +84,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
         cache.setInputTensor(this, input);
 
         int channels = input.shape()[0];

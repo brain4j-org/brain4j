@@ -61,12 +61,13 @@ public class DropoutLayer extends Layer {
      * Applies the dropout to the input tensor. This method will randomly set to 0 random values from the input tensor
      * during training. Meanwhile it will scale the input tensor by {@code 1 - dropout} during inferencing.
      *
-     * @param input The input tensor.
-     * @param training If it's called during training.
+     * @param nextLayer
+     * @param input     The input tensor.
+     * @param training  If it's called during training.
      * @return The resulting tensor.
      */
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
         if (training) {
             return scale(input);
         }
