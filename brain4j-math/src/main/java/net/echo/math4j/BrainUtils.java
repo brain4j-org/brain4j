@@ -1,12 +1,12 @@
 package net.echo.math4j;
 
-import static net.echo.math4j.math.constants.Constants.*;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.vector.Vector;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
+
+import static net.echo.math4j.math.constants.Constants.GRADIENT_CLIP;
 
 /**
  * Utility class for conversions and value matching.

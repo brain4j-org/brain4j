@@ -1,8 +1,8 @@
 package net.echo.math4j.math.tensor;
 
+import net.echo.math4j.device.DeviceType;
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.index.Range;
-import net.echo.math4j.device.DeviceType;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

@@ -4,16 +4,16 @@ import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.structure.StatesCache;
+import net.echo.brain4j.training.advanced.SmartTrainer;
+import net.echo.brain4j.training.advanced.TrainListener;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.Adam;
-import net.echo.brain4j.training.advanced.SmartTrainer;
-import net.echo.brain4j.training.advanced.TrainListener;
 import net.echo.brain4j.transformers.ContextWindow;
 import net.echo.brain4j.transformers.TransformerDecoder;
+import net.echo.brain4j.transformers.encoding.PositionalEncoding;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
-import net.echo.brain4j.transformers.encoding.PositionalEncoding;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
@@ -21,7 +21,10 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 public class ChatBotExample {
 

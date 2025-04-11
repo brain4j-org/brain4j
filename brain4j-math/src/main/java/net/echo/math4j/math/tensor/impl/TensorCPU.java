@@ -1,5 +1,6 @@
 package net.echo.math4j.math.tensor.impl;
 
+import net.echo.math4j.device.DeviceType;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
@@ -7,7 +8,6 @@ import net.echo.math4j.math.tensor.autograd.Operation;
 import net.echo.math4j.math.tensor.autograd.operations.*;
 import net.echo.math4j.math.tensor.index.Range;
 import net.echo.math4j.math.tensor.ops.Convolution;
-import net.echo.math4j.device.DeviceType;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

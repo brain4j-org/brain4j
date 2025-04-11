@@ -1,14 +1,12 @@
 package net.echo.brain4j.transformers.attention;
 
 import com.google.common.base.Preconditions;
-import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;

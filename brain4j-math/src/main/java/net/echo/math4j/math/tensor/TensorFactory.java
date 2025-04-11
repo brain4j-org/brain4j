@@ -1,9 +1,9 @@
 package net.echo.math4j.math.tensor;
 
+import net.echo.math4j.device.DeviceType;
 import net.echo.math4j.math.tensor.impl.TensorCPU;
 import net.echo.math4j.math.tensor.impl.TensorGPU;
 import net.echo.math4j.math.tensor.index.Range;
-import net.echo.math4j.device.DeviceType;
 
 import java.util.ArrayList;
 import java.util.List;

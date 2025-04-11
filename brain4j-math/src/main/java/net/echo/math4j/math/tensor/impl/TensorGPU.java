@@ -1,11 +1,9 @@
 package net.echo.math4j.math.tensor.impl;
 
-import static net.echo.math4j.math.constants.Constants.*;
-
-import net.echo.math4j.exceptions.NativeException;
-import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.device.DeviceType;
 import net.echo.math4j.device.DeviceUtils;
+import net.echo.math4j.exceptions.NativeException;
+import net.echo.math4j.math.tensor.Tensor;
 import org.jocl.*;
 
 import java.io.BufferedReader;
@@ -15,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.echo.math4j.math.constants.Constants.*;
 import static org.jocl.CL.*;
 
 public class TensorGPU extends TensorCPU {

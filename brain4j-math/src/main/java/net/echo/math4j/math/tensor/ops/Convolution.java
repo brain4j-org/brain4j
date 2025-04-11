@@ -1,10 +1,12 @@
 package net.echo.math4j.math.tensor.ops;
 
 import net.echo.math4j.math.complex.Complex;
-import static net.echo.math4j.math.constants.Constants.*;
 import net.echo.math4j.math.fft.FFT;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
+
+import static net.echo.math4j.math.constants.Constants.EPSILON;
+import static net.echo.math4j.math.constants.Constants.FFT_THRESHOLD;
 
 public final class Convolution {
     

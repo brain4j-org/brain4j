@@ -1,6 +1,9 @@
 package net.echo.math4j.device;
 
-import org.jocl.*;
+import org.jocl.CL;
+import org.jocl.Pointer;
+import org.jocl.cl_device_id;
+import org.jocl.cl_platform_id;
 
 import static org.jocl.CL.*;
 

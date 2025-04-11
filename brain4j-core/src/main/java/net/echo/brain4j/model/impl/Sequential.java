@@ -2,9 +2,6 @@ package net.echo.brain4j.model.impl;
 
 import com.google.common.base.Preconditions;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.DenseLayer;
-import net.echo.brain4j.layer.impl.DropoutLayer;
-import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.layer.impl.conv.InputLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.loss.LossFunction;

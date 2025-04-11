@@ -1,9 +1,11 @@
 package net.echo.math4j.math.fft;
 
 import net.echo.math4j.math.complex.Complex;
-import static net.echo.math4j.math.constants.Constants.*;
 
 import java.util.Arrays;
+
+import static net.echo.math4j.math.constants.Constants.PI;
+import static net.echo.math4j.math.constants.Constants.TWO_PI;
 
 public final class FFT {
     

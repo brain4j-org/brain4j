@@ -5,7 +5,6 @@ import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.math4j.math.tensor.Tensor;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
