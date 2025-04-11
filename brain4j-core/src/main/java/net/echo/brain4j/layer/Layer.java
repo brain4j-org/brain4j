@@ -122,14 +122,14 @@ public abstract class Layer implements Adapter {
         Tensor error = outputs.clone().sub(targets);
 
         Tensor loss = error.clone();
-        Vector lossValues = loss.getData();
+        float[] lossValues = loss.getData();
 
-        for (int i = 0; i < lossValues.size(); i++) {
-            double data = lossValues.get(i);
-            double derivative = derivatives.get(i);
+        for (int i = 0; i < lossValues.length; i++) {
+            float data = lossValues[i];
+            float derivative = derivatives.get(i);
 
-            double value = lossFunction.getDelta(data, derivative);
-            lossValues.set(i, value);
+            float value = lossFunction.getDelta(data, derivative);
+            lossValues[i] = value;
         }
 
         return loss;

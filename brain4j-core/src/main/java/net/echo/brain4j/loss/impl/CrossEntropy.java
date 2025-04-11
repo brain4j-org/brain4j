@@ -17,7 +17,7 @@ public class CrossEntropy implements LossFunction {
     }
 
     @Override
-    public double getDelta(double error, double derivative) {
+    public float getDelta(float error, float derivative) {
         return error;
     }
 }

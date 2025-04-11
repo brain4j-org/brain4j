@@ -11,7 +11,6 @@ import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
@@ -22,7 +21,7 @@ import java.util.function.Supplier;
 
 public class TensorCPU implements Cloneable, Tensor {
     
-    private final Vector data;
+    protected final float[] data;
     private final int[] shape;
     private final int[] strides;
     private AutogradContext autogradContext;
@@ -36,7 +35,7 @@ public class TensorCPU implements Cloneable, Tensor {
         this.strides = computeStrides(shape);
         
         int size = computeSize(shape);
-        this.data = new Vector(size);
+        this.data = new float[size];
     }
     
     private static int computeSize(int[] shape) {
@@ -84,7 +83,7 @@ public class TensorCPU implements Cloneable, Tensor {
         Tensor tensor = new TensorCPU(shape);
         
         for (int i = 0; i < data.length; i++) {
-            tensor.getData().set(i, data[i]);
+            tensor.getData()[i] = data[i];
         }
         
         return tensor;
@@ -94,7 +93,7 @@ public class TensorCPU implements Cloneable, Tensor {
         Tensor tensor = new TensorCPU(shape);
         
         for (int i = 0; i < data.length; i++) {
-            tensor.getData().set(i, (float) data[i]);
+            tensor.getData()[i] = (float) data[i];
         }
         
         return tensor;
@@ -102,27 +101,12 @@ public class TensorCPU implements Cloneable, Tensor {
     
     public static Tensor of(int[] shape, int... data) {
         Tensor tensor = new TensorCPU(shape);
-
+        
         for (int i = 0; i < data.length; i++) {
-            tensor.getData().set(i, data[i]);
+            tensor.getData()[i] = (float) data[i];
         }
 
         return tensor;
-    }
-    
-    public static Tensor vector(float... data) {
-        return of(new int[]{data.length}, data);
-    }
-    
-    public static Tensor vector(Vector data) {
-        int size = data.size();
-        float[] floatData = new float[size];
-        
-        for (int i = 0; i < size; i++) {
-            floatData[i] = data.get(i);
-        }
-        
-        return of(new int[]{size}, floatData);
     }
     
     public static Tensor matrix(int rows, int cols, float... data) {
@@ -130,21 +114,13 @@ public class TensorCPU implements Cloneable, Tensor {
     }
     
     public static Tensor zeros(int... shape) {
-        Tensor tensor = new TensorCPU(shape);
-
-        for (int i = 0; i < tensor.getData().size(); i++) {
-            tensor.getData().set(i, 0.0f);
-        }
-
-        return tensor;
+        return new TensorCPU(shape);
     }
     
     public static Tensor ones(int... shape) {
         Tensor tensor = new TensorCPU(shape);
 
-        for (int i = 0; i < tensor.getData().size(); i++) {
-            tensor.getData().set(i, 1.0f);
-        }
+        Arrays.fill(tensor.getData(), 1.0f);
 
         return tensor;
     }
@@ -160,8 +136,8 @@ public class TensorCPU implements Cloneable, Tensor {
     private static Tensor random(Random random, int... shape) {
         Tensor tensor = new TensorCPU(shape);
 
-        for (int i = 0; i < tensor.getData().size(); i++) {
-            tensor.getData().set(i, random.nextFloat());
+        for (int i = 0; i < tensor.getData().length; i++) {
+            tensor.getData()[i] = random.nextFloat();
         }
 
         return tensor;
@@ -179,8 +155,8 @@ public class TensorCPU implements Cloneable, Tensor {
         Tensor tensor = new TensorCPU(shape);
         double range = upperBound - lowerBound;
 
-        for (int i = 0; i < tensor.getData().size(); i++) {
-            tensor.getData().set(i, (float) (random.nextDouble() * range + lowerBound));
+        for (int i = 0; i < tensor.getData().length; i++) {
+            tensor.getData()[i] = (float) (random.nextDouble() * range + lowerBound);
         }
 
         return tensor;
@@ -197,8 +173,8 @@ public class TensorCPU implements Cloneable, Tensor {
     private static Tensor randn(Random random, double mean, double stddev, int... shape) {
         Tensor tensor = new TensorCPU(shape);
 
-        for (int i = 0; i < tensor.getData().size(); i++) {
-            tensor.getData().set(i, (float) (random.nextGaussian() * stddev + mean));
+        for (int i = 0; i < tensor.getData().length; i++) {
+            tensor.getData()[i] = (float) (random.nextGaussian() * stddev + mean);
         }
 
         return tensor;
@@ -215,7 +191,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Vector getData() {
+    public float[] getData() {
         return data;
     }
 
@@ -228,7 +204,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
     
     public int elements() {
-        return data.size();
+        return data.length;
     }
     
     public Tensor set(double value, int... indices) {
@@ -762,7 +738,7 @@ public class TensorCPU implements Cloneable, Tensor {
         
         Tensor tensor = new TensorCPU(shape);
         for (int i = 0; i < data.size(); i++) {
-            tensor.getData().set(i, data.get(i));
+            tensor.getData()[i] = data.get(i);
         }
         return tensor;
     }
@@ -777,49 +753,6 @@ public class TensorCPU implements Cloneable, Tensor {
 
     public Tensor pow(Tensor other) {
         return mapWithIndex((i, x) -> Math.pow(x, other.get(i)));
-    }
-
-    public Tensor mul(Vector vec) {
-        return mul(vector(vec));
-    }
-
-    public Tensor matmul(Vector vec) {
-        if (shape.length != 2) {
-            throw new IllegalArgumentException("matmul(Vector) requires a 2D tensor");
-        }
-        
-        int m = shape[0];
-        int n = shape[1];
-        
-        if (n != vec.size()) {
-            throw new IllegalArgumentException(
-                "The inner dimensions do not match: " + n + " != " + vec.size()
-            );
-        }
-        
-        Tensor result = new TensorCPU(m, 1);
-        
-        for (int i = 0; i < m; i++) {
-            float sum = 0;
-
-            for (int k = 0; k < n; k++) {
-                sum += get(i, k) * vec.get(k);
-            }
-
-            result.set(sum, i, 0);
-        }
-        
-        return result;
-    }
-
-    private Tensor broadcastOperation(Tensor other, BiFunction<Float, Float, Float> operation) {
-        int[] resultShape = broadcastShapes(shape, other.shape());
-        Tensor result = new TensorCPU(resultShape);
-        
-        int[] indices = new int[resultShape.length];
-        broadcastFill(result, this, other, operation, indices, 0);
-        
-        return result;
     }
 
     private int[] broadcastShapes(int[] shape1, int[] shape2) {
@@ -1340,7 +1273,7 @@ public class TensorCPU implements Cloneable, Tensor {
         int dataSize = stream.readInt();
 
         for (int i = 0; i < dataSize; i++) {
-            data.getData().set(i, stream.readDouble());
+            data.getData()[i] = stream.readDouble();
         }
 
         return data;

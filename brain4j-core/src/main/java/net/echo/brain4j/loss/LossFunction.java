@@ -9,5 +9,5 @@ public interface LossFunction {
 
     double calculate(Tensor actual, Tensor predicted);
 
-    double getDelta(double error, double derivative);
+    float getDelta(float error, float derivative);
 }

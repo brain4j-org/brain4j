@@ -2,11 +2,9 @@ package net.echo.math4j.math.tensor;
 
 import net.echo.math4j.math.tensor.autograd.AutogradContext;
 import net.echo.math4j.math.tensor.index.Range;
-import net.echo.math4j.math.vector.Vector;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -17,7 +15,7 @@ public interface Tensor extends Iterable<Double> {
     // Base properties and methods
     //=============================================================
     
-    Vector getData();
+    float[] getData();
     int[] shape();
     int dimension();
     int elements();
@@ -49,8 +47,7 @@ public interface Tensor extends Iterable<Double> {
     Tensor mul(double value);
     Tensor times(Tensor other);
     Tensor times(double value);
-    Tensor mul(Vector vec);
-    
+
     // Division
     Tensor div(Tensor other);
     Tensor div(double value);
@@ -68,7 +65,6 @@ public interface Tensor extends Iterable<Double> {
 
     Tensor oldMatmul(Tensor other);
     Tensor matmul(Tensor other);
-    Tensor matmul(Vector vec);
     double dot(Tensor other);
     double norm();
     double normSquared();

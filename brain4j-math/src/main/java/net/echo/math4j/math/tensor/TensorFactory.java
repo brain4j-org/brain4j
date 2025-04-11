@@ -53,22 +53,7 @@ public class TensorFactory {
     public static Tensor vector(float... data) {
         return of(new int[]{data.length}, data);
     }
-    
-    public static Tensor vector(Vector data) {
-        if (useGPU) {
-            int size = data.size();
-            float[] floatData = new float[size];
-            
-            for (int i = 0; i < size; i++) {
-                floatData[i] = data.get(i);
-            }
-            
-            return TensorGPU.of(new int[]{size}, floatData);
-        } else {
-            return TensorCPU.vector(data);
-        }
-    }
-    
+
     public static Tensor matrix(int rows, int cols, float... data) {
         return of(new int[]{rows, cols}, data);
     }
