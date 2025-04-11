@@ -50,7 +50,7 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         Tensor result = normalize1D(input);
         cache.setOutputTensor(this, result);
         return result;

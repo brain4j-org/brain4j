@@ -41,15 +41,19 @@ public class BigTransformerExample {
         window.append(TensorFactory.zeros(dimension));
 
         StatesCache sharedCache = new StatesCache();
+        double totalTime = 0.0;
 
         for (int i = 0; i < 10; i++) {
             Tensor finalInput = window.toInput();
 
             long start = System.nanoTime();
-            Tensor output = model.predict(sharedCache, finalInput, false);
+            Tensor output = model.predict(sharedCache, finalInput);
 
             took = (System.nanoTime() - start) / 1e6;
-            System.out.printf("Took %s ms to predict%n", took);
+            totalTime += took;
+
+            double mean = totalTime / (i + 1);
+            System.out.printf("Took %.4f ms to predict - %.4f ms on average %n", took, mean);
 
             window.append(output);
         }

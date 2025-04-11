@@ -5,8 +5,10 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.transformers.head.AttentionHead;
+import net.echo.math4j.BrainUtils;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,14 +70,25 @@ public class MultiHeadAttention {
         return new AttentionHead(modelDimension, headDimension);
     }
 
-    public Tensor attend(StatesCache cache, Tensor input) {
-        List<Tensor> headOutputs = new ArrayList<>();
+    public Tensor attend(StatesCache cache, Tensor input, boolean training) {
+        Tensor[] outputs = new Tensor[heads.size()];
+        List<Thread> threads = new ArrayList<>();
 
-        for (AttentionHead head : heads) {
-            headOutputs.add(head.attend(cache, input));
+        for (int i = 0; i < heads.size(); i++) {
+            AttentionHead head = heads.get(i);
+            int index = i;
+
+            if (!training) {
+                Thread thread = Thread.startVirtualThread(() -> outputs[index] = head.attend(cache, input));
+                threads.add(thread);
+            } else {
+                outputs[i] = head.attend(cache, input);
+            }
         }
 
-        return TensorFactory.concat(headOutputs);
+        BrainUtils.waitAll(threads);
+
+        return TensorFactory.concat(List.of(outputs));
     }
 
     public int getTotalNeurons() {

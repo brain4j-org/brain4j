@@ -84,7 +84,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         cache.setInputTensor(this, input);
 
         int channels = input.shape()[0];

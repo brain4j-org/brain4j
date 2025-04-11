@@ -85,6 +85,13 @@ public class ChatBotExample {
             System.out.printf("Saved model inside %s!%n", path);
         }
 
+        System.out.print("Would you like to use the GPU? (y/n): ");
+        String shouldUseGPU = scanner.nextLine();
+
+        if (shouldUseGPU.equals("y")) {
+            Brain4J.useGPUIfAvailable();
+        }
+
         EvaluationResult result = model.evaluate(dataSet);
         System.out.printf("Accuracy: %.3f%% Loss: %.3f%n", result.accuracy() * 100, result.loss());
 

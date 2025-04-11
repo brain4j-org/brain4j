@@ -58,7 +58,7 @@ public class VocabularyMapper extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         int columns = input.shape()[1];
 
         cache.setInputTensor(this, input);
@@ -70,8 +70,7 @@ public class VocabularyMapper extends Layer {
 
         cache.setOutputTensor(this, reshaped);
 
-        return reshaped
-                .matmul(outProjectionWeights)
+        return reshaped.matmul(outProjectionWeights)
                 .reshape(vocabularySize)
                 .softmax(temperature);
     }

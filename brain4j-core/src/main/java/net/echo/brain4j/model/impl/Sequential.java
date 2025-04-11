@@ -135,16 +135,16 @@ public class Sequential extends Model {
             cache.setInputTensor(layer, denseResult);
 
             if (layer instanceof DenseLayer dense) {
-                denseResult = dense.forward(cache, workingLayer, denseResult);
+                denseResult = dense.forward(cache, workingLayer, denseResult, training);
             }
 
             if (layer instanceof DropoutLayer dropout) {
-                denseResult = dropout.apply(denseResult, training);
+                denseResult = dropout.forward(cache, workingLayer, denseResult, training);
                 continue;
             }
 
             if (layer instanceof LayerNorm norm) {
-                denseResult = norm.forward(cache, workingLayer, denseResult);
+                denseResult = norm.forward(cache, workingLayer, denseResult, training);
                 continue;
             }
 

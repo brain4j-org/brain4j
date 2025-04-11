@@ -18,7 +18,7 @@ public class InputLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         int[] shape = input.shape();
 
         if (input.elements() != width * height) {

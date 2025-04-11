@@ -11,12 +11,13 @@ import java.util.Random;
 import java.util.SplittableRandom;
 
 /**
- * Represents a Dropout layer, used to mitigate overfitting
- * by randomly deactivating a fraction of the input neurons.
+ * Represents a Dropout layer, it's used to mitigate overfitting by randomly deactivating a fraction of the neurons
+ * during training.
+ * When inferencing, the output gets scaled by {@code 1 - dropout}.
  */
 public class DropoutLayer extends Layer {
 
-    private Random fastRandom = Random.from(new SplittableRandom());
+    private final Random fastRandom = Random.from(new SplittableRandom());
     private double dropout;
 
     public DropoutLayer() {
@@ -25,9 +26,9 @@ public class DropoutLayer extends Layer {
     /**
      * Constructs a dropout layer instance.
      *
-     * @param dropout the dropout rate (0 < dropout < 1), specifying the
+     * @param dropout The dropout rate (0 < dropout < 1), specifying the
      *                proportion of neurons to deactivate during training
-     * @throws IllegalArgumentException if dropout is outside the range 0-1
+     * @throws IllegalArgumentException If dropout is outside the range 0-1.
      */
     public DropoutLayer(double dropout) {
         super(0, Activations.LINEAR);
@@ -37,14 +38,6 @@ public class DropoutLayer extends Layer {
         }
 
         this.dropout = dropout;
-    }
-
-    public Tensor apply(Tensor input, boolean training) {
-        if (training) {
-            return forward(null, null, input);
-        } else {
-            return scale(input);
-        }
     }
 
     @Override
@@ -64,8 +57,20 @@ public class DropoutLayer extends Layer {
         return false;
     }
 
+    /**
+     * Applies the dropout to the input tensor. This method will randomly set to 0 random values from the input tensor
+     * during training. Meanwhile it will scale the input tensor by {@code 1 - dropout} during inferencing.
+     *
+     * @param input The input tensor.
+     * @param training If it's called during training.
+     * @return The resulting tensor.
+     */
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+        if (training) {
+            return scale(input);
+        }
+
         if (input.dimension() != 1) {
             throw new UnsupportedOperationException("Only 1D tensors are supported!");
         }
@@ -81,6 +86,11 @@ public class DropoutLayer extends Layer {
         return input;
     }
 
+    /**
+     * Scales the input tensor by {@code 1 - input}.
+     * @param input The input tensor.
+     * @return The scaled tensor.
+     */
     public Tensor scale(Tensor input) {
         return input.mul(1 - dropout);
     }
@@ -88,7 +98,7 @@ public class DropoutLayer extends Layer {
     /**
      * Gets the dropout rate.
      *
-     * @return the dropout rate
+     * @return The dropout rate.
      */
     public double getDropout() {
         return dropout;

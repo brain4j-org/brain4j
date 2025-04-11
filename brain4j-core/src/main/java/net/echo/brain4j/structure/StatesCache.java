@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StatesCache {
 
@@ -21,9 +22,9 @@ public class StatesCache {
     public StatesCache() {
         this.inputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
         this.outputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
-        this.feedForwardCache = new HashMap<>();
-        this.keyCache = new HashMap<>();
-        this.valueCache = new HashMap<>();
+        this.feedForwardCache = new ConcurrentHashMap<>(); // TODO: Migrate to arrays
+        this.keyCache = new ConcurrentHashMap<>();
+        this.valueCache = new ConcurrentHashMap<>();
 
         markAsNewSession();
     }

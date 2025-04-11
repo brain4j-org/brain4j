@@ -150,7 +150,7 @@ public abstract class Layer implements Adapter {
         }
     }
 
-    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Tensor input);
+    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training);
 
     // TODO: Eventually implement this for every class and make it abstract
     public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
