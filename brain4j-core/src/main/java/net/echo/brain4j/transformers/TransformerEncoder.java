@@ -80,6 +80,7 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
+        super.serialize(stream);
         stream.writeInt(dimension);
         stream.writeInt(heads);
 
@@ -98,6 +99,7 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
+        super.deserialize(stream);
         this.dimension = stream.readInt();
         this.heads = stream.readInt();
         this.attention = createAttention(heads, dimension);

@@ -35,15 +35,16 @@ public class MNISTExample {
         );
 
         model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
+        boolean loading = new File("mnist.b4j").exists();
 
-        if (new File("mnist.b4j").exists()) {
+        if (loading) {
             System.out.println("Loading existing mnist.b4j model...");
             model.load("mnist.b4j");
+            System.out.println(model.summary());
+        } else {
+            System.out.println(model.summary());
+            model.fit(dataSet, 150, 10);
         }
-
-        System.out.println(model.summary());
-
-        // model.fit(dataSet, 150, 10);
 
         EvaluationResult result = model.evaluate(dataSet);
 

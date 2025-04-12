@@ -72,11 +72,13 @@ public class MultiHeadAttention {
         Tensor[] outputs = new Tensor[heads.size()];
         List<Thread> threads = new ArrayList<>();
 
+        boolean shouldMultiThread = !training && heads.size() > 1;
+
         for (int i = 0; i < heads.size(); i++) {
             AttentionHead head = heads.get(i);
             int index = i;
 
-            if (!training) {
+            if (shouldMultiThread) {
                 Thread thread = Thread.startVirtualThread(() -> outputs[index] = head.attend(cache, input));
                 threads.add(thread);
             } else {
@@ -84,7 +86,9 @@ public class MultiHeadAttention {
             }
         }
 
-        BrainUtils.waitAll(threads);
+        if (shouldMultiThread) {
+            BrainUtils.waitAll(threads);
+        }
 
         return TensorFactory.concat(List.of(outputs));
     }

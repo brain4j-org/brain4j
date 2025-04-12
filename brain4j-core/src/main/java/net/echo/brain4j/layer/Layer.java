@@ -68,7 +68,6 @@ public abstract class Layer implements Adapter {
         }
 
         boolean hasWeights = weights != null && weights.dimension() == 2;
-
         stream.writeBoolean(hasWeights);
 
         if (hasWeights) {
@@ -104,8 +103,7 @@ public abstract class Layer implements Adapter {
 
     public void init(Random generator) {
         for (int i = 0; i < bias.elements(); i++) {
-            double value = 2 * generator.nextDouble() - 1;
-            bias.set(value, i);
+            bias.set(2 * generator.nextDouble() - 1, i);
         }
     }
 

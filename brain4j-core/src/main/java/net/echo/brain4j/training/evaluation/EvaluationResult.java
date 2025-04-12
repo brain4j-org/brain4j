@@ -84,7 +84,7 @@ public class EvaluationResult {
         divider = BrainUtils.getHeader(" Confusion Matrix ", Brain4J.getHeaderChar());
         matrix.append(divider);
         matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
-        matrix.append(" ");
+        matrix.append(" ".repeat(7));
 
         for (int i = 0; i < classes; i++) {
             matrix.append("%4d".formatted(i)).append(" ");

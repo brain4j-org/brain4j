@@ -23,6 +23,7 @@ public class ModernAdapter {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DataOutputStream dataStream = new DataOutputStream(outputStream);
 
+        dataStream.writeUTF("2.7.0");
         dataStream.writeInt(model.getSeed()); // seed
         dataStream.writeUTF(model.getLossFunction().getClass().getName()); // loss_function
         dataStream.writeUTF(model.getWeightInit().getClass().getName()); // weight_init
@@ -49,8 +50,8 @@ public class ModernAdapter {
             byte[] bytes = decompress(fileInputStream.readAllBytes());
             DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
 
+            String version = dataStream.readUTF();
             int seed = dataStream.readInt();
-
             LossFunction lossFunction = BrainUtils.newInstance(dataStream.readUTF());
             WeightInitializer weightInit = BrainUtils.newInstance(dataStream.readUTF());
             Updater updater = BrainUtils.newInstance(dataStream.readUTF());
