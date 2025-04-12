@@ -16,6 +16,14 @@ public class Vector implements Cloneable, Iterable<Double> {
         this.data = new float[size];
     }
 
+    private Vector(float[] data) {
+        this.data = data;
+    }
+
+    public static Vector of(float... data) {
+        return new Vector(data);
+    }
+
     public void set(int index, double value) {
         data[index] = (float) value;
     }

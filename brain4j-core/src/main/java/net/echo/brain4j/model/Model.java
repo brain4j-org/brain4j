@@ -23,6 +23,7 @@ import net.echo.math4j.BrainUtils;
 import net.echo.math4j.DataSet;
 import net.echo.math4j.math.tensor.Tensor;
 import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math4j.math.vector.Vector;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -40,12 +41,10 @@ public abstract class Model implements Adapter {
 
     protected BackPropagation propagation;
     protected List<Layer> layers;
-
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
     protected Optimizer optimizer;
     protected Updater updater;
-
     protected Random generator;
     protected int seed;
 
@@ -122,6 +121,14 @@ public abstract class Model implements Adapter {
     public abstract void fit(DataSet<DataRow> dataSet);
 
     public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
+
+    @Deprecated
+    public Vector predict(Vector input) {
+        Tensor tensor = TensorFactory.vector(input.toArray());
+        Tensor output = predict(new StatesCache(), tensor, false);
+
+        return Vector.of(output.getData());
+    }
 
     public double loss(DataSet<DataRow> dataSet) {
         propagation.partitionIfRequired(dataSet);
