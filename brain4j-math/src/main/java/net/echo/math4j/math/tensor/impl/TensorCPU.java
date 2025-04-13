@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 
 public class TensorCPU implements Cloneable, Tensor {
     
-    protected final float[] data;
+    protected float[] data;
     private final int[] shape;
     private final int[] strides;
     private AutogradContext autogradContext;
