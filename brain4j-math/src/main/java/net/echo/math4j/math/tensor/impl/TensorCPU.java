@@ -1174,6 +1174,21 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
+    public int argmax() {
+        double max = Double.NEGATIVE_INFINITY;
+        int maxIndex = 0;
+
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] > max) {
+                max = data[i];
+                maxIndex = i;
+            }
+        }
+
+        return maxIndex;
+    }
+
+    @Override
     public Tensor clone() {
         return of(shape, data);
     }

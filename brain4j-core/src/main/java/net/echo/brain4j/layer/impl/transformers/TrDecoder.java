@@ -1,14 +1,14 @@
-package net.echo.brain4j.transformers;
+package net.echo.brain4j.layer.impl.transformers;
 
 import net.echo.brain4j.transformers.attention.MaskedMultiHeadAttention;
 
-public class TransformerDecoder extends TransformerEncoder {
+public class TrDecoder extends TrEncoder {
 
-    private TransformerDecoder() {
+    private TrDecoder() {
         super();
     }
 
-    public TransformerDecoder(int numHeads, int dimension) {
+    public TrDecoder(int numHeads, int dimension) {
         super(numHeads, dimension);
     }
 

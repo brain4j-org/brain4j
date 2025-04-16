@@ -1,4 +1,4 @@
-package net.echo.brain4j.model.initialization;
+package net.echo.brain4j.initialization;
 
 public interface WeightInitializer {
 

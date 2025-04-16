@@ -1,4 +1,4 @@
-package net.echo.brain4j.transformers;
+package net.echo.brain4j.layer.impl.transformers;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
@@ -6,7 +6,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.model.initialization.WeightInitializer;
+import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -20,7 +20,7 @@ import java.io.DataOutputStream;
 import java.util.List;
 import java.util.Random;
 
-public class TransformerEncoder extends Layer {
+public class TrEncoder extends Layer {
 
     protected Sequential feedForward;
     protected LayerNorm normalizer;
@@ -29,11 +29,11 @@ public class TransformerEncoder extends Layer {
     protected int heads;
     protected int dimension;
 
-    TransformerEncoder() {
+    TrEncoder() {
         this.normalizer = new LayerNorm();
     }
 
-    public TransformerEncoder(int numHeads, int dimension) {
+    public TrEncoder(int numHeads, int dimension) {
         super(Activations.LINEAR.getFunction());
         
         this.normalizer = new LayerNorm();

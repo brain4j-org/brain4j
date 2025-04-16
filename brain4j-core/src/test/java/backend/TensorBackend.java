@@ -6,9 +6,9 @@ import net.echo.math4j.math.tensor.impl.TensorNative;
 public class TensorBackend {
 
     public static void main(String[] args) {
-        int m = 1000;
-        int n = 2000;
-        int p = 3000;
+        int m = 200;
+        int n = 3000;
+        int p = 200;
         Tensor a = new TensorNative(m, n).fill(Math::random);
         Tensor b = new TensorNative(n, p).fill(Math::random);
 

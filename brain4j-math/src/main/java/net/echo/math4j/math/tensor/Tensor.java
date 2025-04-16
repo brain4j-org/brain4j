@@ -26,6 +26,7 @@ public interface Tensor extends Iterable<Float> {
     float[] toArray();
     double[] toDoubleArray();
     Tensor clone();
+    int argmax();
     
     //=============================================================
     // Base arithmetic operations

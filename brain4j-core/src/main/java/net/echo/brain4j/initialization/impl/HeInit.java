@@ -1,6 +1,6 @@
-package net.echo.brain4j.model.initialization.impl;
+package net.echo.brain4j.initialization.impl;
 
-import net.echo.brain4j.model.initialization.WeightInitializer;
+import net.echo.brain4j.initialization.WeightInitializer;
 
 public class HeInit implements WeightInitializer {
 

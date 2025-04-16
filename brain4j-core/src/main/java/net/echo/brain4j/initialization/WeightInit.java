@@ -1,6 +1,6 @@
-package net.echo.brain4j.model.initialization;
+package net.echo.brain4j.initialization;
 
-import net.echo.brain4j.model.initialization.impl.*;
+import net.echo.brain4j.initialization.impl.*;
 
 /**
  * Enum that defines the different types of weight initialization strategies used for neural networks.

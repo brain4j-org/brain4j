@@ -17,8 +17,9 @@ public class Vocabulary {
         this.corpus = corpus;
         this.dimension = dimension;
         this.tokens = new ArrayList<>();
-        this.tokens.add("<UNK>"); // The first index is for the unknown token
-        this.tokens.add("<END>"); // The second index is for the unknown token
+        this.tokens.add("<unk>"); // The first index is for the unknown token
+        this.tokens.add("<end>"); // The second index is for the unknown token
+        this.tokenize();
     }
 
     public List<String> split(String input) {
@@ -100,7 +101,7 @@ public class Vocabulary {
 
         if (index == -1) {
             tokens.add(expected);
-            index = tokens.size() - 1;
+            return wordToIndex(expected);
         }
 
         return index;

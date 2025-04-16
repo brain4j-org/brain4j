@@ -10,8 +10,8 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.ContextWindow;
-import net.echo.brain4j.transformers.TransformerDecoder;
-import net.echo.brain4j.transformers.encoding.PositionalEncoding;
+import net.echo.brain4j.layer.impl.transformers.TrDecoder;
+import net.echo.brain4j.transformers.PositionalEncoding;
 import net.echo.brain4j.transformers.vocabulary.Vocabulary;
 import net.echo.brain4j.transformers.vocabulary.VocabularyMapper;
 import net.echo.math4j.BrainUtils;
@@ -21,10 +21,7 @@ import net.echo.math4j.math.tensor.TensorFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class ChatBotExample {
 
@@ -45,20 +42,16 @@ public class ChatBotExample {
         List<String> examples = loadExamples();
         Vocabulary vocabulary = new Vocabulary(examples, EMBEDDING_SIZE);
 
-        vocabulary.tokenize();
-
         Transformer model = new Transformer(
-                new TransformerDecoder(1, EMBEDDING_SIZE),
+                new TrDecoder(1, EMBEDDING_SIZE),
                 new VocabularyMapper(vocabulary.getVocabSize(), EMBEDDING_SIZE, 5)
         );
 
         model.compile(Loss.CROSS_ENTROPY, new Adam(0.1));
 
-        Map<String, String> samples = Map.of(
-            "write a story", "Once upon a time, there was a small cat named Mia. Mia lived in a cozy house with Sarah. Every day, Mia played in the garden and chased butterflies. One day, she found a shiny key. It opened a hidden room full of toys. Mia was very happy!"
-        );
+        System.out.println("Loaded vocabulary with " + vocabulary.getVocabSize() + " tokens.");
 
-        DataSet<DataRow> dataSet = getDataSet(vocabulary, samples);
+        DataSet<DataRow> dataSet = getDataSet(vocabulary, examples);
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Have you got a pre-trained model? (y/n): ");
@@ -115,50 +108,74 @@ public class ChatBotExample {
         inference(vocabulary, model, scanner);
     }
 
-    private DataSet<DataRow> getDataSet(Vocabulary vocabulary, Map<String, String> samples) {
+    private DataSet<DataRow> getDataSet(Vocabulary vocabulary, List<String> samples) {
         DataSet<DataRow> dataSet = new DataSet<>();
-        Map<String, Tensor> inputEncodingCache = new HashMap<>();
 
-        for (Map.Entry<String, String> entry : samples.entrySet()) {
-            String trainInput = entry.getKey();
-            String trainOutput = entry.getValue();
-
-            if (!trainOutput.endsWith("<END>")) {
-                if (!trainOutput.endsWith(" ")) {
-                    trainOutput += " ";
-                }
-
-                trainOutput += "<END>";
+        vocabulary.tokenize();
+        for (String entry : samples) {
+            if (!entry.endsWith("<end>")) {
+                entry += "<end>";
             }
 
-            List<String> tokens = vocabulary.split(trainOutput);
-            String lastInput = trainInput + " ";
+            List<String> tokens = vocabulary.split(entry);
+            StringBuilder lastInput = new StringBuilder();
 
             for (String token : tokens) {
-                Tensor encoded;
+                Tensor input = vocabulary.encode(lastInput.toString());
 
-                if (inputEncodingCache.containsKey(lastInput)) {
-                    encoded = inputEncodingCache.get(lastInput);
-                } else {
-                    Tensor input = vocabulary.encode(lastInput);
-                    encoded = ENCODING.encode(input);
+                if (input.elements() > 0) {
+                    Tensor target = TensorFactory.create(vocabulary.getVocabSize());
 
-                    if (lastInput.length() < 50) {
-                        inputEncodingCache.put(lastInput, encoded);
-                    }
+                    int index = vocabulary.wordToIndex(token);
+                    target.set(1, index - 1);
+
+                    dataSet.add(new DataRow(input, target));
                 }
 
-                Tensor target = TensorFactory.create(vocabulary.getVocabSize());
-                int index = vocabulary.wordToIndex(token);
-
-                if (index != -1) {
-                    target.set(1, index);
-                }
-
-                dataSet.add(new DataRow(encoded, target));
-                lastInput += token;
+                lastInput.append(token).append(" ");
             }
         }
+
+//        for (List<String> entry : samples) {
+//            String trainInput = entry.getKey();
+//            String trainOutput = entry.getValue();
+//
+//            if (!trainOutput.endsWith("<END>")) {
+//                if (!trainOutput.endsWith(" ")) {
+//                    trainOutput += " ";
+//                }
+//
+//                trainOutput += "<END>";
+//            }
+//
+//            List<String> tokens = vocabulary.split(trainOutput);
+//            String lastInput = trainInput + " ";
+//
+//            for (String token : tokens) {
+//                Tensor encoded;
+//
+//                if (inputEncodingCache.containsKey(lastInput)) {
+//                    encoded = inputEncodingCache.get(lastInput);
+//                } else {
+//                    Tensor input = vocabulary.encode(lastInput);
+//                    encoded = ENCODING.encode(input);
+//
+//                    if (lastInput.length() < 50) {
+//                        inputEncodingCache.put(lastInput, encoded);
+//                    }
+//                }
+//
+//                Tensor target = TensorFactory.create(vocabulary.getVocabSize());
+//                int index = vocabulary.wordToIndex(token);
+//
+//                if (index != -1) {
+//                    target.set(1, index);
+//                }
+//
+//                dataSet.add(new DataRow(encoded, target));
+//                lastInput += token;
+//            }
+//        }
 
         return dataSet;
     }
@@ -186,7 +203,6 @@ public class ChatBotExample {
         StringBuilder botResponse = new StringBuilder();
         StatesCache cache = new StatesCache();
 
-        String modeCollapse = " ".repeat(10);
         double totalTime = 0.0;
 
         while (true) {
@@ -205,7 +221,9 @@ public class ChatBotExample {
             botResponse.append(word);
             totalTime += took;
 
-            if (word.equals("<END>") || word.equals("<UNK>") || botResponse.toString().endsWith(modeCollapse)) {
+            String modeCollapse = word.repeat(5);
+
+            if (word.equals("<end>") || word.equals("<unk>") || botResponse.toString().endsWith(modeCollapse)) {
                 break;
             }
 

@@ -6,7 +6,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.brain4j.model.initialization.WeightInitializer;
+import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;

@@ -1,6 +1,6 @@
 package net.echo.brain4j.transformers.head;
 
-import net.echo.brain4j.model.initialization.WeightInitializer;
+import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math4j.math.tensor.Tensor;
