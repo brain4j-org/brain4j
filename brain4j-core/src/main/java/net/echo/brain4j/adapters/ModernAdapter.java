@@ -8,7 +8,7 @@ import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.math4j.BrainUtils;
+import net.echo.math.BrainUtils;
 
 import java.io.*;
 

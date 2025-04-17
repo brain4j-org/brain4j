@@ -1,13 +1,14 @@
 package net.echo.brain4j.transformers.tokenizer;
 
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.brain4j.transformers.Vocabulary;
+import net.echo.math.tensor.Tensor;
 
 import java.util.List;
 
 public interface Tokenizer {
-    List<String> split(String input);
+    List<String> split(String corpus);
 
-    Tensor encode(List<String> tokens);
+    Tensor tokenize(Vocabulary vocabulary, String input);
 
-    String decode(Tensor tokens);
+    String decode(Vocabulary vocabulary, Tensor token);
 }

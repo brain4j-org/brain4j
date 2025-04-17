@@ -2,8 +2,8 @@ package net.echo.brain4j.layer.impl.transformers;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
-import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensor;
+import net.echo.math.tensor.TensorFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public class EmbedLayer extends Layer {
 
         for (int i = 0; i < vocabSize; i++) {
             for (int j = 0; j < embeddingDim; j++) {
-                double value = generator.nextDouble(2 * bound) - bound;
+                double value = generator.nextDouble(2) - 1;
                 this.weights.set(value, i, j);
             }
         }

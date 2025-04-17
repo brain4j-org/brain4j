@@ -1,9 +1,9 @@
 package net.echo.brain4j;
 
-import net.echo.math4j.BrainUtils;
-import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.tensor.impl.TensorGPU;
-import net.echo.math4j.opencl.GPUInfo;
+import net.echo.math.BrainUtils;
+import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.impl.TensorGPU;
+import net.echo.math.opencl.GPUInfo;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;

@@ -1,9 +1,9 @@
 package net.echo.brain4j.transformers.head;
 
 import net.echo.brain4j.structure.StatesCache;
-import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
-import net.echo.math4j.math.tensor.index.Range;
+import net.echo.math.tensor.Tensor;
+import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.index.Range;
 
 import java.util.List;
 

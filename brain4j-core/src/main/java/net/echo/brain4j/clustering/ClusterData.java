@@ -1,7 +1,7 @@
 package net.echo.brain4j.clustering;
 
-import net.echo.math4j.DataSet;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.DataSet;
+import net.echo.math.tensor.Tensor;
 
 import java.util.List;
 

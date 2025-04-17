@@ -2,8 +2,8 @@ package net.echo.brain4j.layer.impl.transformers;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
-import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensor;
+import net.echo.math.tensor.TensorFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ public class PosEncodeLayer extends Layer {
             token.set(value, i);
         }
 
-        return token;
+        return token.reshape(1, embeddingDim);
     }
 
     public Tensor getEncoding(int index) {
@@ -54,7 +54,7 @@ public class PosEncodeLayer extends Layer {
         Tensor token = generate(index);
         encodings.add(token);
 
-        return token.reshape(1, embeddingDim);
+        return token;
     }
 
     @Override

@@ -7,7 +7,7 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.layer.impl.transformers.TrDecoder;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.tensor.Tensor;
 
 import java.util.ArrayList;
 import java.util.List;

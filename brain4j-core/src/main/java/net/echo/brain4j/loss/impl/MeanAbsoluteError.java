@@ -1,7 +1,7 @@
 package net.echo.brain4j.loss.impl;
 
 import net.echo.brain4j.loss.LossFunction;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.tensor.Tensor;
 
 public class MeanAbsoluteError implements LossFunction {
 

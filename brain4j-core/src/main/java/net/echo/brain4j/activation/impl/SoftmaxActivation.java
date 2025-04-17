@@ -1,7 +1,7 @@
 package net.echo.brain4j.activation.impl;
 
 import net.echo.brain4j.activation.Activation;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.tensor.Tensor;
 
 public class SoftmaxActivation implements Activation {
 

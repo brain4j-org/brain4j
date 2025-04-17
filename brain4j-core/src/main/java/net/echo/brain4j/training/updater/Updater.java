@@ -5,7 +5,7 @@ import net.echo.brain4j.adapters.json.UpdaterAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Parameters;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.tensor.Tensor;
 
 @JsonAdapter(UpdaterAdapter.class)
 public abstract class Updater {

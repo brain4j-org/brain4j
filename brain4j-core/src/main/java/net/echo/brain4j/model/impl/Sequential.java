@@ -13,9 +13,9 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
-import net.echo.math4j.BrainUtils;
-import net.echo.math4j.DataSet;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.BrainUtils;
+import net.echo.math.DataSet;
+import net.echo.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

@@ -8,12 +8,12 @@ public class TrDecoder extends TrEncoder {
         super();
     }
 
-    public TrDecoder(int numHeads, int dimension) {
-        super(numHeads, dimension);
+    public TrDecoder(int numHeads, int embeddingDim) {
+        super(numHeads, embeddingDim);
     }
 
     @Override
-    public MaskedMultiHeadAttention createAttention(int heads, int dimension) {
-        return new MaskedMultiHeadAttention(heads, dimension);
+    public MaskedMultiHeadAttention createAttention(int heads, int embeddingDim) {
+        return new MaskedMultiHeadAttention(heads, embeddingDim);
     }
 }

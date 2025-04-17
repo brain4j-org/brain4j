@@ -2,7 +2,7 @@ package net.echo.brain4j.structure;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.transformers.head.AttentionHead;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.tensor.Tensor;
 
 import java.util.ArrayList;
 import java.util.List;

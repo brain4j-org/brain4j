@@ -1,6 +1,6 @@
 package net.echo.brain4j.loss;
 
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.tensor.Tensor;
 
 /**
  * Also known as cost function, measures the model's performance and is minimized during training.

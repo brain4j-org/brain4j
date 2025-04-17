@@ -3,7 +3,7 @@ package net.echo.brain4j.training.advanced;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.math4j.DataSet;
+import net.echo.math.DataSet;
 
 public class TrainListener {
 

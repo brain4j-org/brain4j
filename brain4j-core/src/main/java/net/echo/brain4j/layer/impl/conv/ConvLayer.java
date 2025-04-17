@@ -2,8 +2,8 @@ package net.echo.brain4j.layer.impl.conv;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
-import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensor;
+import net.echo.math.tensor.TensorFactory;
 
 import java.util.ArrayList;
 import java.util.List;

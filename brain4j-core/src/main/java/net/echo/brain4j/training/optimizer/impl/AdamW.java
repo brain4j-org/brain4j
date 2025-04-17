@@ -1,7 +1,7 @@
 package net.echo.brain4j.training.optimizer.impl;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.math4j.math.tensor.Tensor;
+import net.echo.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

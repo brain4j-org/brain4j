@@ -12,8 +12,8 @@ import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.head.AttentionHead;
-import net.echo.math4j.math.tensor.Tensor;
-import net.echo.math4j.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensor;
+import net.echo.math.tensor.TensorFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -27,24 +27,24 @@ public class TrEncoder extends Layer {
 
     protected MultiHeadAttention attention;
     protected int heads;
-    protected int dimension;
+    protected int embeddingDim;
 
     TrEncoder() {
         this.normalizer = new LayerNorm();
     }
 
-    public TrEncoder(int numHeads, int dimension) {
+    public TrEncoder(int numHeads, int embeddingDim) {
         super(Activations.LINEAR.getFunction());
         
         this.normalizer = new LayerNorm();
         this.feedForward = new Sequential(
-                new DenseLayer(dimension, Activations.LINEAR),
-                new DenseLayer(4 * dimension, Activations.RELU),
-                new DenseLayer(dimension, Activations.LINEAR)
+                new DenseLayer(embeddingDim, Activations.LINEAR),
+                new DenseLayer(4 * embeddingDim, Activations.RELU),
+                new DenseLayer(embeddingDim, Activations.LINEAR)
         );
 
         this.heads = numHeads;
-        this.dimension = dimension;
+        this.embeddingDim = embeddingDim;
     }
 
     @Override
@@ -60,8 +60,8 @@ public class TrEncoder extends Layer {
         for (int i = 0; i < normAttention.size(); i++) {
             if (cached.size() <= i) {
                 Tensor tensor = normAttention.get(i);
-                Tensor output = feedForward.predict(tensor.reshape(dimension));
-                Tensor reshaped = output.reshape(1, dimension);
+                Tensor output = feedForward.predict(tensor.reshape(embeddingDim));
+                Tensor reshaped = output.reshape(1, embeddingDim);
 
                 cached.add(reshaped);
             }
@@ -81,7 +81,7 @@ public class TrEncoder extends Layer {
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
-        stream.writeInt(dimension);
+        stream.writeInt(embeddingDim);
         stream.writeInt(heads);
 
         for (AttentionHead head : attention.getHeads()) {
@@ -100,14 +100,14 @@ public class TrEncoder extends Layer {
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
         super.deserialize(stream);
-        this.dimension = stream.readInt();
+        this.embeddingDim = stream.readInt();
         this.heads = stream.readInt();
-        this.attention = createAttention(heads, dimension);
+        this.attention = createAttention(heads, embeddingDim);
 
         this.feedForward = new Sequential(
-                new DenseLayer(dimension, Activations.LINEAR),
-                new DenseLayer(4 * dimension, Activations.RELU),
-                new DenseLayer(dimension, Activations.LINEAR)
+                new DenseLayer(embeddingDim, Activations.LINEAR),
+                new DenseLayer(4 * embeddingDim, Activations.RELU),
+                new DenseLayer(embeddingDim, Activations.LINEAR)
         );
 
         for (int i = 0; i < heads; i++) {
@@ -147,12 +147,12 @@ public class TrEncoder extends Layer {
     @Override
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         super.compile(weightInit, lossFunction, optimizer, updater);
-        this.attention = createAttention(heads, dimension);
+        this.attention = createAttention(heads, embeddingDim);
         this.feedForward.compile(weightInit, lossFunction, optimizer, updater);
     }
 
-    public MultiHeadAttention createAttention(int heads, int dimension) {
-        return new MultiHeadAttention(heads, dimension);
+    public MultiHeadAttention createAttention(int heads, int embeddingDim) {
+        return new MultiHeadAttention(heads, embeddingDim);
     }
 
     public MultiHeadAttention getAttention() {
