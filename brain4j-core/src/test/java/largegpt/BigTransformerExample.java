@@ -1,14 +1,14 @@
-package net.echo.examples.largegpt;
+package largegpt;
 
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.layer.impl.transformers.EmbedLayer;
 import net.echo.brain4j.layer.impl.transformers.PosEncodeLayer;
+import net.echo.brain4j.layer.impl.transformers.VocabularyMapper;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Transformer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.group.DecoderGroup;
-import net.echo.brain4j.layer.impl.transformers.VocabularyMapper;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.TensorFactory;
 

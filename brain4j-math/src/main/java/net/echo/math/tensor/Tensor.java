@@ -116,12 +116,13 @@ public interface Tensor extends Iterable<Float> {
     Tensor requiresGrad(boolean requiresGrad);
     boolean requiresGrad();
     Tensor grad();
-    void backward();
+    Tensor backward();
     void backward(Tensor gradOutput);
     Tensor addWithGrad(Tensor other);
     Tensor mulWithGrad(Tensor other);
     Tensor divWithGrad(Tensor other);
     Tensor subWithGrad(Tensor other);
+    Tensor matmulWithGrad(Tensor other);
 
     /**
      * Performs a convolution between this tensor and the specified kernel tensor.

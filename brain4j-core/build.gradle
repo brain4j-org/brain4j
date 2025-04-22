@@ -21,6 +21,5 @@ shadowJar {
     enableRelocation = true
     relocationPrefix = "net.echo.shaded"
 
-    relocate('net.echo.math4j', 'net.echo.math4j')
     minimize()
 }

@@ -1060,8 +1060,10 @@ public class TensorCPU implements Cloneable, Tensor {
         return null;
     }
 
-    public void backward() {
-        backward(ones(shape));
+    public Tensor backward() {
+        Tensor result = ones(shape);
+        backward(result);
+        return result;
     }
 
     public void backward(Tensor gradOutput) {

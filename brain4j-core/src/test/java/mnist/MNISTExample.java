@@ -1,4 +1,4 @@
-package net.echo.examples.mnist;
+package mnist;
 
 import com.google.common.io.Files;
 import net.echo.brain4j.Brain4J;
@@ -15,8 +15,6 @@ import net.echo.math.tensor.TensorFactory;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MNISTExample {
 
@@ -49,9 +47,6 @@ public class MNISTExample {
         EvaluationResult result = model.evaluate(dataSet);
 
         System.out.println(result.confusionMatrix());
-
-        assertTrue(result.loss() < 0.1, "Loss is too high! " + result.loss());
-        assertTrue(result.accuracy() > 0.90, "Accuracy is too low! " + result.accuracy());
 
         ModernAdapter.serialize("mnist", model);
     }

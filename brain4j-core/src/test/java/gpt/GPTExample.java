@@ -1,10 +1,11 @@
-package net.echo.examples.gpt;
+package gpt;
 
 import com.google.common.io.Files;
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.layer.impl.transformers.EmbedLayer;
 import net.echo.brain4j.layer.impl.transformers.PosEncodeLayer;
 import net.echo.brain4j.layer.impl.transformers.TrDecoder;
+import net.echo.brain4j.layer.impl.transformers.VocabularyMapper;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Transformer;
@@ -12,7 +13,6 @@ import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.Vocabulary;
 import net.echo.brain4j.transformers.tokenizer.Tokenizer;
 import net.echo.brain4j.transformers.tokenizer.impl.SimpleTokenizer;
-import net.echo.brain4j.layer.impl.transformers.VocabularyMapper;
 import net.echo.math.tensor.Tensor;
 
 import java.io.File;

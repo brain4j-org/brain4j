@@ -1,4 +1,4 @@
-package net.echo.examples.xor;
+package xor;
 
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.activation.Activations;
