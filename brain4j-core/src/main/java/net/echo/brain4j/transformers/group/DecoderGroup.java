@@ -57,12 +57,12 @@ public class DecoderGroup extends Layer {
     }
 
     @Override
-    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
+    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
         Tensor nextDelta = delta;
 
         for (int i = layers.size(); i > 0; i--) {
             TrDecoder layer = layers.get(i - 1);
-            nextDelta = layer.propagate(cache, previous, nextDelta);
+            nextDelta = layer.backward(cache, previous, nextDelta);
         }
 
         return nextDelta;

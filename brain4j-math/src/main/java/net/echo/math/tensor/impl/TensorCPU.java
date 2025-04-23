@@ -371,6 +371,18 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
+    public double variance() {
+        double mean = mean();
+        double variance = 0.0;
+
+        for (float value : data) {
+            variance += Math.pow(value - mean, 2);
+        }
+
+        return variance / data.length;
+    }
+
+    @Override
     public double max() {
         double max = Double.NEGATIVE_INFINITY;
 

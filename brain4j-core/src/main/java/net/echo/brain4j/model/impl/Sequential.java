@@ -2,6 +2,7 @@ package net.echo.brain4j.model.impl;
 
 import com.google.common.base.Preconditions;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.layer.impl.conv.InputLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.loss.LossFunction;
@@ -134,7 +135,7 @@ public class Sequential extends Model {
             Layer nextLayer = l < layers.size() - 1 ? layers.get(l + 1) : null;
             denseResult = layer.forward(cache, workingLayer, nextLayer, denseResult, training);
 
-            if (layer.canPropagate()) {
+            if (layer.canPropagate() && !(layer instanceof LayerNorm)) {
                 workingLayer = layer;
             }
         }

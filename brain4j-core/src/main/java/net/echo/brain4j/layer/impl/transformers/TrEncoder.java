@@ -74,7 +74,7 @@ public class TrEncoder extends Layer {
     }
 
     @Override
-    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
+    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
         return null;
     }
 

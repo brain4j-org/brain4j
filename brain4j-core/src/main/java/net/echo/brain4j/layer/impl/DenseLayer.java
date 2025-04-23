@@ -8,6 +8,8 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.BrainUtils;
 import net.echo.math.tensor.Tensor;
 
+import java.util.Arrays;
+
 /**
  * Represents a fully connected (dense) layer in a neural network.
  */
@@ -64,7 +66,7 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Tensor propagate(StatesCache cache, Layer previous, Tensor delta) {
+    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
         Tensor output = cache.getOutputTensor(this);
         Tensor derivative = activation.getDerivative(output);
 

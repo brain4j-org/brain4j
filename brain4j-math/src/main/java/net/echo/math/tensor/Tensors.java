@@ -176,4 +176,9 @@ public class Tensors {
 
         return mask;
     }
+
+    public static Tensor scalar(double sumDelta) {
+        int[] shape = {1};
+        return TensorCPU.of(shape, sumDelta);
+    }
 }

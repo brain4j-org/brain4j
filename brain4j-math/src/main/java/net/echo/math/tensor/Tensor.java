@@ -84,6 +84,7 @@ public interface Tensor extends Iterable<Float> {
     
     double sum();
     double mean();
+    double variance();
     double max();
     double min();
     Tensor sum(int dim, boolean keepDim);

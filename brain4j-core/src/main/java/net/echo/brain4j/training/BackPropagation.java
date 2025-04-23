@@ -75,7 +75,7 @@ public class BackPropagation {
 
             if (!layer.canPropagate()) continue;
 
-            delta = layer.propagate(cache, previous, delta);
+            delta = layer.backward(cache, previous, delta);
             previous = layer;
         }
 
