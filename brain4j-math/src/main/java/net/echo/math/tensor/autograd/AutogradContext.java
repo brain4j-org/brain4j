@@ -14,7 +14,11 @@ public class AutogradContext {
         this.requiresGrad = requiresGrad;
         this.grad = null;
     }
-    
+
+    public void zerograd() {
+        this.grad = null;
+    }
+
     public void setOperation(Operation operation, Tensor... inputs) {
         this.operation = operation;
         this.inputs = inputs;
@@ -36,7 +40,7 @@ public class AutogradContext {
     public void backward(Tensor gradOutput) {
         if (!requiresGrad) return;
 
-        grad = grad == null ? gradOutput.clone() : grad.plus(gradOutput);
+        this.grad = grad == null ? gradOutput.clone() : grad.plus(gradOutput);
 
         if (operation == null) return;
 

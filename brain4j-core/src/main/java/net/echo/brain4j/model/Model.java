@@ -385,8 +385,8 @@ public abstract class Model implements Adapter {
 
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
-        layers.clear();
         int layersSize = stream.readInt();
+        layers.clear();
 
         for (int i = 0; i < layersSize; i++) {
             String layerClassPath = stream.readUTF();

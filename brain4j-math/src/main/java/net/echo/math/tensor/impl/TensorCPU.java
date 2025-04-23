@@ -487,22 +487,6 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public float[] toArray() {
-        return data;
-    }
-
-    @Override
-    public double[] toDoubleArray() {
-        double[] result = new double[data.length];
-
-        for (int i = 0; i < data.length; i++) {
-            result[i] = data[i];
-        }
-
-        return result;
-    }
-
-    @Override
     public Tensor reshape(int... newShape) {
         int newSize = computeSize(newShape);
 
@@ -1099,6 +1083,13 @@ public class TensorCPU implements Cloneable, Tensor {
     @Override
     public boolean usesGrad() {
         return autogradContext != null && autogradContext.requiresGrad();
+    }
+
+    @Override
+    public void zerograd() {
+        if (autogradContext != null) {
+            autogradContext.zerograd();
+        }
     }
 
     @Override

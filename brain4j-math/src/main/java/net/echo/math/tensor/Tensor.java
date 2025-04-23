@@ -20,19 +20,17 @@ public interface Tensor extends Iterable<Float> {
     //=============================================================
     // Base properties and methods
     //=============================================================
-    
-    float[] getData();
+
     int[] shape();
+    float[] getData();
+    float get(int... indices);
     int dimension();
     int elements();
-    float get(int... indices);
+    int argmax();
     Tensor set(double value, int... indices);
     Tensor add(double value, int... indices);
-    float[] toArray();
-    double[] toDoubleArray();
     Tensor clone();
-    int argmax();
-    
+
     //=============================================================
     // Base arithmetic operations
     //=============================================================
@@ -139,6 +137,11 @@ public interface Tensor extends Iterable<Float> {
      * @return True if this tensor uses autograd, false otherwise
      */
     boolean usesGrad();
+
+    /**
+     * Zeros the gradient for this tensor.
+     */
+    void zerograd();
 
     /**
      * Gets the gradient for this tensor.

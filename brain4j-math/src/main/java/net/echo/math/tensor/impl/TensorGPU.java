@@ -312,8 +312,8 @@ public class TensorGPU extends TensorCPU {
             int K = shapeA[1];
             int N = shapeB[1];
             
-            float[] dataA = toArray();
-            float[] dataB = other.toArray();
+            float[] dataA = getData();
+            float[] dataB = other.getData();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
@@ -362,8 +362,8 @@ public class TensorGPU extends TensorCPU {
             }
             
             int elements = elements();
-            float[] dataA = toArray();
-            float[] dataB = other.toArray();
+            float[] dataA = getData();
+            float[] dataB = other.getData();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
@@ -410,8 +410,8 @@ public class TensorGPU extends TensorCPU {
             }
             
             int elements = elements();
-            float[] dataA = toArray();
-            float[] dataB = other.toArray();
+            float[] dataA = getData();
+            float[] dataB = other.getData();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
@@ -480,8 +480,8 @@ public class TensorGPU extends TensorCPU {
         
         boolean useFFT = kernelSize > FFT_THRESHOLD;
         
-        float[] inputData = toArray();
-        float[] kernelData = kernel.toArray();
+        float[] inputData = getData();
+        float[] kernelData = kernel.getData();
         float[] resultData = new float[inputSize];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -585,8 +585,8 @@ public class TensorGPU extends TensorCPU {
         
         boolean useFFT = (kernelRows * kernelCols) > FFT_THRESHOLD;
         
-        float[] inputData = toArray();
-        float[] kernelData = kernel.toArray();
+        float[] inputData = getData();
+        float[] kernelData = kernel.getData();
         float[] resultData = new float[inputRows * inputCols];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,

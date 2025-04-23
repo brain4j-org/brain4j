@@ -28,9 +28,7 @@ public class XorExample {
         DataSet<DataRow> dataSet = getDataSet();
         Model model = new Sequential()
                 .add(new DenseLayer(2, Activations.LINEAR, clipper))
-                .add(new LayerNorm())
                 .add(new DenseLayer(32, Activations.MISH, clipper))
-                .add(new LayerNorm())
                 .add(new DenseLayer(1, Activations.SIGMOID, clipper))
                 .compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.1));
 

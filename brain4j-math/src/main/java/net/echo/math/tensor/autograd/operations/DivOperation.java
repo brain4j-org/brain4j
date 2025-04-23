@@ -16,10 +16,10 @@ public class DivOperation implements Operation {
         Tensor b = inputs[1];
         
         // d(a/b)/da = 1/b
-        Tensor gradA = gradOutput.times(b.clone().div(1.0));
+        Tensor gradA = gradOutput.times(b.divide(1.0));
         
         // d(a/b)/db = -a/b^2
-        Tensor gradB = gradOutput.times(a.clone().div(b.clone().times(b.clone())).times(-1.0));
+        Tensor gradB = gradOutput.times(a.divide(b.times(b)).times(-1.0));
         
         return new Tensor[] { gradA, gradB };
     }

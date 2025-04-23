@@ -41,15 +41,17 @@ public class DenseLayer extends Layer {
 
         int numNeurons = bias.elements();
 
-        Tensor weights = denseLayer.getWeights(); // last layer weights, which is [m, n]
-        Tensor reshapedInput = input.reshape(input.elements(), 1); // [n, 1] matrix
+        Tensor weights = denseLayer.getWeights().withGrad(); // last layer weights, which is [m, n]
+        Tensor reshapedInput = input.reshape(input.elements(), 1).withGrad(); // [n, 1] matrix
 
-        Tensor result = weights.matmulWithGrad(reshapedInput) // [m, n] x [n, 1] = [m, 1]
+        Tensor result = weights.withGrad()
+                .matmulWithGrad(reshapedInput) // [m, n] x [n, 1] = [m, 1]
                 .reshape(numNeurons)
+                .withGrad()
                 .addWithGrad(bias);
 
         if (nextLayer instanceof LayerNorm layerNorm) {
-            result = layerNorm.forward(cache, this, null, result, training);
+            result = layerNorm.forward(cache, this, null, result, training).withGrad();
         }
 
         Tensor activated = result.activateWithGrad(activation);
