@@ -2,7 +2,7 @@ package net.echo.math.fft;
 
 import net.echo.math.complex.Complex;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 public final class FFTUtils {
     
@@ -26,7 +26,7 @@ public final class FFTUtils {
     
     public static Tensor complexToTensor1D(Complex[] complex) {
         int size = complex.length;
-        Tensor result = TensorFactory.zeros(size);
+        Tensor result = Tensors.zeros(size);
         
         for (int i = 0; i < size; i++) {
             result.set(complex[i].getReal(), i);
@@ -56,7 +56,7 @@ public final class FFTUtils {
     }
     
     public static Tensor complexToTensor2D(Complex[][] complex, int rows, int cols) {
-        Tensor result = TensorFactory.zeros(rows, cols);
+        Tensor result = Tensors.zeros(rows, cols);
         
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -103,7 +103,7 @@ public final class FFTUtils {
             return tensor.clone();
         }
         
-        Tensor result = TensorFactory.zeros(size);
+        Tensor result = Tensors.zeros(size);
         for (int i = 0; i < currentSize; i++) {
             result.set(tensor.get(i), i);
         }
@@ -124,7 +124,7 @@ public final class FFTUtils {
             return tensor.clone();
         }
         
-        Tensor result = TensorFactory.zeros(rows, cols);
+        Tensor result = Tensors.zeros(rows, cols);
         for (int i = 0; i < Math.min(currentRows, rows); i++) {
             for (int j = 0; j < Math.min(currentCols, cols); j++) {
                 result.set(tensor.get(i, j), i, j);
@@ -144,7 +144,7 @@ public final class FFTUtils {
             return tensor.clone();
         }
         
-        Tensor result = TensorFactory.zeros(size);
+        Tensor result = Tensors.zeros(size);
         for (int i = 0; i < size; i++) {
             result.set(tensor.get(i), i);
         }
@@ -165,7 +165,7 @@ public final class FFTUtils {
             return tensor.clone();
         }
         
-        Tensor result = TensorFactory.zeros(Math.min(currentRows, rows), Math.min(currentCols, cols));
+        Tensor result = Tensors.zeros(Math.min(currentRows, rows), Math.min(currentCols, cols));
         for (int i = 0; i < Math.min(currentRows, rows); i++) {
             for (int j = 0; j < Math.min(currentCols, cols); j++) {
                 result.set(tensor.get(i, j), i, j);

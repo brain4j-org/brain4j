@@ -1,7 +1,7 @@
 package net.echo.math;
 
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -19,7 +19,7 @@ public class BrainUtils {
         }
 
         Tensor XtX = X.transpose().matmul(X);
-        Tensor v = TensorFactory.random(XtX.shape()[1], 1);
+        Tensor v = Tensors.random(XtX.shape()[1], 1);
 
         v = XtX.matmul(v);
         v = v.div(v.norm());

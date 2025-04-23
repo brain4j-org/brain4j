@@ -3,7 +3,7 @@ package net.echo.math.tensor.ops;
 import net.echo.math.complex.Complex;
 import net.echo.math.fft.FFT;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import static net.echo.math.constants.Constants.EPSILON;
 import static net.echo.math.constants.Constants.FFT_THRESHOLD;
@@ -77,7 +77,7 @@ public final class Convolution {
         int kernelSize = kernel.shape()[0];
         int outputSize = inputSize + paddingLeft + paddingRight - kernelSize + 1;
         
-        Tensor output = TensorFactory.zeros(outputSize);
+        Tensor output = Tensors.zeros(outputSize);
         
         float[] flippedKernel = new float[kernelSize];
         for (int i = 0; i < kernelSize; i++) {
@@ -146,7 +146,7 @@ public final class Convolution {
             outputSize = fullSize;
         }
         
-        Tensor output = TensorFactory.zeros(outputSize);
+        Tensor output = Tensors.zeros(outputSize);
         for (int i = 0; i < outputSize; i++) {
             if (startIdx + i < result.length) {
                 double val = result[startIdx + i].getReal();
@@ -240,7 +240,7 @@ public final class Convolution {
         int outputRows = inputRows + paddingTop + paddingBottom - kernelRows + 1;
         int outputCols = inputCols + paddingLeft + paddingRight - kernelCols + 1;
         
-        Tensor output = TensorFactory.zeros(outputRows, outputCols);
+        Tensor output = Tensors.zeros(outputRows, outputCols);
         
         float[][] flippedKernel = new float[kernelRows][kernelCols];
         for (int i = 0; i < kernelRows; i++) {
@@ -342,7 +342,7 @@ public final class Convolution {
             outputCols = fullCols;
         }
         
-        Tensor output = TensorFactory.zeros(outputRows, outputCols);
+        Tensor output = Tensors.zeros(outputRows, outputCols);
         for (int i = 0; i < outputRows; i++) {
             for (int j = 0; j < outputCols; j++) {
                 double val = result[startRow + i][startCol + j].getReal();
@@ -367,7 +367,7 @@ public final class Convolution {
         int rows = shape[0];
         int cols = shape[1];
         
-        Tensor flipped = TensorFactory.zeros(rows, cols);
+        Tensor flipped = Tensors.zeros(rows, cols);
         
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -383,7 +383,7 @@ public final class Convolution {
         int kernelRows = kernelShape[0];
         int kernelCols = kernelShape[1];
         
-        Tensor paddedKernel = TensorFactory.zeros(fftRows, fftCols);
+        Tensor paddedKernel = Tensors.zeros(fftRows, fftCols);
         
         for (int i = 0; i < kernelRows; i++) {
             for (int j = 0; j < kernelCols; j++) {

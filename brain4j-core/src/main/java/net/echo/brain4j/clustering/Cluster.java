@@ -1,7 +1,7 @@
 package net.echo.brain4j.clustering;
 
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class Cluster {
      */
     public Cluster(int dimension, int id) {
         this.id = id;
-        this.center = TensorFactory.random(dimension);
+        this.center = Tensors.random(dimension);
         this.vectors = new ArrayList<>();
     }
 
@@ -69,7 +69,7 @@ public class Cluster {
             return false;
         }
 
-        Tensor newCenter = TensorFactory.create(center.elements());
+        Tensor newCenter = Tensors.create(center.elements());
 
         for (Tensor row : vectors) {
             newCenter.add(row);

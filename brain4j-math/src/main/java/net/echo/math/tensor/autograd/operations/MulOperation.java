@@ -12,9 +12,12 @@ public class MulOperation implements Operation {
     
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
-        return new Tensor[] {
-            gradOutput.times(inputs[1]),
-            gradOutput.times(inputs[0])
-        };
+        Tensor a = inputs[0];
+        Tensor b = inputs[1];
+
+        Tensor gradA = gradOutput.times(b);  // ∂z/∂a = ∂z/∂out * b
+        Tensor gradB = gradOutput.times(a);  // ∂z/∂b = ∂z/∂out * a
+
+        return new Tensor[] { gradA, gradB };
     }
 } 

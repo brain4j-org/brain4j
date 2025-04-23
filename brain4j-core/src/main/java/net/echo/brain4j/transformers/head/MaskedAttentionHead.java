@@ -2,7 +2,7 @@ package net.echo.brain4j.transformers.head;
 
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.index.Range;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class MaskedAttentionHead extends AttentionHead {
         double normalizer = Math.sqrt(headDimension);
 
         Tensor scores = Q.matmul(K.transpose()).div(normalizer);
-        Tensor mask = TensorFactory.triangularMask(scores.shape()[0]);
+        Tensor mask = Tensors.triangularMask(scores.shape()[0]);
 
         Tensor maskedScores = scores.add(mask);
         Tensor attentionWeights = maskedScores.softmax();
@@ -51,15 +51,15 @@ public class MaskedAttentionHead extends AttentionHead {
                 Tensor newK = newInput.matmul(keyWeightsTensor);
                 Tensor newV = newInput.matmul(valueWeightsTensor);
                 
-                List<Tensor> newKTokens = TensorFactory.toList(newK);
-                List<Tensor> newVTokens = TensorFactory.toList(newV);
+                List<Tensor> newKTokens = Tensors.toList(newK);
+                List<Tensor> newVTokens = Tensors.toList(newV);
                 
                 localKeyCache.addAll(newKTokens);
                 localValueCache.addAll(newVTokens);
             }
             
-            K = TensorFactory.zeros(seqLength, headDimension);
-            V = TensorFactory.zeros(seqLength, headDimension);
+            K = Tensors.zeros(seqLength, headDimension);
+            V = Tensors.zeros(seqLength, headDimension);
             
             int elementsToProcess = Math.min(seqLength, localKeyCache.size());
             
@@ -79,8 +79,8 @@ public class MaskedAttentionHead extends AttentionHead {
             localKeyCache.clear();
             localValueCache.clear();
             
-            List<Tensor> kTokens = TensorFactory.toList(K);
-            List<Tensor> vTokens = TensorFactory.toList(V);
+            List<Tensor> kTokens = Tensors.toList(K);
+            List<Tensor> vTokens = Tensors.toList(V);
             
             localKeyCache.addAll(kTokens);
             localValueCache.addAll(vTokens);
@@ -89,7 +89,7 @@ public class MaskedAttentionHead extends AttentionHead {
         double normalizer = Math.sqrt(headDimension);
         
         Tensor scores = Q.matmul(K.transpose()).div(normalizer);
-        Tensor mask = TensorFactory.triangularMask(scores.shape()[0]);
+        Tensor mask = Tensors.triangularMask(scores.shape()[0]);
         
         Tensor maskedScores = scores.add(mask);
         Tensor attentionWeights = maskedScores.softmax();

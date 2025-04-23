@@ -4,7 +4,7 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -21,7 +21,7 @@ public class VocabularyMapper extends Layer {
 
     public VocabularyMapper(int vocabularySize, int dimension, double temperature) {
         this.vocabularySize = vocabularySize;
-        this.outProjectionWeights = TensorFactory.random(dimension, vocabularySize);
+        this.outProjectionWeights = Tensors.random(dimension, vocabularySize);
         this.temperature = Math.max(1e-15, temperature);
     }
 
@@ -37,7 +37,7 @@ public class VocabularyMapper extends Layer {
     public void deserialize(DataInputStream stream) throws Exception {
         this.vocabularySize = stream.readInt();
         this.temperature = stream.readDouble();
-        this.outProjectionWeights = TensorFactory.zeros(0).deserialize(stream);
+        this.outProjectionWeights = Tensors.zeros(0).deserialize(stream);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class VocabularyMapper extends Layer {
 
         cache.setInputTensor(this, input);
 
-        List<Tensor> tokens = TensorFactory.toList(input);
+        List<Tensor> tokens = Tensors.toList(input);
 
         Tensor last = tokens.getLast();
         Tensor reshaped = last.reshape(1, columns);

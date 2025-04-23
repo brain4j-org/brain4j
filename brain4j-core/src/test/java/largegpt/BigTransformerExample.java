@@ -10,7 +10,7 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.transformers.group.DecoderGroup;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 public class BigTransformerExample {
 
@@ -41,7 +41,7 @@ public class BigTransformerExample {
         System.out.println(model.summary());
         System.out.printf("Took %s ms to initialize%n", took);
 
-        Tensor inputs = TensorFactory.vector(10)
+        Tensor inputs = Tensors.vector(10)
                 .mapWithIndex((i, x) -> Float.valueOf(i));
 
         StatesCache sharedCache = new StatesCache();
@@ -56,7 +56,7 @@ public class BigTransformerExample {
             double mean = totalTime / (i + 1);
             System.out.printf("Took %.4f ms to predict - %.4f ms on average %n", took, mean);
 
-            inputs = TensorFactory.vector(inputs.elements() + 1)
+            inputs = Tensors.vector(inputs.elements() + 1)
                     .mapWithIndex((j, x) -> Float.valueOf(j));
         }
     }

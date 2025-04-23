@@ -3,7 +3,7 @@ package net.echo.brain4j.layer.impl.conv;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +72,7 @@ public class ConvLayer extends Layer {
         }
 
         for (int i = 0; i < filters; i++) {
-            Tensor kernel = TensorFactory.create(channels, kernelHeight, kernelWidth);
+            Tensor kernel = Tensors.create(channels, kernelHeight, kernelWidth);
 
             for (int j = 0; j < kernel.elements(); j++) {
                 double value = 2 * generator.nextDouble() * bound - bound;
@@ -94,11 +94,11 @@ public class ConvLayer extends Layer {
         int outputWidth = (columns - kernelWidth + 2 * padding) / stride + 1;
         int outputHeight = (rows - kernelHeight + 2 * padding) / stride + 1;
 
-        Tensor result = TensorFactory.matrix(filters, outputHeight, outputWidth);
+        Tensor result = Tensors.matrix(filters, outputHeight, outputWidth);
 
         for (int f = 0; f < filters; f++) {
             Tensor kernel = kernels.get(f);
-            Tensor filterOutput = TensorFactory.matrix(outputHeight, outputWidth);
+            Tensor filterOutput = Tensors.matrix(outputHeight, outputWidth);
 
             for (int c = 0; c < channels; c++) {
                 Tensor inputSlice = input.slice(c);

@@ -11,7 +11,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math.DataSet;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -66,8 +66,8 @@ public class MNISTExample {
                 inputs[i] = Float.parseFloat(parts[i + 1]);
             }
 
-            var input = TensorFactory.vector(inputs);
-            var output = TensorFactory.create(10);
+            var input = Tensors.vector(inputs);
+            var output = Tensors.create(10);
 
             int value = Integer.parseInt(parts[0]);
             output.set(1, value);

@@ -445,7 +445,7 @@ public class TensorGPU extends TensorCPU {
             return super.mul(other);
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -782,15 +782,5 @@ public class TensorGPU extends TensorCPU {
             Math.min(sizeX, globalSizeX),
             Math.min(sizeY, globalSizeY)
         };
-    }
-
-    @Override
-    public Tensor gpu() {
-        return this;
-    }
-
-    @Override
-    public Tensor cpu() {
-        return TensorCPU.of(shape(), getData());
     }
 }

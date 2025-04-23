@@ -1,7 +1,7 @@
 package net.echo.brain4j;
 
 import net.echo.math.BrainUtils;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.impl.TensorGPU;
 import net.echo.math.opencl.GPUInfo;
 
@@ -42,21 +42,21 @@ public class Brain4J {
      * @return True if the GPU is being used, false otherwise.
      */
     public static boolean isUsingGPU() {
-        return TensorFactory.isUsingGPU();
+        return Tensors.isUsingGPU();
     }
 
     /**
      * Enables the GPU if it's available.
      */
     public static void useGPUIfAvailable() {
-        TensorFactory.useGPUIfAvailable();
+        Tensors.useGPUIfAvailable();
     }
 
     /**
      * Forces the CPU to be used.
      */
     public static void useCPU() {
-        TensorFactory.forceCPU();
+        Tensors.forceCPU();
     }
 
     /**

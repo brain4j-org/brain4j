@@ -12,7 +12,7 @@ import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math.DataSet;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 public class XorExample {
 
@@ -48,8 +48,8 @@ public class XorExample {
 
         for (int x = 0; x < 2; x++) {
             for (int y = 0; y < 2; y++) {
-                Tensor input = TensorFactory.vector(x, y);
-                Tensor output = TensorFactory.vector(x ^ y);
+                Tensor input = Tensors.vector(x, y);
+                Tensor output = Tensors.vector(x ^ y);
 
                 set.add(new DataRow(input, output));
             }

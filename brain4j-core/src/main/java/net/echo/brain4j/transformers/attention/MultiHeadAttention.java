@@ -6,7 +6,7 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.math.BrainUtils;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +63,7 @@ public class MultiHeadAttention {
             BrainUtils.waitAll(threads);
         }
 
-        return TensorFactory.concat(List.of(outputs));
+        return Tensors.concat(List.of(outputs));
     }
 
     public int getTotalNeurons() {

@@ -1,6 +1,7 @@
 package net.echo.math.device;
 
 public enum DeviceType {
+
     DEFAULT(1),
     CPU(1 << 1),
     GPU(1 << 2),

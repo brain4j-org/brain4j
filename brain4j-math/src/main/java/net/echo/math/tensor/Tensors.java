@@ -8,7 +8,7 @@ import net.echo.math.tensor.index.Range;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TensorFactory {
+public class Tensors {
     
     private static boolean useGPU;
 
@@ -152,7 +152,7 @@ public class TensorFactory {
         int rows = tensors.size();
         int columns = tensors.getFirst().shape()[1];
 
-        Tensor result = TensorFactory.zeros(rows, columns);
+        Tensor result = Tensors.zeros(rows, columns);
 
         for (int i = 0; i < rows; i++) {
             Tensor token = tensors.get(i);
@@ -166,7 +166,7 @@ public class TensorFactory {
     }
 
     public static Tensor triangularMask(int dimension) {
-        Tensor mask = TensorFactory.zeros(dimension, dimension);
+        Tensor mask = Tensors.zeros(dimension, dimension);
 
         for (int i = 0; i < dimension; i++) {
             for (int j = i + 1; j < dimension; j++) {

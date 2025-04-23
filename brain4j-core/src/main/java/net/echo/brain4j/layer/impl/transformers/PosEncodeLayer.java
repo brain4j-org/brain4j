@@ -3,7 +3,7 @@ package net.echo.brain4j.layer.impl.transformers;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class PosEncodeLayer extends Layer {
     }
 
     public Tensor generate(int position) {
-        Tensor token = TensorFactory.zeros(embeddingDim);
+        Tensor token = Tensors.zeros(embeddingDim);
 
         for (int i = 0; i < embeddingDim; i++) {
             double exponent = (2.0 * Math.floor(i / 2.0)) / embeddingDim;
@@ -59,7 +59,7 @@ public class PosEncodeLayer extends Layer {
 
     @Override
     public void connect(Random generator, Layer previous, Layer next, double bound) {
-        this.weights = TensorFactory.zeros(0);
+        this.weights = Tensors.zeros(0);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class PosEncodeLayer extends Layer {
         }
 
         int rows = input.shape()[0];
-        List<Tensor> tokens = TensorFactory.toList(input);
+        List<Tensor> tokens = Tensors.toList(input);
 
         for (int i = 0; i < rows; i++) {
             Tensor encoding = getEncoding(i);
@@ -78,6 +78,6 @@ public class PosEncodeLayer extends Layer {
             current.add(encoding);
         }
 
-        return TensorFactory.mergeTensors(tokens);
+        return Tensors.mergeTensors(tokens);
     }
 }

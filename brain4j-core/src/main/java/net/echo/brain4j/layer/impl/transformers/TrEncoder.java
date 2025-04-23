@@ -13,7 +13,7 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.transformers.attention.MultiHeadAttention;
 import net.echo.brain4j.transformers.head.AttentionHead;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -54,7 +54,7 @@ public class TrEncoder extends Layer {
         Tensor attended = attention.attend(cache, input, training);
         Tensor normalized = normalizer.normalize(attended.add(input));
 
-        List<Tensor> normAttention = TensorFactory.toList(normalized);
+        List<Tensor> normAttention = Tensors.toList(normalized);
         List<Tensor> cached = cache.getFeedForwardForLayer(this);
 
         for (int i = 0; i < normAttention.size(); i++) {
@@ -67,7 +67,7 @@ public class TrEncoder extends Layer {
             }
         }
 
-        Tensor merged = TensorFactory.mergeTensors(cached);
+        Tensor merged = Tensors.mergeTensors(cached);
         cache.setOutputTensor(this, merged);
 
         return normalizer.normalize(merged.add(normalized));
@@ -113,9 +113,9 @@ public class TrEncoder extends Layer {
         for (int i = 0; i < heads; i++) {
             AttentionHead head = attention.getHeads().get(i);
 
-            Tensor Q = TensorFactory.zeros(0).deserialize(stream);
-            Tensor K = TensorFactory.zeros(0).deserialize(stream);
-            Tensor V = TensorFactory.zeros(0).deserialize(stream);
+            Tensor Q = Tensors.zeros(0).deserialize(stream);
+            Tensor K = Tensors.zeros(0).deserialize(stream);
+            Tensor V = Tensors.zeros(0).deserialize(stream);
 
             head.setQueryWeightsTensor(Q);
             head.setKeyWeightsTensor(K);

@@ -22,7 +22,7 @@ import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.BrainUtils;
 import net.echo.math.DataSet;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 import net.echo.math.vector.Vector;
 
 import java.text.DecimalFormat;
@@ -102,7 +102,7 @@ public abstract class Model implements Adapter {
         Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
 
         for (int i = 0; i < classes; i++) {
-            classifications.put(i, TensorFactory.create(classes));
+            classifications.put(i, Tensors.create(classes));
         }
 
         List<Thread> threads = new ArrayList<>();
@@ -124,7 +124,7 @@ public abstract class Model implements Adapter {
 
     @Deprecated
     public Vector predict(Vector input) {
-        Tensor tensor = TensorFactory.vector(input.toArray());
+        Tensor tensor = Tensors.vector(input.toArray());
         Tensor output = predict(new StatesCache(), tensor, false);
 
         return Vector.of(output.getData());

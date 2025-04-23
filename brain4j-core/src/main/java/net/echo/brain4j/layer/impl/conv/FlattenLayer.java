@@ -3,7 +3,7 @@ package net.echo.brain4j.layer.impl.conv;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 public class FlattenLayer extends Layer {
 
@@ -19,7 +19,7 @@ public class FlattenLayer extends Layer {
         int kernelWidth = convLayer.getOutputWidth();
         int kernelHeight = convLayer.getOutputHeight();
 
-        this.bias = TensorFactory.create(filters * kernelWidth * kernelHeight);
+        this.bias = Tensors.create(filters * kernelWidth * kernelHeight);
     }
 
     @Override

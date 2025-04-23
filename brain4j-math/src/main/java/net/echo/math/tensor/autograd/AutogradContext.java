@@ -45,7 +45,7 @@ public class AutogradContext {
         for (int i = 0; i < inputs.length; i++) {
             Tensor input = inputs[i];
 
-            if (!input.requiresGrad()) continue;
+            if (!input.usesGrad()) continue;
 
             input.backward(inputGrads[i]);
         }

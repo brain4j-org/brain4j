@@ -6,7 +6,7 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -76,8 +76,8 @@ public class Adam extends Optimizer {
         Tensor secondMomentum = this.secondMomentum[layer.getId()];
 
         if (firstMomentum == null || secondMomentum == null) {
-            firstMomentum = TensorFactory.create(gradient.shape());
-            secondMomentum = TensorFactory.create(gradient.shape());
+            firstMomentum = Tensors.create(gradient.shape());
+            secondMomentum = Tensors.create(gradient.shape());
         }
 
         Tensor gradSquared = gradient.clone().mul(gradient);

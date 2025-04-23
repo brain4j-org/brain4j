@@ -3,7 +3,7 @@ package net.echo.brain4j.transformers.tokenizer.impl;
 import net.echo.brain4j.transformers.Vocabulary;
 import net.echo.brain4j.transformers.tokenizer.Tokenizer;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class SimpleTokenizer implements Tokenizer {
             ids[i] = vocabulary.getId(tokens.get(i));
         }
 
-        return TensorFactory.vector(ids);
+        return Tensors.vector(ids);
     }
 
     @Override

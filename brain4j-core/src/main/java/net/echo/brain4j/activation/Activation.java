@@ -1,7 +1,7 @@
 package net.echo.brain4j.activation;
 
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 public interface Activation {
 
@@ -19,7 +19,7 @@ public interface Activation {
             throw new IllegalArgumentException("Activation only supports 1D tensors!");
         }
 
-        Tensor result = TensorFactory.create(input.elements());
+        Tensor result = Tensors.create(input.elements());
 
         for (int i = 0; i < input.elements(); i++) {
             double value = activate(input.get(i));
@@ -42,7 +42,7 @@ public interface Activation {
             throw new IllegalArgumentException("Derivative only supports 1D tensors!");
         }
 
-        Tensor result = TensorFactory.create(input.elements());
+        Tensor result = Tensors.create(input.elements());
 
         for (int i = 0; i < input.elements(); i++) {
             double value = getDerivative(input.get(i));

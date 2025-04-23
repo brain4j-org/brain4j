@@ -1,7 +1,7 @@
 package net.echo.brain4j.transformers;
 
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class ContextWindow {
         }
 
         this.tokens.add(token);
-        this.context = TensorFactory.mergeTensors(tokens);
+        this.context = Tensors.mergeTensors(tokens);
     }
 
     public void setContext(Tensor context) {
@@ -42,7 +42,7 @@ public class ContextWindow {
         }
 
         this.tokens.clear();
-        this.tokens.addAll(TensorFactory.toList(context));
+        this.tokens.addAll(Tensors.toList(context));
         this.context = context;
     }
 

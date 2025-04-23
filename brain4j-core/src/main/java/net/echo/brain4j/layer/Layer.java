@@ -13,7 +13,7 @@ import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math.BrainUtils;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -35,7 +35,7 @@ public abstract class Layer implements Adapter {
 
     public Layer() {
         this.activation = Activations.LINEAR.getFunction();
-        this.bias = TensorFactory.zeros(0);
+        this.bias = Tensors.zeros(0);
     }
 
     public Layer(Activation activation) {
@@ -53,8 +53,8 @@ public abstract class Layer implements Adapter {
     public Layer(int input, Activation activation) {
         this.id = Parameters.TOTAL_LAYERS++;
         this.activation = activation;
-        this.bias = TensorFactory.create(input);
-        this.weights = TensorFactory.zeros(0);
+        this.bias = Tensors.create(input);
+        this.weights = Tensors.zeros(0);
     }
 
     @Override
@@ -79,14 +79,14 @@ public abstract class Layer implements Adapter {
     public void deserialize(DataInputStream stream) throws Exception {
         this.id = stream.readInt();
         this.activation = BrainUtils.newInstance(stream.readUTF());
-        this.bias = TensorFactory.zeros(stream.readInt());
+        this.bias = Tensors.zeros(stream.readInt());
 
         for (int j = 0; j < bias.elements(); j++) {
             bias.set(stream.readDouble(), j);
         }
 
         boolean hasWeights = stream.readBoolean();
-        this.weights = TensorFactory.zeros(0);
+        this.weights = Tensors.zeros(0);
 
         if (hasWeights) {
             this.weights = weights.deserialize(stream);
@@ -138,7 +138,7 @@ public abstract class Layer implements Adapter {
         int input = bias.elements();
         int output = next.getTotalNeurons();
 
-        this.weights = TensorFactory.matrix(output, input);
+        this.weights = Tensors.matrix(output, input);
 
         for (int i = 0; i < output; i++) {
             for (int j = 0; j < input; j++) {

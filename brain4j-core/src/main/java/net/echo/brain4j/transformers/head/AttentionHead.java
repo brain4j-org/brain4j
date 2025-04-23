@@ -4,7 +4,7 @@ import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.TensorFactory;
+import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.index.Range;
 
 import java.util.List;
@@ -27,9 +27,9 @@ public class AttentionHead {
         this.inputDimension = inputDimension;
         this.headDimension = headDimension;
 
-        this.queryWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
-        this.keyWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
-        this.valueWeightsTensor = TensorFactory.matrix(inputDimension, headDimension);
+        this.queryWeightsTensor = Tensors.matrix(inputDimension, headDimension);
+        this.keyWeightsTensor = Tensors.matrix(inputDimension, headDimension);
+        this.valueWeightsTensor = Tensors.matrix(inputDimension, headDimension);
     }
 
     public int getHeadIndex() {
@@ -117,15 +117,15 @@ public class AttentionHead {
                 Tensor newK = newInput.matmul(keyWeightsTensor);
                 Tensor newV = newInput.matmul(valueWeightsTensor);
                 
-                List<Tensor> newKTokens = TensorFactory.toList(newK);
-                List<Tensor> newVTokens = TensorFactory.toList(newV);
+                List<Tensor> newKTokens = Tensors.toList(newK);
+                List<Tensor> newVTokens = Tensors.toList(newV);
                 
                 localKeyCache.addAll(newKTokens);
                 localValueCache.addAll(newVTokens);
             }
             
-            K = TensorFactory.zeros(seqLength, headDimension);
-            V = TensorFactory.zeros(seqLength, headDimension);
+            K = Tensors.zeros(seqLength, headDimension);
+            V = Tensors.zeros(seqLength, headDimension);
             
             int elementsToProcess = Math.min(seqLength, localKeyCache.size());
             
@@ -145,8 +145,8 @@ public class AttentionHead {
             localKeyCache.clear();
             localValueCache.clear();
             
-            List<Tensor> kTokens = TensorFactory.toList(K);
-            List<Tensor> vTokens = TensorFactory.toList(V);
+            List<Tensor> kTokens = Tensors.toList(K);
+            List<Tensor> vTokens = Tensors.toList(V);
             
             localKeyCache.addAll(kTokens);
             localValueCache.addAll(vTokens);
