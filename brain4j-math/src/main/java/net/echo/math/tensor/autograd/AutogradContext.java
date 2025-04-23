@@ -30,8 +30,8 @@ public class AutogradContext {
     
     public Tensor getGrad() {
         if (grad == null) {
-            int[] shape = this.inputs[0].shape();
-            grad = new TensorCPU(shape);
+            int[] shape = inputs[0].shape();
+            this.grad = new TensorCPU(shape);
         }
 
         return grad;

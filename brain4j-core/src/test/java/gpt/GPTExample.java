@@ -30,7 +30,8 @@ public class GPTExample {
         Brain4J.setLogging(true);
 
         int embeddingDim = 64;
-        List<String> samples = Files.readLines(new File("dataset.txt"), StandardCharsets.UTF_8);
+        List<String> samples = List.of("Hello, I'm echo, a very cool robot working on brain4j!");
+                // Files.readLines(new File("dataset.txt"), StandardCharsets.UTF_8);
 
         Tokenizer tokenizer = new SimpleTokenizer();
         Vocabulary vocabulary = new Vocabulary(tokenizer, samples);
@@ -46,9 +47,10 @@ public class GPTExample {
         System.out.println("Loaded vocabulary of " + vocabulary.size() + " tokens.");
         model.compile(Loss.CROSS_ENTROPY, new Adam(0.1));
 
-        String phrase = "hello!";
+        String phrase = "Hello, I'm echo";
+        System.out.print(phrase);
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             Tensor input = tokenizer.tokenize(vocabulary, phrase);
 
             Tensor nextToken = model.predict(input);

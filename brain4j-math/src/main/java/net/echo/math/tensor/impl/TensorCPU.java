@@ -1313,11 +1313,7 @@ public class TensorCPU implements Cloneable, Tensor {
         if (dimension() == 1) {
             softmax1D(temperature, result);
         } else if (dimension() == 2) {
-            if (dim == 0) {
-                softmaxColumns(temperature, result);
-            } else {
-                softmaxRows(temperature, result);
-            }
+            softmaxRows(temperature, result);
         } else {
             throw new UnsupportedOperationException("Softmax operation is only supported for 1D/2D tensors.");
         }

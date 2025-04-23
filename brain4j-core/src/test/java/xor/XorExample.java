@@ -1,6 +1,8 @@
 package xor;
 
 import net.echo.brain4j.Brain4J;
+import net.echo.brain4j.clipping.GradientClipper;
+import net.echo.brain4j.clipping.impl.HardClipper;
 import net.echo.brain4j.clipping.impl.L2Clipper;
 import net.echo.math.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
@@ -23,7 +25,7 @@ public class XorExample {
 
     public void start() throws Exception {
         Brain4J.setLogging(true);
-        L2Clipper clipper = new L2Clipper(1);
+        GradientClipper clipper = new L2Clipper(1);
 
         DataSet<DataRow> dataSet = getDataSet();
         Model model = new Sequential()
@@ -34,7 +36,9 @@ public class XorExample {
 
         System.out.println(model.summary());
 
+        long start = System.nanoTime();
         model.fit(dataSet, 100, 20);
+        System.out.println("Took " + (System.nanoTime() - start) / 1e6 + " ms");
 
         EvaluationResult result = model.evaluate(dataSet);
         System.out.println(result.confusionMatrix());

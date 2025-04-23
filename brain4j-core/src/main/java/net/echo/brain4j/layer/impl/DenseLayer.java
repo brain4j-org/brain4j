@@ -39,6 +39,9 @@ public class DenseLayer extends Layer {
             throw new UnsupportedOperationException("Layer before must be a dense layer!");
         }
 
+        if (!weights.usesGrad()) weights = weights.withGrad();
+        if (!bias.usesGrad()) bias = bias.withGrad();
+
         int numNeurons = bias.elements();
 
         Tensor weights = denseLayer.getWeights().withGrad(); // last layer weights, which is [m, n]
@@ -51,7 +54,7 @@ public class DenseLayer extends Layer {
                 .addWithGrad(bias);
 
         if (nextLayer instanceof LayerNorm layerNorm) {
-            result = layerNorm.forward(cache, this, null, result, training).withGrad();
+            result = layerNorm.forward(cache, this, null, result, training);
         }
 
         Tensor activated = result.activateWithGrad(activation);

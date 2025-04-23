@@ -10,15 +10,20 @@ public class AutoGradTest {
     }
 
     public void start() {
-        Tensor a = Tensors.vector(1, 2, 3).withGrad();
-        Tensor b = Tensors.vector(4, 5, 6).withGrad();
+        Tensor a = Tensors.matrix(2, 3,
+                1, 2, 3,
+                4, 5, 6).withGrad();
 
-        Tensor c = a.addWithGrad(b);        // c = a + b
-        Tensor z = c.mulWithGrad(b);        // z = c * b (element-wise)
+        Tensor b = Tensors.matrix(3, 1,
+                1,
+                2,
+                3).withGrad();
 
-        z.backward();  // lancia la backward
+        Tensor c = a.matmulWithGrad(b);
+        c.backward();
 
-        System.out.println("dz/da: " + a.grad());  // atteso: [4, 5, 6]
-        System.out.println("dz/db: " + b.grad());  // atteso: [9, 12, 15]
+        System.out.println("c: " + c);
+        System.out.println("dz/da: " + a.grad());
+        System.out.println("dz/db: " + b.grad());
     }
 }

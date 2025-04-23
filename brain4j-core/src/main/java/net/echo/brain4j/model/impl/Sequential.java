@@ -35,10 +35,6 @@ public class Sequential extends Model {
 
     public Sequential(Layer... layers) {
         super(layers);
-
-        if (this.layers.isEmpty()) return;
-
-        validateCNNIfPresent();
     }
 
     private void validateCNNIfPresent() {
@@ -56,8 +52,8 @@ public class Sequential extends Model {
                 Tensor prediction = predict(row.inputs());
                 Tensor expected = row.outputs();
 
-                int predIndex = BrainUtils.argmax(prediction);
-                int targetIndex = BrainUtils.argmax(expected);
+                int predIndex = prediction.argmax();
+                int targetIndex = expected.argmax();
 
                 if (row.outputs().elements() == 1) {
                     predIndex = prediction.get(0) > 0.5 ? 1 : 0;
@@ -87,6 +83,10 @@ public class Sequential extends Model {
 
     @Override
     public Sequential compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        if (!layers.isEmpty()) {
+            validateCNNIfPresent();
+        }
+
         super.compile(initializer, lossFunction, optimizer, updater);
 
         connect(initializer);
