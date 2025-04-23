@@ -1,6 +1,8 @@
 package net.echo.brain4j.layer.impl;
 
-import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.clipping.GradientClipper;
+import net.echo.brain4j.clipping.impl.HardClipper;
+import net.echo.math.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.BrainUtils;
@@ -10,6 +12,8 @@ import net.echo.math.tensor.Tensor;
  * Represents a fully connected (dense) layer in a neural network.
  */
 public class DenseLayer extends Layer {
+
+    private GradientClipper clipper;
 
     private DenseLayer() {
     }
@@ -21,7 +25,12 @@ public class DenseLayer extends Layer {
      * @param activation the activation function to be applied to the output of each neuron
      */
     public DenseLayer(int input, Activations activation) {
+        this(input, activation, new HardClipper(5));
+    }
+
+    public DenseLayer(int input, Activations activation, GradientClipper clipper) {
         super(input, activation);
+        this.clipper = clipper;
     }
 
     @Override
@@ -32,18 +41,18 @@ public class DenseLayer extends Layer {
 
         int numNeurons = bias.elements();
 
-        Tensor reshapedInput = input.reshape(input.elements(), 1);
-        Tensor result = denseLayer
-                .getWeights()
-                .matmul(reshapedInput)
+        Tensor weights = denseLayer.getWeights(); // last layer weights, which is [m, n]
+        Tensor reshapedInput = input.reshape(input.elements(), 1); // [n, 1] matrix
+
+        Tensor result = weights.matmulWithGrad(reshapedInput) // [m, n] x [n, 1] = [m, 1]
                 .reshape(numNeurons)
-                .add(bias);
+                .addWithGrad(bias);
 
         if (nextLayer instanceof LayerNorm layerNorm) {
             result = layerNorm.forward(cache, this, null, result, training);
         }
 
-        Tensor activated = activation.activate(result);
+        Tensor activated = result.activateWithGrad(activation);
         cache.setOutputTensor(this, activated);
 
         return activated;
@@ -62,17 +71,13 @@ public class DenseLayer extends Layer {
                 .matmul(deltaMatrix)
                 .reshape(output.elements());
 
-        // element-wise multiplication of delta and derivative
-        Tensor deltaL = newDelta
-                .mul(derivative)
-                .map(BrainUtils::clipGradient);
+        Tensor deltaL = newDelta.mul(derivative);
+        Tensor gradient = optimizer.optimize(this, deltaMatrix, output.transpose());
 
-        // gradient calculated by the optimizer and clamped
-        Tensor gradient = optimizer
-                .optimize(this, deltaMatrix, output.transpose())
-                .map(BrainUtils::clipGradient);
+        Tensor clippedGradient = clipper.clip(gradient);
+        Tensor clippedDelta = clipper.clip(deltaL);
 
-        updater.acknowledgeChange(this, gradient, deltaL);
+        updater.acknowledgeChange(this, clippedGradient, clippedDelta);
         return deltaL;
     }
 }

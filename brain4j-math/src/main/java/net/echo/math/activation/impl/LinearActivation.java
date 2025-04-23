@@ -1,6 +1,6 @@
-package net.echo.brain4j.activation.impl;
+package net.echo.math.activation.impl;
 
-import net.echo.brain4j.activation.Activation;
+import net.echo.math.activation.Activation;
 
 public class LinearActivation implements Activation {
 

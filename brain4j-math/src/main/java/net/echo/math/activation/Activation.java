@@ -1,4 +1,4 @@
-package net.echo.brain4j.activation;
+package net.echo.math.activation;
 
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;

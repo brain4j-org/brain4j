@@ -141,34 +141,4 @@ public class Sequential extends Model {
 
         return denseResult;
     }
-
-    @Override
-    public void serialize(DataOutputStream stream) throws Exception {
-        stream.writeInt(layers.size());
-
-        for (Layer layer : layers) {
-            stream.writeUTF(layer.getClass().getName());
-            layer.serialize(stream);
-        }
-    }
-
-    @Override
-    public void deserialize(DataInputStream stream) throws Exception {
-        int layersSize = stream.readInt();
-
-        this.layers = new ArrayList<>();
-
-        for (int i = 0; i < layersSize; i++) {
-            String layerClassPath = stream.readUTF();
-            Class<?> layerClass = Class.forName(layerClassPath);
-
-            Constructor<?> constructor = layerClass.getDeclaredConstructor();
-            constructor.setAccessible(true);
-
-            Layer layer = (Layer) constructor.newInstance();
-            layer.deserialize(stream);
-
-            layers.add(layer);
-        }
-    }
 }

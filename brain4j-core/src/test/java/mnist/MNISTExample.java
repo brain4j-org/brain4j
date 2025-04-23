@@ -2,7 +2,10 @@ package mnist;
 
 import com.google.common.io.Files;
 import net.echo.brain4j.Brain4J;
-import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.clipping.impl.HardClipper;
+import net.echo.brain4j.clipping.impl.L2Clipper;
+import net.echo.math.BrainUtils;
+import net.echo.math.activation.Activations;
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.Loss;
@@ -19,36 +22,30 @@ import java.nio.charset.StandardCharsets;
 public class MNISTExample {
 
     public static void main(String[] args) throws Exception {
-        new MNISTExample().testMNIST();
+        new MNISTExample().start();
     }
 
-    private void testMNIST() throws Exception {
+    private void start() throws Exception {
         Brain4J.setLogging(true);
+        L2Clipper clipper = new L2Clipper(1);
 
         DataSet<DataRow> dataSet = getDataSet();
         Sequential model = new Sequential(
-                new DenseLayer(784, Activations.LINEAR),
-                new DenseLayer(64, Activations.SIGMOID),
-                new DenseLayer(10, Activations.SOFTMAX)
+                new DenseLayer(784, Activations.LINEAR, clipper),
+                new DenseLayer(64, Activations.SIGMOID, clipper),
+                new DenseLayer(10, Activations.SOFTMAX, clipper)
         );
 
         model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
-        boolean loading = new File("mnist.b4j").exists();
 
-        if (loading) {
-            System.out.println("Loading existing mnist.b4j model...");
-            model.load("mnist.b4j");
-            System.out.println(model.summary());
-        } else {
-            System.out.println(model.summary());
-            model.fit(dataSet, 150, 10);
-        }
+        System.out.println(model.summary());
+        model.fit(dataSet, 150, 10);
 
         EvaluationResult result = model.evaluate(dataSet);
 
         System.out.println(result.confusionMatrix());
 
-        ModernAdapter.serialize("mnist", model);
+        ModernAdapter.serialize("mnist.b4j", model);
     }
 
     private DataSet<DataRow> getDataSet() throws Exception {

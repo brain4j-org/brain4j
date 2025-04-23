@@ -1,7 +1,7 @@
 package net.echo.brain4j.adapters.json;
 
 import com.google.gson.*;
-import net.echo.brain4j.activation.Activations;
+import net.echo.math.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;

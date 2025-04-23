@@ -1,8 +1,8 @@
 package net.echo.brain4j.layer;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.echo.brain4j.activation.Activation;
-import net.echo.brain4j.activation.Activations;
+import net.echo.math.activation.Activation;
+import net.echo.math.activation.Activations;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.json.LayerAdapter;
 import net.echo.brain4j.loss.LossFunction;

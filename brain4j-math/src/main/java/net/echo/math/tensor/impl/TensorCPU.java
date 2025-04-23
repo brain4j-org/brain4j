@@ -1,5 +1,6 @@
 package net.echo.math.tensor.impl;
 
+import net.echo.math.activation.Activation;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.autograd.AutogradContext;
@@ -1178,6 +1179,15 @@ public class TensorCPU implements Cloneable, Tensor {
         }
 
         return forward(new MatMulOperation(), other);
+    }
+
+    @Override
+    public Tensor activateWithGrad(Activation activation) {
+        if (!usesGrad()) {
+            return activation.activate(this);
+        }
+
+        return forward(new ActivationOperation(activation), null);
     }
 
     @Override

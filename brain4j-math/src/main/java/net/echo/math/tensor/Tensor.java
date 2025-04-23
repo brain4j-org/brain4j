@@ -1,5 +1,6 @@
 package net.echo.math.tensor;
 
+import net.echo.math.activation.Activation;
 import net.echo.math.device.DeviceType;
 import net.echo.math.tensor.autograd.AutogradContext;
 import net.echo.math.tensor.autograd.Operation;
@@ -196,6 +197,13 @@ public interface Tensor extends Iterable<Float> {
      * @return The result of the operation
      */
     Tensor matmulWithGrad(Tensor other);
+
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link Activation}
+     * @param activation The activation to apply
+     * @return The resulting tensor
+     */
+    Tensor activateWithGrad(Activation activation);
 
     /**
      * Performs a convolution between this tensor and the specified kernel tensor.

@@ -1,6 +1,6 @@
-package net.echo.brain4j.activation;
+package net.echo.math.activation;
 
-import net.echo.brain4j.activation.impl.*;
+import net.echo.math.activation.impl.*;
 
 /**
  * Enum that defines the different types of activation functions used for neural networks.

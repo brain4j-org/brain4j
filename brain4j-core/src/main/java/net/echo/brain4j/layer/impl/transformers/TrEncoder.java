@@ -1,6 +1,6 @@
 package net.echo.brain4j.layer.impl.transformers;
 
-import net.echo.brain4j.activation.Activations;
+import net.echo.math.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;

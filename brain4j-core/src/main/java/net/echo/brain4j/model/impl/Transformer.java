@@ -91,28 +91,4 @@ public class Transformer extends Model {
 
         return result;
     }
-
-    @Override
-    public void serialize(DataOutputStream stream) throws Exception {
-        stream.writeInt(layers.size());
-
-        for (Layer layer : layers) {
-            stream.writeUTF(layer.getClass().getName());
-            layer.serialize(stream);
-        }
-    }
-
-    @Override
-    public void deserialize(DataInputStream stream) throws Exception {
-        layers.clear();
-        int layersSize = stream.readInt();
-
-        for (int i = 0; i < layersSize; i++) {
-            String layerClassPath = stream.readUTF();
-            Layer instance = BrainUtils.newInstance(layerClassPath);
-
-            instance.deserialize(stream);
-            layers.add(instance);
-        }
-    }
 }

@@ -25,6 +25,8 @@ import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 import net.echo.math.vector.Vector;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,6 +93,18 @@ public abstract class Model implements Adapter {
 
     public abstract Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss);
 
+    public abstract void fit(DataSet<DataRow> dataSet);
+
+    public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
+
+    @Deprecated
+    public Vector predict(Vector input) {
+        Tensor tensor = Tensors.vector(input.toArray());
+        Tensor output = predict(new StatesCache(), tensor, false);
+
+        return Vector.of(output.getData());
+    }
+
     public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
         int classes = dataSet.getData().getFirst().outputs().elements();
 
@@ -116,18 +130,6 @@ public abstract class Model implements Adapter {
 
         BrainUtils.waitAll(threads);
         return new EvaluationResult(totalLoss.get() / dataSet.size() , classes, classifications);
-    }
-
-    public abstract void fit(DataSet<DataRow> dataSet);
-
-    public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
-
-    @Deprecated
-    public Vector predict(Vector input) {
-        Tensor tensor = Tensors.vector(input.toArray());
-        Tensor output = predict(new StatesCache(), tensor, false);
-
-        return Vector.of(output.getData());
     }
 
     public double loss(DataSet<DataRow> dataSet) {
@@ -221,8 +223,14 @@ public abstract class Model implements Adapter {
         ModernAdapter.serialize(path, this);
     }
 
-    public void add(Layer... layers) {
+    public Model add(Layer layer) {
+        layers.add(layer);
+        return this;
+    }
+
+    public Model add(Layer... layers) {
         this.layers.addAll(Arrays.asList(layers));
+        return this;
     }
 
     public String summary() {
@@ -363,5 +371,29 @@ public abstract class Model implements Adapter {
                 totalError.updateAndGet(v -> v + loss);
             }
         });
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        stream.writeInt(layers.size());
+
+        for (Layer layer : layers) {
+            stream.writeUTF(layer.getClass().getName());
+            layer.serialize(stream);
+        }
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        layers.clear();
+        int layersSize = stream.readInt();
+
+        for (int i = 0; i < layersSize; i++) {
+            String layerClassPath = stream.readUTF();
+            Layer instance = BrainUtils.newInstance(layerClassPath);
+
+            instance.deserialize(stream);
+            layers.add(instance);
+        }
     }
 }
