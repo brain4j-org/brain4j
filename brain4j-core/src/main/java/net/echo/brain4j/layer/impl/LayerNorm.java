@@ -65,7 +65,7 @@ public class LayerNorm extends Layer {
         for (int i = 0; i < rows - 1; i++) {
             Range range = new Range(i, i + 1);
 
-            Tensor token = input.slice(range).reshape(columns);
+            Tensor token = input.slice(range).vector();
             Tensor normalizedToken = normalize1D(token);
 
             for (int j = 0; j < normalizedToken.elements(); j++) {

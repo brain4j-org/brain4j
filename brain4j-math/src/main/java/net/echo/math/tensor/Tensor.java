@@ -11,59 +11,211 @@ import net.echo.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Random;
+import java.util.SplittableRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface Tensor extends Iterable<Float> {
 
-    //=============================================================
-    // Base properties and methods
-    //=============================================================
-
+    /**
+     * Returns the shape of the tensor as an array of integers.
+     * @return The shape of the tensor
+     */
     int[] shape();
+
+    /**
+     * Retrieves the data of the tensor as a float array.
+     * @return The tensor's data
+     */
     float[] getData();
+
+    /**
+     * Gets the value at the specified indices in the tensor.
+     * @param indices The indices for which the value is requested
+     * @return The value at the specified indices
+     */
     float get(int... indices);
+
+    /**
+     * Returns the number of dimensions of the tensor.
+     * @return The number of dimensions
+     */
     int dimension();
+
+    /**
+     * Returns the number of elements in the tensor.
+     * @return The number of elements
+     */
     int elements();
+
+    /**
+     * Finds the index of the maximum value in the tensor.
+     * @return The index of the maximum value
+     */
     int argmax();
+
+    /**
+     * Sets the value at the specified indices in the tensor.
+     * @param value The value to set
+     * @param indices The indices where the value should be set
+     * @return The modified tensor
+     */
     Tensor set(double value, int... indices);
+
+    /**
+     * Adds a value to the tensor at the specified indices.
+     * @param value The value to add
+     * @param indices The indices where the value should be added
+     * @return The modified tensor
+     */
     Tensor add(double value, int... indices);
+
+    /**
+     * Creates a clone of the tensor.
+     * @return A new tensor that is a clone of this tensor
+     */
     Tensor clone();
 
-    //=============================================================
-    // Base arithmetic operations
-    //=============================================================
-    
-    // Addition
+    /**
+     * Adds this tensor with another tensor element-wise.
+     * @param other The tensor to add
+     * @return A new tensor with the result
+     */
     Tensor add(Tensor other);
+
+    /**
+     * Adds this tensor with a constant value element-wise.
+     * @param value The constant value to add
+     * @return A new tensor with the result
+     */
     Tensor add(double value);
+
+    /**
+     * Performs element-wise addition of two tensors (alias for `add`).
+     * @param other The tensor to add
+     * @return A new tensor with the result
+     */
     Tensor plus(Tensor other);
+
+    /**
+     * Adds a constant value to this tensor element-wise (alias for `add`).
+     * @param value The constant value to add
+     * @return A new tensor with the result
+     */
     Tensor plus(double value);
-    
-    // Subtraction
+
+    /**
+     * Subtracts another tensor from this tensor element-wise.
+     * @param other The tensor to subtract
+     * @return A new tensor with the result
+     */
     Tensor sub(Tensor other);
+
+    /**
+     * Subtracts a constant value from this tensor element-wise.
+     * @param value The constant value to subtract
+     * @return A new tensor with the result
+     */
     Tensor sub(double value);
+
+    /**
+     * Performs element-wise subtraction of two tensors (alias for `sub`).
+     * @param other The tensor to subtract
+     * @return A new tensor with the result
+     */
     Tensor minus(Tensor other);
+
+    /**
+     * Subtracts a constant value from this tensor element-wise (alias for `sub`).
+     * @param value The constant value to subtract
+     * @return A new tensor with the result
+     */
     Tensor minus(double value);
-    
-    // Multiplication
+
+    /**
+     * Multiplies this tensor with another tensor element-wise.
+     * @param other The tensor to multiply
+     * @return A new tensor with the result
+     */
     Tensor mul(Tensor other);
+
+    /**
+     * Multiplies this tensor with a constant value element-wise.
+     * @param value The constant value to multiply
+     * @return A new tensor with the result
+     */
     Tensor mul(double value);
+
+    /**
+     * Performs element-wise multiplication of two tensors (alias for `mul`).
+     * @param other The tensor to multiply
+     * @return A new tensor with the result
+     */
     Tensor times(Tensor other);
+
+    /**
+     * Multiplies a constant value with this tensor element-wise (alias for `mul`).
+     * @param value The constant value to multiply
+     * @return A new tensor with the result
+     */
     Tensor times(double value);
 
-    // Division
+    /**
+     * Divides this tensor by another tensor element-wise.
+     * @param other The tensor to divide by
+     * @return A new tensor with the result
+     */
     Tensor div(Tensor other);
+
+    /**
+     * Divides this tensor by a constant value element-wise.
+     * @param value The constant value to divide by
+     * @return A new tensor with the result
+     */
     Tensor div(double value);
+
+    /**
+     * Performs element-wise division of two tensors (alias for `div`).
+     * @param other The tensor to divide by
+     * @return A new tensor with the result
+     */
     Tensor divide(Tensor other);
+
+    /**
+     * Divides this tensor by a constant value element-wise (alias for `div`).
+     * @param value The constant value to divide by
+     * @return A new tensor with the result
+     */
     Tensor divide(double value);
-    
-    // Other mathematical operations
+
+    /**
+     * Raises each element of the tensor to the power of the given value.
+     * @param value The exponent
+     * @return A new tensor with the result
+     */
     Tensor pow(double value);
+
+    /**
+     * Raises each element of the tensor to the power of the corresponding element in another tensor.
+     * @param other The tensor containing the exponents
+     * @return A new tensor with the result
+     */
     Tensor pow(Tensor other);
+
+    /**
+     * Takes the square root of each element of the tensor.
+     * @return A new tensor with the result
+     */
     Tensor sqrt();
-    
+
+    /**
+     * Reshapes the tensor to a 1D vector.
+     * @return A new tensor
+     */
+    Tensor vector();
+
     //=============================================================
     // Linear algebra operations
     //=============================================================
@@ -213,7 +365,6 @@ public interface Tensor extends Iterable<Float> {
      * Performs a convolution between this tensor and the specified kernel tensor.
      * Implicitly uses SAME padding and FFT implementation for larger dimensions.
      * Convolution is supported for both 1D and 2D tensors.
-     *
      * @param kernel The kernel tensor to use for convolution
      * @return A new tensor resulting from the convolution
      * @throws IllegalArgumentException If tensor dimensions are not compatible
@@ -236,7 +387,6 @@ public interface Tensor extends Iterable<Float> {
     /**
      * Converts a tensor to the specified device type.
      * It currently accepts: CPU, GPU, DEFAULT (delegates to CPU)
-     *
      * @param deviceType The target device
      * @return The tensor on the target device
      * @throws IllegalArgumentException If the device type is not supported

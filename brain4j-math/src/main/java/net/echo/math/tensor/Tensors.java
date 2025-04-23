@@ -27,7 +27,11 @@ public class Tensors {
     public static boolean isUsingGPU() {
         return useGPU;
     }
-    
+
+    public static Tensor scalar(double value) {
+        return TensorCPU.of(new int[]{1}, value);
+    }
+
     public static Tensor create(int... shape) {
         return useGPU ? new TensorGPU(shape) : new TensorCPU(shape);
     }
@@ -37,17 +41,8 @@ public class Tensors {
     }
     
     public static Tensor of(int[] shape, double... data) {
-        if (useGPU) {
-            float[] floatData = new float[data.length];
-
-            for (int i = 0; i < data.length; i++) {
-                floatData[i] = (float) data[i];
-            }
-
-            return TensorGPU.of(shape, floatData);
-        } else {
-            return TensorCPU.of(shape, data);
-        }
+        Tensor result = TensorCPU.of(shape, data);
+        return useGPU ? result.gpu() : result;
     }
     
     public static Tensor vector(float... data) {
@@ -68,31 +63,23 @@ public class Tensors {
     }
     
     public static Tensor random(int... shape) {
-        return useGPU ?
-            new TensorGPU(shape).fill(Math::random) :
-            TensorCPU.random(shape);
+        Tensor tensor = TensorCPU.random(shape);
+        return useGPU ? tensor.gpu() : tensor;
     }
 
     public static Tensor random(long seed, int... shape) {
-        Tensor cpuTensor = TensorCPU.random(seed, shape);
-        return useGPU ? TensorGPU.fromTensor(cpuTensor) : cpuTensor;
+        Tensor tensor = TensorCPU.random(seed, shape);
+        return useGPU ? tensor.gpu() : tensor;
     }
     
     public static Tensor uniform(double lowerBound, double upperBound, int... shape) {
-        Tensor cpuTensor = TensorCPU.uniform(lowerBound, upperBound, shape);
-        return useGPU ? TensorGPU.fromTensor(cpuTensor) : cpuTensor;
+        Tensor tensor = TensorCPU.uniform(lowerBound, upperBound, shape);
+        return useGPU ? tensor.gpu() : tensor;
     }
 
     public static Tensor random(double mean, double standardDeviation, int... shape) {
-        Tensor cpuTensor = TensorCPU.randn(mean, standardDeviation, shape);
-        return useGPU ? TensorGPU.fromTensor(cpuTensor) : cpuTensor;
-    }
-    
-    public static Tensor toGPU(TensorCPU tensor) {
-        if (useGPU && !(tensor instanceof TensorGPU)) {
-            return TensorGPU.fromTensor(tensor);
-        }
-        return tensor;
+        Tensor tensor = TensorCPU.randn(mean, standardDeviation, shape);
+        return useGPU ? tensor.gpu() : tensor;
     }
 
     public static Tensor concat(List<Tensor> inputs) {
@@ -152,7 +139,7 @@ public class Tensors {
         int rows = tensors.size();
         int columns = tensors.getFirst().shape()[1];
 
-        Tensor result = Tensors.zeros(rows, columns);
+        Tensor result = zeros(rows, columns);
 
         for (int i = 0; i < rows; i++) {
             Tensor token = tensors.get(i);
@@ -175,10 +162,5 @@ public class Tensors {
         }
 
         return mask;
-    }
-
-    public static Tensor scalar(double sumDelta) {
-        int[] shape = {1};
-        return TensorCPU.of(shape, sumDelta);
     }
 }

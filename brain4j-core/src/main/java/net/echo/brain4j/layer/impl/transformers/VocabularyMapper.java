@@ -85,7 +85,7 @@ public class VocabularyMapper extends Layer {
 
         cache.setOutputTensor(this, logits);
 
-        return last.reshape(vocabularySize);
+        return last.vector();
     }
 
     @Override

@@ -44,14 +44,12 @@ public class DenseLayer extends Layer {
         if (!weights.usesGrad()) weights = weights.withGrad();
         if (!bias.usesGrad()) bias = bias.withGrad();
 
-        int numNeurons = bias.elements();
-
         Tensor weights = denseLayer.getWeights().withGrad(); // last layer weights, which is [m, n]
         Tensor reshapedInput = input.reshape(input.elements(), 1).withGrad(); // [n, 1] matrix
 
         Tensor result = weights.withGrad()
                 .matmulWithGrad(reshapedInput) // [m, n] x [n, 1] = [m, 1]
-                .reshape(numNeurons)
+                .vector()
                 .withGrad()
                 .addWithGrad(bias);
 

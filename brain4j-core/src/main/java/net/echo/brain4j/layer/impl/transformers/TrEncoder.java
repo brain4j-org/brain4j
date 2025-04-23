@@ -60,7 +60,7 @@ public class TrEncoder extends Layer {
         for (int i = 0; i < normAttention.size(); i++) {
             if (cached.size() <= i) {
                 Tensor tensor = normAttention.get(i);
-                Tensor output = feedForward.predict(tensor.reshape(embeddingDim));
+                Tensor output = feedForward.predict(tensor.vector());
                 Tensor reshaped = output.reshape(1, embeddingDim);
 
                 cached.add(reshaped);
