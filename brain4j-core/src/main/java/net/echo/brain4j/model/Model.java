@@ -3,15 +3,14 @@ package net.echo.brain4j.model;
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.adapters.Adapter;
 import net.echo.brain4j.adapters.ModernAdapter;
+import net.echo.brain4j.initialization.WeightInit;
+import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
-import net.echo.brain4j.layer.impl.conv.FlattenLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.model.impl.Transformer;
-import net.echo.brain4j.initialization.WeightInit;
-import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataRow;
@@ -57,37 +56,29 @@ public abstract class Model implements Adapter {
     public void connect(WeightInitializer weightInit) {
         Layer previousLayer = null;
 
-        for (Layer layer : layers) {
-            layer.compile(weightInit, lossFunction, optimizer, updater);
-            layer.init(generator);
-        }
-
-        for (int i = 0; i < layers.size() - 1; i++) {
+        for (int i = 0; i < layers.size(); i++) {
             Layer layer = layers.get(i);
+            layer.compile(weightInit, lossFunction, optimizer, updater);
 
-            if (!layer.canPropagate()) continue;
+            if (i < layers.size() - 1 && layer.canPropagate()) {
+                int current = i + 1;
+                Layer nextLayer = layers.get(current);
 
-            int current = i + 1;
-            Layer nextLayer = layers.get(current);
+                while (!(nextLayer.canPropagate()) && current < layers.size()) {
+                    current++;
+                    nextLayer = layers.get(current);
+                }
 
-            while (!(nextLayer.canPropagate()) && current < layers.size()) {
-                current++;
-                nextLayer = layers.get(current);
+                if (!nextLayer.canPropagate()) continue;
+
+                int inputNeurons = layer.getTotalNeurons();
+                int outputNeurons = nextLayer.getTotalNeurons();
+
+                double bound = weightInit.getBound(inputNeurons, outputNeurons);
+
+                layer.connect(generator, previousLayer, nextLayer, bound);
+                previousLayer = layer;
             }
-
-            if (!nextLayer.canPropagate()) continue;
-
-            if (layer instanceof FlattenLayer flattenLayer) {
-                flattenLayer.preConnect(previousLayer, nextLayer);
-            }
-
-            int nIn = layer.getTotalNeurons();
-            int nOut = nextLayer.getTotalNeurons();
-
-            double bound = weightInit.getBound(nIn, nOut);
-
-            layer.connect(generator, previousLayer, nextLayer, bound);
-            previousLayer = layer;
         }
     }
 

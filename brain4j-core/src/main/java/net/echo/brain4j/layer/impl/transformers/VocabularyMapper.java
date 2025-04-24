@@ -9,7 +9,6 @@ import net.echo.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.List;
 
 public class VocabularyMapper extends Layer {
 

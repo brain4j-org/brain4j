@@ -1,8 +1,8 @@
 package net.echo.brain4j.layer.impl;
 
-import net.echo.math.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
+import net.echo.math.activation.Activations;
 import net.echo.math.tensor.Tensor;
 
 import java.io.DataInputStream;

@@ -1,17 +1,16 @@
 package net.echo.brain4j.transformers.group;
 
-import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.initialization.WeightInitializer;
+import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.transformers.TrEncoder;
+import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.brain4j.layer.impl.transformers.TrEncoder;
 import net.echo.math.tensor.Tensor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class EncoderGroup extends Layer {
 
@@ -28,13 +27,6 @@ public class EncoderGroup extends Layer {
 
         for (int i = 0; i < groupSize; i++) {
             layers.add(new TrEncoder(numHeads, dimension));
-        }
-    }
-
-    @Override
-    public void init(Random generator) {
-        for (TrEncoder layer : layers) {
-            layer.init(generator);
         }
     }
 

@@ -19,8 +19,8 @@ public class StatesCache {
     private final Tensor[] outputTensorsCache;
 
     public StatesCache() {
-        this.inputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
-        this.outputTensorsCache = new Tensor[Parameters.TOTAL_LAYERS];
+        this.inputTensorsCache = new Tensor[Layer.getTotalLayers()];
+        this.outputTensorsCache = new Tensor[Layer.getTotalLayers()];
         this.feedForwardCache = new ConcurrentHashMap<>(); // TODO: Migrate to arrays
         this.keyCache = new ConcurrentHashMap<>();
         this.valueCache = new ConcurrentHashMap<>();

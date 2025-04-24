@@ -1,8 +1,6 @@
 package net.echo.brain4j.training.optimizer;
 
-import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.Adapter;
-import net.echo.brain4j.adapters.json.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.StatesCache;
@@ -13,7 +11,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.List;
 
-@JsonAdapter(OptimizerAdapter.class)
 public abstract class Optimizer implements Adapter {
 
     protected double learningRate;

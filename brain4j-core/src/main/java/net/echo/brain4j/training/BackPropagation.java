@@ -38,6 +38,7 @@ public class BackPropagation {
     public void propagatePartition(List<DataRow> partition) {
         List<Thread> threads = new ArrayList<>();
 
+        // TODO: rewrite using batched tensors
         for (DataRow row : partition) {
             Thread thread = Thread.startVirtualThread(() -> {
                 StatesCache cacheHolder = new StatesCache();
@@ -64,19 +65,19 @@ public class BackPropagation {
     }
 
     public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {
-        List<Layer> layers = model.getLayers();Layer outputLayer = layers.getLast();
+        List<Layer> layers = model.getLayers();
         LossFunction lossFunction = model.getLossFunction();
 
-        Tensor delta = outputLayer.computeLoss(cache, targets, outputs, lossFunction);
-        Layer previous = layers.getLast();
+        Layer last = layers.getLast();
+        Tensor delta = last.computeLoss(cache, targets, outputs, lossFunction);
 
         for (int l = layers.size() - 2; l >= 0; l--) {
             Layer layer = layers.get(l);
 
             if (!layer.canPropagate()) continue;
 
-            delta = layer.backward(cache, previous, delta);
-            previous = layer;
+            delta = layer.backward(cache, last, delta);
+            last = layer;
         }
 
         optimizer.postIteration(cache, updater, layers);

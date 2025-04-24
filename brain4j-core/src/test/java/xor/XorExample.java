@@ -2,9 +2,7 @@ package xor;
 
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.clipping.GradientClipper;
-import net.echo.brain4j.clipping.impl.HardClipper;
 import net.echo.brain4j.clipping.impl.L2Clipper;
-import net.echo.math.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.Loss;
@@ -14,6 +12,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math.DataSet;
+import net.echo.math.activation.Activations;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 

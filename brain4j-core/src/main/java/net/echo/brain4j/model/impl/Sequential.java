@@ -1,27 +1,20 @@
 package net.echo.brain4j.model.impl;
 
-import com.google.common.base.Preconditions;
+import net.echo.brain4j.initialization.WeightInit;
+import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.LayerNorm;
-import net.echo.brain4j.layer.impl.conv.InputLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.initialization.WeightInit;
-import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
-import net.echo.math.BrainUtils;
 import net.echo.math.DataSet;
 import net.echo.math.tensor.Tensor;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,14 +29,6 @@ public class Sequential extends Model {
 
     public Sequential(Layer... layers) {
         super(layers);
-    }
-
-    private void validateCNNIfPresent() {
-        boolean isInput = layers.getFirst() instanceof InputLayer;
-        boolean hasConv = layers.stream().anyMatch(Layer::isConvolutional);
-
-        Preconditions.checkState(!(isInput && !hasConv), "Cannot use an input layer without convolutional layers!");
-        Preconditions.checkState(!(!isInput && hasConv), "Cannot use a convolutional layer without an input layer!");
     }
 
     @Override
@@ -84,10 +69,6 @@ public class Sequential extends Model {
 
     @Override
     public Sequential compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        if (!layers.isEmpty()) {
-            validateCNNIfPresent();
-        }
-
         super.compile(initializer, lossFunction, optimizer, updater);
 
         connect(initializer);

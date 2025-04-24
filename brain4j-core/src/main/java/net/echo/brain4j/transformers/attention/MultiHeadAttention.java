@@ -1,6 +1,5 @@
 package net.echo.brain4j.transformers.attention;
 
-import com.google.common.base.Preconditions;
 import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.transformers.head.AttentionHead;
@@ -23,7 +22,9 @@ public class MultiHeadAttention {
         this.headCount = headCount;
         this.modelDimension = modelDimension;
 
-        Preconditions.checkState(modelDimension % headCount == 0, "Model dimension must be divisible by head count!");
+        if (modelDimension % headCount != 0) {
+            throw new IllegalArgumentException("Model dimension must be divisible by head count!");
+        }
 
         this.headDimension = modelDimension / headCount;
         this.heads = new ArrayList<>();

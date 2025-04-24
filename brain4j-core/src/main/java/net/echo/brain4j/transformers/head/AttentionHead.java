@@ -1,7 +1,6 @@
 package net.echo.brain4j.transformers.head;
 
 import net.echo.brain4j.initialization.WeightInitializer;
-import net.echo.brain4j.structure.Parameters;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
@@ -12,7 +11,6 @@ import java.util.Random;
 
 public class AttentionHead {
 
-    protected int headIndex;
     protected int inputDimension;
     protected int headDimension;
 
@@ -23,17 +21,12 @@ public class AttentionHead {
     protected boolean useCache = true;
 
     public AttentionHead(int inputDimension, int headDimension) {
-        this.headIndex = Parameters.TOTAL_HEADS;
         this.inputDimension = inputDimension;
         this.headDimension = headDimension;
 
         this.queryWeightsTensor = Tensors.matrix(inputDimension, headDimension);
         this.keyWeightsTensor = Tensors.matrix(inputDimension, headDimension);
         this.valueWeightsTensor = Tensors.matrix(inputDimension, headDimension);
-    }
-
-    public int getHeadIndex() {
-        return headIndex;
     }
 
     public void compile(Random random, WeightInitializer initializer) {

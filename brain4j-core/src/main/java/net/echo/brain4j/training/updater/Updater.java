@@ -1,13 +1,9 @@
 package net.echo.brain4j.training.updater;
 
-import com.google.gson.annotations.JsonAdapter;
-import net.echo.brain4j.adapters.json.UpdaterAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.Parameters;
 import net.echo.math.tensor.Tensor;
 
-@JsonAdapter(UpdaterAdapter.class)
 public abstract class Updater {
 
     protected Tensor[] gradientsTensors;
@@ -49,11 +45,12 @@ public abstract class Updater {
     }
 
     public void postInitialize() {
-        this.gradientsTensors = new Tensor[Parameters.TOTAL_LAYERS];
-        this.biasesTensors = new Tensor[Parameters.TOTAL_LAYERS];
+        this.gradientsTensors = new Tensor[Layer.getTotalLayers()];
+        this.biasesTensors = new Tensor[Layer.getTotalLayers()];
     }
 
     public void postFit(Model model, double learningRate, int samples) {
+        postInitialize();
     }
 
     public void postBatch(Model model, double learningRate, int samples) {

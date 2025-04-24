@@ -1,17 +1,14 @@
 package net.echo.brain4j.layer;
 
-import com.google.gson.annotations.JsonAdapter;
-import net.echo.math.activation.Activation;
-import net.echo.math.activation.Activations;
 import net.echo.brain4j.adapters.Adapter;
-import net.echo.brain4j.adapters.json.LayerAdapter;
-import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.initialization.WeightInitializer;
-import net.echo.brain4j.structure.Parameters;
+import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math.BrainUtils;
+import net.echo.math.activation.Activation;
+import net.echo.math.activation.Activations;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 
@@ -19,8 +16,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.Random;
 
-@JsonAdapter(LayerAdapter.class)
 public abstract class Layer implements Adapter {
+
+    private static int totalLayers = 0;
 
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
@@ -28,14 +26,13 @@ public abstract class Layer implements Adapter {
     protected Updater updater;
     protected Layer nextLayer;
 
+    protected Activation activation;
     protected Tensor weights;
     protected Tensor bias;
-    protected Activation activation;
     protected int id;
 
     public Layer() {
-        this.activation = Activations.LINEAR.getFunction();
-        this.bias = Tensors.zeros(0);
+        this(0, Activations.LINEAR);
     }
 
     public Layer(Activation activation) {
@@ -51,10 +48,22 @@ public abstract class Layer implements Adapter {
     }
 
     public Layer(int input, Activation activation) {
-        this.id = Parameters.TOTAL_LAYERS++;
+        this.id = totalLayers++;
         this.activation = activation;
         this.bias = Tensors.create(input);
         this.weights = Tensors.zeros(0);
+    }
+
+    public static int getTotalLayers() {
+        return totalLayers;
+    }
+
+    public boolean canPropagate() {
+        return true;
+    }
+
+    public boolean isConvolutional() {
+        return false;
     }
 
     @Override
@@ -93,20 +102,6 @@ public abstract class Layer implements Adapter {
         }
     }
 
-    public boolean canPropagate() {
-        return true;
-    }
-
-    public boolean isConvolutional() {
-        return false;
-    }
-
-    public void init(Random generator) {
-        for (int i = 0; i < bias.elements(); i++) {
-            bias.set(2 * generator.nextDouble() - 1, i);
-        }
-    }
-
     public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         this.weightInit = weightInit;
         this.lossFunction = lossFunction;
@@ -138,6 +133,10 @@ public abstract class Layer implements Adapter {
         int input = bias.elements();
         int output = next.getTotalNeurons();
 
+        for (int i = 0; i < bias.elements(); i++) {
+            bias.set(2 * generator.nextDouble() - 1, i);
+        }
+
         this.weights = Tensors.matrix(output, input);
 
         for (int i = 0; i < output; i++) {
@@ -149,13 +148,20 @@ public abstract class Layer implements Adapter {
 
     public abstract Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training);
 
-    // TODO: Eventually implement this for every class and make it abstract
     public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
         throw new UnsupportedOperationException("Not implemented for " + this.getClass().getSimpleName());
     }
 
     public Activation getActivation() {
         return activation;
+    }
+
+    public Tensor getBias() {
+        return bias;
+    }
+
+    public Tensor getWeights() {
+        return weights;
     }
 
     public int getTotalParams() {
@@ -168,13 +174,5 @@ public abstract class Layer implements Adapter {
 
     public int getId() {
         return id;
-    }
-
-    public Tensor getBias() {
-        return bias;
-    }
-
-    public Tensor getWeights() {
-        return weights;
     }
 }

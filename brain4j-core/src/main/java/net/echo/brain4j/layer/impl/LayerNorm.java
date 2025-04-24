@@ -1,15 +1,13 @@
 package net.echo.brain4j.layer.impl;
 
-import net.echo.math.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.StatesCache;
+import net.echo.math.activation.Activations;
 import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.Random;
 
 /**
  * Represents a normalization layer, used to normalize the inputs and improve training.
