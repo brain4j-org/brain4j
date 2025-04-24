@@ -37,7 +37,6 @@ public class DenseLayer extends Layer {
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         Tensor W = lastLayer.getWeights();
-        // [batch_size, n_in] x [n_in, n_out]
         Tensor Z = input.matmul(W); // [batch_size, n_out]
 
         int batchSize = Z.shape()[0];
