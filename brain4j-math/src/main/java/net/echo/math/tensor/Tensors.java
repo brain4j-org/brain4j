@@ -42,7 +42,7 @@ public class Tensors {
     
     public static Tensor of(int[] shape, double... data) {
         Tensor result = TensorCPU.of(shape, data);
-        return useGPU ? result.gpu() : result;
+        return useGPU ? TensorGPU.fromTensor(result) : result;
     }
     
     public static Tensor vector(float... data) {
