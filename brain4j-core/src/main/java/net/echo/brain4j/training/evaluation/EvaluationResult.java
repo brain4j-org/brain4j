@@ -61,6 +61,7 @@ public class EvaluationResult {
             recallSum += recall;
         }
 
+        System.out.println("Total correct: " + totalCorrect + ", total incorrect: " + totalIncorrect);
         this.accuracy = (double) totalCorrect / (totalCorrect + totalIncorrect);
         this.precision = precisionSum / classes;
         this.recall = recallSum / classes;

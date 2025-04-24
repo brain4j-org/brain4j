@@ -114,6 +114,7 @@ public abstract class Model implements Adapter {
         }
 
         BrainUtils.waitAll(threads);
+
         return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
     }
 
