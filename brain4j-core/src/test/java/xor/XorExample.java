@@ -46,7 +46,7 @@ public class XorExample {
         System.out.println("Loss: " + loss);
 
         long start = System.currentTimeMillis();
-        model.fit(source, 100000, 10000);
+        model.fit(source, 10000);
         long end = System.currentTimeMillis();
         System.out.println("Time: " + (end - start) + " ms");
 
