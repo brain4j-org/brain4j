@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: brain4j Community Discussions
+    url: https://github.com/xEcho1337/brain4j/discussions
+    about: Please ask and answer questions here.
+  - name: brain4j Documentation
+    url: https://github.com/xEcho1337/brain4j/wiki
+    about: Check the documentation before reporting issues.

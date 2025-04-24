@@ -1,0 +1,6 @@
+jdk:
+  - openjdk21
+
+build:
+  commands:
+    - ./gradlew shadowJar
