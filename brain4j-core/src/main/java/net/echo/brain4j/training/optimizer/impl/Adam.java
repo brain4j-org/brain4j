@@ -2,16 +2,12 @@ package net.echo.brain4j.training.optimizer.impl;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.structure.StatesCache;
 import net.echo.brain4j.training.optimizer.Optimizer;
-import net.echo.brain4j.training.updater.Updater;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.Arrays;
-import java.util.List;
 
 public class Adam extends Optimizer {
 
@@ -67,6 +63,8 @@ public class Adam extends Optimizer {
         this.beta1 = dataInputStream.readFloat();
         this.beta2 = dataInputStream.readFloat();
         this.epsilon = dataInputStream.readFloat();
+        this.beta1Timestep = Math.pow(beta1, timestep);
+        this.beta2Timestep = Math.pow(beta2, timestep);
     }
 
     @Override
@@ -99,11 +97,10 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
+    public void postBatch() {
         this.timestep++;
-
-        this.beta1Timestep = Math.pow(beta1, timestep);
-        this.beta2Timestep = Math.pow(beta2, timestep);
+        this.beta1Timestep *= beta1;
+        this.beta2Timestep *= beta2;
     }
 
     public double getBeta1() {

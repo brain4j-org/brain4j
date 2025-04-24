@@ -4,8 +4,6 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.math.tensor.Tensor;
 
-import java.util.Arrays;
-
 public abstract class Updater {
 
     protected Tensor[] gradientsTensors;
@@ -23,15 +21,11 @@ public abstract class Updater {
             Tensor biasW = biasesTensors[i];
 
             if (gradW != null) {
-                Tensor average = gradW.divide(samples);
-                Tensor delta = average.mul(learningRate);
-                layer.getWeights().sub(delta);
+                layer.getWeights().sub(gradW);
             }
 
             if (biasW != null) {
-                Tensor average = biasW.divide(samples);
-                Tensor delta = average.mul(learningRate);
-                layer.getBias().sub(delta);
+                layer.getBias().sub(biasW);
             }
         }
     }

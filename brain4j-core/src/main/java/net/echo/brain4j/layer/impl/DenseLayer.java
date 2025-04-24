@@ -7,8 +7,6 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.activation.Activations;
 import net.echo.math.tensor.Tensor;
 
-import java.util.Arrays;
-
 /**
  * Represents a fully connected (dense) layer in a neural network.
  */
@@ -67,16 +65,25 @@ public class DenseLayer extends Layer {
         Tensor output = cache.getOutputTensor(this);
         Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
 
-        Tensor transposedWeights = previous.getWeights().transpose();
-        Tensor newDelta = delta.matmul(transposedWeights);;
+        int batches = input.shape()[0];
 
-        Tensor gradient = optimizer.optimize(this, newDelta, input);
-        Tensor biasGradient = newDelta.sum(0, false);
+        Tensor weightsNext = previous.getWeights();  // [n_out, n_out_next]
+        Tensor deltaProjected = delta.matmul(weightsNext.transpose());  // [m x n_out]
+
+        Tensor deltaThisLayer = deltaProjected.mul(derivative); // [m x n_out]
+
+        Tensor gradient = optimizer.optimize(this, deltaThisLayer, input); // [n_in x n_out]
+        Tensor biasGradient = deltaThisLayer.sum(0, false); // [1 x n_out]
+
+        double learningRate = optimizer.getLearningRate();
+
+        gradient.div(batches).mul(learningRate);
+        biasGradient.div(batches).mul(learningRate);
 
         Tensor clippedGradient = clipper.clip(gradient);
-        Tensor clippedDelta = clipper.clip(biasGradient);
+        Tensor clippedBias = clipper.clip(biasGradient);
 
-        updater.acknowledgeChange(this, clippedGradient, clippedDelta);
-        return newDelta.mul(derivative);
+        updater.acknowledgeChange(this, clippedGradient, clippedBias);
+        return deltaThisLayer;
     }
 }

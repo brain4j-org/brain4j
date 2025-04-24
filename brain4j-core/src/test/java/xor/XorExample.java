@@ -1,21 +1,12 @@
 package xor;
 
 import net.echo.brain4j.Brain4J;
-import net.echo.brain4j.clipping.GradientClipper;
-import net.echo.brain4j.clipping.impl.L2Clipper;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.Loss;
-import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.training.data.DataRow;
-import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
-import net.echo.brain4j.training.optimizer.impl.GradientDescent;
-import net.echo.math.DataSet;
-import net.echo.math.Pair;
 import net.echo.math.activation.Activations;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.data.Sample;
@@ -37,21 +28,21 @@ public class XorExample {
 
         Model model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR),
+                new LayerNorm(),
                 new DenseLayer(32, Activations.MISH),
+                new LayerNorm(),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.01));
+        model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.1));
+
+        long start = System.nanoTime();
+        model.fit(source, 100);
+
+        double tookNanos = System.nanoTime() - start;
+        System.out.println("Took: " + (tookNanos / 1e6) + " ms");
 
         double loss = model.loss(source);
-        System.out.println("Loss: " + loss);
-
-        long start = System.currentTimeMillis();
-        model.fit(source, 100);
-        long end = System.currentTimeMillis();
-        System.out.println("Time: " + (end - start) + " ms");
-
-        loss = model.loss(source);
         System.out.println("Loss: " + loss);
     }
 

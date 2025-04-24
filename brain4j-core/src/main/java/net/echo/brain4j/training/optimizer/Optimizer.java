@@ -37,6 +37,9 @@ public abstract class Optimizer implements Adapter {
     public void postInitialize(Model model) {
     }
 
+    public void postBatch() {
+    }
+
     public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
     }
 

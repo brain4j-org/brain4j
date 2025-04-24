@@ -4,16 +4,12 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.StatesCache;
-import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
-import net.echo.math.BrainUtils;
-import net.echo.math.DataSet;
 import net.echo.math.Pair;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BackPropagation {
@@ -38,6 +34,8 @@ public class BackPropagation {
         backpropagation(cache, labels, output);
 
         int elements = inputs.shape()[0];
+
+        optimizer.postBatch();
         updater.postBatch(model, optimizer.getLearningRate(), elements);
     }
 

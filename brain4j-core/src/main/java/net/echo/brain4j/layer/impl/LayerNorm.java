@@ -51,14 +51,13 @@ public class LayerNorm extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        return normalize1D(input);
+        return normalize(input);
     }
 
     public Tensor normalize(Tensor input) {
         Tensor normalized = input.clone();
 
         int rows = input.shape()[0];
-        int columns = input.shape()[1];
 
         for (int i = 0; i < rows - 1; i++) {
             Range range = new Range(i, i + 1);
