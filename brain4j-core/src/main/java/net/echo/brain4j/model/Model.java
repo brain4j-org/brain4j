@@ -20,9 +20,11 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.BrainUtils;
 import net.echo.math.DataSet;
+import net.echo.math.Pair;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
+import net.echo.math.tensor.index.Range;
 import net.echo.math.vector.Vector;
 
 import java.io.DataInputStream;
@@ -55,29 +57,19 @@ public abstract class Model implements Adapter {
     }
 
     public void connect(WeightInitializer weightInit) {
-        Layer previousLayer = null;
+        Layer previousLayer = layers.getFirst();
 
         for (int i = 0; i < layers.size(); i++) {
             Layer layer = layers.get(i);
             layer.compile(weightInit, lossFunction, optimizer, updater);
 
-            if (i < layers.size() - 1 && layer.canPropagate()) {
-                int current = i + 1;
-                Layer nextLayer = layers.get(current);
-
-                while (!(nextLayer.canPropagate()) && current < layers.size()) {
-                    current++;
-                    nextLayer = layers.get(current);
-                }
-
-                if (!nextLayer.canPropagate()) continue;
-
-                int inputNeurons = layer.getTotalNeurons();
-                int outputNeurons = nextLayer.getTotalNeurons();
+            if (i > 0 && layer.canPropagate()) {
+                int inputNeurons = previousLayer.getTotalNeurons();
+                int outputNeurons = layer.getTotalNeurons();
 
                 double bound = weightInit.getBound(inputNeurons, outputNeurons);
 
-                layer.connect(generator, previousLayer, nextLayer, bound);
+                layer.connect(generator, previousLayer, null, bound);
                 previousLayer = layer;
             }
         }
@@ -114,25 +106,30 @@ public abstract class Model implements Adapter {
         List<Thread> threads = new ArrayList<>();
         AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
 
-//        TODO: Reimplement
-//        for (List<DataRow> partition : dataSet.getPartitions()) {
-//            threads.add(makeEvaluation(partition, classifications, totalLoss));
-//        }
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Pair<Tensor, Tensor> partition = dataSource.nextBatch();
+            threads.add(predictPartition(partition, totalLoss));
+        }
 
         BrainUtils.waitAll(threads);
-        return new EvaluationResult(totalLoss.get() / dataSource.size() , classes, classifications);
+        return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
     }
 
-    public double loss(DataSet<DataRow> dataSet) {
+    public double loss(ListDataSource dataSource) {
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
 
-        for (List<DataRow> partition : dataSet.getPartitions()) {
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Pair<Tensor, Tensor> partition = dataSource.nextBatch();
             threads.add(predictPartition(partition, totalError));
         }
 
         BrainUtils.waitAll(threads);
-        return totalError.get() / dataSet.size();
+        return totalError.get() / dataSource.size();
     }
 
     public void fit(ListDataSource dataSource, int epoches) {
@@ -150,7 +147,7 @@ public abstract class Model implements Adapter {
             }
 
             if (currentEpoch % evaluateEvery == 0) {
-                EvaluationResult result = evaluate(dataSource);
+                EvaluationResult result = evaluate(dataSource.clone());
                 System.out.printf("Loss at epoch %s: %.4f | Accuracy: %.2f%%\n", currentEpoch, result.loss(), result.accuracy() * 100);
             }
         }
@@ -346,15 +343,21 @@ public abstract class Model implements Adapter {
         return total;
     }
 
-    protected Thread predictPartition(List<DataRow> partition, AtomicReference<Double> totalError) {
+    protected Thread predictPartition(Pair<Tensor, Tensor> partition, AtomicReference<Double> totalError) {
         return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
-                Tensor inputs = row.inputs();
-                Tensor targets = row.outputs();
+            Tensor inputs = partition.first();
+            Tensor targets = partition.second();
+            Tensor outputs = predict(inputs);
 
-                Tensor outputs = predict(inputs);
-                double loss = lossFunction.calculate(targets, outputs);
+            int batchSize = outputs.shape()[0];
 
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor output = outputs.slice(range).vector();
+                Tensor target = targets.slice(range).vector();
+
+                double loss = lossFunction.calculate(target, output);
                 totalError.updateAndGet(v -> v + loss);
             }
         });

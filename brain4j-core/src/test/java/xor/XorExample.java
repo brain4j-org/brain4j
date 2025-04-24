@@ -40,8 +40,18 @@ public class XorExample {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        model.compile(Loss.BINARY_CROSS_ENTROPY, new GradientDescent(0.01));
-        model.fit(source);
+        model.compile(Loss.BINARY_CROSS_ENTROPY, new GradientDescent(0.1));
+
+        double loss = model.loss(source);
+        System.out.println("Loss: " + loss);
+
+        long start = System.currentTimeMillis();
+        model.fit(source, 100000, 10000);
+        long end = System.currentTimeMillis();
+        System.out.println("Time: " + (end - start) + " ms");
+
+        loss = model.loss(source);
+        System.out.println("Loss: " + loss);
     }
 
     public ListDataSource getDataSet() {

@@ -111,17 +111,25 @@ public abstract class Layer implements Adapter {
     }
 
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
-        Tensor derivatives = activation.getDerivative(outputs);
         Tensor error = outputs.clone().sub(targets);
+        Tensor derivatives = activation.getDerivative(outputs);
 
-        return lossFunction.getDelta(error, derivatives);
+        Tensor input = cache.getInputTensor(this);
+        Tensor delta = lossFunction.getDelta(error, derivatives);
+
+        Tensor weightsGradient = input.transpose().matmul(delta);
+        Tensor biasesGradient = delta.sum(0, false);
+
+        updater.acknowledgeChange(this, weightsGradient, biasesGradient);
+
+        return delta;
     }
 
     public void connect(Random generator, Layer previous, Layer next, double bound) {
         this.nextLayer = next;
 
-        int input = bias.elements();
-        int output = next.getTotalNeurons();
+        int input = previous.getTotalNeurons();
+        int output = this.getTotalNeurons();
 
         for (int i = 0; i < bias.elements(); i++) {
             bias.set(2 * generator.nextDouble() - 1, i);

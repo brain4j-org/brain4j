@@ -7,8 +7,7 @@ public class SoftmaxActivation implements Activation {
 
     @Override
     public double activate(double input) {
-        throw new UnsupportedOperationException(
-                "Softmax is a vector-based activation; use activate(double[]).");
+        throw new UnsupportedOperationException("Softmax is a vector-based activation; use activate(Tensor) instead.");
     }
 
     @Override
@@ -20,5 +19,4 @@ public class SoftmaxActivation implements Activation {
     public double getDerivative(double input) {
         return input * (1.0 - input);
     }
-
 }

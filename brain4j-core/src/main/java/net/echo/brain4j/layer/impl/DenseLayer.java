@@ -36,8 +36,8 @@ public class DenseLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        Tensor W = lastLayer.getWeights();
-        Tensor Z = input.matmul(W); // [batch_size, n_out]
+        // [batch_size, n_in] x [n_in, n_out]
+        Tensor Z = input.matmul(weights); // [batch_size, n_out]
 
         int batchSize = Z.shape()[0];
         int elements = Z.shape()[1];
@@ -63,19 +63,20 @@ public class DenseLayer extends Layer {
 
     @Override
     public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
-        Tensor output = cache.getOutputTensor(this); // [batch_size, n_out]
+        Tensor input = cache.getInputTensor(this);
+        Tensor output = cache.getOutputTensor(this);
         Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
 
-        Tensor transposedWeights = weights.transpose();
-        Tensor newDelta = delta.matmul(transposedWeights);
+        Tensor transposedWeights = previous.getWeights().transpose();
+        Tensor newDelta = delta.matmul(transposedWeights);;
 
-        Tensor deltaL = newDelta.mul(derivative); // [n_in] * [n_in]
-        Tensor gradient = optimizer.optimize(this, delta.transpose(), output);
+        Tensor gradient = input.transpose().matmul(newDelta);
+        Tensor biasGradient = newDelta.sum(0, false);
 
         Tensor clippedGradient = clipper.clip(gradient);
-        Tensor clippedDelta = clipper.clip(deltaL);
+        Tensor clippedDelta = clipper.clip(biasGradient);
 
         updater.acknowledgeChange(this, clippedGradient, clippedDelta);
-        return clippedDelta;
+        return newDelta.mul(derivative);
     }
 }

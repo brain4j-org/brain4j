@@ -4,6 +4,8 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
 import net.echo.math.tensor.Tensor;
 
+import java.util.Arrays;
+
 public abstract class Updater {
 
     protected Tensor[] gradientsTensors;
@@ -14,18 +16,22 @@ public abstract class Updater {
             return; // TODO: Implement this for transformers
         }
 
-        for (int i = 0; i < gradientsTensors.length; i++) {
+        for (int i = 1; i < gradientsTensors.length; i++) {
             Layer layer = model.getLayers().get(i);
 
             Tensor gradW = gradientsTensors[i];
             Tensor biasW = biasesTensors[i];
 
             if (gradW != null) {
-                layer.getWeights().sub(gradW.div(samples).mul(learningRate));
+                Tensor average = gradW.divide(samples);
+                Tensor delta = average.mul(learningRate);
+                layer.getWeights().sub(delta);
             }
 
             if (biasW != null) {
-                layer.getBias().sub(biasW.div(samples).mul(learningRate));
+                Tensor average = biasW.divide(samples);
+                Tensor delta = average.mul(learningRate);
+                layer.getBias().sub(delta);
             }
         }
     }

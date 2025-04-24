@@ -42,6 +42,8 @@ public class BackPropagation {
     }
 
     public void iteration(ListDataSource dataSource) {
+        dataSource.reset();
+
         while (dataSource.hasNext()) {
             propagatePartition(dataSource.nextBatch());
         }
@@ -56,7 +58,7 @@ public class BackPropagation {
         Layer last = layers.getLast();
         Tensor delta = last.computeLoss(cache, targets, outputs, lossFunction);
 
-        for (int l = layers.size() - 2; l >= 0; l--) {
+        for (int l = layers.size() - 2; l >= 1; l--) {
             Layer layer = layers.get(l);
 
             if (!layer.canPropagate()) continue;

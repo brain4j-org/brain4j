@@ -7,7 +7,7 @@ import net.echo.math.tensor.Tensors;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListDataSource {
+public class ListDataSource implements Cloneable {
 
     private final List<Sample> samples;
     private final List<Tensor> batchedInputs;
@@ -34,6 +34,10 @@ public class ListDataSource {
 
     public boolean hasNext() {
         return cursor < batches;
+    }
+
+    public void reset() {
+        cursor = 0;
     }
 
     public Pair<Tensor, Tensor> nextBatch() {
@@ -76,5 +80,10 @@ public class ListDataSource {
 
             index += batchSize;
         }
+    }
+
+    @Override
+    public ListDataSource clone() {
+        return new ListDataSource(samples, batches);
     }
 }
