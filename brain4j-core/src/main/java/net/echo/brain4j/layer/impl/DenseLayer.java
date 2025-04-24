@@ -70,7 +70,7 @@ public class DenseLayer extends Layer {
         Tensor transposedWeights = previous.getWeights().transpose();
         Tensor newDelta = delta.matmul(transposedWeights);;
 
-        Tensor gradient = input.transpose().matmul(newDelta);
+        Tensor gradient = optimizer.optimize(this, newDelta, input);
         Tensor biasGradient = newDelta.sum(0, false);
 
         Tensor clippedGradient = clipper.clip(gradient);

@@ -11,6 +11,7 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
+import net.echo.brain4j.training.optimizer.impl.Adam;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.brain4j.training.optimizer.impl.GradientDescent;
 import net.echo.math.DataSet;
@@ -40,13 +41,13 @@ public class XorExample {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        model.compile(Loss.BINARY_CROSS_ENTROPY, new GradientDescent(0.1));
+        model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.01));
 
         double loss = model.loss(source);
         System.out.println("Loss: " + loss);
 
         long start = System.currentTimeMillis();
-        model.fit(source, 10000);
+        model.fit(source, 100);
         long end = System.currentTimeMillis();
         System.out.println("Time: " + (end - start) + " ms");
 

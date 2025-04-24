@@ -10,6 +10,7 @@ import net.echo.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Arrays;
 import java.util.List;
 
 public class Adam extends Optimizer {
@@ -70,7 +71,7 @@ public class Adam extends Optimizer {
 
     @Override
     public Tensor optimize(Layer layer, Tensor delta, Tensor output) {
-        Tensor gradient = delta.matmul(output);
+        Tensor gradient = output.transpose().matmul(delta);
 
         Tensor firstMomentum = this.firstMomentum[layer.getId()];
         Tensor secondMomentum = this.secondMomentum[layer.getId()];
