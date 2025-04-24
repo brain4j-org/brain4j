@@ -37,11 +37,11 @@ public class MNISTExample {
         model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
 
         System.out.println(model.summary());
-        model.fit(dataSet, 150, 10);
+        // model.fit(dataSet, 150, 10);
 
-        EvaluationResult result = model.evaluate(dataSet);
+       /* EvaluationResult result = model.evaluate(dataSet);
 
-        System.out.println(result.confusionMatrix());
+        System.out.println(result.confusionMatrix());*/
 
         ModernAdapter.serialize("mnist.b4j", model);
     }

@@ -136,16 +136,26 @@ public class Tensors {
     }
 
     public static Tensor mergeTensors(List<Tensor> tensors) {
+        Tensor first = tensors.getFirst();
+
         int rows = tensors.size();
-        int columns = tensors.getFirst().shape()[1];
+        int columns = first.shape()[0];
+
+        if (first.dimension() > 1) {
+            columns = first.shape()[1];
+        }
 
         Tensor result = zeros(rows, columns);
 
         for (int i = 0; i < rows; i++) {
-            Tensor token = tensors.get(i);
+            Tensor current = tensors.get(i);
+
+            if (current.dimension() == 1) {
+                current = current.reshape(1, columns);
+            }
 
             for (int j = 0; j < columns; j++) {
-                result.set(token.get(0, j), i, j);
+                result.set(current.get(0, j), i, j);
             }
         }
 

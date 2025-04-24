@@ -9,6 +9,8 @@ import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.math.BrainUtils;
 import net.echo.math.DataSet;
+import net.echo.math.Pair;
+import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 
 import java.util.ArrayList;
@@ -26,42 +28,25 @@ public class BackPropagation {
         this.updater = updater;
     }
 
-    public void partitionIfRequired(DataSet<DataRow> dataSet) {
-        if (dataSet.isPartitioned()) return;
+    public void propagatePartition(Pair<Tensor, Tensor> partition) {
+        Tensor inputs = partition.first();
+        Tensor labels = partition.second();
 
-        int threads = Runtime.getRuntime().availableProcessors();
-        int partitions = Math.min(threads, dataSet.getData().size());
+        StatesCache cache = new StatesCache();
+        Tensor output = model.predict(cache, inputs, true);
 
-        dataSet.partition(partitions);
+        backpropagation(cache, labels, output);
+
+        int elements = inputs.shape()[0];
+        updater.postBatch(model, optimizer.getLearningRate(), elements);
     }
 
-    public void propagatePartition(List<DataRow> partition) {
-        List<Thread> threads = new ArrayList<>();
-
-        // TODO: rewrite using batched tensors
-        for (DataRow row : partition) {
-            Thread thread = Thread.startVirtualThread(() -> {
-                StatesCache cacheHolder = new StatesCache();
-
-                Tensor output = model.predict(cacheHolder, row.inputs(), true);
-                Tensor target = row.outputs();
-
-                backpropagation(cacheHolder, target, output);
-            });
-
-            threads.add(thread);
+    public void iteration(ListDataSource dataSource) {
+        while (dataSource.hasNext()) {
+            propagatePartition(dataSource.nextBatch());
         }
 
-        BrainUtils.waitAll(threads);
-        updater.postBatch(model, optimizer.getLearningRate(), partition.size());
-    }
-
-    public void iteration(DataSet<DataRow> dataSet) {
-        for (List<DataRow> partition : dataSet.getPartitions()) {
-            propagatePartition(partition);
-        }
-
-        updater.postFit(model, optimizer.getLearningRate(), dataSet.getData().size());
+        updater.postFit(model, optimizer.getLearningRate(), dataSource.size());
     }
 
     public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {

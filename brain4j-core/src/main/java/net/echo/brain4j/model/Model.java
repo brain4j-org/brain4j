@@ -20,6 +20,7 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.BrainUtils;
 import net.echo.math.DataSet;
+import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 import net.echo.math.vector.Vector;
@@ -84,7 +85,7 @@ public abstract class Model implements Adapter {
 
     public abstract Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss);
 
-    public abstract void fit(DataSet<DataRow> dataSet);
+    public abstract void fit(ListDataSource dataSource);
 
     public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
 
@@ -96,8 +97,8 @@ public abstract class Model implements Adapter {
         return Vector.of(output.getData());
     }
 
-    public EvaluationResult evaluate(DataSet<DataRow> dataSet) {
-        int classes = dataSet.getData().getFirst().outputs().elements();
+    public EvaluationResult evaluate(ListDataSource dataSource) {
+        int classes = dataSource.getSamples().getFirst().label().elements();
 
         // Binary classification
         if (classes == 1) {
@@ -113,19 +114,16 @@ public abstract class Model implements Adapter {
         List<Thread> threads = new ArrayList<>();
         AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
 
-        propagation.partitionIfRequired(dataSet);
-
-        for (List<DataRow> partition : dataSet.getPartitions()) {
-            threads.add(makeEvaluation(partition, classifications, totalLoss));
-        }
+//        TODO: Reimplement
+//        for (List<DataRow> partition : dataSet.getPartitions()) {
+//            threads.add(makeEvaluation(partition, classifications, totalLoss));
+//        }
 
         BrainUtils.waitAll(threads);
-        return new EvaluationResult(totalLoss.get() / dataSet.size() , classes, classifications);
+        return new EvaluationResult(totalLoss.get() / dataSource.size() , classes, classifications);
     }
 
     public double loss(DataSet<DataRow> dataSet) {
-        propagation.partitionIfRequired(dataSet);
-
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
 
@@ -137,15 +135,13 @@ public abstract class Model implements Adapter {
         return totalError.get() / dataSet.size();
     }
 
-    public void fit(DataSet<DataRow> dataSet, int epoches) {
-        fit(dataSet, epoches, Integer.MAX_VALUE);
+    public void fit(ListDataSource dataSource, int epoches) {
+        fit(dataSource, epoches, Integer.MAX_VALUE);
     }
 
-    public void fit(DataSet<DataRow> dataSet, int epoches, int evaluateEvery) {
-        propagation.partitionIfRequired(dataSet);
-     
+    public void fit(ListDataSource dataSource, int epoches, int evaluateEvery) {
         for (int i = 0; i < epoches; i++) {
-            propagation.iteration(dataSet);
+            propagation.iteration(dataSource);
 
             int currentEpoch = i + 1;
 
@@ -154,7 +150,7 @@ public abstract class Model implements Adapter {
             }
 
             if (currentEpoch % evaluateEvery == 0) {
-                EvaluationResult result = evaluate(dataSet);
+                EvaluationResult result = evaluate(dataSource);
                 System.out.printf("Loss at epoch %s: %.4f | Accuracy: %.2f%%\n", currentEpoch, result.loss(), result.accuracy() * 100);
             }
         }

@@ -13,7 +13,7 @@ import java.util.SplittableRandom;
 /**
  * Represents a Dropout layer, it's used to mitigate overfitting by randomly deactivating a fraction of the neurons
  * during training.
- * When inferencing, the output gets scaled by {@code 1 - dropout}.
+ * When inferencing, the label gets scaled by {@code 1 - dropout}.
  */
 public class DropoutLayer extends Layer {
 
@@ -67,7 +67,7 @@ public class DropoutLayer extends Layer {
      * @return The resulting tensor.
      */
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         if (training) {
             return scale(input);
         }

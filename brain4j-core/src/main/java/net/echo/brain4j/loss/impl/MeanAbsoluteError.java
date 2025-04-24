@@ -17,7 +17,7 @@ public class MeanAbsoluteError implements LossFunction {
     }
 
     @Override
-    public float getDelta(float error, float derivative) {
-        return Math.signum(error);
+    public Tensor getDelta(Tensor error, Tensor derivative) {
+        return error.map(Math::signum);
     }
 }

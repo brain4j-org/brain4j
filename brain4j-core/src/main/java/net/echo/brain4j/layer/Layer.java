@@ -14,6 +14,7 @@ import net.echo.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Arrays;
 import java.util.Random;
 
 public abstract class Layer implements Adapter {
@@ -113,18 +114,7 @@ public abstract class Layer implements Adapter {
         Tensor derivatives = activation.getDerivative(outputs);
         Tensor error = outputs.clone().sub(targets);
 
-        Tensor loss = error.clone();
-        float[] lossValues = loss.getData();
-
-        for (int i = 0; i < lossValues.length; i++) {
-            float data = lossValues[i];
-            float derivative = derivatives.get(i);
-
-            float value = lossFunction.getDelta(data, derivative);
-            lossValues[i] = value;
-        }
-
-        return loss;
+        return lossFunction.getDelta(error, derivatives);
     }
 
     public void connect(Random generator, Layer previous, Layer next, double bound) {
@@ -137,16 +127,17 @@ public abstract class Layer implements Adapter {
             bias.set(2 * generator.nextDouble() - 1, i);
         }
 
-        this.weights = Tensors.matrix(output, input);
+        this.weights = Tensors.matrix(input, output);
 
-        for (int i = 0; i < output; i++) {
-            for (int j = 0; j < input; j++) {
-                this.weights.set(generator.nextDouble(2 * bound) - bound, i, j);
+        for (int i = 0; i < input; i++) {
+            for (int j = 0; j < output; j++) {
+                double value = generator.nextDouble(2 * bound) - bound;
+                this.weights.set(value, i, j);
             }
         }
     }
 
-    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training);
+    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training);
 
     public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
         throw new UnsupportedOperationException("Not implemented for " + this.getClass().getSimpleName());

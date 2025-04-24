@@ -15,15 +15,19 @@ public interface Activation {
      * Return a new vector containing the activated values.
      */
     default Tensor activate(Tensor input) {
-        if (input.dimension() > 1) {
-            throw new IllegalArgumentException("Activation only supports 1D tensors!");
-        }
+        int[] shape = input.shape();
+        Tensor result = Tensors.create(shape);
 
-        Tensor result = Tensors.create(input.elements());
-
-        for (int i = 0; i < input.elements(); i++) {
-            double value = activate(input.get(i));
-            result.set(value, i);
+        if (input.dimension() == 2) {
+            for (int i = 0; i < shape[0]; i++) {
+                for (int j = 0; j < shape[1]; j++) {
+                    result.set(activate(input.get(i, j)), i, j);
+                }
+            }
+        } else {
+            for (int i = 0; i < input.elements(); i++) {
+                result.set(activate(input.get(i)), i);
+            }
         }
 
         return result;
@@ -38,15 +42,19 @@ public interface Activation {
      * Get the derivative (vector) of the activation at a vector of values.
      */
     default Tensor getDerivative(Tensor input) {
-        if (input.dimension() > 1) {
-            throw new IllegalArgumentException("Derivative only supports 1D tensors!");
-        }
+        int[] shape = input.shape();
+        Tensor result = Tensors.create(shape);
 
-        Tensor result = Tensors.create(input.elements());
-
-        for (int i = 0; i < input.elements(); i++) {
-            double value = getDerivative(input.get(i));
-            result.set(value, i);
+        if (input.dimension() == 2) {
+            for (int i = 0; i < shape[0]; i++) {
+                for (int j = 0; j < shape[1]; j++) {
+                    result.set(getDerivative(input.get(i, j)), i, j);
+                }
+            }
+        } else {
+            for (int i = 0; i < input.elements(); i++) {
+                result.set(getDerivative(input.get(i)), i);
+            }
         }
 
         return result;

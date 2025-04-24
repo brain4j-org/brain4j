@@ -13,6 +13,7 @@ import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.DataSet;
+import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of a sequential neural network model.
- * This model processes an input {@link Tensor} and produces an output {@link Tensor}.
+ * This model processes an input {@link Tensor} and produces an label {@link Tensor}.
  * It supports training using instances of {@link DataRow}.
  * </p>
  */
@@ -85,7 +86,7 @@ public class Sequential extends Model {
     }
 
     @Override
-    public void fit(DataSet<DataRow> dataSet) {
+    public void fit(ListDataSource dataSet) {
         propagation.iteration(dataSet);
     }
 
@@ -98,9 +99,15 @@ public class Sequential extends Model {
     public Tensor predict(StatesCache cache, Tensor input, boolean training) {
         Layer workingLayer = layers.getFirst();
 
-        if (input.elements() != workingLayer.getTotalNeurons()) {
+        if (input.dimension() == 1) {
+            input = input.reshape(1, input.elements());
+        }
+
+        int elements = input.shape()[1];
+
+        if (elements != workingLayer.getTotalNeurons()) {
             throw new IllegalArgumentException("Input dimensions do not match! (Input != Expected): %s != %s"
-                    .formatted(input.elements(), workingLayer.getTotalNeurons()));
+                    .formatted(elements, workingLayer.getTotalNeurons()));
         }
 
         Tensor denseResult = input.clone();
@@ -113,8 +120,7 @@ public class Sequential extends Model {
 
             cache.setInputTensor(layer, denseResult);
 
-            Layer nextLayer = l < layers.size() - 1 ? layers.get(l + 1) : null;
-            denseResult = layer.forward(cache, workingLayer, nextLayer, denseResult, training);
+            denseResult = layer.forward(cache, workingLayer, denseResult, training);
 
             if (layer.canPropagate() && !(layer instanceof LayerNorm)) {
                 workingLayer = layer;

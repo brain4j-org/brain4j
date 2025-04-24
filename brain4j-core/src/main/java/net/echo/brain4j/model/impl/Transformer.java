@@ -13,6 +13,7 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.BrainUtils;
 import net.echo.math.DataSet;
+import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 
 import java.util.List;
@@ -71,8 +72,8 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void fit(DataSet<DataRow> dataSet) {
-        propagation.iteration(dataSet);
+    public void fit(ListDataSource dataSource) {
+        propagation.iteration(dataSource);
     }
 
     @Override
@@ -84,7 +85,7 @@ public class Transformer extends Model {
         Tensor result = input;
 
         for (Layer layer : layers) {
-            result = layer.forward(cache, layer, null, result, training);
+            result = layer.forward(cache, layer, result, training);
         }
 
         return result;

@@ -2,27 +2,27 @@ package net.echo.math;
 
 public class Pair<K, V> {
 
-    public K key;
-    public V value;
+    private K first;
+    private V second;
 
-    public Pair(K key, V value) {
-        this.key = key;
-        this.value = value;
+    public Pair(K key, V second) {
+        this.first = key;
+        this.second = second;
     }
 
-    public K getKey() {
-        return key;
+    public K first() {
+        return first;
     }
 
-    public void setKey(K key) {
-        this.key = key;
+    public void setFirst(K first) {
+        this.first = first;
     }
 
-    public V getValue() {
-        return value;
+    public V second() {
+        return second;
     }
 
-    public void setValue(V value) {
-        this.value = value;
+    public void setSecond(V second) {
+        this.second = second;
     }
 }

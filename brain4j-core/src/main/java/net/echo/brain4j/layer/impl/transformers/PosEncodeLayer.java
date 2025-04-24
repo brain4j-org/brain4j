@@ -63,7 +63,7 @@ public class PosEncodeLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         if (input.dimension() != 2) {
             throw new IllegalArgumentException("Input must be a 2D matrix!");
         }

@@ -4,6 +4,7 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.math.DataSet;
+import net.echo.math.data.ListDataSource;
 
 public class TrainListener {
 
@@ -29,7 +30,7 @@ public class TrainListener {
     public void onEpochStarted(int epoch, int totalEpoches, long start) {
     }
 
-    public void onEvaluated(DataSet<DataRow> dataSet, EvaluationResult evaluation, int epoch, long took) {
+    public void onEvaluated(ListDataSource dataSource, EvaluationResult evaluation, int epoch, long took) {
     }
 
     public void onLossIncreased(double loss, double previousLoss) {

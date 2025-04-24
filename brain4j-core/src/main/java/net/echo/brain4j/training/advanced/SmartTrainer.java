@@ -4,6 +4,7 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.math.DataSet;
+import net.echo.math.data.ListDataSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public class SmartTrainer {
         this.running = false;
     }
 
-    public void start(Model model, DataSet<DataRow> dataSet, double lossThreshold) {
+    public void start(Model model, ListDataSource dataSource, double lossThreshold) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
@@ -43,24 +44,24 @@ public class SmartTrainer {
         this.listeners.forEach(listener -> listener.register(this, model));
 
         while (running && evaluation.loss() > lossThreshold) {
-            iterate(model, dataSet, Integer.MAX_VALUE);
+            iterate(model, dataSource, Integer.MAX_VALUE);
         }
 
         this.running = false;
         this.end = System.nanoTime();
     }
 
-    public void step(Model model, DataSet<DataRow> dataSet, int totalEpoches) {
+    public void step(Model model, ListDataSource dataSource, int totalEpoches) {
         long start = System.nanoTime();
         this.listeners.forEach(listener -> listener.onEpochStarted(epoches, totalEpoches, start));
 
-        model.fit(dataSet);
+        model.fit(dataSource);
 
         long took = System.nanoTime() - start;
         this.listeners.forEach(listener -> listener.onEpochCompleted(epoches, totalEpoches, took));
     }
 
-    public void startFor(Model model, DataSet<DataRow> dataSet, int epochesAmount) {
+    public void startFor(Model model, ListDataSource dataSource, int epochesAmount) {
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
@@ -68,24 +69,24 @@ public class SmartTrainer {
         this.listeners.forEach(listener -> listener.register(this, model));
 
         for (int i = 0; i < epochesAmount && running; i++) {
-            iterate(model, dataSet, epochesAmount);
+            iterate(model, dataSource, epochesAmount);
         }
 
         this.running = false;
         this.end = System.nanoTime();
     }
 
-    private void iterate(Model model, DataSet<DataRow> dataSet, int totalEpoches) {
-        step(model, dataSet, totalEpoches);
+    private void iterate(Model model, ListDataSource dataSource, int totalEpoches) {
+        step(model, dataSource, totalEpoches);
 
         this.epoches++;
 
         if (epoches % evaluateEvery == 0) {
             long start = System.nanoTime();
-            EvaluationResult result = model.evaluate(dataSet);
+            EvaluationResult result = model.evaluate(dataSource);
             long took = System.nanoTime() - start;
 
-            this.listeners.forEach(listener -> listener.onEvaluated(dataSet, result, epoches, took));
+            this.listeners.forEach(listener -> listener.onEvaluated(dataSource, result, epoches, took));
         }
     }
 

@@ -7,6 +7,8 @@ import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.activation.Activations;
 import net.echo.math.tensor.Tensor;
 
+import java.util.Arrays;
+
 /**
  * Represents a fully connected (dense) layer in a neural network.
  */
@@ -21,7 +23,7 @@ public class DenseLayer extends Layer {
      * Constructs a dense layer instance.
      *
      * @param input      the number of neurons in this layer
-     * @param activation the activation function to be applied to the output of each neuron
+     * @param activation the activation function to be applied to the label of each neuron
      */
     public DenseLayer(int input, Activations activation) {
         this(input, activation, new HardClipper(5));
@@ -33,28 +35,28 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Layer nextLayer, Tensor input, boolean training) {
-        if (!(lastLayer instanceof DenseLayer denseLayer)) {
-            throw new UnsupportedOperationException("Layer before must be a dense layer!");
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+        Tensor W = lastLayer.getWeights();
+        // [batch_size, n_in] x [n_in, n_out]
+        Tensor Z = input.matmul(W); // [batch_size, n_out]
+
+        int batchSize = Z.shape()[0];
+        int elements = Z.shape()[1];
+
+        for (int i = 0; i < batchSize; i++) {
+            for (int j = 0; j < elements; j++) {
+                float value = Z.get(i, j);
+                float biasValue = bias.get(j);
+
+                Z.set(value + biasValue, i, j);
+            }
         }
-
-        if (!weights.usesGrad()) weights = weights.withGrad();
-        if (!bias.usesGrad()) bias = bias.withGrad();
-
-        Tensor weights = denseLayer.getWeights().withGrad(); // last layer weights, which is [m, n]
-        Tensor reshapedInput = input.reshape(input.elements(), 1).withGrad(); // [n, 1] matrix
-
-        Tensor result = weights.withGrad()
-                .matmulWithGrad(reshapedInput) // [m, n] x [n, 1] = [m, 1]
-                .vector()
-                .withGrad()
-                .addWithGrad(bias);
 
         if (nextLayer instanceof LayerNorm layerNorm) {
-            result = layerNorm.forward(cache, this, null, result, training);
+            Z = layerNorm.forward(cache, this, Z, training);
         }
 
-        Tensor activated = result.activateWithGrad(activation);
+        Tensor activated = activation.activate(Z);
         cache.setOutputTensor(this, activated);
 
         return activated;
@@ -62,24 +64,19 @@ public class DenseLayer extends Layer {
 
     @Override
     public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
-        Tensor output = cache.getOutputTensor(this);
-        Tensor derivative = activation.getDerivative(output);
+        Tensor output = cache.getOutputTensor(this); // [batch_size, n_out]
+        Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
 
-        // delta as a matrix [n_out, 1]
-        Tensor deltaMatrix = delta.reshape(delta.elements(), 1);
-        Tensor transposedWeights = weights.transpose(); // weights as [n_in, n_out]
+        Tensor transposedWeights = weights.transpose();
+        Tensor newDelta = delta.matmul(transposedWeights);
 
-        Tensor newDelta = transposedWeights
-                .matmul(deltaMatrix)
-                .reshape(output.elements());
-
-        Tensor deltaL = newDelta.mul(derivative);
-        Tensor gradient = optimizer.optimize(this, deltaMatrix, output.transpose());
+        Tensor deltaL = newDelta.mul(derivative); // [n_in] * [n_in]
+        Tensor gradient = optimizer.optimize(this, delta.transpose(), output);
 
         Tensor clippedGradient = clipper.clip(gradient);
         Tensor clippedDelta = clipper.clip(deltaL);
 
         updater.acknowledgeChange(this, clippedGradient, clippedDelta);
-        return deltaL;
+        return clippedDelta;
     }
 }

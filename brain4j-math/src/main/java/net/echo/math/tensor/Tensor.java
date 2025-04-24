@@ -11,8 +11,6 @@ import net.echo.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.Random;
-import java.util.SplittableRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -429,7 +427,7 @@ public interface Tensor extends Iterable<Float> {
     String toString(String format);
 
     /**
-     * Serializes the tensor to the specified output stream.
+     * Serializes the tensor to the specified label stream.
      * @param stream The stream to write on
      * @throws Exception If serialization fails
      */

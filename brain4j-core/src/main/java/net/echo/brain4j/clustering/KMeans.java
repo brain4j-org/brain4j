@@ -30,7 +30,7 @@ public class KMeans {
      *
      * @param dimension the dimension for each cluster, must be the same as the dimension of the data
      */
-    public void init(int dimension) {
+    public void compile(int dimension) {
         for (int i = 0; i < clustersAmount; i++) {
             clusters.add(new Cluster(dimension, i));
         }
@@ -42,14 +42,14 @@ public class KMeans {
      * @param data the data to cluster
      * @return true if the centroids changed, false otherwise
      */
-    public boolean step(ClusterData data) {
+    public boolean step(List<Tensor> data) {
         boolean centroidsChanged = false;
 
         for (Cluster cluster : clusters) {
             cluster.clearData();
         }
 
-        for (Tensor vector : data.getData()) {
+        for (Tensor vector : data) {
             Cluster closestCluster = getClosest(vector);
 
             closestCluster.addVector(vector);
@@ -72,7 +72,7 @@ public class KMeans {
      * @param data the dataset to cluster
      * @return the number of iterations performed
      */
-    public int fit(ClusterData data, int maxIterations) {
+    public int fit(List<Tensor> data, int maxIterations) {
         boolean centroidsChanged = true;
 
         int i = 0;
@@ -92,10 +92,10 @@ public class KMeans {
      * @param set the dataset to evaluate
      * @return a map of data points to their closest clusters
      */
-    public Map<Tensor, Cluster> evaluate(ClusterData set) {
+    public Map<Tensor, Cluster> evaluate(List<Tensor> set) {
         Map<Tensor, Cluster> clusterMap = new HashMap<>();
 
-        for (Tensor vector : set.getData()) {
+        for (Tensor vector : set) {
             Cluster closestCluster = getClosest(vector);
 
             clusterMap.put(vector, closestCluster);

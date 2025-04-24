@@ -23,14 +23,14 @@ public enum WeightInit {
     /**
      * Uniform Xavier initialization is specifically designed for layers with sigmoid or tanh activations.
      * It initializes weights using a uniform distribution,
-     * scaled by the square root of 6 divided by the sum of the number of input and output neurons.
+     * scaled by the square root of 6 divided by the sum of the number of input and label neurons.
      */
     UNIFORM_XAVIER(new UniformXavierInit()),
 
     /**
      * Normal Xavier initialization is specifically designed for layers with sigmoid or tanh activations.
      * It initializes weights using a normal distribution,
-     * scaled by the square root of 2 divided by the number of input and output neurons.
+     * scaled by the square root of 2 divided by the number of input and label neurons.
      */
     NORMAL_XAVIER(new NormalXavierInit()),
 
