@@ -13,7 +13,6 @@ import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class BigDataExample {
@@ -43,7 +42,7 @@ public class BigDataExample {
         model.fit(source);
         long end = System.nanoTime();
 
-        System.out.println("Took: " + (end - start) / 1e6 + " ms");
+        System.out.println("Took for 1 epoch: " + (end - start) / 1e6 + " ms");
     }
 
     public void predict(Model model, ListDataSource source) {
