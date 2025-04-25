@@ -64,8 +64,6 @@ public class DenseLayer extends Layer {
         Tensor output = cache.getOutputTensor(this);
         Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
 
-        int batchSize = input.shape()[0];
-
         Tensor weightsNext = previous.getWeights();  // [n_out, n_out_next]
         Tensor deltaProjected = delta.matmul(weightsNext.transpose());  // [batch_size x n_out]
 

@@ -288,7 +288,12 @@ public class TensorGPU extends TensorCPU {
     public static boolean isGpuAvailable() {
         return INITIALIZED;
     }
-    
+
+    @Override
+    public Tensor clone() {
+        return fromTensor(this);
+    }
+
     @Override
     public Tensor matmul(Tensor other) {
         if (!INITIALIZED) {

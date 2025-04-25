@@ -10,7 +10,9 @@ import net.echo.math.Pair;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class BackPropagation {
 
@@ -40,12 +42,7 @@ public class BackPropagation {
     }
 
     public void iteration(ListDataSource dataSource) {
-        dataSource.reset();
-
-        while (dataSource.hasNext()) {
-            propagatePartition(dataSource.nextBatch());
-        }
-
+        dataSource.propagate(this::propagatePartition);
         updater.postFit(model, optimizer.getLearningRate(), dataSource.size());
     }
 

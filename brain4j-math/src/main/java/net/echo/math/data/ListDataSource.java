@@ -6,14 +6,15 @@ import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ListDataSource implements Cloneable {
 
-    private final List<Sample> samples;
-    private final List<Tensor> batchedInputs;
-    private final List<Tensor> batchedLabels;
-    private final int batches;
-    private int cursor;
+    protected final List<Sample> samples;
+    protected final List<Tensor> batchedInputs;
+    protected final List<Tensor> batchedLabels;
+    protected final int batches;
+    protected int cursor;
 
     public ListDataSource(List<Sample> samples, int batches) {
         this.samples = samples;
@@ -38,6 +39,14 @@ public class ListDataSource implements Cloneable {
 
     public void reset() {
         cursor = 0;
+    }
+
+    public void propagate(Consumer<Pair<Tensor, Tensor>> task) {
+        reset();
+
+        while (hasNext()) {
+            task.accept(nextBatch());
+        }
     }
 
     public Pair<Tensor, Tensor> nextBatch() {

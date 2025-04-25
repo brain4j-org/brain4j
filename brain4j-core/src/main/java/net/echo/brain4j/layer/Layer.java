@@ -111,7 +111,7 @@ public abstract class Layer implements Adapter {
     }
 
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
-        Tensor error = outputs.clone().sub(targets);
+        Tensor error = outputs.minus(targets);
         Tensor derivatives = activation.getDerivative(outputs);
 
         Tensor input = cache.getInputTensor(this);

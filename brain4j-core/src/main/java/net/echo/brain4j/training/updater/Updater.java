@@ -2,6 +2,7 @@ package net.echo.brain4j.training.updater;
 
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.structure.StatesCache;
 import net.echo.math.tensor.Tensor;
 
 public abstract class Updater {

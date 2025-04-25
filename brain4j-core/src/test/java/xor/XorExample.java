@@ -8,6 +8,7 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math.activation.Activations;
+import net.echo.math.data.AsyncDataSource;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.data.Sample;
 import net.echo.math.tensor.Tensor;
@@ -58,6 +59,6 @@ public class XorExample {
             }
         }
 
-        return new ListDataSource(samples, 1);
+        return new AsyncDataSource(samples, 1);
     }
 }

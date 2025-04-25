@@ -706,21 +706,21 @@ public class TensorCPU implements Cloneable, Tensor {
             throw new IllegalArgumentException("matmul requires 2D tensors");
         }
 
-        final int m = shape[0];
-        final int n = shape[1];
-        final int p = other.shape()[1];
+        int m = shape[0];
+        int n = shape[1];
+        int p = other.shape()[1];
 
         if (n != other.shape()[0]) {
             throw new IllegalArgumentException("Dimensions do not match: " + n + " != " + other.shape()[0]);
         }
 
+        Tensor result = new TensorCPU(m, p);
+
         float[] A = this.getData();
         float[] B = other.getData();
-
-        Tensor result = new TensorCPU(m, p);
         float[] C = result.getData();
 
-        final int blockSize = 64;
+        int blockSize = 64;
 
         for (int iBlock = 0; iBlock < m; iBlock += blockSize) {
             int iMax = Math.min(iBlock + blockSize, m);
