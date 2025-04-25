@@ -72,8 +72,8 @@ public class DenseLayer extends Layer {
         Tensor gradient = optimizer.optimize(this, deltaThisLayer, input); // [n_in x n_out]
         Tensor biasGradient = deltaThisLayer.sum(0, false); // [n_out]
 
-//        clipper.clip(gradient);
-//        clipper.clip(biasGradient);
+        clipper.clip(gradient);
+        clipper.clip(biasGradient);
 
         updater.acknowledgeChange(this, gradient, biasGradient);
         return deltaThisLayer;
