@@ -80,39 +80,6 @@ public class TensorCPU implements Cloneable, Tensor {
         return linearIndex;
     }
 
-    private void sumAlongDimension(Tensor result, int dim, boolean keepDim, int[] indices, int[] resultIndices, int currDim) {
-        if (currDim == shape.length) {
-            float value = get(indices);
-
-            if (keepDim) {
-                System.arraycopy(indices, 0, resultIndices, 0, indices.length);
-                resultIndices[dim] = 0;
-            } else {
-                int resultIdx = 0;
-                for (int i = 0; i < indices.length; i++) {
-                    if (i != dim) {
-                        resultIndices[resultIdx++] = indices[i];
-                    }
-                }
-            }
-
-            result.set(result.get(resultIndices) + value, resultIndices);
-            return;
-        }
-
-        if (currDim == dim) {
-            for (int i = 0; i < shape[currDim]; i++) {
-                indices[currDim] = i;
-                sumAlongDimension(result, dim, keepDim, indices, resultIndices, currDim + 1);
-            }
-        } else {
-            for (int i = 0; i < shape[currDim]; i++) {
-                indices[currDim] = i;
-                sumAlongDimension(result, dim, keepDim, indices, resultIndices, currDim + 1);
-            }
-        }
-    }
-
     public static Tensor of(int[] shape, float... data) {
         Tensor tensor = new TensorCPU(shape);
         
@@ -803,7 +770,71 @@ public class TensorCPU implements Cloneable, Tensor {
         return reshape(elements());
     }
 
-    @Override
+    private int[] broadcastShapes(int[] shape1, int[] shape2) {
+        int maxDim = Math.max(shape1.length, shape2.length);
+        int[] resultShape = new int[maxDim];
+
+        for (int i = 0; i < maxDim; i++) {
+            int dim1 = (i < shape1.length) ? shape1[shape1.length - 1 - i] : 1;
+            int dim2 = (i < shape2.length) ? shape2[shape2.length - 1 - i] : 1;
+
+            if (dim1 == 1 || dim2 == 1) {
+                resultShape[maxDim - 1 - i] = Math.max(dim1, dim2);
+            } else if (dim1 == dim2) {
+                resultShape[maxDim - 1 - i] = dim1;
+            } else {
+                throw new IllegalArgumentException(
+                        "Shapes cannot be broadcast: " +
+                                Arrays.toString(shape1) + " vs " + Arrays.toString(shape2)
+                );
+            }
+        }
+
+        return resultShape;
+    }
+
+    private void broadcastFill(Tensor result, Tensor a, Tensor b, BiFunction<Float, Float, Float> operation,
+                               int[] indices, int dim) {
+        if (dim == result.shape().length) {
+            int[] indicesA = mapIndicesToOperand(indices, a.shape());
+            int[] indicesB = mapIndicesToOperand(indices, b.shape());
+
+            float valueA = (indicesA != null) ? a.get(indicesA) : 0;
+            float valueB = (indicesB != null) ? b.get(indicesB) : 0;
+            result.set(operation.apply(valueA, valueB), indices);
+            return;
+        }
+
+        for (int i = 0; i < result.shape()[dim]; i++) {
+            indices[dim] = i;
+            broadcastFill(result, a, b, operation, indices, dim + 1);
+        }
+    }
+
+    private int[] mapIndicesToOperand(int[] indices, int[] shape) {
+        if (indices.length < shape.length) {
+            return null;
+        }
+
+        int[] result = new int[shape.length];
+        int offset = indices.length - shape.length;
+
+        for (int i = 0; i < shape.length; i++) {
+            int idx = indices[offset + i];
+            if (idx >= shape[i]) {
+                if (shape[i] == 1) {
+                    result[i] = 0;
+                } else {
+                    return null;
+                }
+            } else {
+                result[i] = idx;
+            }
+        }
+
+        return result;
+    }
+
     public Tensor sum(int dim, boolean keepDim) {
         if (dim < 0 || dim >= shape.length) {
             throw new IllegalArgumentException("Dimension " + dim + " out of bounds for tensor of shape " + Arrays.toString(shape));
@@ -828,6 +859,39 @@ public class TensorCPU implements Cloneable, Tensor {
         sumAlongDimension(result, dim, keepDim, indices, resultIndices, 0);
 
         return result;
+    }
+
+    private void sumAlongDimension(Tensor result, int dim, boolean keepDim, int[] indices, int[] resultIndices, int currDim) {
+        if (currDim == shape.length) {
+            float value = get(indices);
+
+            if (keepDim) {
+                System.arraycopy(indices, 0, resultIndices, 0, indices.length);
+                resultIndices[dim] = 0;
+            } else {
+                int resultIdx = 0;
+                for (int i = 0; i < indices.length; i++) {
+                    if (i != dim) {
+                        resultIndices[resultIdx++] = indices[i];
+                    }
+                }
+            }
+
+            result.set(result.get(resultIndices) + value, resultIndices);
+            return;
+        }
+
+        if (currDim == dim) {
+            for (int i = 0; i < shape[currDim]; i++) {
+                indices[currDim] = i;
+                sumAlongDimension(result, dim, keepDim, indices, resultIndices, currDim + 1);
+            }
+        } else {
+            for (int i = 0; i < shape[currDim]; i++) {
+                indices[currDim] = i;
+                sumAlongDimension(result, dim, keepDim, indices, resultIndices, currDim + 1);
+            }
+        }
     }
 
     @Override
