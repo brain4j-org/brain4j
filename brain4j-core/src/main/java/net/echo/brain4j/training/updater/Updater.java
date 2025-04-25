@@ -21,11 +21,11 @@ public abstract class Updater {
             Tensor biasW = biasesTensors[i];
 
             if (gradW != null) {
-                layer.getWeights().sub(gradW);
+                layer.getWeights().sub(gradW.div(samples).mul(learningRate));
             }
 
             if (biasW != null) {
-                layer.getBias().sub(biasW);
+                layer.getBias().sub(biasW.div(samples).mul(learningRate));
             }
         }
     }

@@ -10,9 +10,9 @@ public class L2Clipper implements GradientClipper {
     public L2Clipper(double scale) { this.scale = scale; }
 
     @Override
-    public Tensor clip(Tensor grad) {
+    public void clip(Tensor grad) {
         double threshold = scale * Math.sqrt(grad.elements());
-        return clipL2(grad, threshold);
+        clipL2(grad, threshold);
     }
 
     public double l2Norm(Tensor input) {
@@ -25,14 +25,12 @@ public class L2Clipper implements GradientClipper {
         return Math.sqrt(sumOfSquares);
     }
 
-    public Tensor clipL2(Tensor input, double threshold) {
+    public void clipL2(Tensor input, double threshold) {
         double norm = l2Norm(input);
 
         if (norm > threshold) {
             double scaleFactor = threshold / norm;
-            return input.mul(scaleFactor);
+            input.mul(scaleFactor);
         }
-
-        return input;
     }
 }

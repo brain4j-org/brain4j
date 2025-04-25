@@ -10,7 +10,7 @@ public class HardClipper implements GradientClipper {
     public HardClipper(double bound) { this.bound = bound; }
 
     @Override
-    public Tensor clip(Tensor grad) {
-        return grad.map(x -> Math.max(-bound, Math.min(bound, x)));
+    public void clip(Tensor grad) {
+        grad.map(x -> Math.max(-bound, Math.min(bound, x)));
     }
 }

@@ -6,7 +6,7 @@ import net.echo.math.tensor.Tensor;
 public class NoClipper implements GradientClipper {
 
     @Override
-    public Tensor clip(Tensor grad) {
-        return grad;
+    public void clip(Tensor grad) {
+        // Nothing to apply
     }
 }
