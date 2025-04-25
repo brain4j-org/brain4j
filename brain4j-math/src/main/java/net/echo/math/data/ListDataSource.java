@@ -35,7 +35,7 @@ public class ListDataSource implements Cloneable {
     }
 
     public boolean hasNext() {
-        return cursor <= batches;
+        return cursor < batches;
     }
 
     public void reset() {

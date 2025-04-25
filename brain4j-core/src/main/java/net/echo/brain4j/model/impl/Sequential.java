@@ -37,11 +37,10 @@ public class Sequential extends Model {
     @Override
     public Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
         return Thread.startVirtualThread(() -> {
-            Tensor inputs = batch.first();
-            Tensor expected = batch.second();
+            Tensor inputs = batch.first(); // [batch_size, input_size]
+            Tensor expected = batch.second(); // [batch_size, output_size]
 
-            Tensor prediction = predict(inputs);
-
+            Tensor prediction = predict(inputs); // [batch_size, output_size]
             int batchSize = inputs.shape()[0];
 
             for (int i = 0; i < batchSize; i++) {
@@ -54,8 +53,8 @@ public class Sequential extends Model {
                 int targetIndex = target.argmax();
 
                 if (output.elements() == 1) {
-                    predIndex = prediction.get(0) > 0.5 ? 1 : 0;
-                    targetIndex = (int) output.get(0);
+                    predIndex = output.get(0) > 0.5 ? 1 : 0;
+                    targetIndex = (int) target.get(0);
                 }
 
                 double loss = lossFunction.calculate(target, output);
