@@ -13,8 +13,10 @@ import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.BrainUtils;
 import net.echo.math.DataSet;
+import net.echo.math.Pair;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
+import net.echo.math.tensor.index.Range;
 
 import java.util.List;
 import java.util.Map;
@@ -27,17 +29,26 @@ public class Transformer extends Model {
     }
 
     @Override
-    public Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+    public Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
         return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
-                Tensor prediction = predict(row.inputs());
-                Tensor outputs = row.outputs();
+            Tensor inputs = batch.first();
+            Tensor outputs = batch.second();
 
-                double loss = lossFunction.calculate(outputs, prediction);
+            int batchSize = inputs.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor input = inputs.slice(range).vector();
+                Tensor output = outputs.slice(range).vector();
+
+                Tensor prediction = predict(input);
+
+                double loss = lossFunction.calculate(output, prediction);
                 totalLoss.updateAndGet(v -> v + loss);
 
                 int predIndex = BrainUtils.argmax(prediction);
-                int targetIndex = BrainUtils.argmax(outputs);
+                int targetIndex = BrainUtils.argmax(output);
 
                 Tensor predictions = classifications.get(targetIndex);
                 int pred = (int) predictions.get(predIndex);

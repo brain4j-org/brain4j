@@ -13,8 +13,10 @@ import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.DataSet;
+import net.echo.math.Pair;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
+import net.echo.math.tensor.index.Range;
 
 import java.util.List;
 import java.util.Map;
@@ -33,18 +35,27 @@ public class Sequential extends Model {
     }
 
     @Override
-    public Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+    public Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
         return Thread.startVirtualThread(() -> {
-            for (DataRow row : partition) {
-                Tensor prediction = predict(row.inputs());
-                Tensor expected = row.outputs();
+            Tensor inputs = batch.first();
+            Tensor expected = batch.second();
+
+            Tensor prediction = predict(inputs);
+
+            int batchSize = inputs.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor output = prediction.slice(range).vector();
+                Tensor target = expected.slice(range).vector();
 
                 int predIndex = prediction.argmax();
-                int targetIndex = expected.argmax();
+                int targetIndex = target.argmax();
 
-                if (row.outputs().elements() == 1) {
+                if (output.elements() == 1) {
                     predIndex = prediction.get(0) > 0.5 ? 1 : 0;
-                    targetIndex = (int) row.outputs().get(0);
+                    targetIndex = (int) output.get(0);
                 }
 
                 double loss = lossFunction.calculate(expected, prediction);

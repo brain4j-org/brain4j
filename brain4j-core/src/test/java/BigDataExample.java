@@ -4,6 +4,7 @@ import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.optimizer.impl.Adam;
+import net.echo.math.Pair;
 import net.echo.math.activation.Activations;
 import net.echo.math.data.AsyncDataSource;
 import net.echo.math.data.ListDataSource;
@@ -36,12 +37,28 @@ public class BigDataExample {
         System.out.println(model.summary());
 
         ListDataSource source = getDataSet();
+        predict(model, source);
 
         long start = System.nanoTime();
         model.fit(source);
         long end = System.nanoTime();
 
         System.out.println("Took: " + (end - start) / 1e6 + " ms");
+    }
+
+    public void predict(Model model, ListDataSource source) {
+        long start = System.nanoTime();
+        while (source.hasNext()) {
+            Pair<Tensor, Tensor> batch = source.nextBatch();
+
+            Tensor input = batch.first();
+            model.predict(input);
+        }
+        long end = System.nanoTime();
+
+        System.out.println("---- Prediction ----");
+        System.out.println("Input size: " + source.size());
+        System.out.println("Time to predict: " + (end - start) / 1e6 + " ms");
     }
 
     public ListDataSource getDataSet() {
@@ -54,6 +71,6 @@ public class BigDataExample {
             samples.add(new Sample(input, output));
         }
 
-        return new AsyncDataSource(samples, 16);
+        return new AsyncDataSource(samples, 8);
     }
 }

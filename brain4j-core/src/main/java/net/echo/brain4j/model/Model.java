@@ -75,7 +75,7 @@ public abstract class Model implements Adapter {
         }
     }
 
-    public abstract Thread makeEvaluation(List<DataRow> partition, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss);
+    public abstract Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss);
 
     public abstract void fit(ListDataSource dataSource);
 
@@ -110,7 +110,7 @@ public abstract class Model implements Adapter {
 
         while (dataSource.hasNext()) {
             Pair<Tensor, Tensor> partition = dataSource.nextBatch();
-            threads.add(predictPartition(partition, totalLoss));
+            threads.add(makeEvaluation(partition, classifications, totalLoss));
         }
 
         BrainUtils.waitAll(threads);

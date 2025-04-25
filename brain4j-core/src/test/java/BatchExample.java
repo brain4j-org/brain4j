@@ -5,14 +5,14 @@ import net.echo.math.tensor.Tensors;
 public class BatchExample {
 
     public static void main(String[] args) {
-        int batchSize = 8192 * 5;
-        int samples = 327680;
+        Brain4J.useGPUIfAvailable();
 
-        int batches = samples / batchSize;
+        int batches = 8;
+        int samples = 327680;
+        int batchSize = samples / batches;
 
         System.out.println("Batch size: " + batchSize);
         System.out.println("Batches: " + batches);
-        Brain4J.useGPUIfAvailable();
 
         Tensor a = Tensors.random(batchSize, 13);
 
@@ -24,9 +24,7 @@ public class BatchExample {
         long start = System.nanoTime();
 
         for (int i = 0; i < batches; i++) {
-            for (int j = 0; j < 3; j++) {
-                a.matmul(b).matmul(c).matmul(d).matmul(e);
-            }
+            a.matmul(b).matmul(c).matmul(d).matmul(e);
         }
 
         long end = System.nanoTime();
