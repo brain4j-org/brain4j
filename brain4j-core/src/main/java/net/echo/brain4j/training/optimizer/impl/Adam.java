@@ -69,6 +69,7 @@ public class Adam extends Optimizer {
 
     @Override
     public Tensor optimize(Layer layer, Tensor delta, Tensor output) {
+        // [n_out, batch_size] x [batch_size, n_out]
         Tensor gradient = output.transpose().matmul(delta);
 
         Tensor firstMomentum = this.firstMomentum[layer.getId()];

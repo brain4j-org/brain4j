@@ -37,13 +37,6 @@ public class BigDataExample {
 
         ListDataSource source = getDataSet();
 
-        Tensor packet = source.nextBatch().first();
-
-        System.out.println("Shape: " + Arrays.toString(packet.shape()));
-        System.out.println("Size: " + packet.elements());
-
-        source.reset();
-
         long start = System.nanoTime();
         model.fit(source);
         long end = System.nanoTime();
@@ -61,6 +54,6 @@ public class BigDataExample {
             samples.add(new Sample(input, output));
         }
 
-        return new AsyncDataSource(samples, 8);
+        return new AsyncDataSource(samples, 16);
     }
 }
