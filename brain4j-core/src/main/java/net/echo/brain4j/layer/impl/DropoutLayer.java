@@ -72,16 +72,12 @@ public class DropoutLayer extends Layer {
             return scale(input);
         }
 
-        if (input.dimension() != 1) {
-            throw new UnsupportedOperationException("Only 1D tensors are supported!");
-        }
-
         for (int i = 0; i < input.elements(); i++) {
             if (fastRandom.nextDouble() > dropout) {
                 continue;
             }
 
-            input.set(0, i);
+            input.getData()[i] = 0;
         }
 
         return input;
