@@ -13,35 +13,26 @@ import java.util.function.Consumer;
 
 public class AsyncDataSource extends ListDataSource {
 
-    public AsyncDataSource(List<Sample> samples, int batches) {
-        super(samples, batches);
+    public AsyncDataSource(List<Sample> samples, boolean shuffle, int batches) {
+        super(samples, shuffle, batches);
     }
 
     public void propagate(Consumer<Pair<Tensor, Tensor>> task) {
-        List<Callable<Void>> tasks = new ArrayList<>();
-
         int processors = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(processors);
 
         reset();
+
         while (hasNext()) {
             Pair<Tensor, Tensor> partition = nextBatch();
-            tasks.add(() -> {
-                task.accept(partition);
-                return null;
-            });
+            executor.submit(() -> task.accept(partition));
         }
 
-        try {
-            executor.invokeAll(tasks);
-            executor.close();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        executor.close();
     }
 
     @Override
     public AsyncDataSource clone() {
-        return new AsyncDataSource(samples, batches);
+        return new AsyncDataSource(samples, false, batches);
     }
 }

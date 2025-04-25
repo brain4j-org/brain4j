@@ -149,7 +149,8 @@ public abstract class Model implements Adapter {
 
             if (currentEpoch % evaluateEvery == 0) {
                 EvaluationResult result = evaluate(dataSource.clone());
-                System.out.printf("Loss at epoch %s: %.4f | Accuracy: %.2f%%\n", currentEpoch, result.loss(), result.accuracy() * 100);
+                System.out.printf("[%s/%s] Loss: %.3f | Acc: %.2f%% | F1: %.2f%%\n", currentEpoch, epoches, result.loss(),
+                        result.accuracy() * 100, result.f1Score() * 100);
             }
         }
     }

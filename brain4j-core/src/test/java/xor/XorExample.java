@@ -59,6 +59,6 @@ public class XorExample {
             }
         }
 
-        return new AsyncDataSource(samples, 1);
+        return new AsyncDataSource(samples, false, 1);
     }
 }

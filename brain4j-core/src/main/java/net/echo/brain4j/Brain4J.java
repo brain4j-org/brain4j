@@ -7,6 +7,8 @@ import net.echo.math.tensor.impl.TensorGPU;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Welcome to Brain4J!
@@ -61,7 +63,7 @@ public class Brain4J {
 
     /**
      * Enables or disables the logging while training.
-     * @param logging True to enable logging, false to disable it.
+     * @param logging True to enable logging, false to disable it
      */
     public static void setLogging(boolean logging) {
         Brain4J.logging = logging;
@@ -74,7 +76,7 @@ public class Brain4J {
 
     /**
      * Gets the header char for the progress bar. Initializes the print stream if needed.
-     * @return The header char.
+     * @return The header char
      */
     public static String getHeaderChar() {
         if (!initialized) {
@@ -87,7 +89,7 @@ public class Brain4J {
 
     /**
      * Prints the device info of the GPU.
-     * @param info The GPU info.
+     * @param info The GPU info
      */
     public static void printDeviceInfo(GPUInfo info) {
         String builder = BrainUtils.getHeader(" Device Information ", getHeaderChar()) +
@@ -103,9 +105,18 @@ public class Brain4J {
 
     /**
      * Checks if the logging is enabled.
-     * @return True if the logging is enabled, false otherwise.
+     * @return True if the logging is enabled, false otherwise
      */
     public static boolean isLogging() {
         return logging;
+    }
+
+    /**
+     * Creates a new ExecutorService with the number of threads equal to the number of available processors.
+     * @return The ExecutorService instance
+     */
+    public static ExecutorService getExecutor() {
+        int threads = Runtime.getRuntime().availableProcessors();
+        return Executors.newFixedThreadPool(threads);
     }
 }

@@ -50,7 +50,7 @@ public class Sequential extends Model {
                 Tensor output = prediction.slice(range).vector();
                 Tensor target = expected.slice(range).vector();
 
-                int predIndex = prediction.argmax();
+                int predIndex = output.argmax();
                 int targetIndex = target.argmax();
 
                 if (output.elements() == 1) {
@@ -58,7 +58,7 @@ public class Sequential extends Model {
                     targetIndex = (int) output.get(0);
                 }
 
-                double loss = lossFunction.calculate(expected, prediction);
+                double loss = lossFunction.calculate(target, output);
                 totalLoss.updateAndGet(v -> v + loss);
 
                 Tensor predictions = classifications.get(targetIndex);

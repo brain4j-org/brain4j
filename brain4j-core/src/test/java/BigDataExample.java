@@ -14,6 +14,7 @@ import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public class BigDataExample {
 
@@ -47,12 +48,14 @@ public class BigDataExample {
 
     public void predict(Model model, ListDataSource source) {
         long start = System.nanoTime();
+        ExecutorService executor = Brain4J.getExecutor();
+
         while (source.hasNext()) {
             Pair<Tensor, Tensor> batch = source.nextBatch();
-
-            Tensor input = batch.first();
-            model.predict(input);
+            executor.submit(() -> model.predict(batch.first()));
         }
+
+        executor.close();
         long end = System.nanoTime();
 
         System.out.println("---- Prediction ----");
@@ -70,6 +73,6 @@ public class BigDataExample {
             samples.add(new Sample(input, output));
         }
 
-        return new AsyncDataSource(samples, 8);
+        return new AsyncDataSource(samples, false, 8);
     }
 }

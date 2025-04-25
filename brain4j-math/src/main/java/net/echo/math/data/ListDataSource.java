@@ -5,6 +5,7 @@ import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -16,14 +17,14 @@ public class ListDataSource implements Cloneable {
     protected final int batches;
     protected int cursor;
 
-    public ListDataSource(List<Sample> samples, int batches) {
+    public ListDataSource(List<Sample> samples, boolean shuffle, int batches) {
         this.samples = samples;
         this.batchedInputs = new ArrayList<>();
         this.batchedLabels = new ArrayList<>();
         this.batches = batches;
 
-        if (samples.size() % batches != 0) {
-            throw new IllegalArgumentException("The number of samples must be a multiple of the number of batches.");
+        if (shuffle) {
+            Collections.shuffle(this.samples);
         }
 
         computeBatches();
@@ -34,7 +35,7 @@ public class ListDataSource implements Cloneable {
     }
 
     public boolean hasNext() {
-        return cursor < batches;
+        return cursor <= batches;
     }
 
     public void reset() {
@@ -93,6 +94,6 @@ public class ListDataSource implements Cloneable {
 
     @Override
     public ListDataSource clone() {
-        return new ListDataSource(samples, batches);
+        return new ListDataSource(samples, false, batches);
     }
 }

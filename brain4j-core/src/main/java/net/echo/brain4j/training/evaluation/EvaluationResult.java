@@ -12,6 +12,8 @@ public class EvaluationResult {
     private final int classes;
     private final Map<Integer, Tensor> classifications;
 
+    private int totalCorrect;
+    private int totalIncorrect;
     private double accuracy;
     private double precision;
     private double recall;
@@ -25,9 +27,6 @@ public class EvaluationResult {
     }
 
     private void calculateStats() {
-        int totalCorrect = 0;
-        int totalIncorrect = 0;
-
         int[] truePositives = new int[classes];
         int[] falsePositives = new int[classes];
         int[] falseNegatives = new int[classes];
@@ -61,7 +60,6 @@ public class EvaluationResult {
             recallSum += recall;
         }
 
-        System.out.println("Total correct: " + totalCorrect + ", total incorrect: " + totalIncorrect);
         this.accuracy = (double) totalCorrect / (totalCorrect + totalIncorrect);
         this.precision = precisionSum / classes;
         this.recall = recallSum / classes;
@@ -119,6 +117,14 @@ public class EvaluationResult {
 
     public int classes() {
         return classes;
+    }
+
+    public int totalCorrect() {
+        return totalCorrect;
+    }
+
+    public int totalIncorrect() {
+        return totalIncorrect;
     }
 
     public double accuracy() {
