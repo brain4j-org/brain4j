@@ -9,7 +9,7 @@ import java.util.Iterator;
  * Represents a mathematical vector.
  * This class is deprecated and will be completely replaced by the {@link Tensor} class.
  */
-@Deprecated(since = "2.6.0", forRemoval = true)
+@Deprecated(since = "2.7.0", forRemoval = true)
 public class Vector implements Cloneable, Iterable<Double> {
 
     private final float[] data;
