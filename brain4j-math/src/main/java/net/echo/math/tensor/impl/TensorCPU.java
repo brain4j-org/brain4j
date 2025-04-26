@@ -1,6 +1,7 @@
 package net.echo.math.tensor.impl;
 
 import net.echo.math.activation.Activation;
+import net.echo.math.data.AsyncDataSource;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.autograd.AutogradContext;
@@ -18,6 +19,7 @@ import java.util.SplittableRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 public class TensorCPU implements Cloneable, Tensor {
     
@@ -673,19 +675,21 @@ public class TensorCPU implements Cloneable, Tensor {
             throw new IllegalArgumentException("matmul requires 2D tensors");
         }
 
-        int m = shape[0];
-        int n = shape[1];
-        int p = other.shape()[1];
-
+        int m = shape[0], n = shape[1], p = other.shape()[1];
         if (n != other.shape()[0]) {
             throw new IllegalArgumentException("Dimensions do not match: " + n + " != " + other.shape()[0]);
         }
 
+        long totalOps = (long) m * n * p;
+        long threshold = AsyncDataSource.PROCESSORS * 100_000L;
+
+        if (totalOps > threshold) {
+            return matmulParallel(other);
+        }
+
         Tensor result = new TensorCPU(m, p);
 
-        float[] A = this.getData();
-        float[] B = other.getData();
-        float[] C = result.getData();
+        float[] A = this.getData(), B = other.getData(), C = result.getData();
 
         int blockSize = 64;
 
@@ -716,6 +720,27 @@ public class TensorCPU implements Cloneable, Tensor {
                 }
             }
         }
+
+        return result;
+    }
+
+    private Tensor matmulParallel(Tensor other) {
+        int m = shape[0], n = shape[1], p = other.shape()[1];
+
+        Tensor result = new TensorCPU(m, p);
+        float[] A = this.getData(), B = other.getData(), C = result.getData();
+
+        IntStream.range(0, m).parallel().forEach(i -> {
+            int aRow = i * n;
+            int cRow = i * p;
+            for (int k = 0; k < n; k++) {
+                float aVal = A[aRow + k];
+                int bRow = k * p;
+                for (int j = 0; j < p; j++) {
+                    C[cRow + j] += aVal * B[bRow + j];
+                }
+            }
+        });
 
         return result;
     }

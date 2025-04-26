@@ -29,9 +29,7 @@ public class XorExample {
 
         Model model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR),
-                new LayerNorm(),
                 new DenseLayer(32, Activations.MISH),
-                new LayerNorm(),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -59,6 +57,6 @@ public class XorExample {
             }
         }
 
-        return new AsyncDataSource(samples, false, 1);
+        return new ListDataSource(samples, false, 1);
     }
 }

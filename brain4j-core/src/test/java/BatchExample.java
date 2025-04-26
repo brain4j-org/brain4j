@@ -5,7 +5,7 @@ import net.echo.math.tensor.Tensors;
 public class BatchExample {
 
     public static void main(String[] args) {
-        Brain4J.useGPUIfAvailable();
+//        Brain4J.useGPUIfAvailable();
 
         int batches = 8;
         int samples = 327680;
