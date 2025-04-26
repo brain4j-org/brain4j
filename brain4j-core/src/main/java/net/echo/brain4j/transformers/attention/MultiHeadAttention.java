@@ -68,13 +68,9 @@ public class MultiHeadAttention {
     }
 
     public int getTotalNeurons() {
-        int total = 0;
-
-        for (AttentionHead head : heads) {
-            total += head.size();
-        }
-
-        return total;
+        return heads.stream()
+                .mapToInt(AttentionHead::size)
+                .sum();
     }
 
     public void setUseCache(boolean useCache) {

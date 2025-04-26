@@ -78,15 +78,18 @@ public class AttentionHead {
     }
 
     public Tensor attend(Tensor input) {
-        Tensor Q = input.matmul(queryWeightsTensor);
-        Tensor K = input.matmul(keyWeightsTensor);
-        Tensor V = input.matmul(valueWeightsTensor);
+        // input = [seq_length, input_dimension]
+        Tensor Q = input.matmul(queryWeightsTensor); // [seq_length, head_dimension]
+        Tensor K = input.matmul(keyWeightsTensor); // [seq_length, head_dimension]
+        Tensor V = input.matmul(valueWeightsTensor); // [seq_length, head_dimension]
 
         double normalizer = Math.sqrt(headDimension);
 
+        // [seq_length, seq_length]
         Tensor scores = Q.matmul(K.transpose()).div(normalizer);
         Tensor attentionWeights = scores.softmax();
 
+        // [seq_length, head_dimension]
         return attentionWeights.matmul(V);
     }
     

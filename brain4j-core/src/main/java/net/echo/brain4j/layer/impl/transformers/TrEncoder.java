@@ -19,6 +19,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 public class TrEncoder extends Layer {
 
@@ -172,13 +173,10 @@ public class TrEncoder extends Layer {
     }
 
     public int getFeedForwardSize() {
-        int total = 0;
-
-        for (Layer layer : feedForward.getLayers()) {
-            total += layer.getTotalParams();
-        }
-
-        return total;
+        return feedForward.getLayers()
+                .stream()
+                .mapToInt(Layer::getTotalParams)
+                .sum();
     }
 }
 
