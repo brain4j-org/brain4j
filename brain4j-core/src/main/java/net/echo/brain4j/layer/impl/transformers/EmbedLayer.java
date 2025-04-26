@@ -47,8 +47,8 @@ public class EmbedLayer extends Layer {
             int index = (int) input.get(i);
 
             if (index < 0 || index >= vocabSize) {
-                throw new IllegalArgumentException("Invalid index: %s for input tensor: %s".formatted(index,
-                        input.toString("%.1f")));
+                throw new IllegalArgumentException(
+                        "Invalid index: " + index + " for input tensor: " + input.toString("%.1f"));
             }
 
             Tensor embedding = embeddings.get(index);
