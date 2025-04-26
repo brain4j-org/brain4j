@@ -1,13 +1,9 @@
-package xor;
-
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.Adam;
-import net.echo.math.DataSet;
 import net.echo.math.activation.Activations;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.data.Sample;
