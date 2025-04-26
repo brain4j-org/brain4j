@@ -138,9 +138,17 @@ public abstract class Model implements Adapter {
     }
 
     public void fit(ListDataSource dataSource, int epoches, int evaluateEvery) {
+        fit(dataSource, dataSource, epoches, evaluateEvery);
+    }
+
+    public void fit(ListDataSource trainSource, ListDataSource testSource, int epoches) {
+        fit(trainSource, testSource, epoches, Integer.MAX_VALUE);
+    }
+
+    public void fit(ListDataSource trainSource, ListDataSource testSource, int epoches, int evaluateEvery) {
         for (int i = 0; i < epoches; i++) {
             long start = System.nanoTime();
-            propagation.iteration(dataSource);
+            propagation.iteration(trainSource);
             double tookMs = (System.nanoTime() - start) / 1e6;
 
             int currentEpoch = i + 1;
@@ -150,12 +158,13 @@ public abstract class Model implements Adapter {
             }
 
             if (currentEpoch % evaluateEvery == 0) {
-                EvaluationResult result = evaluate(dataSource.clone());
+                EvaluationResult result = evaluate(testSource.clone());
                 System.out.printf("[%s/%s] Loss: %.4f | Accuracy: %.2f%% | F1-Score: %.2f%%\n", currentEpoch, epoches,
                         result.loss(), result.accuracy() * 100, result.f1Score() * 100);
             }
         }
     }
+
 
     public void printProgressBar(double tookMs, int currentEpoch, int epoches, int evaluateEvery) {
         int progressBarLength = 20;

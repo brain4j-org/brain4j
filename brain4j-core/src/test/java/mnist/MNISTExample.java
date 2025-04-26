@@ -27,7 +27,9 @@ public class MNISTExample {
     public void start() throws Exception {
         Brain4J.setLogging(true);
 
-        ListDataSource dataSource = getDataSource();
+        ListDataSource trainSource = getDataSource("mnist_train.csv");
+        ListDataSource testSource = getDataSource("mnist_test.csv");
+
         Model model = new Sequential(
                 new DenseLayer(784, Activations.LINEAR),
                 new DenseLayer(128, Activations.RELU),
@@ -38,13 +40,13 @@ public class MNISTExample {
         model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
         System.out.println(model.summary());
 
-        model.fit(dataSource, 50, 10);
+        model.fit(trainSource, testSource, 50, 10);
         model.save("mnist.b4j");
     }
 
-    public ListDataSource getDataSource() throws IOException {
+    public ListDataSource getDataSource(String fileName) throws IOException {
         List<Sample> samples = new ArrayList<>();
-        List<String> lines = Files.readAllLines(new File("mnist_train.csv").toPath());
+        List<String> lines = Files.readAllLines(new File(fileName).toPath());
 
         for (int i = 1; i < lines.size(); i++) {
             String line = lines.get(i);

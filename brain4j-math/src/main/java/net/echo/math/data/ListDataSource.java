@@ -15,12 +15,14 @@ public class ListDataSource implements Cloneable {
     protected final List<Tensor> batchedInputs;
     protected final List<Tensor> batchedLabels;
     protected final int batchSize;
+    protected final int batches;
     protected int cursor;
 
     public ListDataSource(List<Sample> samples, boolean shuffle, int batchSize) {
         this.samples = samples;
         this.batchedInputs = new ArrayList<>();
         this.batchedLabels = new ArrayList<>();
+        this.batches = samples.size() / batchSize;
         this.batchSize = batchSize;
 
         if (shuffle) {
@@ -35,7 +37,7 @@ public class ListDataSource implements Cloneable {
     }
 
     public boolean hasNext() {
-        return cursor < batchSize;
+        return cursor < batches;
     }
 
     public void reset() {
