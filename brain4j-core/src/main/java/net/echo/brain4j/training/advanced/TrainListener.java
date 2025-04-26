@@ -1,9 +1,7 @@
 package net.echo.brain4j.training.advanced;
 
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.math.DataSet;
 import net.echo.math.data.ListDataSource;
 
 public class TrainListener {

@@ -2,6 +2,7 @@ package net.echo.math;
 
 import java.util.*;
 
+@Deprecated(since = "2.7.0", forRemoval = true)
 public class DataSet<T> implements Iterable<T> {
 
     protected final List<List<T>> partitions;

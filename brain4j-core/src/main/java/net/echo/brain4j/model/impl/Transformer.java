@@ -7,18 +7,15 @@ import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.StatesCache;
-import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.optimizer.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.math.BrainUtils;
-import net.echo.math.DataSet;
 import net.echo.math.Pair;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.index.Range;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
