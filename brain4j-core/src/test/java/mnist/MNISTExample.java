@@ -5,6 +5,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math.activation.Activations;
 import net.echo.math.data.ListDataSource;
@@ -40,8 +41,12 @@ public class MNISTExample {
         model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
         System.out.println(model.summary());
 
+        // model.load("mnist.b4j"); If you want to load the pre-trained model
         model.fit(trainSource, testSource, 50, 10);
         model.save("mnist.b4j");
+
+        EvaluationResult result = model.evaluate(testSource);
+        System.out.println(result.confusionMatrix());
     }
 
     public ListDataSource getDataSource(String fileName) throws IOException {

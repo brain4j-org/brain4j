@@ -15,7 +15,12 @@ import static net.echo.math.constants.Constants.GRADIENT_CLIP;
 public class BrainUtils {
 
     public static String formatDuration(double seconds) {
-        Duration duration = Duration.ofMillis((long) (seconds * 1000));
+        double millis = seconds * 1000;
+        Duration duration = Duration.ofMillis((long) millis);
+
+        if (seconds < 1) {
+            return String.format("%.2fms", millis);
+        }
 
         if (seconds < 60) {
             return String.format("%.2fs", seconds);

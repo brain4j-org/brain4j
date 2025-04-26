@@ -41,8 +41,8 @@ public class GuideExample {
             }
         }
 
-        ListDataSource dataSet = new ListDataSource(samples, false, 1);
-        model.fit(dataSet, 1000, 100);
+        ListDataSource dataSet = new ListDataSource(samples, false, 4);
+        model.fit(dataSet, 50, 10);
 
         // You can evaluate the model like this
         EvaluationResult evaluation = model.evaluate(dataSet);
