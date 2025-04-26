@@ -15,8 +15,8 @@ public class AsyncDataSource extends ListDataSource {
     public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
     public static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(PROCESSORS);
 
-    public AsyncDataSource(List<Sample> samples, boolean shuffle, int batches) {
-        super(samples, shuffle, batches);
+    public AsyncDataSource(List<Sample> samples, boolean shuffle, int batchSize) {
+        super(samples, shuffle, batchSize);
     }
 
     public void propagate(Consumer<Pair<Tensor, Tensor>> task) {

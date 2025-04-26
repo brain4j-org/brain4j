@@ -23,7 +23,7 @@ public class BigDataExample {
     }
 
     public void start() {
-//        Brain4J.useGPUIfAvailable();
+        Brain4J.setLogging(true);
         Model model = new Sequential(
                 new DenseLayer(13, Activations.LINEAR),
                 new DenseLayer(256, Activations.RELU),
@@ -73,6 +73,6 @@ public class BigDataExample {
             samples.add(new Sample(input, output));
         }
 
-        return new AsyncDataSource(samples, false, 8);
+        return new ListDataSource(samples, true, 256);
     }
 }
