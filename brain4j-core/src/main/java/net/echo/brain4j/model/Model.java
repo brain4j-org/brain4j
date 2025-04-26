@@ -139,31 +139,43 @@ public abstract class Model implements Adapter {
 
     public void fit(ListDataSource dataSource, int epoches, int evaluateEvery) {
         for (int i = 0; i < epoches; i++) {
+            long start = System.nanoTime();
             propagation.iteration(dataSource);
+            double tookMs = (System.nanoTime() - start) / 1e6;
 
             int currentEpoch = i + 1;
 
             if (Brain4J.isLogging()) {
-                printProgressBar(currentEpoch, epoches, evaluateEvery);
+                printProgressBar(tookMs, currentEpoch, epoches, evaluateEvery);
             }
 
             if (currentEpoch % evaluateEvery == 0) {
                 EvaluationResult result = evaluate(dataSource.clone());
-                System.out.printf("[%s/%s] Loss: %.4f | Acc: %.2f%% | F1: %.2f%%\n", currentEpoch, epoches, result.loss(),
-                        result.accuracy() * 100, result.f1Score() * 100);
+                System.out.printf("[%s/%s] Loss: %.4f | Accuracy: %.2f%% | F1-Score: %.2f%%\n", currentEpoch, epoches,
+                        result.loss(), result.accuracy() * 100, result.f1Score() * 100);
             }
         }
     }
 
-    public void printProgressBar(int currentEpoch, int epoches, int evaluateEvery) {
-        int progressBarLength = 30;
+    public void printProgressBar(double tookMs, int currentEpoch, int epoches, int evaluateEvery) {
+        int progressBarLength = 20;
         double percentage = (double) currentEpoch / epoches;
 
         int repetitions = (int) (percentage * progressBarLength);
         int remaining = progressBarLength - repetitions;
 
-        String progressBar = "\u001B[32m" + Brain4J.getHeaderChar().repeat(repetitions) + "\u001B[0m" + "━".repeat(remaining);
-        System.out.printf("\rEpoch: %s/%s %-30s %.2f%%", currentEpoch, epoches, progressBar, percentage * 100);
+        String barChar = Brain4J.getHeaderChar();
+        int remainingEpoches = epoches - currentEpoch;
+
+        double seconds = tookMs / 1000;
+        double remainingTime = seconds * remainingEpoches;
+
+        String remainingTimeStr = BrainUtils.formatDuration(remainingTime);
+        String timeStr = BrainUtils.formatDuration(seconds);
+
+        String progressBar = "\u001B[32m" + barChar.repeat(repetitions) + "\u001B[0m" + barChar.repeat(remaining);
+        System.out.printf("\r[%s/%s] %-30s %.2f%% [%s/epoch | %s remaining]", currentEpoch, epoches, progressBar,
+                percentage * 100, timeStr, remainingTimeStr);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
             System.out.println();
@@ -180,6 +192,10 @@ public abstract class Model implements Adapter {
 
     public Model compile(Loss function, Optimizer optimizer) {
         return compile(function.getFunction(), optimizer);
+    }
+
+    public Model compile(Loss function, Optimizer optimizer, Updater updater) {
+        return compile(WeightInit.UNIFORM_XAVIER.getFunction(), function.getFunction(), optimizer, updater);
     }
 
     public Model compile(LossFunction function, Optimizer optimizer) {

@@ -34,6 +34,6 @@ public class AsyncDataSource extends ListDataSource {
 
     @Override
     public AsyncDataSource clone() {
-        return new AsyncDataSource(samples, false, batches);
+        return new AsyncDataSource(samples, false, batchSize);
     }
 }

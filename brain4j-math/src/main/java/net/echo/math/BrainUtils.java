@@ -4,6 +4,7 @@ import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 
 import java.lang.reflect.Constructor;
+import java.time.Duration;
 import java.util.List;
 
 import static net.echo.math.constants.Constants.GRADIENT_CLIP;
@@ -12,6 +13,21 @@ import static net.echo.math.constants.Constants.GRADIENT_CLIP;
  * Utility class for conversions and value matching.
  */
 public class BrainUtils {
+
+    public static String formatDuration(double seconds) {
+        Duration duration = Duration.ofMillis((long) (seconds * 1000));
+
+        if (seconds < 60) {
+            return String.format("%.2fs", seconds);
+        }
+
+        long minutes = duration.toMinutesPart();
+        long secs = duration.toSecondsPart();
+
+        return (secs == 0)
+                ? String.format("%dm", minutes)
+                : String.format("%dm%ds", minutes, secs);
+    }
 
     public static double estimateMaxLearningRate(Tensor X) {
         if (X.dimension() == 1) {

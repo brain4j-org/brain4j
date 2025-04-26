@@ -23,7 +23,7 @@ public class BigDataExample {
     }
 
     public void start() {
-        Brain4J.useGPUIfAvailable();
+//        Brain4J.useGPUIfAvailable();
         Model model = new Sequential(
                 new DenseLayer(13, Activations.LINEAR),
                 new DenseLayer(256, Activations.RELU),

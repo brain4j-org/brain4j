@@ -14,14 +14,14 @@ public class ListDataSource implements Cloneable {
     protected final List<Sample> samples;
     protected final List<Tensor> batchedInputs;
     protected final List<Tensor> batchedLabels;
-    protected final int batches;
+    protected final int batchSize;
     protected int cursor;
 
-    public ListDataSource(List<Sample> samples, boolean shuffle, int batches) {
+    public ListDataSource(List<Sample> samples, boolean shuffle, int batchSize) {
         this.samples = samples;
         this.batchedInputs = new ArrayList<>();
         this.batchedLabels = new ArrayList<>();
-        this.batches = batches;
+        this.batchSize = batchSize;
 
         if (shuffle) {
             Collections.shuffle(this.samples);
@@ -35,7 +35,7 @@ public class ListDataSource implements Cloneable {
     }
 
     public boolean hasNext() {
-        return cursor < batches;
+        return cursor < batchSize;
     }
 
     public void reset() {
@@ -66,8 +66,6 @@ public class ListDataSource implements Cloneable {
 
     private void computeBatches() {
         int size = size();
-        int batchSize = size / batches;
-
         int index = 0;
 
         while (index < size) {
@@ -94,6 +92,6 @@ public class ListDataSource implements Cloneable {
 
     @Override
     public ListDataSource clone() {
-        return new ListDataSource(samples, false, batches);
+        return new ListDataSource(samples, false, batchSize);
     }
 }
