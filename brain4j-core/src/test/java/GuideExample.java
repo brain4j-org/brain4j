@@ -1,9 +1,10 @@
 import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.Loss;
+import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.brain4j.training.optimizer.impl.Adam;
+import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math.activation.Activations;
 import net.echo.math.data.ListDataSource;
 import net.echo.math.data.Sample;
@@ -17,14 +18,14 @@ public class GuideExample {
 
     public static void main(String[] args) {
         Brain4J.setLogging(true);
-        Sequential model = new Sequential(
+        Model model = new Sequential(
                 new DenseLayer(2, Activations.LINEAR), // 2 Input neurons
                 new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
                 new DenseLayer(32, Activations.MISH), // 32 Hidden neurons
                 new DenseLayer(1, Activations.SIGMOID) // 1 Output neuron for classification
         );
 
-        model.compile(Loss.BINARY_CROSS_ENTROPY, new Adam(0.1));
+        model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.1));
 
         List<Sample> samples = new ArrayList<>();
 
@@ -37,11 +38,14 @@ public class GuideExample {
             }
         }
 
-        ListDataSource dataSet = new ListDataSource(samples, false, 4);
-        model.fit(dataSet, 50, 10);
+        // Samples, no shuffle, 4 of batch size
+        ListDataSource dataSource = new ListDataSource(samples, false, 4);
+
+        // Fit the model for 50 epoches, evaluate every 10
+        model.fit(dataSource, 50, 10);
 
         // You can evaluate the model like this
-        EvaluationResult evaluation = model.evaluate(dataSet);
+        EvaluationResult evaluation = model.evaluate(dataSource);
         System.out.println(evaluation.confusionMatrix());
     }
 }
