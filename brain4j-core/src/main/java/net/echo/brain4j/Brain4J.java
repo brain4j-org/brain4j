@@ -28,7 +28,7 @@ public class Brain4J {
      * @return The current version.
      */
     public static String version() {
-        return "2.7.0";
+        return "2.7.1";
     }
 
     /**

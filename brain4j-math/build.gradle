@@ -10,7 +10,3 @@ dependencies {
 shadowJar {
     archiveFileName = "brain4j-math-${parent.version}.jar"
 }
-
-tasks.named("jar") {
-    enabled = false
-}

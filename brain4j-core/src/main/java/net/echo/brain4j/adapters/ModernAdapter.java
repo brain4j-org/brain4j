@@ -23,7 +23,7 @@ public class ModernAdapter {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DataOutputStream dataStream = new DataOutputStream(outputStream);
 
-        dataStream.writeUTF("2.7.0");
+        dataStream.writeUTF("2.7.1");
         dataStream.writeInt(model.getSeed()); // seed
         dataStream.writeUTF(model.getLossFunction().getClass().getName()); // loss_function
         dataStream.writeUTF(model.getWeightInit().getClass().getName()); // weight_init
