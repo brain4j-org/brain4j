@@ -3,4 +3,5 @@ jdk:
 
 build:
   commands:
-    - ./gradlew shadowJar
+    - ./gradlew :brain4j-core:shadowJar
+    - ./gradlew :brain4j-math:shadowJar
