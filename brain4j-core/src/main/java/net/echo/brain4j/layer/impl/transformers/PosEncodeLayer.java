@@ -58,7 +58,7 @@ public class PosEncodeLayer extends Layer {
     }
 
     @Override
-    public void connect(Random generator, Layer previous, Layer next, double bound) {
+    public void connect(Random generator, Layer previous, double bound) {
         this.weights = Tensors.zeros(0);
     }
 

@@ -21,7 +21,7 @@ public class EmbedLayer extends Layer {
     }
 
     @Override
-    public void connect(Random generator, Layer previous, Layer next, double bound) {
+    public void connect(Random generator, Layer previous, double bound) {
         this.weights = Tensors.matrix(vocabSize, embeddingDim);
 
         for (int i = 0; i < vocabSize; i++) {
