@@ -125,8 +125,8 @@ public abstract class Layer implements Adapter {
         return delta;
     }
 
-    public void connect(Random generator, Layer previous, Layer next, double bound) {
-        this.nextLayer = next;
+    public void connect(Random generator, Layer previous, double bound) {
+        if (previous == null) return;
 
         int input = previous.getTotalNeurons();
         int output = this.getTotalNeurons();

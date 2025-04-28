@@ -57,19 +57,22 @@ public abstract class Model implements Adapter {
     }
 
     public void connect(WeightInitializer weightInit) {
-        Layer previousLayer = layers.getFirst();
+        Layer previousLayer = null;
 
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+        for (Layer layer : layers) {
             layer.compile(weightInit, lossFunction, optimizer, updater);
 
-            if (i > 0 && layer.canPropagate()) {
-                int inputNeurons = previousLayer.getTotalNeurons();
-                int outputNeurons = layer.getTotalNeurons();
+            if (layer.canPropagate()) {
+                double bound = 0;
 
-                double bound = weightInit.getBound(inputNeurons, outputNeurons);
+                if (previousLayer != null) {
+                    int inputNeurons = previousLayer.getTotalNeurons();
+                    int outputNeurons = layer.getTotalNeurons();
 
-                layer.connect(generator, previousLayer, null, bound);
+                    bound = weightInit.getBound(inputNeurons, outputNeurons);
+                }
+
+                layer.connect(generator, previousLayer, bound);
                 previousLayer = layer;
             }
         }
