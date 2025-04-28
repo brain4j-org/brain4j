@@ -1,14 +1,15 @@
 package mnist;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-
 import net.echo.brain4j.adapters.ModernAdapter;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class MNISTTestApp extends JFrame {
 
@@ -78,11 +79,11 @@ public class MNISTTestApp extends JFrame {
 
         private final int gridSize = 28;
         private final int scale = 20;
-        private final int[][] pixels;
+        private final float[][] pixels; // cambiato da int[][] a float[][] !
         private DrawingListener drawingListener;
 
         public DrawingPanel() {
-            pixels = new int[gridSize][gridSize];
+            pixels = new float[gridSize][gridSize];
             setBackground(Color.WHITE);
 
             addMouseListener(new MouseAdapter() {
@@ -106,9 +107,9 @@ public class MNISTTestApp extends JFrame {
             int y = e.getY() / scale;
             if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
                 if (isPenSelected()) {
-                    pixels[y][x] = 1;
+                    applyBrush(x, y);
                 } else {
-                    pixels[y][x] = 0;
+                    erase(x, y);
                 }
                 repaint();
                 if (drawingListener != null) {
@@ -117,11 +118,38 @@ public class MNISTTestApp extends JFrame {
             }
         }
 
+        private void applyBrush(int x, int y) {
+            float centerIntensity = 1.0f;
+            float sideIntensity = 0.3f;
+
+            setPixel(x, y, centerIntensity);
+            setPixel(x - 1, y, sideIntensity);
+            setPixel(x + 1, y, sideIntensity);
+            setPixel(x, y - 1, sideIntensity);
+            setPixel(x, y + 1, sideIntensity);
+        }
+
+        private void erase(int x, int y) {
+            setPixel(x, y, 0.0f);
+            setPixel(x - 1, y, 0.0f);
+            setPixel(x + 1, y, 0.0f);
+            setPixel(x, y - 1, 0.0f);
+            setPixel(x, y + 1, 0.0f);
+        }
+
+        private void setPixel(int x, int y, float intensity) {
+            if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+                if (intensity > pixels[y][x]) {
+                    pixels[y][x] = intensity; // sovrascrive solo se aumenta l'intensità
+                }
+            }
+        }
+
         public float[] getImageData() {
             float[] data = new float[gridSize * gridSize];
             for (int y = 0; y < gridSize; y++) {
                 for (int x = 0; x < gridSize; x++) {
-                    data[y * gridSize + x] = pixels[y][x] * 255;
+                    data[y * gridSize + x] = pixels[y][x] * 255f;
                 }
             }
             return data;
@@ -130,7 +158,7 @@ public class MNISTTestApp extends JFrame {
         public void clear() {
             for (int y = 0; y < gridSize; y++) {
                 for (int x = 0; x < gridSize; x++) {
-                    pixels[y][x] = 0;
+                    pixels[y][x] = 0.0f;
                 }
             }
             repaint();
@@ -145,7 +173,8 @@ public class MNISTTestApp extends JFrame {
             super.paintComponent(g);
             for (int y = 0; y < gridSize; y++) {
                 for (int x = 0; x < gridSize; x++) {
-                    g.setColor(pixels[y][x] == 1 ? Color.BLACK : Color.WHITE);
+                    int gray = 255 - (int)(pixels[y][x] * 255);
+                    g.setColor(new Color(gray, gray, gray));
                     g.fillRect(x * scale, y * scale, scale, scale);
                     g.setColor(Color.LIGHT_GRAY);
                     g.drawRect(x * scale, y * scale, scale, scale);
@@ -153,6 +182,7 @@ public class MNISTTestApp extends JFrame {
             }
         }
     }
+
 
     private interface DrawingListener {
         void onDrawingChanged();

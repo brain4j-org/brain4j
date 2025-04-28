@@ -5,7 +5,26 @@ package net.echo.math.constants;
  */
 public final class Constants {
     
-    private Constants() {}
+    private Constants() {
+    }
+
+    public static final String RESET = "\033[0m";
+
+    public static final String WHITE = "\033[97m";
+
+    public static final String GREEN = "\033[92m";
+
+    public static final String BLUE = "\033[94m";
+
+    public static final String CYAN = "\033[96m";
+
+    public static final String YELLOW = "\033[93m";
+
+    public static final String MAGENTA = "\033[95m";
+
+    public static final String PURPLE = "\033[35m";
+
+    public static final String GRAY = "\033[37m";
 
     public static final double PI = Math.PI;
     

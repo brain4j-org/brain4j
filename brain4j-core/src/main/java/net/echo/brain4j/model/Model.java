@@ -32,6 +32,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static net.echo.math.constants.Constants.*;
+
 /**
  * Represents an abstract neural network model.
  * Inputs and outputs are represented by n-dimensional tensors.
@@ -180,9 +182,14 @@ public abstract class Model implements Adapter {
         String remainingTimeStr = BrainUtils.formatDuration(remainingTime);
         String timeStr = BrainUtils.formatDuration(seconds);
 
-        String progressBar = "\u001B[32m" + barChar.repeat(repetitions) + "\u001B[0m" + barChar.repeat(remaining);
-        System.out.printf("\r[%s/%s] %-30s %.2f%% [%s/epoch | %s remaining]", currentEpoch, epoches, progressBar,
-                percentage * 100, timeStr, remainingTimeStr);
+        String heading = WHITE + "[%s/%s] ";
+        String progressBar = BLUE + barChar.repeat(repetitions) + RESET + barChar.repeat(remaining);
+        String percentual = YELLOW + " %.2f%%" + RESET;
+        String time = GRAY + " [%s/epoch | %s remaining]" + RESET;
+
+        String message = String.format(heading + progressBar + percentual + time,
+                currentEpoch, epoches, percentage * 100, timeStr, remainingTimeStr);
+        System.out.print("\r" + message);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
             System.out.println();
