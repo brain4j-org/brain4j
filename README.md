@@ -11,6 +11,15 @@ Brain4J is available on [JitPack](https://jitpack.io/), for more details follow 
 * [Report an Issue](https://github.com/xEcho1337/brain4j/issues/new?template=Blank+issue)
 * [Documentation](https://github.com/xEcho1337/brain4j/wiki)
 
+## Preview
+
+This are some screenshots taken from the MNIST example.
+
+<p align="center">
+  <img width="45%" src="https://github.com/user-attachments/assets/04dc0bc3-f429-4809-ab10-a187004085c5" />
+  <img width="45%" src="https://github.com/user-attachments/assets/235cca1a-a1c1-4c48-a340-9bda88faa05b" />
+</p>
+
 ## Contact
 
 * Discord: `@xecho1337`
