@@ -68,7 +68,7 @@ public class EvaluationResult {
 
     public String confusionMatrix() {
         StringBuilder matrix = new StringBuilder();
-        String divider = BrainUtils.getHeader(" Evaluation Results ", Brain4J.getHeaderChar());
+        String divider = BrainUtils.getHeader(" Confusion Matrix ", Brain4J.getHeaderChar());
 
         matrix.append(divider);
         matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
@@ -80,7 +80,7 @@ public class EvaluationResult {
         matrix.append(secondary.formatted("Recall:", "%.4f".formatted(recall)));
         matrix.append(secondary.formatted("F1-score:", "%.4f".formatted(f1Score)));
 
-        divider = BrainUtils.getHeader(" Confusion Matrix ", Brain4J.getHeaderChar());
+        divider = BrainUtils.getHeader(" Evaluation Results ", Brain4J.getHeaderChar());
         matrix.append(divider);
         matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
         matrix.append(" ".repeat(7));
