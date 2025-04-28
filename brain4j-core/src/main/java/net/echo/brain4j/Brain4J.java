@@ -75,6 +75,20 @@ public class Brain4J {
     }
 
     /**
+     * Enables logging while training. Delegates to {@link #setLogging(boolean)}.
+     */
+    public static void enableLogging() {
+        setLogging(true);
+    }
+
+    /**
+     * Disables logging while training. Delegates to {@link #setLogging(boolean)}.
+     */
+    public static void disableLogging() {
+
+    }
+
+    /**
      * Gets the header char for the progress bar. Initializes the print stream if needed.
      * @return The header char
      */

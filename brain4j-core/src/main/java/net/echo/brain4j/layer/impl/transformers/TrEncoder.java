@@ -27,9 +27,9 @@ public class TrEncoder extends Layer {
     protected LayerNorm normalizer;
     protected DropoutLayer dropout;
     protected MultiHeadAttention attention;
+    protected double dropoutRate = 0.1; // default value
     protected int heads;
     protected int embeddingDim;
-    protected double dropoutRate = 0.1; // default value
 
     TrEncoder() {
         this.normalizer = new LayerNorm();
@@ -128,9 +128,12 @@ public class TrEncoder extends Layer {
         cache.setInputTensor(this, input);
 
         Tensor attended = attention.attend(cache, input, training);
-        Tensor normalized = normalizer.normalize(attended.add(input));
 
-        List<Tensor> normAttention = Tensors.toList(normalized);
+        if (training) attended = dropout.forward(cache, this, attended, true);
+
+        Tensor attentionOut = normalizer.normalize(input.add(attended));
+
+        List<Tensor> normAttention = Tensors.toList(attentionOut);
         List<Tensor> cached = cache.getFeedForwardForLayer(this);
 
         for (int i = 0; i < normAttention.size(); i++) {
@@ -146,7 +149,9 @@ public class TrEncoder extends Layer {
         Tensor merged = Tensors.mergeTensors(cached);
         cache.setOutputTensor(this, merged);
 
-        return normalizer.normalize(merged.add(normalized));
+        if (training) merged = dropout.forward(cache, this, merged, true);
+
+        return normalizer.normalize(attentionOut.add(merged));
     }
 
     @Override

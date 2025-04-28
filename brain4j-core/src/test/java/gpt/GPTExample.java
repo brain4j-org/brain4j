@@ -1,5 +1,6 @@
 package gpt;
 
+import net.echo.brain4j.Brain4J;
 import net.echo.brain4j.layer.impl.transformers.EmbedLayer;
 import net.echo.brain4j.layer.impl.transformers.PosEncodeLayer;
 import net.echo.brain4j.layer.impl.transformers.TrDecoder;
@@ -20,29 +21,31 @@ import java.util.List;
 
 public class GPTExample {
 
-    public static int EMBEDDING_DIM = 64;
-
     public static void main(String[] args) throws IOException {
         new GPTExample().start();
     }
 
     public void start() throws IOException {
+        Brain4J.setLogging(true);
+        final int embeddingDim = 64;
+
         List<String> corpus = Files.readAllLines(new File("corpus.txt").toPath());
 
         Tokenizer tokenizer = new SimpleTokenizer();
         Vocabulary vocabulary = new Vocabulary(tokenizer, corpus);
 
         Model model = new Transformer(
-                new EmbedLayer(vocabulary.size(), EMBEDDING_DIM),
-                new PosEncodeLayer(EMBEDDING_DIM),
+                new EmbedLayer(vocabulary.size(), embeddingDim),
+                new PosEncodeLayer(embeddingDim),
 
-                new TrDecoder(8, EMBEDDING_DIM),
-                new TrDecoder(8, EMBEDDING_DIM),
+                new TrDecoder(8, embeddingDim),
+                new TrDecoder(8, embeddingDim),
 
-                new VocabularyMapper(vocabulary.size(), EMBEDDING_DIM, 0.2)
+                new VocabularyMapper(vocabulary.size(), embeddingDim, 3)
         );
 
         model.compile(Loss.CROSS_ENTROPY, new Lion(0.01, 0.9));
+        System.out.println(model.summary());
 
         String input = "hello, world!";
 
