@@ -3,6 +3,7 @@ package net.echo.brain4j.layer.impl.transformers;
 import net.echo.brain4j.initialization.WeightInitializer;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
+import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.impl.Sequential;
@@ -19,24 +20,31 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 public class TrEncoder extends Layer {
 
     protected Sequential feedForward;
     protected LayerNorm normalizer;
-
+    protected DropoutLayer dropout;
     protected MultiHeadAttention attention;
     protected int heads;
     protected int embeddingDim;
+    protected double dropoutRate = 0.1; // default value
 
     TrEncoder() {
         this.normalizer = new LayerNorm();
+        this.dropout = new DropoutLayer(dropoutRate);
+    }
+
+    public TrEncoder(int numHeads, int embeddingDim, double dropoutRate) {
+        this(numHeads, embeddingDim);
+        this.dropoutRate = dropoutRate;
+        this.dropout = new DropoutLayer(dropoutRate);
     }
 
     public TrEncoder(int numHeads, int embeddingDim) {
         super(Activations.LINEAR.getFunction());
-        
+
         this.normalizer = new LayerNorm();
         this.feedForward = new Sequential(
                 new DenseLayer(embeddingDim, Activations.LINEAR),
@@ -46,6 +54,22 @@ public class TrEncoder extends Layer {
 
         this.heads = numHeads;
         this.embeddingDim = embeddingDim;
+        this.dropout = new DropoutLayer(dropoutRate);
+        this.attention = createAttention(numHeads, embeddingDim);
+    }
+
+    public Tensor propagate(Tensor input, StatesCache cache, boolean training) {
+        Tensor normalized = normalizer.normalize(input);
+
+        Tensor attended = attention.attend(cache, normalized, training);
+        if (training) attended = dropout.forward(cache, this, attended, training);
+        Tensor residual1 = attended.add(input);
+
+        Tensor normalized2 = normalizer.normalize(residual1);
+        Tensor ffnOutput = feedForward.predict(normalized2);
+        if (training) ffnOutput = dropout.forward(cache, this, ffnOutput, training);
+
+        return ffnOutput.add(residual1);
     }
 
     @Override
