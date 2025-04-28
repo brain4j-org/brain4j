@@ -25,8 +25,14 @@ jobs:
       - name: Build with Gradle (ShadowJar)
         run: ./gradlew buildAll
 
-      - name: Archive build artifacts
+      - name: Archive build core artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: build/libs/*.jar
+          path: brain4j-core/build/libs/*.jar
+
+      - name: Archive build math artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: brain4j-math/build/libs/*.jar
