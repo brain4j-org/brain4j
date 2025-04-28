@@ -80,32 +80,35 @@ public class EvaluationResult {
         matrix.append(secondary.formatted("Recall:", "%.4f".formatted(recall)));
         matrix.append(secondary.formatted("F1-score:", "%.4f".formatted(f1Score)));
 
-        divider = BrainUtils.getHeader(" Evaluation Results ", Brain4J.getHeaderChar());
-        matrix.append(divider);
-        matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
-        matrix.append(" ".repeat(7));
+        if (!classifications.isEmpty()) {
+            divider = BrainUtils.getHeader(" Evaluation Results ", Brain4J.getHeaderChar());
+            matrix.append(divider);
+            matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
+            matrix.append(" ".repeat(7));
 
-        for (int i = 0; i < classes; i++) {
-            matrix.append("%4d".formatted(i)).append(" ");
-        }
-
-        matrix.append("\n  ");
-        matrix.append("-".repeat(5 + classes * 5)).append("\n");
-
-        for (int i = 0; i < classes; i++) {
-            StringBuilder text = new StringBuilder();
-            Tensor predictions = classifications.get(i);
-
-            for (int j = 0; j < predictions.elements(); j++) {
-                int prediction = (int) predictions.get(j);
-                text.append("%4d".formatted(prediction)).append(" ");
+            for (int i = 0; i < classes; i++) {
+                matrix.append("%4d".formatted(i)).append(" ");
             }
 
-            matrix.append("%4d | ".formatted(i));
-            matrix.append(text).append("\n");
+            matrix.append("\n  ");
+            matrix.append("-".repeat(5 + classes * 5)).append("\n");
+
+            for (int i = 0; i < classes; i++) {
+                StringBuilder text = new StringBuilder();
+                Tensor predictions = classifications.get(i);
+
+                for (int j = 0; j < predictions.elements(); j++) {
+                    int prediction = (int) predictions.get(j);
+                    text.append("%4d".formatted(prediction)).append(" ");
+                }
+
+                matrix.append("%4d | ".formatted(i));
+                matrix.append(text).append("\n");
+            }
+
+            matrix.append("\n");
         }
 
-        matrix.append("\n");
         matrix.append(BrainUtils.getHeader("", Brain4J.getHeaderChar()));
 
         return matrix.toString();
