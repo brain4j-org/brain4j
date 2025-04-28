@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build:
@@ -23,7 +23,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle (ShadowJar)
-        run: ./gradlew shadowJar
+        run: ./gradlew buildAll
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v4
