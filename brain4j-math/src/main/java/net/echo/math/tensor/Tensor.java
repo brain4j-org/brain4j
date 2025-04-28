@@ -230,7 +230,7 @@ public interface Tensor extends Iterable<Float> {
     //=============================================================
     // Statistical operations
     //=============================================================
-    
+
     double sum();
     double mean();
     double variance();
@@ -238,7 +238,8 @@ public interface Tensor extends Iterable<Float> {
     double min();
     Tensor sum(int dim, boolean keepDim);
     Tensor mean(int dim, boolean keepDim);
-    
+    Tensor sign();
+
     //=============================================================
     // Shape manipulation
     //=============================================================

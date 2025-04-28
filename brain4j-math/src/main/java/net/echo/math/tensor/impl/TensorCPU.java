@@ -895,6 +895,23 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
+    public Tensor sign() {
+        Tensor result = of(shape);
+
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] > 0) {
+                result.getData()[i] = 1;
+            } else if (data[i] < 0) {
+                result.getData()[i] = -1;
+            } else {
+                result.getData()[i] = 0;
+            }
+        }
+
+        return result;
+    }
+
+    @Override
     public Tensor view(int... newShape) {
         int autoIdx = -1;
         int knownSize = 1;
