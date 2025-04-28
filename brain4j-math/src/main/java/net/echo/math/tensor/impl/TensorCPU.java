@@ -639,37 +639,6 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor oldMatmul(Tensor other) {
-        if (shape.length != 2 || other.shape().length != 2) {
-            throw new IllegalArgumentException("matmul requires 2D tensors");
-        }
-
-        int m = shape[0];
-        int n = shape[1];
-        int p = other.shape()[1];
-
-        if (n != other.shape()[0]) {
-            throw new IllegalArgumentException("The inner dimensions do not match: " + n + " != " + other.shape()[0]);
-        }
-
-        Tensor result = new TensorCPU(m, p);
-
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < p; j++) {
-                float sum = 0;
-
-                for (int k = 0; k < n; k++) {
-                    sum += get(i, k) * other.get(k, j);
-                }
-
-                result.set(sum, i, j);
-            }
-        }
-
-        return result;
-    }
-
-    @Override
     public Tensor matmul(Tensor other) {
         if (shape.length != 2 || other.shape().length != 2) {
             throw new IllegalArgumentException("matmul requires 2D tensors");

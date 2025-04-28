@@ -218,7 +218,6 @@ public interface Tensor extends Iterable<Float> {
     // Linear algebra operations
     //=============================================================
 
-    Tensor oldMatmul(Tensor other);
     Tensor matmul(Tensor other);
     double dot(Tensor other);
     double norm();
