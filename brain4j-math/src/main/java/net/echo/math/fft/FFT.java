@@ -4,6 +4,7 @@ import net.echo.math.complex.Complex;
 
 import java.util.Arrays;
 
+import static net.echo.math.BrainUtils.nextPowerOf2;
 import static net.echo.math.constants.Constants.PI;
 import static net.echo.math.constants.Constants.TWO_PI;
 
@@ -148,20 +149,6 @@ public final class FFT {
 
     public static boolean isPowerOf2(int n) {
         return n > 0 && (n & (n - 1)) == 0;
-    }
- 
-    public static int nextPowerOf2(int n) {
-        if (n <= 0) {
-            return 1;
-        }
-        
-        n--;
-        n |= n >>> 1;
-        n |= n >>> 2;
-        n |= n >>> 4;
-        n |= n >>> 8;
-        n |= n >>> 16;
-        return n + 1;
     }
     
     public static Complex[] zeroPad(Complex[] input, int size) {

@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.echo.math.BrainUtils.nextPowerOf2;
 import static net.echo.math.constants.Constants.*;
 import static org.jocl.CL.*;
 
@@ -755,17 +756,6 @@ public class TensorGPU extends TensorCPU {
         }
         
         return TensorGPU.of(new int[] {inputRows, inputCols}, resultData);
-    }
-    
-    private static int nextPowerOf2(int n) {
-        if (n <= 0) return 1;
-        n--;
-        n |= n >>> 1;
-        n |= n >>> 2;
-        n |= n >>> 4;
-        n |= n >>> 8;
-        n |= n >>> 16;
-        return n + 1;
     }
     
     private static long[] getOptimalWorkgroupSize(long globalSize) {

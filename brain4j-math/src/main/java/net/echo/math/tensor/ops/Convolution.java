@@ -5,6 +5,7 @@ import net.echo.math.fft.FFT;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 
+import static net.echo.math.BrainUtils.nextPowerOf2;
 import static net.echo.math.constants.Constants.EPSILON;
 import static net.echo.math.constants.Constants.FFT_THRESHOLD;
 
@@ -104,7 +105,7 @@ public final class Convolution {
         int kernelSize = kernel.shape()[0];
         
         int fullSize = inputSize + kernelSize - 1;
-        int fftSize = FFT.nextPowerOf2(fullSize);
+        int fftSize = nextPowerOf2(fullSize);
         
         Complex[] inputComplex = new Complex[fftSize];
         Complex[] kernelComplex = new Complex[fftSize];
@@ -283,8 +284,8 @@ public final class Convolution {
         int fullRows = inputRows + kernelRows - 1;
         int fullCols = inputCols + kernelCols - 1;
         
-        int fftRows = FFT.nextPowerOf2(fullRows);
-        int fftCols = FFT.nextPowerOf2(fullCols);
+        int fftRows = nextPowerOf2(fullRows);
+        int fftCols = nextPowerOf2(fullCols);
         
         Complex[][] inputComplex = new Complex[fftRows][fftCols];
         Complex[][] kernelComplex = new Complex[fftRows][fftCols];
