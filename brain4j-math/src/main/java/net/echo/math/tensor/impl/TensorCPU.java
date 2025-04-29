@@ -670,8 +670,11 @@ public class TensorCPU implements Cloneable, Tensor {
             throw new IllegalArgumentException("Inner dimensions must match: " + n + " != " + k);
         }
 
+        int[] resultShape = new int[dims];
+
         int batch = 1;
         for (int i = 0; i < dims - 2; i++) {
+            resultShape[i] = shape[i];
             batch *= shape[i];
         }
 
@@ -681,8 +684,6 @@ public class TensorCPU implements Cloneable, Tensor {
         if (totalOps > threshold) {
             return matmulParallel(other);
         }
-
-        int[] resultShape = Arrays.copyOf(shape, dims);
 
         resultShape[dims - 2] = m;
         resultShape[dims - 1] = p;
@@ -724,12 +725,12 @@ public class TensorCPU implements Cloneable, Tensor {
         int p = other.shape()[dims - 1];
 
         int batch = 1;
+        int[] resultShape = new int[dims];
 
         for (int i = 0; i < dims - 2; i++) {
+            resultShape[i] = shape[i];
             batch *= shape[i];
         }
-
-        int[] resultShape = Arrays.copyOf(shape, dims);
 
         resultShape[dims - 2] = m;
         resultShape[dims - 1] = p;
@@ -740,12 +741,12 @@ public class TensorCPU implements Cloneable, Tensor {
         float[] B = other.getData();
         float[] C = result.getData();
 
-        IntStream.range(0, batch).parallel().forEach(b -> {
+        for (int b = 0; b < batch; b++) {
             int offsetA = b * m * n;
             int offsetB = b * n * p;
             int offsetC = b * m * p;
 
-            for (int i = 0; i < m; i++) {
+            IntStream.range(0, m).parallel().forEach(i -> {
                 int rowA = offsetA + i * n;
                 int rowC = offsetC + i * p;
 
@@ -757,8 +758,9 @@ public class TensorCPU implements Cloneable, Tensor {
                         C[rowC + j] += aVal * B[colB + j];
                     }
                 }
-            }
-        });
+            });
+        }
+
 
         return result;
     }
