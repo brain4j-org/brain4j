@@ -640,17 +640,36 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor matmul(Tensor other) {
-        if (shape.length != 2 || other.shape().length != 2) {
-            throw new IllegalArgumentException("matmul requires 2D tensors");
+        if (shape.length < 2 || other.shape().length < 2) {
+            throw new IllegalArgumentException("Matrix multiplication requires at least 2D tensors!");
         }
 
-        int m = shape[0], n = shape[1], p = other.shape()[1];
-        if (n != other.shape()[0]) {
-            throw new IllegalArgumentException("Dimensions do not match: " + n + " != " + other.shape()[0]);
+        if (shape.length != other.shape().length) {
+            throw new IllegalArgumentException("Dimensions do not match: " + shape.length + " != " + other.shape().length);
+        }
+
+        int dimension = dimension();
+        int[] otherShape = other.shape();
+
+        // support for n-dimentional matmuls
+        int m = shape[dimension - 2];
+        int n = shape[dimension - 1];
+
+        int k = otherShape[dimension - 2];
+        int p = otherShape[dimension - 1];
+
+        if (n != k) {
+            throw new IllegalArgumentException("Dimensions do not match: " + n + " != " + k);
         }
 
         long totalOps = (long) m * n * p;
         long threshold = AsyncDataSource.PROCESSORS * 100_000L;
+
+//        if (dimension > 2) {
+//            for (int i = 0; i < shape.length; i++) {
+//                totalOps *= shape[i];
+//            }
+//        }
 
         if (totalOps > threshold) {
             return matmulParallel(other);
@@ -675,13 +694,13 @@ public class TensorCPU implements Cloneable, Tensor {
                         int indexA_i = i * n;
                         int indexC_i = i * p + jBlock;
 
-                        for (int k = kBlock; k < kMax; k++) {
-                            float aVal = A[indexA_i + k];
+                        for (int j = kBlock; j < kMax; j++) {
+                            float aVal = A[indexA_i + j];
 
-                            int indexB_k = k * p + jBlock;
+                            int indexB_k = j * p + jBlock;
                             int indexC = indexC_i;
 
-                            for (int j = jBlock; j < jMax; j++) {
+                            for (int l = jBlock; l < jMax; l++) {
                                 C[indexC++] += aVal * B[indexB_k++];
                             }
                         }

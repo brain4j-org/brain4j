@@ -58,20 +58,6 @@ public class TrEncoder extends Layer {
         this.attention = createAttention(numHeads, embeddingDim);
     }
 
-    public Tensor propagate(Tensor input, StatesCache cache, boolean training) {
-        Tensor normalized = normalizer.normalize(input);
-
-        Tensor attended = attention.attend(cache, normalized, training);
-        if (training) attended = dropout.forward(cache, this, attended, training);
-        Tensor residual1 = attended.add(input);
-
-        Tensor normalized2 = normalizer.normalize(residual1);
-        Tensor ffnOutput = feedForward.predict(normalized2);
-        if (training) ffnOutput = dropout.forward(cache, this, ffnOutput, training);
-
-        return ffnOutput.add(residual1);
-    }
-
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
@@ -127,7 +113,7 @@ public class TrEncoder extends Layer {
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         cache.setInputTensor(this, input);
 
-        Tensor attended = attention.attend(cache, input, training);
+        Tensor attended = attention.attend(cache, input);
 
         if (training) attended = dropout.forward(cache, this, attended, true);
 

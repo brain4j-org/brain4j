@@ -11,6 +11,6 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
 
     @Override
     public AttentionHead createAttentionHead() {
-        return new MaskedAttentionHead(modelDimension, headDimension);
+        return new MaskedAttentionHead(embeddingDim, headDimension);
     }
 }

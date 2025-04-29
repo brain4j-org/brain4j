@@ -51,7 +51,6 @@ public class GPTExample {
 
         model.compile(Loss.CROSS_ENTROPY, new Lion(0.01, 0.9));
 
-
         System.out.println(model.summary());
         System.out.println("Vocabulary Size: " + vocabSize);
 
