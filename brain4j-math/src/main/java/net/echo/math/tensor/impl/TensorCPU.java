@@ -645,66 +645,71 @@ public class TensorCPU implements Cloneable, Tensor {
         }
 
         if (shape.length != other.shape().length) {
-            throw new IllegalArgumentException("Dimensions do not match: " + shape.length + " != " + other.shape().length);
+            throw new IllegalArgumentException(
+                    "Dimensions do not match: " + shape.length + " != " + other.shape().length
+            );
         }
 
-        int dimension = dimension();
-        int[] otherShape = other.shape();
+        for (int i = 0; i < shape.length - 2; i++) {
+            if (shape[i] != other.shape()[i]) {
+                throw new IllegalArgumentException(
+                        "Batch dimensions do not match at index " + i + ": " + shape[i] + " != " + other.shape()[i]
+                );
+            }
+        }
 
-        // support for n-dimentional matmuls
-        int m = shape[dimension - 2];
-        int n = shape[dimension - 1];
+        int dims = shape.length;
 
-        int k = otherShape[dimension - 2];
-        int p = otherShape[dimension - 1];
+        int m = shape[dims - 2];
+        int n = shape[dims - 1];
+
+        int k = other.shape()[dims - 2];
+        int p = other.shape()[dims - 1];
 
         if (n != k) {
-            throw new IllegalArgumentException("Dimensions do not match: " + n + " != " + k);
+            throw new IllegalArgumentException("Inner dimensions must match: " + n + " != " + k);
         }
 
-        long totalOps = (long) m * n * p;
-        long threshold = AsyncDataSource.PROCESSORS * 100_000L;
+        int batch = 1;
+        for (int i = 0; i < dims - 2; i++) {
+            batch *= shape[i];
+        }
 
-//        if (dimension > 2) {
-//            for (int i = 0; i < shape.length; i++) {
-//                totalOps *= shape[i];
-//            }
-//        }
+        long totalOps = (long) batch * m * n * p;
+        long threshold = AsyncDataSource.PROCESSORS * 100_000L;
 
         if (totalOps > threshold) {
             return matmulParallel(other);
         }
 
-        Tensor result = new TensorCPU(m, p);
+        int[] resultShape = Arrays.copyOf(shape, dims);
 
-        float[] A = this.getData(), B = other.getData(), C = result.getData();
+        resultShape[dims - 2] = m;
+        resultShape[dims - 1] = p;
 
-        int blockSize = 64;
+        Tensor result = new TensorCPU(resultShape);
 
-        for (int iBlock = 0; iBlock < m; iBlock += blockSize) {
-            int iMax = Math.min(iBlock + blockSize, m);
+        float[] A = this.getData();
+        float[] B = other.getData();
+        float[] C = result.getData();
 
-            for (int kBlock = 0; kBlock < n; kBlock += blockSize) {
-                int kMax = Math.min(kBlock + blockSize, n);
-
-                for (int jBlock = 0; jBlock < p; jBlock += blockSize) {
-                    int jMax = Math.min(jBlock + blockSize, p);
-
-                    for (int i = iBlock; i < iMax; i++) {
-                        int indexA_i = i * n;
-                        int indexC_i = i * p + jBlock;
-
-                        for (int j = kBlock; j < kMax; j++) {
-                            float aVal = A[indexA_i + j];
-
-                            int indexB_k = j * p + jBlock;
-                            int indexC = indexC_i;
-
-                            for (int l = jBlock; l < jMax; l++) {
-                                C[indexC++] += aVal * B[indexB_k++];
-                            }
-                        }
+        // Perform batch matmul
+        for (int b = 0; b < batch; b++) {
+            int offsetA = b * m * n;
+            int offsetB = b * k * p;
+            int offsetC = b * m * p;
+            for (int i = 0; i < m; i++) {
+                int rowA = offsetA + i * n;
+                int rowC = offsetC + i * p;
+                for (int j = 0; j < p; j++) {
+                    float sum = 0f;
+                    int idxA = rowA;
+                    int idxB = offsetB + j;
+                    for (int t = 0; t < n; t++) {
+                        sum += A[idxA++] * B[idxB];
+                        idxB += p;
                     }
+                    C[rowC + j] = sum;
                 }
             }
         }
@@ -712,20 +717,45 @@ public class TensorCPU implements Cloneable, Tensor {
         return result;
     }
 
-    private Tensor matmulParallel(Tensor other) {
-        int m = shape[0], n = shape[1], p = other.shape()[1];
+    public Tensor matmulParallel(Tensor other) {
+        int dims = shape.length;
+        int m = shape[dims - 2];
+        int n = shape[dims - 1];
+        int p = other.shape()[dims - 1];
 
-        Tensor result = new TensorCPU(m, p);
-        float[] A = this.getData(), B = other.getData(), C = result.getData();
+        int batch = 1;
 
-        IntStream.range(0, m).parallel().forEach(i -> {
-            int aRow = i * n;
-            int cRow = i * p;
-            for (int k = 0; k < n; k++) {
-                float aVal = A[aRow + k];
-                int bRow = k * p;
-                for (int j = 0; j < p; j++) {
-                    C[cRow + j] += aVal * B[bRow + j];
+        for (int i = 0; i < dims - 2; i++) {
+            batch *= shape[i];
+        }
+
+        int[] resultShape = Arrays.copyOf(shape, dims);
+
+        resultShape[dims - 2] = m;
+        resultShape[dims - 1] = p;
+
+        Tensor result = new TensorCPU(resultShape);
+
+        float[] A = this.getData();
+        float[] B = other.getData();
+        float[] C = result.getData();
+
+        IntStream.range(0, batch).parallel().forEach(b -> {
+            int offsetA = b * m * n;
+            int offsetB = b * n * p;
+            int offsetC = b * m * p;
+
+            for (int i = 0; i < m; i++) {
+                int rowA = offsetA + i * n;
+                int rowC = offsetC + i * p;
+
+                for (int t = 0; t < n; t++) {
+                    float aVal = A[rowA + t];
+                    int colB = offsetB + t * p;
+
+                    for (int j = 0; j < p; j++) {
+                        C[rowC + j] += aVal * B[colB + j];
+                    }
                 }
             }
         });
