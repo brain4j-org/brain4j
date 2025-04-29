@@ -44,14 +44,18 @@ public class VocabularyMapper extends Layer {
 
     @Override
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
-        Tensor output = cache.getOutputTensor(this);
-        Tensor delta = outputs.minus(targets)
-                .reshape(1, vocabularySize); // [1, vocab_size]
+        if (targets.dimension() > 1) {
+            targets = targets.vector();
+        }
 
+        Tensor input = cache.getInputTensor(this);
+        Tensor output = cache.getOutputTensor(this);
+
+        Tensor delta = outputs.minus(targets).reshape(1, vocabularySize);
         int rows = output.shape()[0];
 
         Range range = new Range(rows - 1, rows);
-        Tensor last = output.slice(range).reshape(1, dimension); // last token [1, dimension]
+        Tensor last = input.slice(range).reshape(1, dimension); // last token [1, dimension]
 
         Tensor transposedWeights = outProjectionWeights.transpose(); // [vocab_size, dimension]
         Tensor gradW = last.transpose() // [dimension, 1]
@@ -64,7 +68,7 @@ public class VocabularyMapper extends Layer {
         Tensor deltaFull = Tensors.zeros(rows, dimension); // [sequence_length, dimension]
 
         for (int i = 0; i < gradient.elements(); i++) {
-            deltaFull.set(gradient.get(i), rows - 1, i);
+            deltaFull.set(gradient.get(0, i), rows - 1, i);
         }
 
         return deltaFull;

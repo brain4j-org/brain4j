@@ -36,14 +36,15 @@ public class EmbedLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        if (input.dimension() != 1) {
-            throw new UnsupportedOperationException("Input must be 1-dimensional!");
+        int elements = input.shape()[0];
+
+        if (input.dimension() > 1) {
+            input = input.reshape(input.elements());
         }
 
-        int rows = input.shape()[0];
         List<Tensor> tokens = new ArrayList<>();
 
-        for (int i = 0; i < rows; i++) {
+        for (int i = 0; i < elements; i++) {
             int index = (int) input.get(i);
 
             if (index < 0 || index >= vocabSize) {

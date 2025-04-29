@@ -25,6 +25,35 @@ public class PosEncodeLayer extends Layer {
         this(embeddingDim, 1024);
     }
 
+    @Override
+    public boolean canPropagate() {
+        return false;
+    }
+
+    @Override
+    public void connect(Random generator, Layer previous, double bound) {
+        this.weights = Tensors.zeros(0);
+    }
+
+    @Override
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+        if (input.dimension() != 2) {
+            throw new IllegalArgumentException("Input must be a 2D matrix!");
+        }
+
+        int rows = input.shape()[0];
+        List<Tensor> tokens = Tensors.toList(input);
+
+        for (int i = 0; i < rows; i++) {
+            Tensor encoding = getEncoding(i);
+            Tensor current = tokens.get(i);
+
+            current.add(encoding);
+        }
+
+        return Tensors.mergeTensors(tokens);
+    }
+
     private void initializeEncodings(int maxLength) {
         for (int position = 0; position < maxLength; position++) {
             encodings.add(generate(position));
@@ -55,29 +84,5 @@ public class PosEncodeLayer extends Layer {
         encodings.add(token);
 
         return token;
-    }
-
-    @Override
-    public void connect(Random generator, Layer previous, double bound) {
-        this.weights = Tensors.zeros(0);
-    }
-
-    @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        if (input.dimension() != 2) {
-            throw new IllegalArgumentException("Input must be a 2D matrix!");
-        }
-
-        int rows = input.shape()[0];
-        List<Tensor> tokens = Tensors.toList(input);
-
-        for (int i = 0; i < rows; i++) {
-            Tensor encoding = getEncoding(i);
-            Tensor current = tokens.get(i);
-
-            current.add(encoding);
-        }
-
-        return Tensors.mergeTensors(tokens);
     }
 }
