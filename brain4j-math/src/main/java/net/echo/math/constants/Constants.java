@@ -67,4 +67,6 @@ public final class Constants {
     public static final int OPTIMAL_WORKGROUP_SIZE = 256;
     
     public static final int MAX_WORKGROUP_SIZE = 1024;
+
+    public static final double PRECISION_THRESHOLD = 1e-7;
 } 
