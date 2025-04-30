@@ -13,7 +13,7 @@ public class CrossEntropy implements LossFunction {
             loss -= actual.get(i) * Math.log(predicted.get(i) + 1e-15);
         }
 
-        return loss;
+        return loss / actual.elements();
     }
 
     @Override
