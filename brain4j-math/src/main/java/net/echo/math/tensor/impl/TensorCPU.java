@@ -741,26 +741,26 @@ public class TensorCPU implements Cloneable, Tensor {
         float[] B = other.getData();
         float[] C = result.getData();
 
-        for (int b = 0; b < batch; b++) {
+        IntStream.range(0, batch * m).parallel().forEach(r -> {
+            int b = r / m;
+            int i = r % m;
+
             int offsetA = b * m * n;
             int offsetB = b * n * p;
             int offsetC = b * m * p;
 
-            IntStream.range(0, m).parallel().forEach(i -> {
-                int rowA = offsetA + i * n;
-                int rowC = offsetC + i * p;
+            int rowA = offsetA + i * n;
+            int rowC = offsetC + i * p;
 
-                for (int t = 0; t < n; t++) {
-                    float aVal = A[rowA + t];
-                    int colB = offsetB + t * p;
+            for (int t = 0; t < n; t++) {
+                float aVal = A[rowA + t];
+                int colB = offsetB + t * p;
 
-                    for (int j = 0; j < p; j++) {
-                        C[rowC + j] += aVal * B[colB + j];
-                    }
+                for (int j = 0; j < p; j++) {
+                    C[rowC + j] += aVal * B[colB + j];
                 }
-            });
-        }
-
+            }
+        });
 
         return result;
     }

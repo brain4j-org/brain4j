@@ -73,6 +73,6 @@ public class BigDataExample {
             samples.add(new Sample(input, output));
         }
 
-        return new ListDataSource(samples, true, 256);
+        return new ListDataSource(samples, true, 8192 * 4);
     }
 }
