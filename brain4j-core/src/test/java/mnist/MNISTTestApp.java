@@ -79,11 +79,11 @@ public class MNISTTestApp extends JFrame {
 
         private final int gridSize = 28;
         private final int scale = 20;
-        private final float[][] pixels; // cambiato da int[][] a float[][] !
+        private final float[][] pixels;
         private DrawingListener drawingListener;
 
         public DrawingPanel() {
-            pixels = new float[gridSize][gridSize];
+            this.pixels = new float[gridSize][gridSize];
             setBackground(Color.WHITE);
 
             addMouseListener(new MouseAdapter() {
@@ -105,13 +105,16 @@ public class MNISTTestApp extends JFrame {
         private void handleDrawing(MouseEvent e) {
             int x = e.getX() / scale;
             int y = e.getY() / scale;
+
             if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
                 if (isPenSelected()) {
                     applyBrush(x, y);
                 } else {
                     erase(x, y);
                 }
+
                 repaint();
+
                 if (drawingListener != null) {
                     drawingListener.onDrawingChanged();
                 }
@@ -140,7 +143,7 @@ public class MNISTTestApp extends JFrame {
         private void setPixel(int x, int y, float intensity) {
             if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
                 if (intensity > pixels[y][x]) {
-                    pixels[y][x] = intensity; // sovrascrive solo se aumenta l'intensità
+                    pixels[y][x] = intensity;
                 }
             }
         }

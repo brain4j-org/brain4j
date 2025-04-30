@@ -44,8 +44,13 @@ public class MNISTExample {
         System.out.println(model.summary());
 
         // model.load("mnist.b4j"); If you want to load the pre-trained model
+
+        long start = System.nanoTime();
         model.fit(trainSource, testSource, 50, 10);
+        double took = (System.nanoTime() - start) / 1e6;
+
         model.save("mnist.b4j");
+        System.out.printf("Total time: %.4f ms | Average per epoch: %.4f ms %n", took, took / 50);
 
         EvaluationResult result = model.evaluate(testSource);
         System.out.println(result.confusionMatrix());

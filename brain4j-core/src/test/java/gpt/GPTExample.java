@@ -29,7 +29,7 @@ public class GPTExample {
     }
 
     public void start() throws Exception {
-        int embeddingDim = 32;
+        int embeddingDim = 64;
 
         Brain4J.setLogging(true);
         List<String> corpus = Files.readAllLines(new File("corpus.txt").toPath());
@@ -43,13 +43,11 @@ public class GPTExample {
                 new EmbedLayer(vocabSize, embeddingDim),
                 new PosEncodeLayer(embeddingDim),
 
-                new TrDecoder(8, embeddingDim),
-                new TrDecoder(8, embeddingDim),
-
+                new TrDecoder(1, embeddingDim),
                 new VocabularyMapper(vocabSize, embeddingDim, 0.1)
         );
 
-        model.compile(Loss.CROSS_ENTROPY, new Lion(0.01, 0.9));
+        model.compile(Loss.CROSS_ENTROPY, new Lion(0.0001, 0.9));
 
         System.out.println(model.summary());
         System.out.println("Vocabulary Size: " + vocabSize);
