@@ -12,7 +12,7 @@ import net.echo.math.tensor.Tensor;
  */
 public class DenseLayer extends Layer {
 
-    private GradientClipper clipper;
+    private GradientClipper clipper = new HardClipper(5);
 
     private DenseLayer() {
     }

@@ -5,6 +5,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.Loss;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.Sequential;
+import net.echo.brain4j.training.evaluation.EvaluationResult;
 import net.echo.brain4j.training.optimizer.impl.AdamW;
 import net.echo.math.activation.Activations;
 import net.echo.math.data.ListDataSource;
@@ -30,21 +31,30 @@ public class CIFARExample {
         // https://www.kaggle.com/datasets/fedesoriano/cifar10-python-in-csv
         ListDataSource trainSource = getDataSource("cifar_train.csv");
 
+        System.out.println("Loaded " + trainSource.size() + " samples");
+
         Model model = new Sequential(
-                new DenseLayer(3072, Activations.RELU),
-                new DenseLayer(512, Activations.RELU),
-                new DenseLayer(256, Activations.RELU),
+                new DenseLayer(3072, Activations.LINEAR),
+                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(64, Activations.RELU),
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
+        model.load("cifar.b4j");
         model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
+
         System.out.println(model.summary());
 
         long start = System.nanoTime();
-        model.fit(trainSource, 1, 1);
+        model.fit(trainSource, 50, 1);
         double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.printf("Took %.4f milliseconds for one epoch%n", took);
+        System.out.printf("Took %.4f milliseconds to complete the training%n", took);
+
+        EvaluationResult result = model.evaluate(trainSource);
+        System.out.println(result.confusionMatrix());
+
+        model.save("cifar.b4j");
     }
 
     public ListDataSource getDataSource(String fileName) throws Exception {
