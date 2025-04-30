@@ -761,7 +761,6 @@ public class TensorCPU implements Cloneable, Tensor {
             });
         }
 
-
         return result;
     }
 
