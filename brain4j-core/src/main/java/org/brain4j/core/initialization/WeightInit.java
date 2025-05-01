@@ -1,6 +1,5 @@
 package org.brain4j.core.initialization;
 
-import net.echo.brain4j.initialization.impl.*;
 import org.brain4j.core.initialization.impl.*;
 
 /**
