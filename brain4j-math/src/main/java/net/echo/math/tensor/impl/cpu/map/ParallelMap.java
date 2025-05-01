@@ -22,7 +22,7 @@ public class ParallelMap extends RecursiveAction {
     @Override
     protected void compute() {
         int work = end - start;
-        if (work > WORK_THRESHOLD) {
+        if (isOverThreshold(work)) {
             int mid = (start + end) >>> 1;
             invokeAll(
                     new ParallelMap(parameters, start, mid),
@@ -34,18 +34,35 @@ public class ParallelMap extends RecursiveAction {
         DoubleToDoubleFunction function = parameters.function();
         float[] data = parameters.data();
 
+        mapSection(start, end, data, function);
+    }
+
+    public static void map(
+            DoubleToDoubleFunction function, float[] data, ForkJoinPool pool
+    ) {
+        int start = 0;
+        int end = data.length;
+
+        int work = end - start;
+        if (!isOverThreshold(work)) {
+            mapSection(start, end, data, function);
+            return;
+        }
+
+        MapParameters parameters = new MapParameters(function, data);
+        ParallelMap parallelMap = new ParallelMap(parameters, 0, data.length);
+        pool.invoke(parallelMap);
+    }
+
+    private static void mapSection(int start, int end, float[] data, DoubleToDoubleFunction function) {
         for (int i = start; i < end; i++) {
             double value = data[i];
             data[i] = (float) function.apply(value);
         }
     }
 
-    public static void map(
-            DoubleToDoubleFunction function, float[] data, ForkJoinPool pool
-    ) {
-        MapParameters parameters = new MapParameters(function, data);
-        ParallelMap parallelMap = new ParallelMap(parameters, 0, data.length);
-        pool.invoke(parallelMap);
+    private static boolean isOverThreshold(int work) {
+        return work > WORK_THRESHOLD;
     }
 
 }

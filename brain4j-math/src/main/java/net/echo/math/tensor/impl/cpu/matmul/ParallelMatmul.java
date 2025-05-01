@@ -1,7 +1,6 @@
 package net.echo.math.tensor.impl.cpu.matmul;
 
 import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorSpecies;
 
 import java.util.concurrent.ForkJoinPool;
@@ -9,7 +8,7 @@ import java.util.concurrent.RecursiveAction;
 
 public class ParallelMatmul extends RecursiveAction {
 
-    static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
+    private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
 
     private static final int WORK_THRESHOLD = 1;
     private static final int COMPLEXITY_THRESHOLD = 65536;
@@ -31,7 +30,7 @@ public class ParallelMatmul extends RecursiveAction {
         int np = parameters.np();
 
         int work = end - start;
-        if (work > WORK_THRESHOLD && work * np > COMPLEXITY_THRESHOLD) {
+        if (isOverThreshold(work, np)) {
             int mid = (start + end) >>> 1;
             invokeAll(
                     new ParallelMatmul(parameters, start, mid),
@@ -48,6 +47,34 @@ public class ParallelMatmul extends RecursiveAction {
         float[] B = parameters.B();
         float[] C = parameters.C();
 
+        multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+    }
+
+    public static void multiply(
+            int batch, int m, int n, int p, float[] A, float[] B, float[] C, ForkJoinPool pool
+    ) {
+        int start = 0;
+        int end = batch * m;
+        int mn = m * n;
+        int np = n * p;
+        int mp = m * p;
+
+        int work = end - start;
+        if (!isOverThreshold(work, np)) {
+            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+            return;
+        }
+
+        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp);
+        ParallelMatmul parallelMatmul = new ParallelMatmul(parameters, start, end);
+        pool.invoke(parallelMatmul);
+    }
+
+    private static void multiplySection(
+            int start, int end,
+            int m, int n, int p, float[] A, float[] B, float[] C,
+            int mn, int np, int mp
+    ) {
         for (int r = start; r < end; r++) {
             int b = r / m;
             int i = r % m;
@@ -61,10 +88,11 @@ public class ParallelMatmul extends RecursiveAction {
                 float aVal = A[rowA + t];
                 int colB = offsetB + t * p;
 
-                int j;
-                for (j = 0; j < SPECIES.loopBound(p); j += SPECIES.length()) {
-                    var vb = FloatVector.fromArray(SPECIES, B, colB + j);
-                    var vc = FloatVector.fromArray(SPECIES, C, rowC + j);
+                int j = 0;
+
+                for (; j < SPECIES.loopBound(p); j += SPECIES.length()) {
+                    FloatVector vb = FloatVector.fromArray(SPECIES, B, colB + j);
+                    FloatVector vc = FloatVector.fromArray(SPECIES, C, rowC + j);
                     vc.add(vb.mul(aVal)).intoArray(C, rowC + j);
                 }
 
@@ -75,12 +103,8 @@ public class ParallelMatmul extends RecursiveAction {
         }
     }
 
-    public static void multiply(
-            int batch, int m, int n, int p, float[] A, float[] B, float[] C, ForkJoinPool pool
-    ) {
-        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, n * p, m * n, m * p);
-        ParallelMatmul parallelMatmul = new ParallelMatmul(parameters, 0, batch * m);
-        pool.invoke(parallelMatmul);
+    private static boolean isOverThreshold(int work, int np) {
+        return work > WORK_THRESHOLD && work * np > COMPLEXITY_THRESHOLD;
     }
 
 }
