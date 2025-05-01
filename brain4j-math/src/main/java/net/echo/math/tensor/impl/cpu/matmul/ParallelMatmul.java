@@ -1,9 +1,15 @@
 package net.echo.math.tensor.impl.cpu.matmul;
 
+import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.VectorSpecies;
+
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
 public class ParallelMatmul extends RecursiveAction {
+
+    static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
 
     private static final int WORK_THRESHOLD = 1;
     private static final int COMPLEXITY_THRESHOLD = 65536;
@@ -54,7 +60,15 @@ public class ParallelMatmul extends RecursiveAction {
             for (int t = 0; t < n; t++) {
                 float aVal = A[rowA + t];
                 int colB = offsetB + t * p;
-                for (int j = 0; j < p; j++) {
+
+                int j;
+                for (j = 0; j < SPECIES.loopBound(p); j += SPECIES.length()) {
+                    var vb = FloatVector.fromArray(SPECIES, B, colB + j);
+                    var vc = FloatVector.fromArray(SPECIES, C, rowC + j);
+                    vc.add(vb.mul(aVal)).intoArray(C, rowC + j);
+                }
+
+                for (; j < p; j++) {
                     C[rowC + j] += aVal * B[colB + j];
                 }
             }
