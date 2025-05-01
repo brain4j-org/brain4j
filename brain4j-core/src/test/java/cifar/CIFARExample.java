@@ -40,8 +40,7 @@ public class CIFARExample {
                 new DenseLayer(10, Activations.SOFTMAX)
         );
 
-        model.load("cifar.b4j");
-//        model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
+        model.compile(Loss.CROSS_ENTROPY, new AdamW(0.01));
 
         System.out.println(model.summary());
 

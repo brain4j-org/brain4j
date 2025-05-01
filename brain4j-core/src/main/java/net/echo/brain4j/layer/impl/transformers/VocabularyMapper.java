@@ -44,14 +44,10 @@ public class VocabularyMapper extends Layer {
 
     @Override
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
-        if (targets.dimension() > 1) {
-            targets = targets.vector();
-        }
-
         Tensor input = cache.getInputTensor(this);
         Tensor output = cache.getOutputTensor(this);
 
-        Tensor delta = outputs.minus(targets).reshape(1, vocabularySize);
+        Tensor delta = outputs.minus(targets.vector()).reshape(1, vocabularySize);
         int rows = output.shape()[0];
 
         Range range = new Range(rows - 1, rows);

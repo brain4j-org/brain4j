@@ -40,10 +40,10 @@ public class BigDataExample {
         predict(model, source);
 
         long start = System.nanoTime();
-        model.fit(source);
+        model.fit(source, 5);
         long end = System.nanoTime();
 
-        System.out.println("Took for 1 epoch: " + (end - start) / 1e6 + " ms");
+        System.out.println("Took for 5 epoches " + (end - start) / 1e6 + " ms");
     }
 
     public void predict(Model model, ListDataSource source) {
@@ -73,6 +73,6 @@ public class BigDataExample {
             samples.add(new Sample(input, output));
         }
 
-        return new ListDataSource(samples, true, 8192 * 4);
+        return new ListDataSource(samples, true, 8192);
     }
 }

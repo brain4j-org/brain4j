@@ -67,7 +67,7 @@ public class MNISTExample {
             float[] inputs = new float[parts.length - 1];
 
             for (int j = 1; j < inputs.length; j++) {
-                inputs[j] = Float.parseFloat(parts[j]);
+                inputs[j] = Float.parseFloat(parts[j]) / 255;
             }
 
             Tensor input = Tensors.vector(inputs);
