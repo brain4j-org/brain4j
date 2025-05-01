@@ -1,10 +1,10 @@
 package mnist;
 
-import net.echo.brain4j.adapters.ModernAdapter;
-import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.impl.Sequential;
-import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.Tensors;
+import org.brain4j.core.adapters.ModernAdapter;
+import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Sequential;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 
 import javax.swing.*;
 import java.awt.*;

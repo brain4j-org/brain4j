@@ -3,8 +3,8 @@ plugins {
     id "com.gradleup.shadow" version "9.0.0-beta10"
 }
 
-group = 'net.echo'
-version = '2.8'
+group = 'org.brain4j'
+version = '2.9'
 
 subprojects {
     apply plugin: 'java'

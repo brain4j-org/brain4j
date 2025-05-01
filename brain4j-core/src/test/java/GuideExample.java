@@ -1,15 +1,15 @@
-import net.echo.brain4j.Brain4J;
-import net.echo.brain4j.layer.impl.DenseLayer;
-import net.echo.brain4j.loss.Loss;
-import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.impl.Sequential;
-import net.echo.brain4j.training.evaluation.EvaluationResult;
-import net.echo.brain4j.training.optimizer.impl.AdamW;
-import net.echo.math.activation.Activations;
-import net.echo.math.data.ListDataSource;
-import net.echo.math.data.Sample;
-import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.Tensors;
+import org.brain4j.core.Brain4J;
+import org.brain4j.core.layer.impl.DenseLayer;
+import org.brain4j.core.loss.Loss;
+import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Sequential;
+import org.brain4j.core.training.evaluation.EvaluationResult;
+import org.brain4j.core.training.optimizer.impl.AdamW;
+import org.brain4j.math.activation.Activations;
+import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.data.Sample;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.List;

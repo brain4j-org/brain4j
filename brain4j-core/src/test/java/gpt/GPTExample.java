@@ -1,21 +1,21 @@
 package gpt;
 
-import net.echo.brain4j.Brain4J;
-import net.echo.brain4j.layer.impl.transformers.EmbedLayer;
-import net.echo.brain4j.layer.impl.transformers.PosEncodeLayer;
-import net.echo.brain4j.layer.impl.transformers.TrDecoder;
-import net.echo.brain4j.layer.impl.transformers.VocabularyMapper;
-import net.echo.brain4j.loss.Loss;
-import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.impl.Transformer;
-import net.echo.brain4j.training.optimizer.impl.Lion;
-import net.echo.brain4j.transformers.Vocabulary;
-import net.echo.brain4j.transformers.tokenizer.Tokenizer;
-import net.echo.brain4j.transformers.tokenizer.impl.SimpleTokenizer;
-import net.echo.math.data.ListDataSource;
-import net.echo.math.data.Sample;
-import net.echo.math.tensor.Tensor;
-import net.echo.math.tensor.Tensors;
+import org.brain4j.core.Brain4J;
+import org.brain4j.core.layer.impl.transformers.EmbedLayer;
+import org.brain4j.core.layer.impl.transformers.PosEncodeLayer;
+import org.brain4j.core.layer.impl.transformers.TrDecoder;
+import org.brain4j.core.layer.impl.transformers.VocabularyMapper;
+import org.brain4j.core.loss.Loss;
+import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Transformer;
+import org.brain4j.core.training.optimizer.impl.Lion;
+import org.brain4j.core.transformers.Vocabulary;
+import org.brain4j.core.transformers.tokenizer.Tokenizer;
+import org.brain4j.core.transformers.tokenizer.impl.SimpleTokenizer;
+import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.data.Sample;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 
 import java.io.File;
 import java.nio.file.Files;
