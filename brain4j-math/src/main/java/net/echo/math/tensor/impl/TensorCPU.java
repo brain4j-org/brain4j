@@ -1,12 +1,12 @@
 package net.echo.math.tensor.impl;
 
 import net.echo.math.activation.Activation;
-import net.echo.math.data.AsyncDataSource;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.autograd.AutogradContext;
 import net.echo.math.tensor.autograd.Operation;
 import net.echo.math.tensor.autograd.operations.*;
+import net.echo.math.tensor.impl.cpu.ParallelMatmul;
 import net.echo.math.tensor.index.Range;
 import net.echo.math.tensor.ops.Convolution;
 
@@ -16,13 +16,15 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.SplittableRandom;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
 
 public class TensorCPU implements Cloneable, Tensor {
-    
+
+    private static final ForkJoinPool POOL = ForkJoinPool.commonPool();
+
     protected float[] data;
     private final int[] shape;
     private final int[] strides;
@@ -678,13 +680,6 @@ public class TensorCPU implements Cloneable, Tensor {
             batch *= shape[i];
         }
 
-        long totalOps = (long) batch * m * n * p;
-        long threshold = AsyncDataSource.PROCESSORS * 100_000L;
-
-        if (totalOps > threshold) {
-            return matmulParallel(other);
-        }
-
         resultShape[dims - 2] = m;
         resultShape[dims - 1] = p;
 
@@ -694,74 +689,7 @@ public class TensorCPU implements Cloneable, Tensor {
         float[] B = other.getData();
         float[] C = result.getData();
 
-        // Perform batch matmul
-        for (int b = 0; b < batch; b++) {
-            int offsetA = b * m * n;
-            int offsetB = b * k * p;
-            int offsetC = b * m * p;
-            for (int i = 0; i < m; i++) {
-                int rowA = offsetA + i * n;
-                int rowC = offsetC + i * p;
-                for (int j = 0; j < p; j++) {
-                    float sum = 0f;
-                    int idxA = rowA;
-                    int idxB = offsetB + j;
-                    for (int t = 0; t < n; t++) {
-                        sum += A[idxA++] * B[idxB];
-                        idxB += p;
-                    }
-                    C[rowC + j] = sum;
-                }
-            }
-        }
-
-        return result;
-    }
-
-    public Tensor matmulParallel(Tensor other) {
-        int dims = shape.length;
-        int m = shape[dims - 2];
-        int n = shape[dims - 1];
-        int p = other.shape()[dims - 1];
-
-        int batch = 1;
-        int[] resultShape = new int[dims];
-
-        for (int i = 0; i < dims - 2; i++) {
-            resultShape[i] = shape[i];
-            batch *= shape[i];
-        }
-
-        resultShape[dims - 2] = m;
-        resultShape[dims - 1] = p;
-
-        Tensor result = new TensorCPU(resultShape);
-
-        float[] A = this.getData();
-        float[] B = other.getData();
-        float[] C = result.getData();
-
-        IntStream.range(0, batch * m).parallel().forEach(r -> {
-            int b = r / m;
-            int i = r % m;
-
-            int offsetA = b * m * n;
-            int offsetB = b * n * p;
-            int offsetC = b * m * p;
-
-            int rowA = offsetA + i * n;
-            int rowC = offsetC + i * p;
-
-            for (int t = 0; t < n; t++) {
-                float aVal = A[rowA + t];
-                int colB = offsetB + t * p;
-
-                for (int j = 0; j < p; j++) {
-                    C[rowC + j] += aVal * B[colB + j];
-                }
-            }
-        });
-
+        ParallelMatmul.multiply(batch, m, n, p, A, B, C, POOL);
         return result;
     }
 
