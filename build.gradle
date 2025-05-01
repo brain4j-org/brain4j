@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'net.echo'
-version = '2.7.1'
+version = '2.8'
 
 subprojects {
     apply plugin: 'java'
