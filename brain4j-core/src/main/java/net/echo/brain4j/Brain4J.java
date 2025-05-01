@@ -85,7 +85,7 @@ public class Brain4J {
      * Disables logging while training. Delegates to {@link #setLogging(boolean)}.
      */
     public static void disableLogging() {
-
+        setLogging(false);
     }
 
     /**
