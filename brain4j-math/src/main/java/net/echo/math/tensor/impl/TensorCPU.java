@@ -8,16 +8,15 @@ import net.echo.math.tensor.autograd.AutogradContext;
 import net.echo.math.tensor.autograd.Operation;
 import net.echo.math.tensor.autograd.operations.*;
 import net.echo.math.tensor.impl.cpu.map.ParallelMap;
-import net.echo.math.tensor.impl.cpu.matmul.ParallelMatmul;
+import net.echo.math.tensor.impl.cpu.matmul.Matmul;
+import net.echo.math.tensor.impl.cpu.matmul.ScalarParallelMatmul;
+import net.echo.math.tensor.impl.cpu.matmul.VectorParallelMatmul;
 import net.echo.math.tensor.index.Range;
 import net.echo.math.tensor.ops.Convolution;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Random;
-import java.util.SplittableRandom;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -25,6 +24,16 @@ import java.util.function.Supplier;
 public class TensorCPU implements Cloneable, Tensor {
 
     private static final ForkJoinPool POOL = ForkJoinPool.commonPool();
+    private static final Matmul MATMUL;
+
+    static {
+        Optional<Module> module = ModuleLayer
+                .boot()
+                .findModule("jdk.incubator.vector");
+
+        // TODO: Warn about enabling the vector api?
+        MATMUL = module.isPresent() ? new VectorParallelMatmul() : new ScalarParallelMatmul();
+    }
 
     protected float[] data;
     private final int[] shape;
@@ -686,7 +695,7 @@ public class TensorCPU implements Cloneable, Tensor {
         float[] B = other.getData();
         float[] C = result.getData();
 
-        ParallelMatmul.multiply(batch, m, n, p, A, B, C, POOL);
+        MATMUL.multiply(batch, m, n, p, A, B, C, POOL);
         return result;
     }
 

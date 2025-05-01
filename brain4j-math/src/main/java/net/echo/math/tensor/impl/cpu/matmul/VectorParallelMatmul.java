@@ -6,51 +6,55 @@ import jdk.incubator.vector.VectorSpecies;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
-public class ParallelMatmul extends RecursiveAction {
+public class VectorParallelMatmul implements Matmul {
 
     private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
 
     private static final int WORK_THRESHOLD = 1;
     private static final int COMPLEXITY_THRESHOLD = 65536;
 
-    private final MatmulParameters parameters;
-    private final int start;
-    private final int end;
+    private static class VectorAction extends RecursiveAction {
 
-    public ParallelMatmul(MatmulParameters parameters, int start, int end) {
-        this.parameters = parameters;
-        this.start = start;
-        this.end = end;
-    }
+        private final MatmulParameters parameters;
+        private final int start;
+        private final int end;
 
-    @Override
-    protected void compute() {
-        int n = parameters.n();
-        int p = parameters.p();
-        int np = parameters.np();
-
-        int work = end - start;
-        if (isOverThreshold(work, np)) {
-            int mid = (start + end) >>> 1;
-            invokeAll(
-                    new ParallelMatmul(parameters, start, mid),
-                    new ParallelMatmul(parameters, mid, end)
-            );
-            return;
+        public VectorAction(MatmulParameters parameters, int start, int end) {
+            this.parameters = parameters;
+            this.start = start;
+            this.end = end;
         }
 
-        int m = parameters.m();
-        int mn = parameters.mn();
-        int mp = parameters.mp();
+        @Override
+        protected void compute() {
+            int n = parameters.n();
+            int p = parameters.p();
+            int np = parameters.np();
 
-        float[] A = parameters.A();
-        float[] B = parameters.B();
-        float[] C = parameters.C();
+            int work = end - start;
+            if (isOverThreshold(work, np)) {
+                int mid = (start + end) >>> 1;
+                invokeAll(
+                        new VectorAction(parameters, start, mid),
+                        new VectorAction(parameters, mid, end)
+                );
+                return;
+            }
 
-        multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+            int m = parameters.m();
+            int mn = parameters.mn();
+            int mp = parameters.mp();
+
+            float[] A = parameters.A();
+            float[] B = parameters.B();
+            float[] C = parameters.C();
+
+            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+        }
+
     }
 
-    public static void multiply(
+    public void multiply(
             int batch, int m, int n, int p, float[] A, float[] B, float[] C, ForkJoinPool pool
     ) {
         int start = 0;
@@ -66,8 +70,8 @@ public class ParallelMatmul extends RecursiveAction {
         }
 
         MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp);
-        ParallelMatmul parallelMatmul = new ParallelMatmul(parameters, start, end);
-        pool.invoke(parallelMatmul);
+        VectorAction action = new VectorAction(parameters, start, end);
+        pool.invoke(action);
     }
 
     private static void multiplySection(
