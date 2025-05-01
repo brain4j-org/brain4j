@@ -1,12 +1,14 @@
 package net.echo.math.tensor.impl;
 
 import net.echo.math.activation.Activation;
+import net.echo.math.lang.DoubleToDoubleFunction;
 import net.echo.math.tensor.Tensor;
 import net.echo.math.tensor.Tensors;
 import net.echo.math.tensor.autograd.AutogradContext;
 import net.echo.math.tensor.autograd.Operation;
 import net.echo.math.tensor.autograd.operations.*;
-import net.echo.math.tensor.impl.cpu.ParallelMatmul;
+import net.echo.math.tensor.impl.cpu.map.ParallelMap;
+import net.echo.math.tensor.impl.cpu.matmul.ParallelMatmul;
 import net.echo.math.tensor.index.Range;
 import net.echo.math.tensor.ops.Convolution;
 
@@ -18,7 +20,6 @@ import java.util.Random;
 import java.util.SplittableRandom;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class TensorCPU implements Cloneable, Tensor {
@@ -470,12 +471,8 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor map(Function<Double, Double> function) {
-        for (int i = 0; i < data.length; i++) {
-            double value = data[i];
-            data[i] = function.apply(value).floatValue();
-        }
-
+    public Tensor map(DoubleToDoubleFunction function) {
+        ParallelMap.map(function, data, POOL);
         return this;
     }
 

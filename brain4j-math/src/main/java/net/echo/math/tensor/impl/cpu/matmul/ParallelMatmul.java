@@ -1,4 +1,4 @@
-package net.echo.math.tensor.impl.cpu;
+package net.echo.math.tensor.impl.cpu.matmul;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
@@ -22,7 +22,7 @@ public class ParallelMatmul extends RecursiveAction {
     protected void compute() {
         int n = parameters.n();
         int p = parameters.p();
-        int np = n * p;
+        int np = parameters.np();
 
         int work = end - start;
         if (work > WORK_THRESHOLD && work * np > COMPLEXITY_THRESHOLD) {
@@ -35,8 +35,8 @@ public class ParallelMatmul extends RecursiveAction {
         }
 
         int m = parameters.m();
-        int mn = m * n;
-        int mp = m * p;
+        int mn = parameters.mn();
+        int mp = parameters.mp();
 
         float[] A = parameters.A();
         float[] B = parameters.B();
@@ -64,7 +64,7 @@ public class ParallelMatmul extends RecursiveAction {
     public static void multiply(
             int batch, int m, int n, int p, float[] A, float[] B, float[] C, ForkJoinPool pool
     ) {
-        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C);
+        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, n * p, m * n, m * p);
         ParallelMatmul parallelMatmul = new ParallelMatmul(parameters, 0, batch * m);
         pool.invoke(parallelMatmul);
     }

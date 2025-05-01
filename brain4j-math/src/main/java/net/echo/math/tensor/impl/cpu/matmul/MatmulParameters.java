@@ -1,4 +1,4 @@
-package net.echo.math.tensor.impl.cpu;
+package net.echo.math.tensor.impl.cpu.matmul;
 
 public record MatmulParameters(
         int m,
@@ -6,7 +6,10 @@ public record MatmulParameters(
         int p,
         float[] A,
         float[] B,
-        float[] C
+        float[] C,
+        int np,
+        int mn,
+        int mp
 ) {
 
 }
