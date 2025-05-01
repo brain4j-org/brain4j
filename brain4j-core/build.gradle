@@ -17,3 +17,7 @@ shadowJar {
     archiveFileName = "brain4j-core-${parent.version}.jar"
     minimize()
 }
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs(['--add-modules', 'jdk.incubator.vector'])
+}
