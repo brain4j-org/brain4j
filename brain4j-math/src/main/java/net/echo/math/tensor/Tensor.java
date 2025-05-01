@@ -2,6 +2,7 @@ package net.echo.math.tensor;
 
 import net.echo.math.activation.Activation;
 import net.echo.math.device.DeviceType;
+import net.echo.math.lang.DoubleToDoubleFunction;
 import net.echo.math.tensor.autograd.AutogradContext;
 import net.echo.math.tensor.autograd.Operation;
 import net.echo.math.tensor.autograd.operations.*;
@@ -261,7 +262,7 @@ public interface Tensor extends Iterable<Float> {
     Tensor setChannel(int channel, Tensor data);
 
     Tensor mapWithIndex(BiFunction<Integer, Float, Float> function);
-    Tensor map(Function<Double, Double> function);
+    Tensor map(DoubleToDoubleFunction function);
     Tensor fill(float value);
     Tensor fill(Supplier<Double> supplier);
 
