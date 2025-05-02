@@ -25,6 +25,10 @@ public class BrainUtils {
         return n + 1;
     }
 
+    public static boolean isPowerOf2(int n) {
+        return n > 0 && (n & (n - 1)) == 0;
+    }
+
     public static String formatDuration(double seconds) {
         double millis = seconds * 1000;
         Duration duration = Duration.ofMillis((long) millis);

@@ -414,6 +414,19 @@ public interface Tensor extends Iterable<Float> {
     }
 
     /**
+     * Checks if the tensor is loaded on the specified device type.
+     * @param deviceType The device type to check
+     * @return True if the tensor is loaded on the specified device, false otherwise
+     */
+    default boolean isOn(DeviceType deviceType) {
+        return switch (deviceType) {
+            case CPU -> this instanceof TensorCPU;
+            case GPU -> this instanceof TensorGPU;
+            default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
+        };
+    }
+
+    /**
      * Checks if any of the values inside the tensor are NaN.
      * @return True if any of the values are NaN, false otherwise
      */

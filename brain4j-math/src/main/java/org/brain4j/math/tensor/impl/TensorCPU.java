@@ -31,8 +31,13 @@ public class TensorCPU implements Cloneable, Tensor {
                 .boot()
                 .findModule("jdk.incubator.vector");
 
-        // TODO: Warn about enabling the vector api?
-        MATMUL = module.isPresent() ? new VectorParallelMatmul() : new ScalarParallelMatmul();
+        if (module.isPresent()) {
+            MATMUL = new VectorParallelMatmul();
+        } else {
+            System.out.println("WARNING: The Vector incubator API is not available. For better performance, use:");
+            System.out.println("\t--add-modules jdk.incubator.vector");
+            MATMUL = new ScalarParallelMatmul();
+        }
     }
 
     protected float[] data;

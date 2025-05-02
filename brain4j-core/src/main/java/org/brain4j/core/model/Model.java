@@ -84,7 +84,7 @@ public abstract class Model implements Adapter {
 
     public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
 
-    @Deprecated
+    @Deprecated(since = "2.8.0", forRemoval = true)
     public Vector predict(Vector input) {
         Tensor tensor = Tensors.vector(input.toArray());
         Tensor output = predict(new StatesCache(), tensor, false);
@@ -288,9 +288,10 @@ public abstract class Model implements Adapter {
         String weights = format.format(totalWeights);
         String biases = format.format(totalBiases);
 
-        String sizeOfParams = BrainUtils.formatNumber(params * 4); // 4 = float size in bytes
-        String sizeOfWeights = BrainUtils.formatNumber(totalWeights * 4);
-        String sizeOfBiases = BrainUtils.formatNumber(totalBiases * 4);
+        byte floatSize = Float.BYTES; // 4 bytes
+        String sizeOfParams = BrainUtils.formatNumber(params * floatSize);
+        String sizeOfWeights = BrainUtils.formatNumber(totalWeights * floatSize);
+        String sizeOfBiases = BrainUtils.formatNumber(totalBiases * floatSize);
 
         stats.append(BrainUtils.getHeader(" Recap ", Brain4J.getHeaderChar()));
         stats.append("Total weights: %s (%s)\n".formatted(weights, sizeOfWeights));
