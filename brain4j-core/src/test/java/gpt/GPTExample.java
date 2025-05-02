@@ -8,9 +8,7 @@ import org.brain4j.core.layer.impl.transformers.VocabularyMapper;
 import org.brain4j.core.loss.Loss;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.impl.Transformer;
-import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.core.training.optimizer.impl.GradientDescent;
-import org.brain4j.core.training.optimizer.impl.Lion;
 import org.brain4j.core.transformers.Vocabulary;
 import org.brain4j.core.transformers.tokenizer.Tokenizer;
 import org.brain4j.core.transformers.tokenizer.impl.SimpleTokenizer;
@@ -50,7 +48,6 @@ public class GPTExample {
         );
 
         model.compile(Loss.CROSS_ENTROPY, new GradientDescent(0.01));
-//        model.load("gpt.b4j");
 
         System.out.println(model.summary());
         System.out.println("Vocabulary Size: " + vocabSize);
@@ -74,8 +71,6 @@ public class GPTExample {
             samples.add(new Sample(inputTensor, outputTensor));
         }
 
-        System.out.println("Last Sample: " + text);
-
         ListDataSource source = new ListDataSource(samples, false, 1);
         model.fit(source, 20, 1);
 
@@ -83,9 +78,6 @@ public class GPTExample {
 
         Tensor tensor = tokenizer.tokenize(vocabulary, input);
         Tensor output = model.predict(tensor).vector();
-
-        System.out.println("Input tensor -> " + tensor.toString("%.1f"));
-        System.out.println("Output tensor -> " + output.toString("%.4f"));
 
         String nextToken = vocabulary.getToken(output.argmax());
         System.out.println(input + nextToken);
