@@ -31,6 +31,7 @@ public class VocabularyMapper extends Layer {
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeInt(vocabularySize);
+        stream.writeInt(dimension);
         stream.writeDouble(temperature);
 
         outProjectionWeights.serialize(stream);
@@ -40,6 +41,7 @@ public class VocabularyMapper extends Layer {
     public void deserialize(DataInputStream stream) throws Exception {
         super.deserialize(stream);
         this.vocabularySize = stream.readInt();
+        this.dimension = stream.readInt();
         this.temperature = stream.readDouble();
         this.outProjectionWeights = Tensors.zeros(0).deserialize(stream);
     }
