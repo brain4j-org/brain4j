@@ -63,16 +63,16 @@ public class StatesCache {
         if (keyCache.isEmpty() && valueCache.isEmpty()) {
             return true;
         }
-        
-        for (List<Tensor> tensors : keyCache.values()) {
-            if (!tensors.isEmpty()) {
-                Tensor cached = tensors.getFirst();
 
-                if (cached.shape()[0] != tensor.shape()[0]) {
-                    return false;
-                }
+        for (List<Tensor> tensors : keyCache.values()) {
+            if (tensors.isEmpty()) continue;
+
+            Tensor cached = tensors.getFirst();
+            if (cached.shape()[0] != tensor.shape()[0]) {
+                return false;
             }
         }
+
         
         return true;
     }
