@@ -4,6 +4,7 @@ import org.brain4j.math.complex.Complex;
 
 import java.util.Arrays;
 
+import static org.brain4j.math.BrainUtils.isPowerOf2;
 import static org.brain4j.math.BrainUtils.nextPowerOf2;
 import static org.brain4j.math.constants.Constants.PI;
 import static org.brain4j.math.constants.Constants.TWO_PI;
@@ -145,10 +146,6 @@ public final class FFT {
         }
         
         return result;
-    }
-
-    public static boolean isPowerOf2(int n) {
-        return n > 0 && (n & (n - 1)) == 0;
     }
     
     public static Complex[] zeroPad(Complex[] input, int size) {
