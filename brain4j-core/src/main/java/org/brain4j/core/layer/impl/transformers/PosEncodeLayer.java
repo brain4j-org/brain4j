@@ -5,14 +5,19 @@ import org.brain4j.core.structure.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class PosEncodeLayer extends Layer {
 
-    private final List<Tensor> encodings;
-    private final int embeddingDim;
+    private List<Tensor> encodings;
+    private int embeddingDim;
+
+    private PosEncodeLayer() {
+    }
 
     public PosEncodeLayer(int embeddingDim, int maxLength) {
         this.embeddingDim = embeddingDim;
@@ -23,6 +28,20 @@ public class PosEncodeLayer extends Layer {
 
     public PosEncodeLayer(int embeddingDim) {
         this(embeddingDim, 1024);
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        super.serialize(stream);
+        stream.writeInt(embeddingDim);
+        stream.writeInt(encodings.size());
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        super.deserialize(stream);
+        this.embeddingDim = stream.readInt();
+        this.encodings = new ArrayList<>(stream.readInt());
     }
 
     @Override

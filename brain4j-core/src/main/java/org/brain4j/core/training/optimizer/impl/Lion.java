@@ -14,6 +14,9 @@ public class Lion extends Optimizer {
     private Tensor[] momentumHistory;
     private double beta;
 
+    private Lion() {
+    }
+
     public Lion(double learningRate, double beta) {
         super(learningRate);
         this.beta = beta;
@@ -33,7 +36,7 @@ public class Lion extends Optimizer {
 
     @Override
     public void postInitialize(Model model) {
-        this.momentumHistory = new Tensor[model.getLayers().size()];
+        this.momentumHistory = new Tensor[Layer.getTotalLayers()];
     }
 
     @Override

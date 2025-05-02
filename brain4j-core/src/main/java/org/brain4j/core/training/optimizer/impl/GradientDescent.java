@@ -6,6 +6,9 @@ import org.brain4j.math.tensor.Tensor;
 
 public class GradientDescent extends Optimizer {
 
+    private GradientDescent() {
+    }
+
     public GradientDescent(double learningRate) {
         super(learningRate);
     }

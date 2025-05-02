@@ -29,6 +29,7 @@ public class VocabularyMapper extends Layer {
 
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
+        super.serialize(stream);
         stream.writeInt(vocabularySize);
         stream.writeDouble(temperature);
 
@@ -37,6 +38,7 @@ public class VocabularyMapper extends Layer {
 
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
+        super.deserialize(stream);
         this.vocabularySize = stream.readInt();
         this.temperature = stream.readDouble();
         this.outProjectionWeights = Tensors.zeros(0).deserialize(stream);
@@ -45,18 +47,15 @@ public class VocabularyMapper extends Layer {
     @Override
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
         Tensor input = cache.getInputTensor(this);
-        Tensor output = cache.getOutputTensor(this);
+
+        int rows = input.shape()[0];
+        Range range = new Range(rows - 1, rows);
 
         Tensor delta = outputs.minus(targets.vector()).reshape(1, vocabularySize);
-        int rows = output.shape()[0];
-
-        Range range = new Range(rows - 1, rows);
         Tensor last = input.slice(range).reshape(1, dimension); // last token [1, dimension]
 
         Tensor transposedWeights = outProjectionWeights.transpose(); // [vocab_size, dimension]
-        Tensor gradW = last.transpose() // [dimension, 1]
-                .matmul(delta) // [dimension, vocab_size]
-                .mul(optimizer.getLearningRate());
+        Tensor gradW = optimizer.optimize(this, delta, last);
 
         outProjectionWeights.sub(gradW);
 
@@ -74,17 +73,14 @@ public class VocabularyMapper extends Layer {
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         cache.setInputTensor(this, input);
 
-        Tensor logits = input.matmul(outProjectionWeights)
-                .softmax(temperature);
+        int rows = input.shape()[0];
 
-        int rows = logits.shape()[0];
-
-        Range range = new Range(rows - 1, rows);
-        Tensor last = logits.slice(range);
+        Tensor last = input.slice(new Range(rows - 1, rows));
+        Tensor logits = last.matmul(outProjectionWeights).softmax(temperature);
 
         cache.setOutputTensor(this, logits);
 
-        return last.vector();
+        return logits.vector();
     }
 
     @Override

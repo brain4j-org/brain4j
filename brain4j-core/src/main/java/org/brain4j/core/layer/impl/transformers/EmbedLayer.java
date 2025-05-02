@@ -5,19 +5,39 @@ import org.brain4j.core.structure.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class EmbedLayer extends Layer {
 
-    private final int vocabSize;
-    private final int embeddingDim;
     private List<Tensor> embeddings;
+    private int vocabSize;
+    private int embeddingDim;
+
+    private EmbedLayer() {
+    }
 
     public EmbedLayer(int vocabSize, int embeddingDim) {
         this.vocabSize = vocabSize;
         this.embeddingDim = embeddingDim;
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        super.serialize(stream);
+        stream.writeInt(vocabSize);
+        stream.writeInt(embeddingDim);
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        super.deserialize(stream);
+        this.vocabSize = stream.readInt();
+        this.embeddingDim = stream.readInt();
+        this.embeddings = Tensors.toList(weights);
     }
 
     @Override
@@ -36,11 +56,11 @@ public class EmbedLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        int elements = input.shape()[0];
-
         if (input.dimension() > 1) {
             input = input.reshape(input.elements());
         }
+
+        int elements = input.shape()[0];
 
         List<Tensor> tokens = new ArrayList<>();
 
@@ -49,7 +69,8 @@ public class EmbedLayer extends Layer {
 
             if (index < 0 || index >= vocabSize) {
                 throw new IllegalArgumentException(
-                        "Invalid index: " + index + " for input tensor: " + input.toString("%.1f"));
+                        "Invalid index: " + index + " for input tensor: " + input.toString("%.1f")
+                );
             }
 
             Tensor embedding = embeddings.get(index);

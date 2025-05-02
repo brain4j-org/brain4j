@@ -76,6 +76,9 @@ public class Transformer extends Model {
 
         connect(initializer);
 
+        this.optimizer.postInitialize(this);
+        this.updater.postInitialize();
+
         return this;
     }
 

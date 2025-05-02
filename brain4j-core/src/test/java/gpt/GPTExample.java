@@ -8,6 +8,8 @@ import org.brain4j.core.layer.impl.transformers.VocabularyMapper;
 import org.brain4j.core.loss.Loss;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.impl.Transformer;
+import org.brain4j.core.training.optimizer.impl.AdamW;
+import org.brain4j.core.training.optimizer.impl.GradientDescent;
 import org.brain4j.core.training.optimizer.impl.Lion;
 import org.brain4j.core.transformers.Vocabulary;
 import org.brain4j.core.transformers.tokenizer.Tokenizer;
@@ -43,11 +45,12 @@ public class GPTExample {
                 new EmbedLayer(vocabSize, embeddingDim),
                 new PosEncodeLayer(embeddingDim),
 
-                new TrDecoder(1, embeddingDim),
+                new TrDecoder(2, embeddingDim),
                 new VocabularyMapper(vocabSize, embeddingDim, 0.1)
         );
 
-        model.compile(Loss.CROSS_ENTROPY, new Lion(0.0001, 0.9));
+        model.compile(Loss.CROSS_ENTROPY, new GradientDescent(0.01));
+//        model.load("gpt.b4j");
 
         System.out.println(model.summary());
         System.out.println("Vocabulary Size: " + vocabSize);
@@ -56,7 +59,7 @@ public class GPTExample {
         List<String> tokens = tokenizer.split(corpus.getFirst());
 
         StringBuilder text = new StringBuilder();
-        int limit = 18; // tokens.size() - 1;
+        int limit = tokens.size() - 1;
 
         for (int i = 0; i < limit; i++) {
             text.append(tokens.get(i));
@@ -74,7 +77,7 @@ public class GPTExample {
         System.out.println("Last Sample: " + text);
 
         ListDataSource source = new ListDataSource(samples, false, 1);
-        model.fit(source, 5000, 100);
+        model.fit(source, 20, 1);
 
         String input = "The cat (Felis catus), also referred to as the domestic cat or";
 

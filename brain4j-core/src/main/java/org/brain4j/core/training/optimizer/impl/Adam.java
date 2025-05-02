@@ -43,8 +43,8 @@ public class Adam extends Optimizer {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        this.firstMomentum = new Tensor[model.getLayers().size()];
-        this.secondMomentum = new Tensor[model.getLayers().size()];
+        this.firstMomentum = new Tensor[Layer.getTotalLayers()];
+        this.secondMomentum = new Tensor[Layer.getTotalLayers()];
     }
 
     @Override

@@ -31,7 +31,7 @@ public class TrEncoder extends Layer {
     protected int heads;
     protected int embeddingDim;
 
-    TrEncoder() {
+    protected TrEncoder() {
         this.normalizer = new LayerNorm();
         this.dropout = new DropoutLayer(dropoutRate);
     }
