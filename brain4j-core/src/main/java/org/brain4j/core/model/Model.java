@@ -84,7 +84,7 @@ public abstract class Model implements Adapter {
 
     public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
 
-    @Deprecated
+    @Deprecated(since = "2.8.0", forRemoval = true)
     public Vector predict(Vector input) {
         Tensor tensor = Tensors.vector(input.toArray());
         Tensor output = predict(new StatesCache(), tensor, false);
