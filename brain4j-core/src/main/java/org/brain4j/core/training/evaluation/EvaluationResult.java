@@ -3,6 +3,7 @@ package org.brain4j.core.training.evaluation;
 import org.brain4j.core.Brain4J;
 import org.brain4j.math.BrainUtils;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 
 import java.util.Map;
 
@@ -66,14 +67,14 @@ public class EvaluationResult {
         this.f1Score = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
     }
 
-    public String confusionMatrix() {
+    public String results() {
         StringBuilder matrix = new StringBuilder();
-        String divider = BrainUtils.getHeader(" Confusion Matrix ", Brain4J.getHeaderChar());
+        String divider = BrainUtils.getHeader(" Evaluation Results ", Brain4J.getHeaderChar());
 
         matrix.append(divider);
         matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
 
-        String secondary = "%-15s %-10s\n";
+        String secondary = "%-12s %-10s\n";
         matrix.append(secondary.formatted("Loss:", "%.4f".formatted(loss)));
         matrix.append(secondary.formatted("Accuracy:", "%.4f".formatted(accuracy)));
         matrix.append(secondary.formatted("Precision:", "%.4f".formatted(precision)));
@@ -81,7 +82,7 @@ public class EvaluationResult {
         matrix.append(secondary.formatted("F1-score:", "%.4f".formatted(f1Score)));
 
         if (!classifications.isEmpty()) {
-            divider = BrainUtils.getHeader(" Evaluation Results ", Brain4J.getHeaderChar());
+            divider = BrainUtils.getHeader(" Confusion Matrix ", Brain4J.getHeaderChar());
             matrix.append(divider);
             matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
             matrix.append(" ".repeat(7));
@@ -112,6 +113,20 @@ public class EvaluationResult {
         matrix.append(BrainUtils.getHeader("", Brain4J.getHeaderChar()));
 
         return matrix.toString();
+    }
+
+    public Tensor confusionMatrix() {
+        Tensor result = Tensors.matrix(classes, classes);
+
+        for (int i = 0; i < classes; i++) {
+            Tensor predictions = classifications.get(i);
+
+            for (int j = 0; j < predictions.elements(); j++) {
+                result.set(predictions.get(j), i, j);
+            }
+        }
+
+        return result;
     }
 
     public double loss() {

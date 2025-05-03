@@ -44,13 +44,13 @@ public abstract class Updater {
         this.biasesTensors[layer.getId()] = biasW;
     }
 
-    public void postInitialize() {
+    public void resetGradients() {
         this.gradientsTensors = new Tensor[Layer.getTotalLayers()];
         this.biasesTensors = new Tensor[Layer.getTotalLayers()];
     }
 
     public void postFit(Model model, double learningRate, int samples) {
-        postInitialize();
+        resetGradients();
     }
 
     public void postBatch(Model model, double learningRate, int samples) {

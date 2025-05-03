@@ -1259,7 +1259,7 @@ public class TensorCPU implements Cloneable, Tensor {
         }
 
         StringBuilder sb = new StringBuilder();
-        appendTensor(sb, 0, new int[shape.length], "%f");
+        appendTensor(sb, 0, new int[shape.length], "%.16f");
 
         return sb.toString();
     }

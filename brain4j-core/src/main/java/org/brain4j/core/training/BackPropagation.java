@@ -59,7 +59,5 @@ public class BackPropagation {
             delta = layer.backward(cache, last, delta);
             last = layer;
         }
-
-        optimizer.postIteration(cache, updater, layers);
     }
 }

@@ -40,9 +40,6 @@ public abstract class Optimizer implements Adapter {
     public void postBatch() {
     }
 
-    public void postIteration(StatesCache cacheHolder, Updater updater, List<Layer> layers) {
-    }
-
     public double getLearningRate() {
         return learningRate;
     }

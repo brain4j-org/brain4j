@@ -53,7 +53,7 @@ public class MNISTExample {
         System.out.printf("Total time: %.4f ms | Average per epoch: %.4f ms %n", took, took / 50);
 
         EvaluationResult result = model.evaluate(testSource);
-        System.out.println(result.confusionMatrix());
+        System.out.println(result.results());
     }
 
     public ListDataSource getDataSource(String fileName) throws IOException {

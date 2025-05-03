@@ -51,7 +51,7 @@ public class CIFARExample {
         System.out.printf("Took %.4f milliseconds to complete the training%n", took);
 
         EvaluationResult result = model.evaluate(trainSource);
-        System.out.println(result.confusionMatrix());
+        System.out.println(result.results());
 
         model.save("cifar.b4j");
     }

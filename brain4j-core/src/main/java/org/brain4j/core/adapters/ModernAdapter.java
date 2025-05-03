@@ -68,7 +68,7 @@ public class ModernAdapter {
             model.setOptimizer(optimizer);
 
             model.getOptimizer().postInitialize(model);
-            model.getUpdater().postInitialize();
+            model.getUpdater().resetGradients();
             model.setPropagation(new BackPropagation(model, optimizer, updater));
 
             for (Layer layer : model.getLayers()) {

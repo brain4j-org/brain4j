@@ -46,6 +46,6 @@ public class GuideExample {
 
         // You can evaluate the model like this
         EvaluationResult evaluation = model.evaluate(dataSource);
-        System.out.println(evaluation.confusionMatrix());
+        System.out.println(evaluation.results());
     }
 }

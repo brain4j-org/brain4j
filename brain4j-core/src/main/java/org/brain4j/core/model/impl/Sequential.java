@@ -85,7 +85,7 @@ public class Sequential extends Model {
         connect(initializer);
 
         this.optimizer.postInitialize(this);
-        this.updater.postInitialize();
+        this.updater.resetGradients();
 
         return this;
     }
