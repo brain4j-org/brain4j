@@ -416,7 +416,6 @@ public abstract class Model implements Adapter {
 
         for (int i = 0; i < layersSize; i++) {
             String layerClassPath = stream.readUTF();
-            System.out.println(i + ": " + layerClassPath);
             Layer instance = BrainUtils.newInstance(layerClassPath);
 
             instance.deserialize(stream);

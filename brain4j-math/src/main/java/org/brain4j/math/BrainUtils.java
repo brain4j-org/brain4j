@@ -131,6 +131,10 @@ public class BrainUtils {
 
     @SuppressWarnings("all")
     public static <T> T newInstance(String classPath) throws Exception {
+        // Support for versions prior to 2.9
+        classPath = classPath.replace("net.echo.brain4j", "org.brain4j.core");
+        classPath = classPath.replace("net.echo.math", "org.brain4j.math");
+
         Class<?> clazz = Class.forName(classPath);
 
         Constructor<?> constructor = clazz.getDeclaredConstructor();
