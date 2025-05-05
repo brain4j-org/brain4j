@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class StatesCache {
 
-    private final Map<Integer, List<Tensor>> feedForwardCache;
+    private final Map<Integer, Tensor> feedForwardCache;
     private final Map<Integer, List<Tensor>> keyCache;
     private final Map<Integer, List<Tensor>> valueCache;
 
@@ -77,8 +77,12 @@ public class StatesCache {
         return true;
     }
 
-    public List<Tensor> getFeedForwardForLayer(Layer layer) {
-        return feedForwardCache.computeIfAbsent(layer.hashCode(), k -> new ArrayList<>());
+    public Tensor getFeedForwardCache(Layer layer) {
+        return feedForwardCache.computeIfAbsent(layer.hashCode(), k -> null);
+    }
+
+    public void setFeedForwardCache(Layer layer, Tensor tensor) {
+        feedForwardCache.put(layer.hashCode(), tensor);
     }
     
     public List<Tensor> getKeyCacheForHead(AttentionHead head) {

@@ -1,7 +1,7 @@
 package org.brain4j.core.model;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.adapters.Adapter;
+import org.brain4j.core.adapters.BinarySerializable;
 import org.brain4j.core.adapters.ModernAdapter;
 import org.brain4j.core.initialization.WeightInit;
 import org.brain4j.core.initialization.WeightInitializer;
@@ -41,7 +41,7 @@ import static org.brain4j.math.constants.Constants.*;
  * @see Sequential Sequential
  * @see Transformer Transformer
  */
-public abstract class Model implements Adapter {
+public abstract class Model implements BinarySerializable {
 
     protected BackPropagation propagation;
     protected List<Layer> layers;

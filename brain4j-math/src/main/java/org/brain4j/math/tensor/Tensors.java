@@ -135,7 +135,59 @@ public class Tensors {
         return result;
     }
 
+    /**
+     * Stacks two matrices into a single tensor.
+     * @apiNote The first shape can be different, meanwhile the second shape must be equal for all tensors
+     * @param tensors The input tensors
+     * @return A new tensor containing all the other ones one on top of the other
+     */
+    public static Tensor stack(Tensor... tensors) {
+        if (tensors.length == 0) {
+            throw new IllegalArgumentException("No elements specified!");
+        }
+
+        int dimension = Integer.MAX_VALUE;
+        int elements = 0;
+
+        for (Tensor tensor : tensors) {
+            if (tensor.dimension() != 2) {
+                throw new IllegalArgumentException("All tensors must be 2 dimensional!");
+            }
+
+            int[] shape = tensor.shape();
+
+            if (dimension == Integer.MAX_VALUE) {
+                dimension = shape[1];
+            } else if (dimension != shape[1]) {
+                throw new IllegalArgumentException("Not all tensors have the same dimension!");
+            }
+
+            elements += shape[0];
+        }
+
+        Tensor result = Tensors.create(elements, dimension);
+        int rowOffset = 0;
+
+        for (Tensor tensor : tensors) {
+            int[] shape = tensor.shape(); // [tokens, dimension]
+
+            for (int row = 0; row < shape[0]; row++) {
+                for (int col = 0; col < shape[1]; col++) {
+                    result.set(tensor.get(row, col), rowOffset + row, col);
+                }
+            }
+
+            rowOffset += shape[0];
+        }
+
+        return result;
+    }
+
     public static Tensor mergeTensors(List<Tensor> tensors) {
+        if (tensors.isEmpty()) {
+            throw new IllegalArgumentException("No elements specified!");
+        }
+
         Tensor first = tensors.getFirst();
 
         int rows = tensors.size();

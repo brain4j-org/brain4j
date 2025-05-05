@@ -1,17 +1,14 @@
 package org.brain4j.core.training.optimizer;
 
-import org.brain4j.core.adapters.Adapter;
+import org.brain4j.core.adapters.BinarySerializable;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.structure.StatesCache;
-import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.tensor.Tensor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.List;
 
-public abstract class Optimizer implements Adapter {
+public abstract class Optimizer implements BinarySerializable {
 
     protected double learningRate;
 

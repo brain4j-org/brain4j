@@ -42,24 +42,35 @@ public class BatchNorm extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        int batchSize = input.shape()[0];
-        Tensor transposed = input.transpose(); // [dimension, batch_size]
-
-        for (int i = 0; i < batchSize; i++) {
-            Tensor feature = transposed.slice(new Range(i, i + 1)); // [1, batch_size]
-
-            double mean = feature.mean();
-            double variance = feature.variance();
-            double std = Math.sqrt(variance + epsilon);
-            // TODO: Finish this
-        }
-
-        return input;
+    public boolean canPropagate() {
+        return false;
     }
 
     @Override
-    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
-        return delta;
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+        int batchSize = input.shape()[0];
+
+        Tensor transposed = input.transpose(); // [dimension, batch_size]
+        Tensor result = transposed.clone();
+
+        for (int i = 0; i < batchSize; i++) {
+            Range range = new Range(i, i + 1);
+
+            Tensor token = transposed.slice(range).vector(); // [batch_size]
+            Tensor row = normalize1D(token).mul(weights).add(bias);
+
+            for (int j = 0; j < row.elements(); j++) {
+                result.set(row.get(j), i, j);
+            }
+        }
+
+        return result;
+    }
+
+    public Tensor normalize1D(Tensor input) {
+        double mean = input.mean();
+        double variance = input.variance();
+        double std = Math.sqrt(variance + epsilon);
+        return input.minus(mean).div(std);
     }
 }

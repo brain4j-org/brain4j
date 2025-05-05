@@ -1,6 +1,6 @@
 package org.brain4j.core.layer;
 
-import org.brain4j.core.adapters.Adapter;
+import org.brain4j.core.adapters.BinarySerializable;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.structure.StatesCache;
@@ -16,7 +16,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.Random;
 
-public abstract class Layer implements Adapter {
+public abstract class Layer implements BinarySerializable {
 
     public static int totalLayers = 0;
 

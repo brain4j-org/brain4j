@@ -15,10 +15,10 @@ import org.brain4j.core.transformers.head.AttentionHead;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.List;
 import java.util.Random;
 
 public class TrEncoder extends Layer {
@@ -117,27 +117,30 @@ public class TrEncoder extends Layer {
 
         if (training) attended = dropout.forward(cache, this, attended, true);
 
-        Tensor attentionOut = normalizer.normalize(input.add(attended));
+        Tensor attentionOut = normalizer.forward(cache, this, input.add(attended), training);
+        Tensor cached = cache.getFeedForwardCache(this); // [tokens, dimension]
 
-        List<Tensor> normAttention = Tensors.toList(attentionOut);
-        List<Tensor> cached = cache.getFeedForwardForLayer(this);
+        if (cached == null) cached = Tensors.create(0, embeddingDim);
 
-        for (int i = 0; i < normAttention.size(); i++) {
-            if (cached.size() <= i) {
-                Tensor tensor = normAttention.get(i);
-                Tensor output = feedForward.predict(tensor.vector());
-                Tensor reshaped = output.reshape(1, embeddingDim);
+        int tokens = attentionOut.shape()[0];
+        int cacheSize = cached.shape()[0];
 
-                cached.add(reshaped);
-            }
-        }
+        Range range = new Range(cacheSize, tokens);
 
-        Tensor merged = Tensors.mergeTensors(cached);
-        cache.setOutputTensor(this, merged);
+        Tensor notCached = attentionOut.slice(range);
+        Tensor output = feedForward.predict(notCached);
 
-        if (training) merged = dropout.forward(cache, this, merged, true);
+        Tensor result = Tensors.stack(cached, output);
 
-        return normalizer.normalize(attentionOut.add(merged));
+        cache.setFeedForwardCache(this, result);
+
+        if (training) result = dropout.forward(cache, this, result, true);
+
+        result = normalizer.forward(cache, this, attentionOut.add(result), training);
+
+        cache.setOutputTensor(this, result);
+
+        return result;
     }
 
     @Override
