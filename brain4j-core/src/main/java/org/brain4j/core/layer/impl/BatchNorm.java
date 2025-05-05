@@ -9,17 +9,14 @@ import org.brain4j.math.tensor.index.Range;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
-/**
- * Represents a normalization layer, used to normalize the inputs and improve training.
- */
-public class LayerNorm extends Layer {
+public class BatchNorm extends Layer {
 
     private double epsilon;
 
     /**
      * Constructs a layer normalization instance with a default epsilon.
      */
-    public LayerNorm() {
+    public BatchNorm() {
         this(1e-5);
     }
 
@@ -27,7 +24,7 @@ public class LayerNorm extends Layer {
      * Constructs a layer normalization instance with an epsilon.
      * @param epsilon the epsilon used to avoid division by zero
      */
-    public LayerNorm(double epsilon) {
+    public BatchNorm(double epsilon) {
         super(0, Activations.LINEAR);
         this.epsilon = epsilon;
     }
@@ -45,38 +42,24 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public boolean canPropagate() {
-        return false;
+    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+        int batchSize = input.shape()[0];
+        Tensor transposed = input.transpose(); // [dimension, batch_size]
+
+        for (int i = 0; i < batchSize; i++) {
+            Tensor feature = transposed.slice(new Range(i, i + 1)); // [1, batch_size]
+
+            double mean = feature.mean();
+            double variance = feature.variance();
+            double std = Math.sqrt(variance + epsilon);
+            // TODO: Finish this
+        }
+
+        return input;
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        return normalize(input);
-    }
-
-    public Tensor normalize(Tensor input) {
-        Tensor normalized = input.clone();
-
-        int rows = input.shape()[0];
-
-        for (int i = 0; i < rows; i++) {
-            Range range = new Range(i, i + 1);
-
-            Tensor token = input.slice(range).vector();
-            Tensor normalizedToken = normalize1D(token);
-
-            for (int j = 0; j < normalizedToken.elements(); j++) {
-                normalized.set(normalizedToken.get(j), i, j);
-            }
-        }
-
-        return normalized;
-    }
-
-    public Tensor normalize1D(Tensor input) {
-        double mean = input.mean();
-        double variance = input.variance();
-        double std = Math.sqrt(variance + epsilon);
-        return input.minus(mean).div(std);
+    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
+        return delta;
     }
 }
