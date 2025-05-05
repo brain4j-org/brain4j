@@ -1420,20 +1420,13 @@ public class TensorCPU implements Cloneable, Tensor {
     public Tensor convolve(Tensor kernel) {
         int dim = this.dimension();
 
-        if (dim > 3) {
-            throw new IllegalArgumentException("Convolution is supported only for 1D and 2D tensors");
-        }
-
         if (kernel.dimension() != dim) {
             throw new IllegalArgumentException("The kernel dimension must match the input dimension");
         }
-        
-        Convolution.ConvolutionType convType;
-        if (this.elements() > 1000 || kernel.elements() > 100) { // convType based on tensor size
-            convType = Convolution.ConvolutionType.FFT;
-        } else {
-            convType = Convolution.ConvolutionType.DIRECT;
-        }
+
+        Convolution.ConvolutionType convType = elements() > 1000 || kernel.elements() > 100
+                ? Convolution.ConvolutionType.FFT
+                : Convolution.ConvolutionType.DIRECT;
 
         if (dim == 1) {
             return Convolution.convolve1D(this, kernel, Convolution.PaddingMode.SAME, convType);

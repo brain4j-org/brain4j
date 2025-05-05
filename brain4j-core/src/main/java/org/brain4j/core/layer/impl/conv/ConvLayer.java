@@ -9,12 +9,11 @@ import org.brain4j.math.tensor.Tensors;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Random;
 
 public class ConvLayer extends Layer {
 
-    private Tensor filters;
-    private Tensor bias;
-
+    private int filters;
     private int channels;
     private int filtersWidth;
     private int filtersHeight;
@@ -30,20 +29,36 @@ public class ConvLayer extends Layer {
     }
 
     public ConvLayer(Activation activation, int filters, int channels, int filtersWidth, int filtersHeight, int padding, int stride) {
-        super(activation);
-        this.filters = Tensors.create(filters, channels, filtersHeight, filtersWidth);
-        this.bias = Tensors.create(channels, filtersHeight, filtersWidth);
+        this.id = totalLayers++;
+        this.activation = activation;
+        this.filters = filters;
+        this.channels = channels;
         this.filtersWidth = filtersWidth;
         this.filtersHeight = filtersHeight;
         this.padding = padding;
         this.stride = stride;
+
+        this.bias = Tensors.matrix(channels, filtersHeight, filtersWidth);
+        this.weights = Tensors.create(filters);
+    }
+
+    @Override
+    public void connect(Random generator, Layer previous, double bound) {
+        if (previous == null) return;
+
+        for (int i = 0; i < bias.elements(); i++) {
+            bias.getData()[i] = (float) (2 * generator.nextDouble() - 1);
+        }
+
+        for (int i = 0; i < weights.elements(); i++) {
+            weights.getData()[i] = (float) (2 * generator.nextDouble() - 1);
+        }
     }
 
     @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
-        filters.serialize(stream);
-        bias.serialize(stream);
+        stream.writeInt(filters);
         stream.writeInt(channels);
         stream.writeInt(filtersWidth);
         stream.writeInt(filtersHeight);
@@ -54,8 +69,7 @@ public class ConvLayer extends Layer {
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
         super.deserialize(stream);
-        this.filters = Tensors.zeros(0).deserialize(stream);
-        this.bias = Tensors.zeros(0).deserialize(stream);
+        this.filters = stream.readInt();
         this.channels = stream.readInt();
         this.filtersWidth = stream.readInt();
         this.filtersHeight = stream.readInt();
@@ -65,11 +79,9 @@ public class ConvLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        return input.convolve(filters).map(x -> activation.activate(x));
-    }
-
-    public Tensor getFilters() {
-        return filters;
+        // [batch_size, channels, height, width]
+        return input.convolve(weights)
+                .map(x -> activation.activate(x));
     }
 
     public int getChannels() {

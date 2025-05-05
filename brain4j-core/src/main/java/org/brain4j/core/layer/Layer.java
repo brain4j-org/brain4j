@@ -18,7 +18,7 @@ import java.util.Random;
 
 public abstract class Layer implements Adapter {
 
-    private static int totalLayers = 0;
+    protected static int totalLayers = 0;
 
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
