@@ -32,7 +32,7 @@ public class TrEncoder extends Layer {
     protected int embeddingDim;
 
     protected TrEncoder() {
-        this.normalizer = new LayerNorm();
+        this.normalizer = new LayerNorm(0);
         this.dropout = new DropoutLayer(dropoutRate);
     }
 
@@ -45,7 +45,7 @@ public class TrEncoder extends Layer {
     public TrEncoder(int numHeads, int embeddingDim) {
         super(Activations.LINEAR.getFunction());
 
-        this.normalizer = new LayerNorm();
+        this.normalizer = new LayerNorm(embeddingDim);
         this.feedForward = new Sequential(
                 new DenseLayer(embeddingDim, Activations.LINEAR),
                 new DenseLayer(4 * embeddingDim, Activations.RELU),

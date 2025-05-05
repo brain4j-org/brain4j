@@ -23,11 +23,11 @@ public class ModernAdapter {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DataOutputStream dataStream = new DataOutputStream(outputStream);
 
-        dataStream.writeUTF("2.8");
+        dataStream.writeUTF("2.9.0");
         dataStream.writeInt(model.getSeed()); // seed
-        dataStream.writeUTF(model.getLossFunction().getClass().getName()); // loss_function
-        dataStream.writeUTF(model.getWeightInit().getClass().getName()); // weight_init
-        dataStream.writeUTF(model.getUpdater().getClass().getName()); // updater
+        dataStream.writeUTF(model.getLossFunction().getClass().getName());
+        dataStream.writeUTF(model.getWeightInit().getClass().getName());
+        dataStream.writeUTF(model.getUpdater().getClass().getName());
         dataStream.writeUTF(model.getOptimizer().getClass().getName());
 
         model.getOptimizer().serialize(dataStream); // optimizer
@@ -67,8 +67,8 @@ public class ModernAdapter {
             model.setUpdater(updater);
             model.setOptimizer(optimizer);
 
-            model.getOptimizer().postInitialize(model);
             model.getUpdater().resetGradients();
+            model.getOptimizer().postInitialize(model);
             model.setPropagation(new BackPropagation(model, optimizer, updater));
 
             for (Layer layer : model.getLayers()) {

@@ -18,7 +18,7 @@ import java.util.Random;
 
 public abstract class Layer implements Adapter {
 
-    protected static int totalLayers = 0;
+    public static int totalLayers = 0;
 
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
@@ -76,7 +76,7 @@ public abstract class Layer implements Adapter {
             stream.writeDouble(bias.get(j));
         }
 
-        boolean hasWeights = weights != null && weights.dimension() == 2;
+        boolean hasWeights = weights != null;
         stream.writeBoolean(hasWeights);
 
         if (hasWeights) {
@@ -131,16 +131,13 @@ public abstract class Layer implements Adapter {
         int output = this.getTotalNeurons();
 
         for (int i = 0; i < bias.elements(); i++) {
-            bias.set(2 * generator.nextDouble() - 1, i);
+            bias.getData()[i] = (float) (2 * generator.nextDouble() - 1);
         }
 
         this.weights = Tensors.matrix(input, output);
 
-        for (int i = 0; i < input; i++) {
-            for (int j = 0; j < output; j++) {
-                double value = generator.nextDouble(2 * bound) - bound;
-                this.weights.set(value, i, j);
-            }
+        for (int i = 0; i < weights.elements(); i++) {
+            weights.getData()[i] = (float) (2 * generator.nextDouble() - 1);
         }
     }
 

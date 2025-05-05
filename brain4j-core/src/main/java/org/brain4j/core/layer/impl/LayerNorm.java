@@ -4,6 +4,7 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.index.Range;
 
 import java.io.DataInputStream;
@@ -19,17 +20,18 @@ public class LayerNorm extends Layer {
     /**
      * Constructs a layer normalization instance with a default epsilon.
      */
-    public LayerNorm() {
-        this(1e-5);
+    public LayerNorm(int input) {
+        this(input, 1e-5);
     }
 
     /**
      * Constructs a layer normalization instance with an epsilon.
      * @param epsilon the epsilon used to avoid division by zero
      */
-    public LayerNorm(double epsilon) {
-        super(0, Activations.LINEAR);
+    public LayerNorm(int input, double epsilon) {
+        super(input, Activations.LINEAR);
         this.epsilon = epsilon;
+        this.weights = Tensors.zeros(input);
     }
 
     @Override
@@ -63,8 +65,10 @@ public class LayerNorm extends Layer {
             Range range = new Range(i, i + 1);
 
             Tensor token = input.slice(range).vector();
-            Tensor normalizedToken = normalize1D(token);
-
+            Tensor normalizedToken = normalize1D(token)
+                    .mul(weights)
+                    .add(bias);
+            
             for (int j = 0; j < normalizedToken.elements(); j++) {
                 normalized.set(normalizedToken.get(j), i, j);
             }
