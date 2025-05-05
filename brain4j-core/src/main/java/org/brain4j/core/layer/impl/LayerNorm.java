@@ -31,7 +31,7 @@ public class LayerNorm extends Layer {
     public LayerNorm(int input, double epsilon) {
         super(input, Activations.LINEAR);
         this.epsilon = epsilon;
-        this.weights = Tensors.zeros(input);
+        this.weights = Tensors.ones(input);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class LayerNorm extends Layer {
             Tensor normalizedToken = normalize1D(token)
                     .mul(weights)
                     .add(bias);
-            
+
             for (int j = 0; j < normalizedToken.elements(); j++) {
                 normalized.set(normalizedToken.get(j), i, j);
             }
