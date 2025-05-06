@@ -4,6 +4,7 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -68,21 +69,40 @@ public class PosEncodeLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        if (input.dimension() != 2) {
-            throw new IllegalArgumentException("Input must be a 2D matrix!");
+        if (input.dimension() < 2) {
+            throw new IllegalArgumentException("Input must be at least a 2D matrix!");
         }
 
-        int rows = input.shape()[0];
-        List<Tensor> tokens = Tensors.toList(input);
-
-        for (int i = 0; i < rows; i++) {
-            Tensor encoding = getEncoding(i);
-            Tensor current = tokens.get(i);
-
-            current.add(encoding);
+        if (input.dimension() != 3) {
+            input = input.reshape(1, input.elements());
         }
 
-        return Tensors.mergeTensors(tokens);
+        int[] shape = input.shape();
+
+        int batchSize = shape[0];
+        int seqLength = shape[1];
+        int dimension = shape[2];
+
+        Tensor result = Tensors.create(batchSize, seqLength, dimension);
+
+        for (int b = 0; b < batchSize; b++) {
+            Tensor batch = input.slice(new Range(b, b + 1))
+                    .reshape(seqLength, dimension);
+
+            for (int s = 0; s < seqLength; s++) {
+                Tensor token = batch.slice(new Range(s, s + 1))
+                        .reshape(1, dimension);
+                Tensor encoding = getEncoding(b); // [1, dimension]
+
+                token.add(encoding);
+
+                for (int p = 0; p < token.elements(); p++) {
+                    result.set(token.get(0, p), b, s, p);
+                }
+            }
+        }
+
+        return result;
     }
 
     private void initializeEncodings(int maxLength) {

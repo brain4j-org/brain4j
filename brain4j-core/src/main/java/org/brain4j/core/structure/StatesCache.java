@@ -77,12 +77,12 @@ public class StatesCache {
         return true;
     }
 
-    public Tensor getFeedForwardCache(Layer layer) {
-        return feedForwardCache.computeIfAbsent(layer.hashCode(), k -> null);
+    public Tensor getFeedForwardCache(int offset, Layer layer) {
+        return feedForwardCache.computeIfAbsent(layer.hashCode() + offset, k -> null);
     }
 
-    public void setFeedForwardCache(Layer layer, Tensor tensor) {
-        feedForwardCache.put(layer.hashCode(), tensor);
+    public void setFeedForwardCache(int offset, Layer layer, Tensor tensor) {
+        feedForwardCache.put(layer.hashCode() + offset, tensor);
     }
     
     public List<Tensor> getKeyCacheForHead(AttentionHead head) {

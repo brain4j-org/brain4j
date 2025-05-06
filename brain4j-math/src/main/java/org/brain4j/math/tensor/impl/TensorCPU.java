@@ -1002,7 +1002,7 @@ public class TensorCPU implements Cloneable, Tensor {
             throw new IllegalArgumentException("Tensor must be 3-dimensional!");
         }
 
-        if (channel <= 0 || channel >= shape[0]) {
+        if (channel < 0 || channel >= shape[0]) {
             throw new IllegalArgumentException("Invalid channel index: " + channel);
         }
 

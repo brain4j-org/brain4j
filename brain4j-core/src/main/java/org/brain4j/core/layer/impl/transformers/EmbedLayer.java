@@ -4,6 +4,7 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -61,27 +62,41 @@ public class EmbedLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
-        if (input.dimension() > 1) {
-            input = input.reshape(input.elements());
+        if (input.dimension() > 2) {
+            throw new IllegalArgumentException("Input must be a 1D or 2D matrix!");
         }
 
-        int elements = input.shape()[0];
+        if (input.dimension() == 1) {
+            input = input.reshape(1, input.elements());
+        }
 
-        List<Tensor> tokens = new ArrayList<>();
+        int[] shape = input.shape();
 
-        for (int i = 0; i < elements; i++) {
-            int index = (int) input.get(i);
+        int batchSize = shape[0];
+        int elements = shape[1];
 
-            if (index < 0 || index >= vocabSize) {
-                throw new IllegalArgumentException(
-                        "Invalid index: " + index + " for input tensor: " + input.toString("%.1f")
-                );
+        Tensor result = Tensors.create(batchSize, elements, embeddingDim);
+
+        for (int i = 0; i < batchSize; i++) {
+            Tensor batch = input.slice(new Range(i, i + 1)); // [1, seq_len]
+            List<Tensor> tokens = new ArrayList<>();
+
+            for (int j = 0; j < elements; j++) {
+                int index = (int) batch.get(0, j);
+
+                if (index < 0 || index >= vocabSize) {
+                    throw new IllegalArgumentException(
+                            "Invalid index: " + index + " for input tensor: " + input.toString("%.1f")
+                    );
+                }
+
+                Tensor embedding = embeddings.get(index);
+                tokens.add(embedding);
             }
 
-            Tensor embedding = embeddings.get(index);
-            tokens.add(embedding);
+            result.setChannel(i, Tensors.mergeTensors(tokens));
         }
 
-        return Tensors.mergeTensors(tokens);
+        return result;
     }
 }

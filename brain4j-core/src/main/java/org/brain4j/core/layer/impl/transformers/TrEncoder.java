@@ -19,6 +19,7 @@ import org.brain4j.math.tensor.index.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Arrays;
 import java.util.Random;
 
 public class TrEncoder extends Layer {
@@ -111,34 +112,53 @@ public class TrEncoder extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+        int[] shape = input.shape();
+
+        if (shape.length != 3) {
+            throw new IllegalArgumentException(
+                    "Input must have shape [batch_size, seq_len, dimension]! Got: " + Arrays.toString(shape)
+            );
+        }
+
         cache.setInputTensor(this, input);
 
-        Tensor attended = attention.attend(cache, input);
+        int batchSize = shape[0];
+        int seqLength = shape[1];
+        int dimension = shape[2];
 
-        if (training) attended = dropout.forward(cache, this, attended, true);
+        Tensor result = Tensors.create(batchSize, seqLength, dimension);
 
-        Tensor attentionOut = normalizer.forward(cache, this, input.add(attended), training);
-        Tensor cached = cache.getFeedForwardCache(this); // [tokens, dimension]
+        for (int i = 0; i < batchSize; i++) {
+            Tensor batch = input.slice(new Range(i, i + 1)).reshape(seqLength, dimension);
 
-        if (cached == null) cached = Tensors.create(0, embeddingDim);
+            Tensor attended = attention.attend(cache, batch);
 
-        int tokens = attentionOut.shape()[0];
-        int cacheSize = cached.shape()[0];
+            if (training) attended = dropout.forward(cache, this, attended, true);
 
-        Range range = new Range(cacheSize, tokens);
+            Tensor attentionOut = normalizer.forward(cache, this, batch.add(attended), training);
+            Tensor cached = cache.getFeedForwardCache(i, this); // [tokens, dimension]
 
-        Tensor notCached = attentionOut.slice(range);
-        Tensor output = feedForward.predict(notCached);
-        Tensor result = Tensors.stack(cached, output);
+            if (cached == null) cached = Tensors.create(0, embeddingDim);
 
-        cache.setFeedForwardCache(this, result);
+            int tokens = attentionOut.shape()[0];
+            int cacheSize = cached.shape()[0];
 
-        if (training) result = dropout.forward(cache, this, result, true);
+            Range range = new Range(cacheSize, tokens);
 
-        result = normalizer.forward(cache, this, attentionOut.add(result), training);
+            Tensor notCached = attentionOut.slice(range);
+            Tensor output = feedForward.predict(notCached);
+            Tensor stacked = Tensors.stack(cached, output);
+
+            cache.setFeedForwardCache(i, this, stacked);
+
+            if (training) stacked = dropout.forward(cache, this, stacked, true);
+
+            stacked = normalizer.forward(cache, this, attentionOut.add(stacked), training);
+
+            result.setChannel(i, stacked);
+        }
 
         cache.setOutputTensor(this, result);
-
         return result;
     }
 

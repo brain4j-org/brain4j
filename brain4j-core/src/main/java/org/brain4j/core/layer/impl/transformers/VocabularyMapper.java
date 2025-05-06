@@ -53,18 +53,27 @@ public class VocabularyMapper extends Layer {
 
     @Override
     public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
-        Tensor input = cache.getInputTensor(this);
+        Tensor input = cache.getInputTensor(this); // [batch_size, seq_len, dimension]
 
-        int rows = input.shape()[0];
-        Range range = new Range(rows - 1, rows);
+        int[] shape = input.shape();
 
-        Tensor delta = outputs.minus(targets.vector()).reshape(1, vocabularySize);
-        Tensor last = input.slice(range).reshape(1, dimension); // last token [1, dimension]
+        int batchSize = shape[0];
+        int seqLength = shape[1];
 
+        Tensor delta = outputs.minus(targets); // [batch_size, vocab_size]
+        Range range = new Range(seqLength - 1, seqLength);
+
+        for (int i = 0; i < batchSize; i++) {
+            Tensor batch = input.slice(new Range(i, i + 1)) // [1, seq_len, dimension]
+                    .reshape(seqLength, dimension); // [seq_len, dimension]
+            Tensor last = batch.slice(range); // [1, dimension]
+
+            Tensor gradW = optimizer.optimize(this, delta, last);
+            outProjectionWeights.sub(gradW);
+        }
+
+        /* TODO: Reimplement this with batches
         Tensor transposedWeights = outProjectionWeights.transpose(); // [vocab_size, dimension]
-        Tensor gradW = optimizer.optimize(this, delta, last);
-
-        outProjectionWeights.sub(gradW);
 
         Tensor gradient = delta.matmul(transposedWeights); // [1, dimension]
         Tensor deltaFull = Tensors.zeros(rows, dimension); // [sequence_length, dimension]
@@ -72,22 +81,50 @@ public class VocabularyMapper extends Layer {
         for (int i = 0; i < gradient.elements(); i++) {
             deltaFull.set(gradient.get(0, i), rows - 1, i);
         }
-
         return deltaFull;
+        */
+
+        return null;
     }
 
     @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+        int[] shape = input.shape();
+
+        if (shape.length < 2) {
+            throw new IllegalArgumentException(
+                    "Input must have the shape [batch_size, seq_len, dimension] or [seq_len, dimension]!"
+            );
+        }
+
+        if (shape.length == 2) {
+            input = input.reshape(1, shape[0], shape[1]);
+        }
+
+        int batchSize = shape[0];
+        int seqLength = shape[1];
+        int dimension = shape[2];
+
         cache.setInputTensor(this, input);
 
-        int rows = input.shape()[0];
+        Tensor result = Tensors.create(batchSize, vocabularySize);
 
-        Tensor last = input.slice(new Range(rows - 1, rows));
-        Tensor logits = last.matmul(outProjectionWeights).softmax(temperature);
+        for (int i = 0; i < batchSize; i++) {
+            Tensor batch = input.slice(new Range(i, i + 1))
+                    .reshape(seqLength, dimension);
 
-        cache.setOutputTensor(this, logits);
+            Tensor last = batch.slice(new Range(seqLength - 1, seqLength)); // [1, dimension]
+            Tensor logits = last.matmul(outProjectionWeights)
+                    .softmax(temperature)
+                    .vector(); // [vocab_size]
 
-        return logits.vector();
+            for (int j = 0; j < logits.elements(); j++) {
+                result.set(logits.get(j), i, j);
+            }
+        }
+
+        cache.setOutputTensor(this, result);
+        return result;
     }
 
     @Override
