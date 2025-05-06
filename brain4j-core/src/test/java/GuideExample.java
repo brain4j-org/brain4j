@@ -26,6 +26,7 @@ public class GuideExample {
         );
 
         model.compile(Loss.BINARY_CROSS_ENTROPY, new AdamW(0.1));
+        System.out.println(model.summary());
 
         List<Sample> samples = new ArrayList<>();
 

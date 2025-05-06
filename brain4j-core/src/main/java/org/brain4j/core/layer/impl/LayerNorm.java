@@ -35,6 +35,11 @@ public class LayerNorm extends Layer {
     }
 
     @Override
+    public String getLayerName() {
+        return "Layer Norm";
+    }
+
+    @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeDouble(epsilon);

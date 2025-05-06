@@ -28,6 +28,11 @@ public class VocabularyMapper extends Layer {
     }
 
     @Override
+    public String getLayerName() {
+        return "Vocabulary Mapper";
+    }
+
+    @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeInt(vocabularySize);
@@ -86,7 +91,7 @@ public class VocabularyMapper extends Layer {
     }
 
     @Override
-    public int getTotalParams() {
+    public int getTotalWeights() {
         return outProjectionWeights.elements();
     }
 }

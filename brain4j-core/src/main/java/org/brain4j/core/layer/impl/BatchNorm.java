@@ -30,6 +30,11 @@ public class BatchNorm extends Layer {
     }
 
     @Override
+    public String getLayerName() {
+        return "Batch Norm";
+    }
+
+    @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeDouble(epsilon);
@@ -57,14 +62,14 @@ public class BatchNorm extends Layer {
             Range range = new Range(i, i + 1);
 
             Tensor token = transposed.slice(range).vector(); // [batch_size]
-            Tensor row = normalize1D(token).mul(weights).add(bias);
+            Tensor normalized = normalize1D(token);
 
-            for (int j = 0; j < row.elements(); j++) {
-                result.set(row.get(j), i, j);
+            for (int j = 0; j < normalized.elements(); j++) {
+                result.set(normalized.get(j), i, j);
             }
         }
 
-        return result;
+        return result.transpose();
     }
 
     public Tensor normalize1D(Tensor input) {

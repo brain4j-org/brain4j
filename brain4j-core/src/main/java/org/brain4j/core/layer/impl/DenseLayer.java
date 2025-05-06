@@ -33,6 +33,11 @@ public class DenseLayer extends Layer {
     }
 
     @Override
+    public String getLayerName() {
+        return "Dense Layer";
+    }
+
+    @Override
     public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
         Tensor Z = input.matmul(weights); // [batch_size, n_out]
 

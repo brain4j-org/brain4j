@@ -6,7 +6,6 @@ import org.brain4j.core.adapters.ModernAdapter;
 import org.brain4j.core.initialization.WeightInit;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.impl.DropoutLayer;
 import org.brain4j.core.loss.Loss;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.model.impl.Sequential;
@@ -253,6 +252,10 @@ public abstract class Model implements BinarySerializable {
     }
 
     public String summary() {
+        if (updater == null || optimizer == null || weightInit == null) {
+            throw new IllegalStateException("The network is not compiled! Make sure to call compile() before.");
+        }
+
         StringBuilder stats = new StringBuilder();
         DecimalFormat format = new DecimalFormat("#,###");
 
@@ -268,13 +271,13 @@ public abstract class Model implements BinarySerializable {
         for (int i = 0; i < this.layers.size(); i++) {
             Layer layer = this.layers.get(i);
 
-            String layerType = layer.getClass().getSimpleName();
+            String layerType = layer.getLayerName();
 
             int neurons = layer.getTotalNeurons();
-            int weights = layer.getTotalParams();
+            int weights = layer.getTotalWeights();
 
-            String formatNeurons = layer instanceof DropoutLayer ? "-" : format.format(neurons);
-            String formatWeights = format.format(weights);
+            String formatNeurons = layer.getTotalNeurons() == 0 ? "-" : format.format(neurons);
+            String formatWeights = layer.getTotalWeights() == 0 ? "-" : format.format(weights);
 
             stats.append(pattern.formatted(i, layerType, formatNeurons, formatWeights, layer.getActivation().getName()));
 
@@ -373,7 +376,7 @@ public abstract class Model implements BinarySerializable {
         int total = 0;
 
         for (Layer layer : layers) {
-            total += layer.getTotalParams();
+            total += layer.getTotalWeights();
         }
 
         return total;

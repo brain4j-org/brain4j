@@ -15,19 +15,24 @@ import java.util.List;
 public class DecoderGroup extends Layer {
 
     private final List<TrDecoder> layers;
-    private final int groupSize;
+    private final int amount;
     private final int numHeads;
     private final int dimension;
 
     public DecoderGroup(int layersAmount, int numHeads, int dimension) {
         this.layers = new ArrayList<>();
-        this.groupSize = layersAmount;
+        this.amount = layersAmount;
         this.numHeads = numHeads;
         this.dimension = dimension;
 
         for (int i = 0; i < layersAmount; i++) {
             layers.add(new TrDecoder(numHeads, dimension));
         }
+    }
+
+    @Override
+    public String getLayerName() {
+        return "(%sx) Decoders".formatted(amount);
     }
 
     @Override
@@ -61,11 +66,11 @@ public class DecoderGroup extends Layer {
     }
 
     @Override
-    public int getTotalParams() {
+    public int getTotalWeights() {
         int total = 0;
 
         for (TrDecoder layer : layers) {
-            total += layer.getTotalParams();
+            total += layer.getTotalWeights();
         }
 
         return total;
@@ -86,8 +91,8 @@ public class DecoderGroup extends Layer {
         return layers;
     }
 
-    public int getGroupSize() {
-        return groupSize;
+    public int getAmount() {
+        return amount;
     }
 
     public int getNumHeads() {

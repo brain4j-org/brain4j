@@ -153,7 +153,7 @@ public class TrEncoder extends Layer {
     }
 
     @Override
-    public int getTotalParams() {
+    public int getTotalWeights() {
         return getAttentionSize() + getFeedForwardSize();
     }
 
@@ -190,7 +190,7 @@ public class TrEncoder extends Layer {
     }
 
     public int getFeedForwardSize() {
-        return feedForward.getLayers().stream().mapToInt(Layer::getTotalParams).sum();
+        return feedForward.getLayers().stream().mapToInt(Layer::getTotalWeights).sum();
     }
 }
 

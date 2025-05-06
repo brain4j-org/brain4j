@@ -54,6 +54,10 @@ public abstract class Layer implements BinarySerializable {
         this.weights = Tensors.zeros(0);
     }
 
+    public String getLayerName() {
+        return this.getClass().getSimpleName();
+    }
+
     public static int getTotalLayers() {
         return totalLayers;
     }
@@ -159,7 +163,7 @@ public abstract class Layer implements BinarySerializable {
         return weights;
     }
 
-    public int getTotalParams() {
+    public int getTotalWeights() {
         return weights.elements();
     }
 

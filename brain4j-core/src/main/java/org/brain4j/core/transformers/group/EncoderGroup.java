@@ -61,11 +61,11 @@ public class EncoderGroup extends Layer {
     }
 
     @Override
-    public int getTotalParams() {
+    public int getTotalWeights() {
         int total = 0;
 
         for (TrEncoder layer : layers) {
-            total += layer.getTotalParams();
+            total += layer.getTotalWeights();
         }
 
         return total;

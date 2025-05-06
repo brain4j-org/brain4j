@@ -33,6 +33,11 @@ public class PosEncodeLayer extends Layer {
     }
 
     @Override
+    public String getLayerName() {
+        return "Positional Encoding";
+    }
+
+    @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeInt(embeddingDim);
@@ -52,7 +57,7 @@ public class PosEncodeLayer extends Layer {
     }
 
     @Override
-    public int getTotalParams() {
+    public int getTotalWeights() {
         return maxLength * embeddingDim;
     }
 

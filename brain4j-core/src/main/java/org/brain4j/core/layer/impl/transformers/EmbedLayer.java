@@ -26,6 +26,11 @@ public class EmbedLayer extends Layer {
     }
 
     @Override
+    public String getLayerName() {
+        return "Embedding";
+    }
+
+    @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeInt(vocabSize);

@@ -41,6 +41,11 @@ public class DropoutLayer extends Layer {
     }
 
     @Override
+    public String getLayerName() {
+        return "Dropout (%s)".formatted(dropout);
+    }
+
+    @Override
     public void serialize(DataOutputStream stream) throws Exception {
         super.serialize(stream);
         stream.writeDouble(dropout);
