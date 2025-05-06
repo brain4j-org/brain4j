@@ -19,13 +19,13 @@ public class DecoderGroup extends Layer {
     private final int numHeads;
     private final int dimension;
 
-    public DecoderGroup(int groupSize, int numHeads, int dimension) {
+    public DecoderGroup(int layersAmount, int numHeads, int dimension) {
         this.layers = new ArrayList<>();
-        this.groupSize = groupSize;
+        this.groupSize = layersAmount;
         this.numHeads = numHeads;
         this.dimension = dimension;
 
-        for (int i = 0; i < groupSize; i++) {
+        for (int i = 0; i < layersAmount; i++) {
             layers.add(new TrDecoder(numHeads, dimension));
         }
     }

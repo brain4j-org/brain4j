@@ -46,17 +46,14 @@ public class MultiHeadAttention {
         Tensor[] outputs = new Tensor[heads.size()];
 
         for (int i = 0; i < heads.size(); i++) {
-            AttentionHead head = heads.get(i);
-            outputs[i] = head.attend(cache, input);
+            outputs[i] = heads.get(i).attend(cache, input);
         }
 
         return Tensors.concat(List.of(outputs));
     }
 
-    public int getTotalNeurons() {
-        return heads.stream()
-                .mapToInt(AttentionHead::size)
-                .sum();
+    public int size() {
+        return heads.stream().mapToInt(AttentionHead::size).sum();
     }
 
     public void setUseCache(boolean useCache) {

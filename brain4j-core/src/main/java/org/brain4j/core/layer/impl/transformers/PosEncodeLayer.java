@@ -14,6 +14,7 @@ import java.util.Random;
 public class PosEncodeLayer extends Layer {
 
     private List<Tensor> encodings;
+    private int maxLength;
     private int embeddingDim;
 
     private PosEncodeLayer() {
@@ -21,6 +22,7 @@ public class PosEncodeLayer extends Layer {
 
     public PosEncodeLayer(int embeddingDim, int maxLength) {
         this.embeddingDim = embeddingDim;
+        this.maxLength = maxLength;
         this.encodings = new ArrayList<>();
 
         initializeEncodings(maxLength);
@@ -47,6 +49,11 @@ public class PosEncodeLayer extends Layer {
     @Override
     public boolean canPropagate() {
         return false;
+    }
+
+    @Override
+    public int getTotalParams() {
+        return maxLength * embeddingDim;
     }
 
     @Override

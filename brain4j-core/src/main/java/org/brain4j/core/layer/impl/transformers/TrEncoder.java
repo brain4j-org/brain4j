@@ -129,7 +129,6 @@ public class TrEncoder extends Layer {
 
         Tensor notCached = attentionOut.slice(range);
         Tensor output = feedForward.predict(notCached);
-
         Tensor result = Tensors.stack(cached, output);
 
         cache.setFeedForwardCache(this, result);
@@ -187,14 +186,11 @@ public class TrEncoder extends Layer {
     }
 
     public int getAttentionSize() {
-        return getAttention().getTotalNeurons();
+        return getAttention().size();
     }
 
     public int getFeedForwardSize() {
-        return feedForward.getLayers()
-                .stream()
-                .mapToInt(Layer::getTotalParams)
-                .sum();
+        return feedForward.getLayers().stream().mapToInt(Layer::getTotalParams).sum();
     }
 }
 
