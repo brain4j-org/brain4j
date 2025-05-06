@@ -185,34 +185,55 @@ public class Tensors {
 
     public static Tensor mergeTensors(List<Tensor> tensors) {
         if (tensors.isEmpty()) {
-            throw new IllegalArgumentException("No elements specified!");
+            throw new IllegalArgumentException("No tensors provided!");
         }
 
         Tensor first = tensors.getFirst();
+        int dimension = first.dimension();
 
-        int rows = tensors.size();
-        int columns = first.shape()[0];
+        int[] shape = first.shape();
+        int[] newShape = new int[dimension + 1];
 
-        if (first.dimension() > 1) {
-            columns = first.shape()[1];
-        }
+        newShape[0] = tensors.size();
+        System.arraycopy(shape, 0, newShape, 1, dimension);
 
-        Tensor result = zeros(rows, columns);
+        Tensor result = zeros(newShape);
 
-        for (int i = 0; i < rows; i++) {
+        for (int i = 0; i < tensors.size(); i++) {
             Tensor current = tensors.get(i);
-
-            if (current.dimension() == 1) {
-                current = current.reshape(1, columns);
+            if (current.dimension() != dimension) {
+                throw new IllegalArgumentException(
+                        "All input tensors must have the same dimension!"
+                );
             }
 
-            for (int j = 0; j < columns; j++) {
-                result.set(current.get(0, j), i, j);
-            }
+            int[] idx = new int[dimension];
+            copyRecursive(current, result, idx, 0, i);
         }
 
         return result;
     }
+
+    private static void copyRecursive(Tensor src, Tensor dest, int[] idx, int dim, int batchIndex) {
+        if (dim == idx.length) {
+            double value = src.get(idx);
+
+            int[] destIdx = new int[idx.length + 1];
+            destIdx[0] = batchIndex;
+
+            System.arraycopy(idx, 0, destIdx, 1, idx.length);
+
+            dest.set(value, destIdx);
+        } else {
+            int dimSize = src.shape()[dim];
+
+            for (int j = 0; j < dimSize; j++) {
+                idx[dim] = j;
+                copyRecursive(src, dest, idx, dim + 1, batchIndex);
+            }
+        }
+    }
+
 
     public static Tensor triangularMask(int dimension) {
         Tensor mask = Tensors.zeros(dimension, dimension);
