@@ -20,13 +20,13 @@ public class AttentionHead {
     
     protected boolean useCache = true;
 
-    public AttentionHead(int inputDimension, int headDimension) {
-        this.inputDimension = inputDimension;
+    public AttentionHead(int embeddingDim, int headDimension) {
+        this.inputDimension = embeddingDim;
         this.headDimension = headDimension;
 
-        this.queryWeightsTensor = Tensors.matrix(inputDimension, headDimension);
-        this.keyWeightsTensor = Tensors.matrix(inputDimension, headDimension);
-        this.valueWeightsTensor = Tensors.matrix(inputDimension, headDimension);
+        this.queryWeightsTensor = Tensors.matrix(embeddingDim, headDimension);
+        this.keyWeightsTensor = Tensors.matrix(embeddingDim, headDimension);
+        this.valueWeightsTensor = Tensors.matrix(embeddingDim, headDimension);
     }
 
     public void compile(Random random, WeightInitializer initializer) {
@@ -78,7 +78,7 @@ public class AttentionHead {
     }
 
     public Tensor attend(Tensor input) {
-        // input = [seq_length, input_dimension]
+        // input = [seq_length, embedding_dim]
         Tensor Q = input.matmul(queryWeightsTensor); // [seq_length, head_dimension]
         Tensor K = input.matmul(keyWeightsTensor); // [seq_length, head_dimension]
         Tensor V = input.matmul(valueWeightsTensor); // [seq_length, head_dimension]
