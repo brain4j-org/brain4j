@@ -44,6 +44,50 @@ public class ListDataSource implements Cloneable {
         cursor = 0;
     }
 
+    public ListDataSource normalize() {
+        List<Tensor> inputs = new ArrayList<>();
+
+        for (Sample sample : samples) {
+            inputs.add(sample.input());
+        }
+
+        Tensor first = inputs.getFirst();
+        int features = first.dimension();
+
+        float[] means = new float[features];
+        float[] stds = new float[features];
+
+        for (int i = 0; i < features; i++) {
+            double mean = 0;
+            double std = 0;
+
+            for (Tensor input : inputs) {
+                mean += input.get(i);
+                std += input.get(i) * input.get(i);
+            }
+
+            mean /= inputs.size();
+            std = Math.sqrt(std / inputs.size() - mean * mean);
+
+            means[i] = (float) mean;
+            stds[i] = (float) Math.max(std, 1e-8);
+        }
+
+        Tensor mean = Tensors.vector(means);
+        Tensor std = Tensors.vector(stds);
+
+        for (Tensor input : inputs) {
+            input.sub(mean).div(std);
+        }
+
+        batchedInputs.clear();
+        batchedLabels.clear();
+
+        computeBatches();
+
+        return this;
+    }
+
     public void propagate(Consumer<Pair<Tensor, Tensor>> task) {
         reset();
 
