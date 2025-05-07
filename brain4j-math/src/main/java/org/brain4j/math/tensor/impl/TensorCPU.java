@@ -125,17 +125,15 @@ public class TensorCPU implements Cloneable, Tensor {
 
     public static Tensor of(int[] shape, float... data) {
         Tensor tensor = new TensorCPU(shape);
-        
-        for (int i = 0; i < data.length; i++) {
-            tensor.getData()[i] = data[i];
-        }
+
+        System.arraycopy(data, 0, tensor.getData(), 0, data.length);
         
         return tensor;
     }
     
     public static Tensor of(int[] shape, double... data) {
         Tensor tensor = new TensorCPU(shape);
-        
+
         for (int i = 0; i < data.length; i++) {
             tensor.getData()[i] = (float) data[i];
         }
