@@ -3,15 +3,18 @@ package org.brain4j.math.tensor.impl.cpu.matmul;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.*;
 
 public class VectorParallelMatmul implements Matmul {
 
     private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
 
-    private static final int WORK_THRESHOLD = 1;
-    private static final int COMPLEXITY_THRESHOLD = 65536;
+    private static final int PARALLELISM = Runtime.getRuntime().availableProcessors();
+    private static final int PARALLEL_COMPLEXITY_THRESHOLD = 65536;
+    private static final int PARALLEL_WORK_THRESHOLD = PARALLELISM;
+
+    private static final int SPLIT_COMPLEXITY_THRESHOLD = 65536;
+    private static final int SPLIT_WORK_THRESHOLD = 2;
 
     private static class VectorAction extends RecursiveAction {
 
@@ -31,16 +34,6 @@ public class VectorParallelMatmul implements Matmul {
             int p = parameters.p();
             int np = parameters.np();
 
-            int work = end - start;
-            if (isOverThreshold(work, np)) {
-                int mid = (start + end) >>> 1;
-                invokeAll(
-                        new VectorAction(parameters, start, mid),
-                        new VectorAction(parameters, mid, end)
-                );
-                return;
-            }
-
             int m = parameters.m();
             int mn = parameters.mn();
             int mp = parameters.mp();
@@ -49,7 +42,17 @@ public class VectorParallelMatmul implements Matmul {
             float[] B = parameters.B();
             float[] C = parameters.C();
 
-            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+            int work = end - start;
+            if (!isOverSplitThreshold(work, np)) {
+                multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+                return;
+            }
+
+            int mid = (start + end) >>> 1;
+            invokeAll(
+                    new VectorAction(parameters, start, mid),
+                    new VectorAction(parameters, mid, end)
+            );
         }
 
     }
@@ -64,14 +67,24 @@ public class VectorParallelMatmul implements Matmul {
         int mp = m * p;
 
         int work = end - start;
-        if (!isOverThreshold(work, np)) {
+        if (!isOverParallelThreshold(work, np)) {
             multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
             return;
         }
 
+        int parallelism = PARALLELISM;
+        int step = work / parallelism;
+
         MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp);
-        VectorAction action = new VectorAction(parameters, start, end);
-        pool.invoke(action);
+        VectorAction[] actions = new VectorAction[parallelism];
+
+        int i;
+        for (i = 0; i < parallelism - 1; i++) {
+            actions[i] = new VectorAction(parameters, start + (i * step), start + ((i + 1) * step));
+        }
+        actions[i] = new VectorAction(parameters, start + (i * step), end);
+
+        ForkJoinTask.invokeAll(actions);
     }
 
     private static void multiplySection(
@@ -107,8 +120,12 @@ public class VectorParallelMatmul implements Matmul {
         }
     }
 
-    private static boolean isOverThreshold(int work, int np) {
-        return work > WORK_THRESHOLD && work * np > COMPLEXITY_THRESHOLD;
+    private static boolean isOverParallelThreshold(int work, int np) {
+        return work > PARALLEL_WORK_THRESHOLD && work * np > PARALLEL_COMPLEXITY_THRESHOLD;
+    }
+
+    private static boolean isOverSplitThreshold(int work, int np) {
+        return work > SPLIT_WORK_THRESHOLD && work * np > SPLIT_COMPLEXITY_THRESHOLD;
     }
 
 }

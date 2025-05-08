@@ -3,11 +3,16 @@ package org.brain4j.math.tensor.impl.cpu.map;
 import org.brain4j.math.lang.DoubleToDoubleFunction;
 
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
 public class ParallelMap extends RecursiveAction {
 
-    private static final int WORK_THRESHOLD = 1024;
+    private static final int PARALLELISM = Runtime.getRuntime().availableProcessors();
+    private static final int PARALLEL_COMPLEXITY_THRESHOLD = 1024;
+    private static final int PARALLEL_WORK_THRESHOLD = PARALLELISM;
+
+    private static final int SPLIT_COMPLEXITY_THRESHOLD = 1024;
 
     private final MapParameters parameters;
     private final int start;
@@ -23,7 +28,7 @@ public class ParallelMap extends RecursiveAction {
     protected void compute() {
         int work = end - start;
 
-        if (isOverThreshold(work)) {
+        if (isOverSplitThreshold(work)) {
             int mid = (start + end) >>> 1;
             invokeAll(
                     new ParallelMap(parameters, start, mid),
@@ -48,14 +53,24 @@ public class ParallelMap extends RecursiveAction {
 
         int work = end - start;
 
-        if (!isOverThreshold(work)) {
+        if (!isOverParallelThreshold(work)) {
             mapSection(function, start, end, data);
             return;
         }
 
+        int parallelism = PARALLELISM;
+        int step = work / parallelism;
+
         MapParameters parameters = new MapParameters(function, data);
-        ParallelMap parallelMap = new ParallelMap(parameters, 0, data.length);
-        pool.invoke(parallelMap);
+        ParallelMap[] actions = new ParallelMap[parallelism];
+
+        int i;
+        for (i = 0; i < parallelism - 1; i++) {
+            actions[i] = new ParallelMap(parameters, start + (i * step), start + ((i + 1) * step));
+        }
+        actions[i] = new ParallelMap(parameters, start + (i * step), end);
+
+        ForkJoinTask.invokeAll(actions);
     }
 
     private static void mapSection(
@@ -69,7 +84,11 @@ public class ParallelMap extends RecursiveAction {
         }
     }
 
-    private static boolean isOverThreshold(int work) {
-        return work > WORK_THRESHOLD;
+    private static boolean isOverParallelThreshold(int work) {
+        return work > PARALLEL_WORK_THRESHOLD && work > PARALLEL_COMPLEXITY_THRESHOLD;
+    }
+
+    private static boolean isOverSplitThreshold(int work) {
+        return work > SPLIT_COMPLEXITY_THRESHOLD;
     }
 }
