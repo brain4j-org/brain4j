@@ -8,6 +8,7 @@ import org.brain4j.core.layer.impl.transformers.VocabularyMapper;
 import org.brain4j.core.loss.Loss;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.impl.Transformer;
+import org.brain4j.core.training.optimizer.impl.GradientDescent;
 import org.brain4j.core.training.optimizer.impl.Lion;
 import org.brain4j.core.transformers.Vocabulary;
 import org.brain4j.core.transformers.tokenizer.Tokenizer;
@@ -44,10 +45,9 @@ public class GPTExample {
                 new PosEncodeLayer(embeddingDim),
 
                 new TrDecoder(2, embeddingDim),
-                new VocabularyMapper(vocabSize, embeddingDim, 0.5)
+                new VocabularyMapper(vocabSize, embeddingDim, 1)
         );
-
-        model.compile(Loss.CROSS_ENTROPY, new Lion(0.001, 0.9));
+        model.compile(Loss.CROSS_ENTROPY, new GradientDescent(0.01));
 
         System.out.println(model.summary());
         System.out.println("Vocabulary Size: " + vocabSize);

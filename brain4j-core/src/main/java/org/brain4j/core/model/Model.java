@@ -2,7 +2,7 @@ package org.brain4j.core.model;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.adapters.BinarySerializable;
-import org.brain4j.core.adapters.ModelSerializer;
+import org.brain4j.core.adapters.impl.BrainFormatAdapter;
 import org.brain4j.core.initialization.WeightInit;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
@@ -234,11 +234,11 @@ public abstract class Model implements BinarySerializable {
     }
 
     public void load(String path) throws Exception {
-        ModelSerializer.deserialize(path, this);
+        BrainFormatAdapter.deserialize(path, this);
     }
 
     public void save(String path) throws Exception {
-        ModelSerializer.serialize(path, this);
+        BrainFormatAdapter.serialize(path, this);
     }
 
     public Model add(Layer layer) {

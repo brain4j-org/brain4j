@@ -14,6 +14,43 @@ import static org.brain4j.math.constants.Constants.GRADIENT_CLIP;
  */
 public class BrainUtils {
 
+    public static float f16ToFloat(short half) {
+        int sign = (half >> 15) & 0x1f;
+        int exponent = (half >> 10) & 0x1f;
+        int mantissa = half & 0x3ff;
+
+        if (exponent == 31) {
+            if (mantissa == 0) {
+                // Inf
+                return Float.intBitsToFloat((sign << 31) | 0x7f800000);
+            } else {
+                // NaN
+                return Float.intBitsToFloat((sign << 31) | 0x7f800000 | (mantissa << 13));
+            }
+        }
+
+        if (exponent == 0) {
+            if (mantissa == 0) {
+                // Zero
+                return Float.intBitsToFloat(sign << 31);
+            } else {
+                // Subnormal -> normalize
+                while ((mantissa & 0x00000400) == 0) {
+                    mantissa <<= 1;
+                    exponent -= 1;
+                }
+                exponent += 1;
+                mantissa &= ~0x00000400;
+            }
+        }
+
+        exponent += (127 - 15);
+        mantissa <<= 13;
+
+        int result = (sign << 31) | (exponent << 23) | mantissa;
+        return Float.intBitsToFloat(result);
+    }
+
     public static int nextPowerOf2(int n) {
         if (n <= 0) return 1;
         n--;

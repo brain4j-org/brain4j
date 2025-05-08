@@ -1,6 +1,6 @@
-package org.brain4j.core.adapters;
+package org.brain4j.core.adapters.impl;
 
-import com.github.luben.zstd.Zstd;
+import org.brain4j.core.adapters.ModelAdapter;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
@@ -12,14 +12,16 @@ import org.brain4j.math.BrainUtils;
 
 import java.io.*;
 
-public class ModelSerializer {
+public class BrainFormatAdapter implements ModelAdapter {
 
-    public static void serialize(String path, Model model) throws Exception {
+    @Override
+    public void serialize(String path, Model model) throws Exception {
         String suffix = path.endsWith(".b4j") ? "" : ".b4j";
         serialize(new File(path + suffix), model);
     }
 
-    public static void serialize(File file, Model model) throws Exception {
+    @Override
+    public void serialize(File file, Model model) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DataOutputStream dataStream = new DataOutputStream(outputStream);
 
@@ -36,18 +38,20 @@ public class ModelSerializer {
         byte[] bytes = outputStream.toByteArray();
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-            byte[] compressed = compress(bytes);
+            byte[] compressed = ModelAdapter.compress(bytes);
             fileOutputStream.write(compressed);
         }
     }
 
-    public static <T extends Model> T deserialize(String path, T model) throws Exception {
+    @Override
+    public Model deserialize(String path, Model model) throws Exception {
         return deserialize(new File(path), model);
     }
 
-    public static <T extends Model> T deserialize(File file, T model) throws Exception {
+    @Override
+    public Model deserialize(File file, Model model) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            byte[] bytes = decompress(fileInputStream.readAllBytes());
+            byte[] bytes = ModelAdapter.decompress(fileInputStream.readAllBytes());
             DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(bytes));
 
             String version = dataStream.readUTF();
@@ -77,14 +81,5 @@ public class ModelSerializer {
 
             return model;
         }
-    }
-
-    public static byte[] compress(byte[] data) {
-        return Zstd.compress(data);
-    }
-
-    public static byte[] decompress(byte[] data) {
-        int size = (int) Zstd.getFrameContentSize(data);
-        return Zstd.decompress(data, size);
     }
 }
