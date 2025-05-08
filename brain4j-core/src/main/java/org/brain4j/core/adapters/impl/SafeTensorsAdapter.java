@@ -16,16 +16,17 @@ import java.util.Map;
 
 public class SafeTensorsAdapter implements ModelAdapter {
 
-    public static Model load(String path, Model model) throws IOException {
+    public static Map<String, Tensor> parseStructure(String path) throws IOException {
+        Map<String, Tensor> tensors = new HashMap<>();
+
         try (DataInputStream stream = new DataInputStream(new FileInputStream(path))) {
-            long jsonLength = ByteBuffer.wrap(stream.readNBytes(8))
-                    .order(ByteOrder.LITTLE_ENDIAN)
-                    .getLong();
+            ByteBuffer lenBuffer = ByteBuffer.wrap(stream.readNBytes(8));
+            lenBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-            String json = new String(stream.readNBytes((int) jsonLength), StandardCharsets.UTF_8);
+            int jsonLength = Math.toIntExact(lenBuffer.getLong());
+
+            String json = new String(stream.readNBytes(jsonLength), StandardCharsets.UTF_8);
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-
-            Map<String, Tensor> tensors = new HashMap<>();
 
             for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
                 String key = entry.getKey();
@@ -63,13 +64,9 @@ public class SafeTensorsAdapter implements ModelAdapter {
 
                 tensors.put(key, tensor);
             }
-
-            for (Map.Entry<String, Tensor> entry : tensors.entrySet()) {
-                System.out.println(entry.getKey());
-            }
         }
 
-        return model;
+        return tensors;
     }
 
     @Override
