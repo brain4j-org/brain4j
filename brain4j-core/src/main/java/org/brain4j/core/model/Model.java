@@ -233,12 +233,14 @@ public abstract class Model implements BinarySerializable {
         return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
     }
 
-    public void load(String path) throws Exception {
-        BrainFormatAdapter.deserialize(path, this);
+    public Model load(String path) throws Exception {
+        new BrainFormatAdapter().deserialize(path, this);
+        return this;
     }
 
-    public void save(String path) throws Exception {
-        BrainFormatAdapter.serialize(path, this);
+    public Model save(String path) throws Exception {
+        new BrainFormatAdapter().serialize(path, this);
+        return this;
     }
 
     public Model add(Layer layer) {

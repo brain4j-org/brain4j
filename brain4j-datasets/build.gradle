@@ -1,0 +1,13 @@
+plugins {
+    id "java"
+    id "com.gradleup.shadow" version "9.0.0-beta10"
+}
+
+compileJava {
+    options.compilerArgs.addAll(['--enable-preview'])
+    options.compilerArgs.addAll(['--add-modules', 'jdk.incubator.vector'])
+}
+
+shadowJar {
+    archiveFileName = "brain4j-datasets-${parent.version}.jar"
+}

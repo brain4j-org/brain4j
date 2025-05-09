@@ -5,7 +5,6 @@ import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.loss.Loss;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.impl.Sequential;
-import org.brain4j.core.training.evaluation.EvaluationResult;
 import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.data.ListDataSource;
@@ -29,12 +28,13 @@ public class CIFARExample {
 
         // You can find the dataset on Kaggle
         // https://www.kaggle.com/datasets/fedesoriano/cifar10-python-in-csv
-        ListDataSource trainSource = getDataSource("cifar_train.csv");
-
-        System.out.println("Loaded " + trainSource.size() + " samples");
+//        ListDataSource trainSource = getDataSource("cifar_train.csv");
+//
+//        System.out.println("Loaded " + trainSource.size() + " samples");
 
         Model model = new Sequential(
                 new DenseLayer(3072, Activations.LINEAR),
+                new DenseLayer(256, Activations.RELU),
                 new DenseLayer(128, Activations.RELU),
                 new DenseLayer(64, Activations.RELU),
                 new DenseLayer(10, Activations.SOFTMAX)
@@ -44,16 +44,16 @@ public class CIFARExample {
 
         System.out.println(model.summary());
 
-        long start = System.nanoTime();
-        model.fit(trainSource, 50, 1);
-        double took = (System.nanoTime() - start) / 1e6;
-
-        System.out.printf("Took %.4f milliseconds to complete the training%n", took);
-
-        EvaluationResult result = model.evaluate(trainSource);
-        System.out.println(result.results());
-
-        model.save("cifar.b4j");
+//        long start = System.nanoTime();
+//        model.fit(trainSource, 50, 1);
+//        double took = (System.nanoTime() - start) / 1e6;
+//
+//        System.out.printf("Took %.4f milliseconds to complete the training%n", took);
+//
+//        EvaluationResult result = model.evaluate(trainSource);
+//        System.out.println(result.results());
+//
+//        model.save("cifar.b4j");
     }
 
     public ListDataSource getDataSource(String fileName) throws Exception {

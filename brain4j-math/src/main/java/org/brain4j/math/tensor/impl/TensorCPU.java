@@ -45,16 +45,36 @@ public class TensorCPU implements Cloneable, Tensor {
     private final int[] strides;
     private AutogradContext autogradContext;
 
+
     public TensorCPU(int... shape) {
         if (shape.length == 0) {
             throw new IllegalArgumentException("Shape cannot be empty");
         }
-        
+
         this.shape = Arrays.copyOf(shape, shape.length);
         this.strides = computeStrides(shape);
-        
-        int size = computeSize(shape);
-        this.data = new float[size];
+        this.data = new float[computeSize(shape)];
+    }
+
+    public TensorCPU(int[] shape, int[] strides) {
+        if (shape.length == 0) {
+            throw new IllegalArgumentException("Shape cannot be empty");
+        }
+
+        this.shape = shape;
+        this.strides = strides;
+        this.data = new float[computeSize(shape)];
+    }
+
+    public TensorCPU(int[] shape, int[] strides, float[] data) {
+        if (shape.length == 0) {
+            throw new IllegalArgumentException("Shape cannot be empty");
+        }
+
+        this.shape = shape;
+        this.strides = strides;
+        this.data = new float[data.length];
+        System.arraycopy(data, 0, this.data, 0, data.length);
     }
 
     private int computeSize(int[] shape) {
@@ -97,6 +117,10 @@ public class TensorCPU implements Cloneable, Tensor {
         }
 
         return linearIndex;
+    }
+
+    public static Tensor of(int[] shape, int[] strides, float... data) {
+        return new TensorCPU(shape, strides, data);
     }
 
     public static Tensor of(int[] shape, float... data) {
@@ -530,6 +554,10 @@ public class TensorCPU implements Cloneable, Tensor {
                     + shape.length + " dimensions");
         }
 
+//        int[] newShape = new int[] { shape[1], shape[0] };
+//        int[] newStride = new int[] { strides[1], strides[0] };
+//
+//        return new TensorCPU(newShape, newStride, data);
         int rows = shape[0];
         int cols = shape[1];
 

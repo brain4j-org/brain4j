@@ -1,6 +1,5 @@
 package mnist;
 
-import org.brain4j.core.adapters.impl.BrainFormatAdapter;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.tensor.Tensor;
@@ -220,7 +219,7 @@ public class MNISTTestApp extends JFrame {
     }
 
     public static void main(String[] args) throws Exception {
-        Model model = BrainFormatAdapter.deserialize("mnist.b4j", new Sequential());
+        Model model = new Sequential().load("mnist.b4j");;
         SwingUtilities.invokeLater(() -> new MNISTTestApp(model));
     }
 }

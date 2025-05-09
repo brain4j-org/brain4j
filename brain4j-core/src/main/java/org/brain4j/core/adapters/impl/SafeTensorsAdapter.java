@@ -1,13 +1,19 @@
 package org.brain4j.core.adapters.impl;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.brain4j.core.adapters.ModelAdapter;
 import org.brain4j.core.model.Model;
 import org.brain4j.math.BrainUtils;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -16,10 +22,10 @@ import java.util.Map;
 
 public class SafeTensorsAdapter implements ModelAdapter {
 
-    public static Map<String, Tensor> parseStructure(String path) throws IOException {
+    public static Map<String, Tensor> parseStructure(File file) throws IOException {
         Map<String, Tensor> tensors = new HashMap<>();
 
-        try (DataInputStream stream = new DataInputStream(new FileInputStream(path))) {
+        try (DataInputStream stream = new DataInputStream(new FileInputStream(file))) {
             ByteBuffer lenBuffer = ByteBuffer.wrap(stream.readNBytes(8));
             lenBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -81,11 +87,18 @@ public class SafeTensorsAdapter implements ModelAdapter {
 
     @Override
     public Model deserialize(String path, Model model) throws Exception {
-        return null;
+        return deserialize(new File(path), model);
     }
 
     @Override
     public Model deserialize(File file, Model model) throws Exception {
-        return null;
+        Map<String, Tensor> structure = parseStructure(file);
+
+        structure.forEach((key, tensor) -> {
+            String[] paths = key.split("\\.");
+
+        });
+
+        return model;
     }
 }
