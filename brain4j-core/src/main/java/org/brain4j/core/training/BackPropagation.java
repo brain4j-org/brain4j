@@ -59,9 +59,9 @@ public class BackPropagation {
         int count = layers.size() - 1;
 
         Layer last = layers.getLast();
-        Tensor delta = last.computeLoss(count - 1, cache, targets, outputs, lossFunction);
+        Tensor delta = last.computeLoss(count, cache, targets, outputs, lossFunction);
 
-        for (int l = count - 2; l >= 1; l--) {
+        for (int l = count - 1; l >= 1; l--) {
             Layer layer = layers.get(l);
 
             if (!layer.canPropagate()) continue;
