@@ -1,12 +1,12 @@
-package org.brain4j.core.adapters.impl;
+package org.brain4j.core.serializing.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.brain4j.core.adapters.ModelAdapter;
+import org.brain4j.core.serializing.ModelAdapter;
 import org.brain4j.core.model.Model;
-import org.brain4j.math.BrainUtils;
+import org.brain4j.math.Brain4JUtils;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
@@ -58,7 +58,7 @@ public class SafeTensorsAdapter implements ModelAdapter {
                     case "f16" -> {
                         for (int i = 0; i < dest.length; i++) {
                             short f16 = buffer.getShort();
-                            dest[i] = BrainUtils.f16ToFloat(f16);
+                            dest[i] = Brain4JUtils.f16ToFloat(f16);
                         }
                     }
                     case "f32", "f64" -> {

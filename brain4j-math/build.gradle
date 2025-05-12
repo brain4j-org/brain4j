@@ -8,7 +8,6 @@ dependencies {
 }
 
 compileJava {
-    options.compilerArgs.addAll(['--enable-preview'])
     options.compilerArgs.addAll(['--add-modules', 'jdk.incubator.vector'])
 }
 

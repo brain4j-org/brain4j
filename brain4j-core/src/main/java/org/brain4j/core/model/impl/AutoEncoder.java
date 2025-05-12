@@ -4,7 +4,7 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.LayerNorm;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.core.training.evaluation.EvaluationResult;
-import org.brain4j.math.BrainUtils;
+import org.brain4j.math.Brain4JUtils;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
@@ -52,7 +52,7 @@ public class AutoEncoder extends Sequential {
             threads.add(makeEvaluation(partition, null, totalLoss));
         }
 
-        BrainUtils.waitAll(threads);
+        Brain4JUtils.waitAll(threads);
 
         return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, new HashMap<>());
     }

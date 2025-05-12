@@ -6,7 +6,8 @@ import java.util.Arrays;
 
 public final class PrecisionUtils {
 
-    private PrecisionUtils() {}
+    private PrecisionUtils() {
+    }
 
     /**
      * Check if a double value can be accurately represented as a float without significant loss of precision.
@@ -61,9 +62,9 @@ public final class PrecisionUtils {
      * @return a string describing the current precision mode
      */
     public static String getPrecisionModeDescription(
-            boolean isUsingGPU,
-            boolean supportsFP64,
-            boolean requiresFP64
+        boolean isUsingGPU,
+        boolean supportsFP64,
+        boolean requiresFP64
     ) {
         if (!isUsingGPU) {
             return "CPU (Full precision)";

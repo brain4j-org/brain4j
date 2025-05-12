@@ -1,4 +1,4 @@
-package org.brain4j.core.adapters;
+package org.brain4j.core.serializing;
 
 import com.github.luben.zstd.Zstd;
 import org.brain4j.core.model.Model;

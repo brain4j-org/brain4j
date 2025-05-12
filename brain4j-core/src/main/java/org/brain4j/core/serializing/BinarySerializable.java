@@ -1,4 +1,4 @@
-package org.brain4j.core.adapters;
+package org.brain4j.core.serializing;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

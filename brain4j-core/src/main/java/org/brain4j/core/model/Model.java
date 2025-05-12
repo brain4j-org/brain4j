@@ -1,8 +1,8 @@
 package org.brain4j.core.model;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.adapters.BinarySerializable;
-import org.brain4j.core.adapters.impl.BrainFormatAdapter;
+import org.brain4j.core.serializing.BinarySerializable;
+import org.brain4j.core.serializing.impl.BrainFormatAdapter;
 import org.brain4j.core.initialization.WeightInit;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
@@ -16,7 +16,7 @@ import org.brain4j.core.training.evaluation.EvaluationResult;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
-import org.brain4j.math.BrainUtils;
+import org.brain4j.math.Brain4JUtils;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
@@ -77,12 +77,19 @@ public abstract class Model implements BinarySerializable {
         }
     }
 
-    public abstract Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications,
-                                          AtomicReference<Double> totalLoss);
+    public abstract Thread makeEvaluation(
+        Pair<Tensor, Tensor> batch,
+        Map<Integer, Tensor> classifications,
+        AtomicReference<Double> totalLoss
+    );
 
     public abstract void fit(ListDataSource dataSource);
 
-    public abstract Tensor predict(StatesCache cache, Tensor input, boolean training);
+    public abstract Tensor predict(
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    );
 
     @Deprecated(since = "2.8.0", forRemoval = true)
     public Vector predict(Vector input) {
@@ -110,7 +117,7 @@ public abstract class Model implements BinarySerializable {
             threads.add(makeEvaluation(partition, classifications, totalLoss));
         }
 
-        BrainUtils.waitAll(threads);
+        Brain4JUtils.waitAll(threads);
 
         return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
     }
@@ -126,7 +133,7 @@ public abstract class Model implements BinarySerializable {
             threads.add(predictPartition(partition, totalError));
         }
 
-        BrainUtils.waitAll(threads);
+        Brain4JUtils.waitAll(threads);
         return totalError.get() / dataSource.size();
     }
 
@@ -134,42 +141,52 @@ public abstract class Model implements BinarySerializable {
         fit(dataSource, epoches, Integer.MAX_VALUE);
     }
 
-    public void fit(ListDataSource dataSource, int epoches, int evaluateEvery) {
+    public void fit(
+        ListDataSource dataSource,
+        int epoches,
+        int evaluateEvery
+    ) {
         fit(dataSource, dataSource, epoches, evaluateEvery);
     }
 
-    public void fit(ListDataSource trainSource, ListDataSource testSource, int epoches) {
+    public void fit(
+        ListDataSource trainSource,
+        ListDataSource testSource,
+        int epoches
+    ) {
         fit(trainSource, testSource, epoches, Integer.MAX_VALUE);
     }
 
-    public void fit(ListDataSource trainSource, ListDataSource testSource, int epoches, int evaluateEvery) {
-        for (int i = 0; i < epoches; i++) {
+    public void fit(
+        ListDataSource trainSource,
+        ListDataSource testSource,
+        int epoches,
+        int evaluateEvery
+    ) {
+        for (int i = 1; i <= epoches; i++) {
             long start = System.nanoTime();
             propagation.iteration(trainSource);
-            double tookMs = (System.nanoTime() - start) / 1e6;
-
-            int currentEpoch = i + 1;
+            long tookNanos = System.nanoTime() - start;
 
             if (Brain4J.isLogging()) {
-                printProgressBar(tookMs, currentEpoch, epoches, evaluateEvery);
+                printProgressBar(tookNanos / 1e6, i, epoches, evaluateEvery);
             }
 
-            if (currentEpoch % evaluateEvery == 0) {
-                printEvaluation(currentEpoch, epoches, testSource);
+            if (i % evaluateEvery == 0) {
+                printEvaluation(i, epoches, testSource);
             }
         }
     }
 
-    public void printEvaluation(int currentEpoch, int epoches, ListDataSource testSource) {
+    public void printEvaluation(int step, int epoches, ListDataSource testSource) {
         EvaluationResult result = evaluate(testSource.clone());
 
         String lossMsg = "Loss: " + MAGENTA + "%.4f" + RESET;
         String accuracyMsg = "Accuracy: " + LIGHT_BLUE + "%.2f%%" + RESET;
         String f1ScoreMsg = "F1-Score: " + LIGHT_GREEN + "%.2f%%" + RESET;
 
-        String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg;
-        String formatted = String.format(message, currentEpoch, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
-        System.out.println(formatted);
+        String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg + "\n";
+        System.out.printf(message, step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
     }
 
     public void printProgressBar(double tookMs, int currentEpoch, int epoches, int evaluateEvery) {
@@ -177,7 +194,6 @@ public abstract class Model implements BinarySerializable {
         double percentage = (double) currentEpoch / epoches;
 
         int repetitions = (int) (percentage * progressBarLength);
-        int remaining = progressBarLength - repetitions;
 
         String barChar = Brain4J.getHeaderChar();
         int remainingEpoches = epoches - currentEpoch;
@@ -185,16 +201,22 @@ public abstract class Model implements BinarySerializable {
         double seconds = tookMs / 1000;
         double remainingTime = seconds * remainingEpoches;
 
-        String remainingTimeStr = BrainUtils.formatDuration(remainingTime);
-        String timeStr = BrainUtils.formatDuration(seconds);
+        String remainingTimeStr = Brain4JUtils.formatDuration(remainingTime);
+        String timeStr = Brain4JUtils.formatDuration(seconds);
 
-        String heading = WHITE + "[%s/%s] ";
-        String progressBar = LIGHT_GREEN + barChar.repeat(repetitions) + RESET + barChar.repeat(remaining);
+        String progressMsg = WHITE + "[%s/%s] ";
+        String progressBar = LIGHT_GREEN + Brain4JUtils.createProgressBar(
+            percentage,
+            progressBarLength,
+            barChar,
+            RESET + barChar
+        );
+
         String percentual = LIGHT_YELLOW + " %.2f%%" + RESET;
         String time = GRAY + " [%s/epoch | %s remaining]" + RESET;
-
-        String message = String.format(heading + progressBar + percentual + time,
+        String message = String.format(progressMsg + progressBar + percentual + time,
                 currentEpoch, epoches, percentage * 100, timeStr, remainingTimeStr);
+
         System.out.print("\r" + message);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
@@ -266,7 +288,7 @@ public abstract class Model implements BinarySerializable {
         DecimalFormat format = new DecimalFormat("#,###");
 
         String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
-        String divider = BrainUtils.getHeader(" Architecture ", Brain4J.getHeaderChar());
+        String divider = Brain4JUtils.getHeader(" Architecture ", Brain4J.getHeaderChar());
 
         stats.append(divider);
         stats.append(pattern.formatted("Index", "Layer", "Neurons", "Weights", "Activation")).append("\n");
@@ -298,15 +320,15 @@ public abstract class Model implements BinarySerializable {
         String biases = format.format(totalBiases);
 
         byte floatSize = Float.BYTES; // 4 bytes
-        String sizeOfParams = BrainUtils.formatNumber(params * floatSize);
-        String sizeOfWeights = BrainUtils.formatNumber(totalWeights * floatSize);
-        String sizeOfBiases = BrainUtils.formatNumber(totalBiases * floatSize);
+        String sizeOfParams = Brain4JUtils.formatNumber(params * floatSize);
+        String sizeOfWeights = Brain4JUtils.formatNumber(totalWeights * floatSize);
+        String sizeOfBiases = Brain4JUtils.formatNumber(totalBiases * floatSize);
 
-        stats.append(BrainUtils.getHeader(" Recap ", Brain4J.getHeaderChar()));
+        stats.append(Brain4JUtils.getHeader(" Recap ", Brain4J.getHeaderChar()));
         stats.append("Total weights: %s (%s)\n".formatted(weights, sizeOfWeights));
         stats.append("Total biases: %s (%s)\n".formatted(biases, sizeOfBiases));
         stats.append("Total parameters: %s (%s)\n".formatted(parameters, sizeOfParams));
-        stats.append(BrainUtils.getHeader("", Brain4J.getHeaderChar()));
+        stats.append(Brain4JUtils.getHeader("", Brain4J.getHeaderChar()));
 
         return stats.toString();
     }
@@ -425,7 +447,7 @@ public abstract class Model implements BinarySerializable {
 
         for (int i = 0; i < layersSize; i++) {
             String layerClassPath = stream.readUTF();
-            Layer instance = BrainUtils.newInstance(layerClassPath);
+            Layer instance = Brain4JUtils.newInstance(layerClassPath);
 
             instance.deserialize(stream);
             layers.add(instance);

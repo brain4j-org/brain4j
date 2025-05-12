@@ -1,12 +1,12 @@
 package org.brain4j.core.layer;
 
-import org.brain4j.core.adapters.BinarySerializable;
+import org.brain4j.core.serializing.BinarySerializable;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.math.BrainUtils;
+import org.brain4j.math.Brain4JUtils;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
@@ -91,7 +91,7 @@ public abstract class Layer implements BinarySerializable {
     @Override
     public void deserialize(DataInputStream stream) throws Exception {
         this.id = stream.readInt();
-        this.activation = BrainUtils.newInstance(stream.readUTF());
+        this.activation = Brain4JUtils.newInstance(stream.readUTF());
         this.bias = Tensors.zeros(stream.readInt());
 
         for (int j = 0; j < bias.elements(); j++) {

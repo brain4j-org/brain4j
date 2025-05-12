@@ -4,8 +4,8 @@ import org.brain4j.math.complex.Complex;
 
 import java.util.Arrays;
 
-import static org.brain4j.math.BrainUtils.isPowerOf2;
-import static org.brain4j.math.BrainUtils.nextPowerOf2;
+import static org.brain4j.math.Brain4JUtils.isPowerOf2;
+import static org.brain4j.math.Brain4JUtils.nextPowerOf2;
 import static org.brain4j.math.constants.Constants.PI;
 import static org.brain4j.math.constants.Constants.TWO_PI;
 
@@ -167,7 +167,11 @@ public final class FFT {
         return result;
     }
     
-    public static Complex[][] transform2D(Complex[][] input, int rows, int cols) {
+    public static Complex[][] transform2D(
+        Complex[][] input,
+        int rows,
+        int cols
+    ) {
         if (input == null || rows <= 0 || cols <= 0) {
             throw new IllegalArgumentException("Invalid input for 2D FFT");
         }
@@ -194,7 +198,11 @@ public final class FFT {
         return result;
     }
     
-    public static Complex[][] inverseTransform2D(Complex[][] input, int rows, int cols) {
+    public static Complex[][] inverseTransform2D(
+        Complex[][] input,
+        int rows,
+        int cols
+    ) {
         if (input == null || rows <= 0 || cols <= 0) {
             throw new IllegalArgumentException("Invalid input for 2D inverse FFT");
         }
@@ -205,8 +213,10 @@ public final class FFT {
         }
         
         Complex[][] result = new Complex[rows][cols];
+
         for (int j = 0; j < cols; j++) {
             Complex[] column = new Complex[rows];
+
             for (int i = 0; i < rows; i++) {
                 column[i] = temp[i][j];
             }

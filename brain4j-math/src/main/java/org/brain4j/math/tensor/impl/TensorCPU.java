@@ -510,7 +510,7 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor map(DoubleToDoubleFunction function) {
-        ParallelMap.map(function, data, POOL);
+        ParallelMap.map(function, POOL, data);
         return this;
     }
 
@@ -554,10 +554,6 @@ public class TensorCPU implements Cloneable, Tensor {
                     + shape.length + " dimensions");
         }
 
-//        int[] newShape = new int[] { shape[1], shape[0] };
-//        int[] newStride = new int[] { strides[1], strides[0] };
-//
-//        return new TensorCPU(newShape, newStride, data);
         int rows = shape[0];
         int cols = shape[1];
 
@@ -611,7 +607,13 @@ public class TensorCPU implements Cloneable, Tensor {
         return result;
     }
 
-    private void copyPermutedData(Tensor result, int[] dims, int[] indices, int[] newIndices, int dim) {
+    private void copyPermutedData(
+        Tensor result,
+        int[] dims,
+        int[] indices,
+        int[] newIndices,
+        int dim
+    ) {
         if (dim == shape.length) {
             result.set(get(indices), newIndices);
             return;
@@ -662,7 +664,14 @@ public class TensorCPU implements Cloneable, Tensor {
         return result;
     }
 
-    private void copySelectedData(Tensor result, int dim, int[] indices, int[] newIndices, int oldDim, int newDim) {
+    private void copySelectedData(
+        Tensor result,
+        int dim,
+        int[] indices,
+        int[] newIndices,
+        int oldDim,
+        int newDim
+    ) {
         if (oldDim == shape.length) {
             result.set(get(indices), newIndices);
             return;
@@ -764,12 +773,22 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor pow(double value) {
-        return map(x -> Math.pow(x, value));
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (float) Math.pow(data[i], value);
+        }
+
+        return this;
     }
 
     @Override
     public Tensor pow(Tensor other) {
-        return mapWithIndex((i, x) -> (float) Math.pow(x, other.get(i)));
+        checkSameShape(other);
+
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (float) Math.pow(data[i], other.getData()[i]);
+        }
+
+        return this;
     }
 
     @Override
@@ -805,8 +824,14 @@ public class TensorCPU implements Cloneable, Tensor {
         return resultShape;
     }
 
-    private void broadcastFill(Tensor result, Tensor a, Tensor b, BiFunction<Float, Float, Float> operation,
-                               int[] indices, int dim) {
+    private void broadcastFill(
+        Tensor result,
+        Tensor a,
+        Tensor b,
+        BiFunction<Float, Float, Float> operation,
+        int[] indices,
+        int dim
+    ) {
         if (dim == result.shape().length) {
             int[] indicesA = mapIndicesToOperand(indices, a.shape());
             int[] indicesB = mapIndicesToOperand(indices, b.shape());
@@ -873,7 +898,14 @@ public class TensorCPU implements Cloneable, Tensor {
         return result;
     }
 
-    private void sumAlongDimension(Tensor result, int dim, boolean keepDim, int[] indices, int[] resultIndices, int currDim) {
+    private void sumAlongDimension(
+        Tensor result,
+        int dim,
+        boolean keepDim,
+        int[] indices,
+        int[] resultIndices,
+        int currDim
+    ) {
         if (currDim == shape.length) {
             float value = get(indices);
 
@@ -973,6 +1005,7 @@ public class TensorCPU implements Cloneable, Tensor {
 
         int[] newShape = new int[nonSingletonDims];
         int newIdx = 0;
+
         for (int dim : shape) {
             if (dim != 1) {
                 newShape[newIdx++] = dim;
@@ -1092,7 +1125,13 @@ public class TensorCPU implements Cloneable, Tensor {
         return result;
     }
 
-    private void sliceCopy(Tensor result, Range[] ranges, int[] srcIndices, int[] dstIndices, int dim) {
+    private void sliceCopy(
+        Tensor result,
+        Range[] ranges,
+        int[] srcIndices,
+        int[] dstIndices,
+        int dim
+    ) {
         if (dim == shape.length) {
             result.set(get(srcIndices), dstIndices);
             return;

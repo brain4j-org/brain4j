@@ -12,7 +12,23 @@ import static org.brain4j.math.constants.Constants.GRADIENT_CLIP;
 /**
  * Utility class for conversions and value matching.
  */
-public class BrainUtils {
+public class Brain4JUtils {
+
+    public static String createProgressBar(
+        double percent,
+        int characterCount,
+        String barCharacter,
+        String emptyCharacter
+    ) {
+        if (percent < 0 || percent > 1) {
+            throw new IllegalArgumentException("Percent must be between 0 and 1!");
+        }
+
+        int fill = (int) Math.round(percent * characterCount);
+        int remaining = characterCount - fill;
+
+        return barCharacter.repeat(fill) + emptyCharacter.repeat(remaining);
+    }
 
     public static float f16ToFloat(short half) {
         int sign = (half >> 15) & 0x1f;
@@ -112,11 +128,16 @@ public class BrainUtils {
     public static String getHeader(String middleText, String character) {
         int maxLength = 70;
         int middleLength = middleText.length();
+        int repeatedLength = (maxLength - middleLength) / 2;
 
-        String repeated = character.repeat((maxLength - middleLength) / 2);
+        String repeated = character.repeat(repeatedLength);
         String result = repeated + middleText + repeated;
 
-        return (result.length() != maxLength ? result + character : result) + "\n";
+        if (result.length() < maxLength) {
+            result += character;
+        }
+
+        return result + "\n";
     }
 
     public static int argmax(Tensor input) {
@@ -147,16 +168,10 @@ public class BrainUtils {
         }
     }
 
-    public static double clipGradient(double gradient) {
-        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
-    }
-
     public static String formatNumber(long params) {
         String[] prefixes = {"B", "KB", "MB", "GB", "TB"};
 
-        if (params == 0) {
-            return "0";
-        }
+        if (params == 0) return "0";
 
         int ciphers = (int) (Math.log10(params) / 3);
 

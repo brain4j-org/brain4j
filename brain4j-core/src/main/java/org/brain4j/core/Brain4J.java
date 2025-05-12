@@ -1,6 +1,6 @@
 package org.brain4j.core;
 
-import org.brain4j.math.BrainUtils;
+import org.brain4j.math.Brain4JUtils;
 import org.brain4j.math.opencl.GPUInfo;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.impl.TensorGPU;
@@ -28,7 +28,7 @@ public class Brain4J {
      * @return The current version.
      */
     public static String version() {
-        return "2.8.0";
+        return "2.9.0";
     }
 
     /**
@@ -106,7 +106,7 @@ public class Brain4J {
      * @param info The GPU info
      */
     public static void printDeviceInfo(GPUInfo info) {
-        String builder = BrainUtils.getHeader(" Device Information ", getHeaderChar()) +
+        String builder = Brain4JUtils.getHeader(" Device Information ", getHeaderChar()) +
                 "Name: " + info.name() + "\n" +
                 "Vendor: " + info.vendor() + "\n" +
                 "OpenCL Version: " + info.version() + "\n" +
@@ -127,7 +127,7 @@ public class Brain4J {
 
     /**
      * Creates a new ExecutorService with the number of threads equal to the number of available processors.
-     * @return The ExecutorService instance
+     * @return The executor service instance
      */
     public static ExecutorService getExecutor() {
         int threads = Runtime.getRuntime().availableProcessors();

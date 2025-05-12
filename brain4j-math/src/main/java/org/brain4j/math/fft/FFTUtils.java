@@ -55,7 +55,11 @@ public final class FFTUtils {
         return result;
     }
     
-    public static Tensor complexToTensor2D(Complex[][] complex, int rows, int cols) {
+    public static Tensor complexToTensor2D(
+        Complex[][] complex,
+        int rows,
+        int cols
+    ) {
         Tensor result = Tensors.zeros(rows, cols);
         
         for (int i = 0; i < rows; i++) {
@@ -111,7 +115,11 @@ public final class FFTUtils {
         return result;
     }
     
-    public static Tensor zeroPad2D(Tensor tensor, int rows, int cols) {
+    public static Tensor zeroPad2D(
+        Tensor tensor,
+        int rows,
+        int cols
+    ) {
         if (tensor.dimension() != 2) {
             throw new IllegalArgumentException("Input tensor must be 2D");
         }
@@ -125,6 +133,7 @@ public final class FFTUtils {
         }
         
         Tensor result = Tensors.zeros(rows, cols);
+
         for (int i = 0; i < Math.min(currentRows, rows); i++) {
             for (int j = 0; j < Math.min(currentCols, cols); j++) {
                 result.set(tensor.get(i, j), i, j);
@@ -152,7 +161,11 @@ public final class FFTUtils {
         return result;
     }
     
-    public static Tensor removePadding2D(Tensor tensor, int rows, int cols) {
+    public static Tensor removePadding2D(
+        Tensor tensor,
+        int rows,
+        int cols
+    ) {
         if (tensor.dimension() != 2) {
             throw new IllegalArgumentException("Input tensor must be 2D");
         }

@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.brain4j.math.BrainUtils.nextPowerOf2;
+import static org.brain4j.math.Brain4JUtils.nextPowerOf2;
 import static org.brain4j.math.constants.Constants.*;
 import static org.jocl.CL.*;
 

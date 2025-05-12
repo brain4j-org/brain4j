@@ -1,6 +1,6 @@
-package org.brain4j.core.adapters.impl;
+package org.brain4j.core.serializing.impl;
 
-import org.brain4j.core.adapters.ModelAdapter;
+import org.brain4j.core.serializing.ModelAdapter;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
@@ -8,7 +8,7 @@ import org.brain4j.core.model.Model;
 import org.brain4j.core.training.BackPropagation;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.math.BrainUtils;
+import org.brain4j.math.Brain4JUtils;
 
 import java.io.*;
 
@@ -56,10 +56,10 @@ public class BrainFormatAdapter implements ModelAdapter {
 
             String version = dataStream.readUTF();
             int seed = dataStream.readInt();
-            LossFunction lossFunction = BrainUtils.newInstance(dataStream.readUTF());
-            WeightInitializer weightInit = BrainUtils.newInstance(dataStream.readUTF());
-            Updater updater = BrainUtils.newInstance(dataStream.readUTF());
-            Optimizer optimizer = BrainUtils.newInstance(dataStream.readUTF());
+            LossFunction lossFunction = Brain4JUtils.newInstance(dataStream.readUTF());
+            WeightInitializer weightInit = Brain4JUtils.newInstance(dataStream.readUTF());
+            Updater updater = Brain4JUtils.newInstance(dataStream.readUTF());
+            Optimizer optimizer = Brain4JUtils.newInstance(dataStream.readUTF());
 
             optimizer.deserialize(dataStream);
 

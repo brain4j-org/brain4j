@@ -1,6 +1,6 @@
 package org.brain4j.core.training.optimizer;
 
-import org.brain4j.core.adapters.BinarySerializable;
+import org.brain4j.core.serializing.BinarySerializable;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 import org.brain4j.math.tensor.Tensor;

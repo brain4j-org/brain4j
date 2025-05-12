@@ -15,14 +15,10 @@ public class StatesCache {
     private final Map<Integer, List<Tensor>> keyCache;
     private final Map<Integer, List<Tensor>> valueCache;
 
-    private final Tensor[] weightsGradientCache;
-    private final Tensor[] biasGradientCache;
     private final Tensor[] inputTensorsCache;
     private final Tensor[] outputTensorsCache;
 
     public StatesCache() {
-        this.weightsGradientCache = new Tensor[Layer.getTotalLayers()];
-        this.biasGradientCache = new Tensor[Layer.getTotalLayers()];
         this.inputTensorsCache = new Tensor[Layer.getTotalLayers()];
         this.outputTensorsCache = new Tensor[Layer.getTotalLayers()];
         this.feedForwardCache = new ConcurrentHashMap<>(); // TODO: Migrate to arrays
@@ -30,11 +26,6 @@ public class StatesCache {
         this.valueCache = new ConcurrentHashMap<>();
 
         markAsNewSession();
-    }
-
-    public void gradientChange(Layer layer, Tensor weightChange, Tensor biasChange) {
-        weightsGradientCache[layer.getId()] = weightChange;
-        biasGradientCache[layer.getId()] = biasChange;
     }
 
     public void setInputTensor(Layer layer, Tensor value) {
@@ -58,7 +49,7 @@ public class StatesCache {
         valueCache.clear();
     }
 
-    // avoid shape mismatch errors
+    // Avoid shape mismatch errors
     public boolean isCompatibleWithCache(Tensor tensor) {
         if (keyCache.isEmpty() && valueCache.isEmpty()) {
             return true;
@@ -68,12 +59,12 @@ public class StatesCache {
             if (tensors.isEmpty()) continue;
 
             Tensor cached = tensors.getFirst();
+
             if (cached.shape()[0] != tensor.shape()[0]) {
                 return false;
             }
         }
 
-        
         return true;
     }
 

@@ -56,12 +56,6 @@ public class MultiHeadAttention {
         return heads.stream().mapToInt(AttentionHead::size).sum();
     }
 
-    public void setUseCache(boolean useCache) {
-        for (AttentionHead head : heads) {
-            head.setUseCache(useCache);
-        }
-    }
-
     protected void initializeHeads() {
         for (int i = 0; i < headCount; i++) {
             heads.add(createAttentionHead());
