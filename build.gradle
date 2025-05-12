@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.0.0-beta10'
+}
+
+group = 'org.brain4j'
+version = '3.0'
+
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+
+    compileJava {
+        options.encoding = "UTF-8"
+    }
+
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+
+tasks.register('buildAll') {
+    dependsOn ':brain4j-math:shadowJar', ':brain4j-core:shadowJar'
+
+    doLast {
+        println 'Completed build for both math and core.'
+    }
+}

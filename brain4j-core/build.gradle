@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.0.0-beta10'
+}
+
+dependencies {
+    implementation project(':brain4j-math')
+
+    implementation 'com.github.luben:zstd-jni:1.5.7-2'
+    implementation 'com.google.code.gson:gson:2.13.1'
+
+    testImplementation 'com.google.guava:guava:32.1.2-jre'
+}
+
+shadowJar {
+    archiveFileName = 'brain4j-core-${parent.version}.jar'
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs(['--add-modules', 'jdk.incubator.vector'])
+}

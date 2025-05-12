@@ -1,0 +1,4 @@
+rootProject.name = 'brain4j-3.0'
+
+include 'brain4j-core'
+include 'brain4j-math'
