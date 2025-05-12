@@ -20,7 +20,8 @@ public class ConvLayer extends Layer {
     private int padding;
     private int stride;
 
-    public ConvLayer(Activations activation, int filters, int filtersWidth, int filtersHeight) {
+    public ConvLayer(Activations activation, int filters, int filtersWidth, int filtersHeight
+    ) {
         this(activation.getFunction(), filters, filtersWidth, filtersHeight, 1, 1);
     }
 
@@ -36,7 +37,11 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public void connect(Random generator, Layer previous, double bound) {
+    public void connect(
+        Random generator,
+        Layer previous,
+        double bound
+    ) {
         if (previous instanceof ConvLayer convLayer) {
             this.channels = convLayer.getChannels();
         } else if (previous instanceof InputLayer inputLayer) {
@@ -79,7 +84,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(int index, StatesCache cache, Tensor input, boolean training) {
         // [batch_size, channels, height, width]
         return input.convolve(weights)
                 .map(x -> activation.activate(x));

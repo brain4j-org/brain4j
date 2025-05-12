@@ -2,6 +2,7 @@ package org.brain4j.core.model;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.serializing.BinarySerializable;
+import org.brain4j.core.serializing.ModelAdapter;
 import org.brain4j.core.serializing.impl.BrainFormatAdapter;
 import org.brain4j.core.initialization.WeightInit;
 import org.brain4j.core.initialization.WeightInitializer;
@@ -56,23 +57,23 @@ public abstract class Model implements BinarySerializable {
     }
 
     public void connect(WeightInitializer weightInit) {
-        Layer previousLayer = null;
+        Layer previous = null;
 
         for (Layer layer : layers) {
-            layer.compile(weightInit, lossFunction, optimizer, updater);
+            layer.compile(weightInit, optimizer, updater);
 
             if (layer.canPropagate() && layer.canConnect()) {
                 double bound = 0;
 
-                if (previousLayer != null) {
-                    int inputNeurons = previousLayer.getTotalNeurons();
+                if (previous != null) {
+                    int inputNeurons = previous.getTotalNeurons();
                     int outputNeurons = layer.getTotalNeurons();
 
                     bound = weightInit.getBound(inputNeurons, outputNeurons);
                 }
 
-                layer.connect(generator, previousLayer, bound);
-                previousLayer = layer;
+                layer.connect(generator, previous, bound);
+                previous = layer;
             }
         }
     }
@@ -97,6 +98,50 @@ public abstract class Model implements BinarySerializable {
         Tensor output = predict(new StatesCache(), tensor, false);
 
         return Vector.of(output.getData());
+    }
+
+    @Override
+    public void serialize(DataOutputStream stream) throws Exception {
+        stream.writeInt(layers.size());
+
+        for (Layer layer : layers) {
+            stream.writeUTF(layer.getClass().getName());
+            layer.serialize(stream);
+        }
+    }
+
+    @Override
+    public void deserialize(DataInputStream stream) throws Exception {
+        int layersSize = stream.readInt();
+        layers.clear();
+
+        for (int i = 0; i < layersSize; i++) {
+            String layerClassPath = stream.readUTF();
+            Layer instance = Brain4JUtils.newInstance(layerClassPath);
+
+            instance.deserialize(stream);
+            layers.add(instance);
+        }
+    }
+
+    protected Thread predictPartition(Pair<Tensor, Tensor> partition, AtomicReference<Double> totalError) {
+        return Thread.startVirtualThread(() -> {
+            Tensor inputs = partition.first();
+            Tensor targets = partition.second();
+            Tensor outputs = predict(inputs);
+
+            int batchSize = outputs.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor output = outputs.slice(range).vector();
+                Tensor target = targets.slice(range).vector();
+
+                double loss = lossFunction.calculate(target, output);
+                totalError.updateAndGet(v -> v + loss);
+            }
+        });
     }
 
     public EvaluationResult evaluate(ListDataSource dataSource) {
@@ -178,7 +223,11 @@ public abstract class Model implements BinarySerializable {
         }
     }
 
-    public void printEvaluation(int step, int epoches, ListDataSource testSource) {
+    public void printEvaluation(
+        int step,
+        int epoches,
+        ListDataSource testSource
+    ) {
         EvaluationResult result = evaluate(testSource.clone());
 
         String lossMsg = "Loss: " + MAGENTA + "%.4f" + RESET;
@@ -189,11 +238,14 @@ public abstract class Model implements BinarySerializable {
         System.out.printf(message, step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
     }
 
-    public void printProgressBar(double tookMs, int currentEpoch, int epoches, int evaluateEvery) {
+    public void printProgressBar(
+        double tookMs,
+        int currentEpoch,
+        int epoches,
+        int evaluateEvery
+    ) {
         int progressBarLength = 20;
         double percentage = (double) currentEpoch / epoches;
-
-        int repetitions = (int) (percentage * progressBarLength);
 
         String barChar = Brain4J.getHeaderChar();
         int remainingEpoches = epoches - currentEpoch;
@@ -236,7 +288,11 @@ public abstract class Model implements BinarySerializable {
         return compile(function.getFunction(), optimizer);
     }
 
-    public Model compile(Loss function, Optimizer optimizer, Updater updater) {
+    public Model compile(
+        Loss function,
+        Optimizer optimizer,
+        Updater updater
+    ) {
         return compile(WeightInit.UNIFORM_XAVIER.getFunction(), function.getFunction(), optimizer, updater);
     }
 
@@ -244,7 +300,12 @@ public abstract class Model implements BinarySerializable {
         return compile(WeightInit.UNIFORM_XAVIER.getFunction(), function, optimizer, new StochasticUpdater());
     }
 
-    public Model compile(WeightInitializer initializer, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+    public Model compile(
+        WeightInitializer initializer,
+        LossFunction lossFunction,
+        Optimizer optimizer,
+        Updater updater
+    ) {
         this.propagation = new BackPropagation(this, optimizer, updater);
         this.weightInit = initializer;
         this.lossFunction = lossFunction;
@@ -255,18 +316,29 @@ public abstract class Model implements BinarySerializable {
         return this;
     }
 
-    public Model compile(WeightInit initializer, Loss lossFunction, Optimizer optimizer, Updater updater) {
+    public Model compile(
+        WeightInit initializer,
+        Loss lossFunction,
+        Optimizer optimizer,
+        Updater updater
+    ) {
         return compile(initializer.getFunction(), lossFunction.getFunction(), optimizer, updater);
     }
 
-    public Model load(String path) throws Exception {
-        new BrainFormatAdapter().deserialize(path, this);
-        return this;
+    public Model load(String path, ModelAdapter adapter) throws Exception {
+        return adapter.deserialize(path, this);
     }
 
-    public Model save(String path) throws Exception {
-        new BrainFormatAdapter().serialize(path, this);
-        return this;
+    public Model load(String path) throws Exception {
+        return load(path, new BrainFormatAdapter());
+    }
+
+    public void save(String path, ModelAdapter adapter) throws Exception {
+        adapter.serialize(path, this);
+    }
+
+    public void save(String path) throws Exception {
+        save(path, new BrainFormatAdapter());
     }
 
     public Model add(Layer layer) {
@@ -391,66 +463,14 @@ public abstract class Model implements BinarySerializable {
     }
 
     public int getTotalNeurons() {
-        int total = 0;
-
-        for (Layer layer : layers) {
-            total += layer.getTotalNeurons();
-        }
-
-        return total;
+        return layers.stream()
+            .mapToInt(Layer::getTotalNeurons)
+            .sum();
     }
 
     public int getTotalWeights() {
-        int total = 0;
-
-        for (Layer layer : layers) {
-            total += layer.getTotalWeights();
-        }
-
-        return total;
-    }
-
-    protected Thread predictPartition(Pair<Tensor, Tensor> partition, AtomicReference<Double> totalError) {
-        return Thread.startVirtualThread(() -> {
-            Tensor inputs = partition.first();
-            Tensor targets = partition.second();
-            Tensor outputs = predict(inputs);
-
-            int batchSize = outputs.shape()[0];
-
-            for (int i = 0; i < batchSize; i++) {
-                Range range = new Range(i, i + 1);
-
-                Tensor output = outputs.slice(range).vector();
-                Tensor target = targets.slice(range).vector();
-
-                double loss = lossFunction.calculate(target, output);
-                totalError.updateAndGet(v -> v + loss);
-            }
-        });
-    }
-
-    @Override
-    public void serialize(DataOutputStream stream) throws Exception {
-        stream.writeInt(layers.size());
-
-        for (Layer layer : layers) {
-            stream.writeUTF(layer.getClass().getName());
-            layer.serialize(stream);
-        }
-    }
-
-    @Override
-    public void deserialize(DataInputStream stream) throws Exception {
-        int layersSize = stream.readInt();
-        layers.clear();
-
-        for (int i = 0; i < layersSize; i++) {
-            String layerClassPath = stream.readUTF();
-            Layer instance = Brain4JUtils.newInstance(layerClassPath);
-
-            instance.deserialize(stream);
-            layers.add(instance);
-        }
+        return layers.stream()
+            .mapToInt(Layer::getTotalWeights)
+            .sum();
     }
 }

@@ -76,7 +76,7 @@ public class BrainFormatAdapter implements ModelAdapter {
             model.setPropagation(new BackPropagation(model, optimizer, updater));
 
             for (Layer layer : model.getLayers()) {
-                layer.compile(weightInit, lossFunction, optimizer, updater);
+                layer.compile(weightInit, optimizer, updater);
             }
 
             return model;

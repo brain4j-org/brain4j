@@ -3,7 +3,6 @@ package org.brain4j.core.transformers.group;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.transformers.TrDecoder;
-import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
@@ -19,7 +18,11 @@ public class DecoderGroup extends Layer {
     private final int numHeads;
     private final int dimension;
 
-    public DecoderGroup(int layersAmount, int numHeads, int dimension) {
+    public DecoderGroup(
+        int layersAmount,
+        int numHeads,
+        int dimension
+    ) {
         this.layers = new ArrayList<>();
         this.amount = layersAmount;
         this.numHeads = numHeads;
@@ -36,30 +39,44 @@ public class DecoderGroup extends Layer {
     }
 
     @Override
-    public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+    public void compile(
+        WeightInitializer weightInit,
+        Optimizer optimizer,
+        Updater updater
+    ) {
         for (TrDecoder layer : layers) {
-            layer.compile(weightInit, lossFunction, optimizer, updater);
+            layer.compile(weightInit, optimizer, updater);
         }
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         Tensor output = input;
 
-        for (TrDecoder layer : layers) {
-            output = layer.forward(cache, output, training);
+        for (int i = 0; i < layers.size(); i++) {
+            output = layers.get(i).forward(i, cache, output, training);
         }
 
         return output;
     }
 
     @Override
-    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
+    public Tensor backward(
+        int index,
+        StatesCache cache,
+        Layer previous,
+        Tensor delta
+    ) {
         Tensor nextDelta = delta;
 
         for (int i = layers.size(); i > 0; i--) {
             TrDecoder layer = layers.get(i - 1);
-            nextDelta = layer.backward(cache, previous, nextDelta);
+            nextDelta = layer.backward(i, cache, previous, nextDelta);
         }
 
         return nextDelta;

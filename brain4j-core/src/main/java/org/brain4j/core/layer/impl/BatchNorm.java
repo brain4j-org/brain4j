@@ -52,7 +52,12 @@ public class BatchNorm extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         int batchSize = input.shape()[0];
 
         Tensor transposed = input.transpose(); // [dimension, batch_size]

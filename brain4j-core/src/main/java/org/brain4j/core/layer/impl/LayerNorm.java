@@ -57,7 +57,12 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         int batchSize = input.shape()[0];
         Tensor result = input.clone();
 

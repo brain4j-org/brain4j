@@ -47,7 +47,11 @@ public class EmbedLayer extends Layer {
     }
 
     @Override
-    public void connect(Random generator, Layer previous, double bound) {
+    public void connect(
+        Random generator,
+        Layer previous,
+        double bound
+    ) {
         this.weights = Tensors.matrix(vocabSize, embeddingDim);
 
         for (int i = 0; i < vocabSize; i++) {
@@ -61,7 +65,12 @@ public class EmbedLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         if (input.dimension() > 2) {
             throw new IllegalArgumentException("Input must be a 1D or 2D matrix!");
         }
@@ -82,15 +91,15 @@ public class EmbedLayer extends Layer {
             List<Tensor> tokens = new ArrayList<>();
 
             for (int j = 0; j < elements; j++) {
-                int index = (int) batch.get(0, j);
+                int batchIndex = (int) batch.get(0, j);
 
-                if (index < 0 || index >= vocabSize) {
+                if (batchIndex < 0 || batchIndex >= vocabSize) {
                     throw new IllegalArgumentException(
-                            "Invalid index: " + index + " for input tensor: " + input.toString("%.1f")
+                            "Invalid index: " + batchIndex + " for input tensor: " + input.toString("%.1f")
                     );
                 }
 
-                Tensor embedding = embeddings.get(index);
+                Tensor embedding = embeddings.get(batchIndex);
                 tokens.add(embedding);
             }
 

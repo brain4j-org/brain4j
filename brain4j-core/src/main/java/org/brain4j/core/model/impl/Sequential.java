@@ -130,7 +130,7 @@ public class Sequential extends Model {
 
             cache.setInputTensor(layer, denseResult);
 
-            denseResult = layer.forward(cache, denseResult, training);
+            denseResult = layer.forward(i, cache, denseResult, training);
 
             if (layer.canPropagate() && !(layer instanceof LayerNorm)) {
                 workingLayer = layer;

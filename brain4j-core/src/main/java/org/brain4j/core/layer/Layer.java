@@ -106,18 +106,27 @@ public abstract class Layer implements BinarySerializable {
         }
     }
 
-    public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+    public void compile(
+        WeightInitializer weightInit,
+        Optimizer optimizer,
+        Updater updater
+    ) {
         this.weightInit = weightInit;
-        this.lossFunction = lossFunction;
         this.optimizer = optimizer;
         this.updater = updater;
     }
 
-    public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
+    public Tensor computeLoss(
+        int index,
+        StatesCache cache,
+        Tensor targets,
+        Tensor outputs,
+        LossFunction lossFunction
+    ) {
         Tensor error = outputs.minus(targets);
         Tensor derivatives = activation.getDerivative(outputs);
 
-        Tensor input = cache.getInputTensor(this);
+        Tensor input = cache.getInputTensor(index);
         Tensor delta = lossFunction.getDelta(error, derivatives);
 
         Tensor weightsGradient = input.transpose().matmul(delta);
@@ -128,7 +137,11 @@ public abstract class Layer implements BinarySerializable {
         return delta;
     }
 
-    public void connect(Random generator, Layer previous, double bound) {
+    public void connect(
+        Random generator,
+        Layer previous,
+        double bound
+    ) {
         if (previous == null) return;
 
         int input = previous.getTotalNeurons();
@@ -145,9 +158,14 @@ public abstract class Layer implements BinarySerializable {
         }
     }
 
-    public abstract Tensor forward(StatesCache cache, Tensor input, boolean training);
+    public abstract Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    );
 
-    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
+    public Tensor backward(int index, StatesCache cache, Layer previous, Tensor delta) {
         throw new UnsupportedOperationException("Not implemented for " + this.getClass().getSimpleName());
     }
 

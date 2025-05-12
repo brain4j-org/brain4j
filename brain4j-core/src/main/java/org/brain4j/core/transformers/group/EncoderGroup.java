@@ -3,7 +3,6 @@ package org.brain4j.core.transformers.group;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.transformers.TrEncoder;
-import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
@@ -31,30 +30,44 @@ public class EncoderGroup extends Layer {
     }
 
     @Override
-    public void compile(WeightInitializer weightInit, LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+    public void compile(
+        WeightInitializer weightInit,
+        Optimizer optimizer,
+        Updater updater
+    ) {
         for (TrEncoder layer : layers) {
-            layer.compile(weightInit, lossFunction, optimizer, updater);
+            layer.compile(weightInit, optimizer, updater);
         }
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         Tensor output = input;
 
-        for (TrEncoder layer : layers) {
-            output = layer.forward(cache, output, training);
+        for (int i = 0; i < layers.size(); i++) {
+            output = layers.get(i).forward(i, cache, output, training);
         }
 
         return output;
     }
 
     @Override
-    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
+    public Tensor backward(
+        int index,
+        StatesCache cache,
+        Layer previous,
+        Tensor delta
+    ) {
         Tensor nextDelta = delta;
 
         for (int i = layers.size(); i > 0; i--) {
             TrEncoder layer = layers.get(i - 1);
-            nextDelta = layer.backward(cache, previous, nextDelta);
+            nextDelta = layer.backward(index, cache, previous, nextDelta);
         }
 
         return nextDelta;
@@ -62,24 +75,16 @@ public class EncoderGroup extends Layer {
 
     @Override
     public int getTotalWeights() {
-        int total = 0;
-
-        for (TrEncoder layer : layers) {
-            total += layer.getTotalWeights();
-        }
-
-        return total;
+        return layers.stream()
+            .mapToInt(TrEncoder::getTotalWeights)
+            .sum();
     }
 
     @Override
     public int getTotalNeurons() {
-        int total = 0;
-
-        for (TrEncoder layer : layers) {
-            total += layer.getTotalNeurons();
-        }
-
-        return total;
+        return layers.stream()
+            .mapToInt(TrEncoder::getTotalNeurons)
+            .sum();
     }
 
     public List<TrEncoder> getLayers() {

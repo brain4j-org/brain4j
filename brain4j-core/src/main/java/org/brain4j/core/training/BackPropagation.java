@@ -18,7 +18,11 @@ public class BackPropagation {
     private final Optimizer optimizer;
     private final Updater updater;
 
-    public BackPropagation(Model model, Optimizer optimizer, Updater updater) {
+    public BackPropagation(
+        Model model,
+        Optimizer optimizer,
+        Updater updater
+    ) {
         this.model = model;
         this.optimizer = optimizer;
         this.updater = updater;
@@ -44,19 +48,25 @@ public class BackPropagation {
         updater.postFit(model, optimizer.getLearningRate(), dataSource.size());
     }
 
-    public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {
+    public void backpropagation(
+        StatesCache cache,
+        Tensor targets,
+        Tensor outputs
+    ) {
         List<Layer> layers = model.getLayers();
         LossFunction lossFunction = model.getLossFunction();
 
-        Layer last = layers.getLast();
-        Tensor delta = last.computeLoss(cache, targets, outputs, lossFunction);
+        int count = layers.size() - 1;
 
-        for (int l = layers.size() - 2; l >= 1; l--) {
+        Layer last = layers.getLast();
+        Tensor delta = last.computeLoss(count - 1, cache, targets, outputs, lossFunction);
+
+        for (int l = count - 2; l >= 1; l--) {
             Layer layer = layers.get(l);
 
             if (!layer.canPropagate()) continue;
 
-            delta = layer.backward(cache, last, delta);
+            delta = layer.backward(l, cache, last, delta);
             last = layer;
         }
     }

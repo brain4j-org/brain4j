@@ -32,16 +32,16 @@ public class StatesCache {
         inputTensorsCache[layer.getId()] = value;
     }
 
-    public Tensor getInputTensor(Layer layer) {
-        return inputTensorsCache[layer.getId()];
+    public Tensor getInputTensor(int index) {
+        return inputTensorsCache[index];
     }
 
     public void setOutputTensor(Layer layer, Tensor value) {
         outputTensorsCache[layer.getId()] = value;
     }
 
-    public Tensor getOutputTensor(Layer layer) {
-        return outputTensorsCache[layer.getId()];
+    public Tensor getOutputTensor(int index) {
+        return outputTensorsCache[index];
     }
     
     public void markAsNewSession() {
@@ -72,7 +72,11 @@ public class StatesCache {
         return feedForwardCache.computeIfAbsent(layer.hashCode() + offset, k -> null);
     }
 
-    public void setFeedForwardCache(int offset, Layer layer, Tensor tensor) {
+    public void setFeedForwardCache(
+        int offset,
+        Layer layer,
+        Tensor tensor
+    ) {
         feedForwardCache.put(layer.hashCode() + offset, tensor);
     }
     

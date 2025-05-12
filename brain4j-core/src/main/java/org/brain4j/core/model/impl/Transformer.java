@@ -94,7 +94,7 @@ public class Transformer extends Model {
         Tensor result = input;
 
         for (Layer layer : layers) {
-            result = layer.forward(cache, result, training);
+            result = layer.forward(i, cache, result, training);
         }
 
         return result;

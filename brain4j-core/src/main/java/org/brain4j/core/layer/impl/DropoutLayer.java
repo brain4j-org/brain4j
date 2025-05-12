@@ -67,12 +67,18 @@ public class DropoutLayer extends Layer {
      * during training. Meanwhile it will scale the input tensor by {@code 1 - dropout} during inferencing.
      *
      * @param nextLayer
+     * @param index
      * @param input     The input tensor.
      * @param training  If it's called during training.
      * @return The resulting tensor.
      */
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         if (training) {
             return scale(input);
         }

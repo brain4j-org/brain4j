@@ -52,8 +52,14 @@ public class VocabularyMapper extends Layer {
     }
 
     @Override
-    public Tensor computeLoss(StatesCache cache, Tensor targets, Tensor outputs, LossFunction lossFunction) {
-        Tensor input = cache.getInputTensor(this); // [batch_size, seq_len, dimension]
+    public Tensor computeLoss(
+        int index,
+        StatesCache cache,
+        Tensor targets,
+        Tensor outputs,
+        LossFunction lossFunction
+    ) {
+        Tensor input = cache.getInputTensor(index); // [batch_size, seq_len, dimension]
 
         int[] shape = input.shape();
 
@@ -72,23 +78,16 @@ public class VocabularyMapper extends Layer {
             outProjectionWeights.sub(gradW);
         }
 
-        /* TODO: Reimplement this with batches
-        Tensor transposedWeights = outProjectionWeights.transpose(); // [vocab_size, dimension]
-
-        Tensor gradient = delta.matmul(transposedWeights); // [1, dimension]
-        Tensor deltaFull = Tensors.zeros(rows, dimension); // [sequence_length, dimension]
-
-        for (int i = 0; i < gradient.elements(); i++) {
-            deltaFull.set(gradient.get(0, i), rows - 1, i);
-        }
-        return deltaFull;
-        */
-
         return null;
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         int[] shape = input.shape();
 
         if (shape.length < 2) {

@@ -38,7 +38,12 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
+    public Tensor forward(
+        int index,
+        StatesCache cache,
+        Tensor input,
+        boolean training
+    ) {
         Tensor Z = input.matmul(weights); // [batch_size, n_out]
 
         int batchSize = Z.shape()[0];
@@ -54,7 +59,7 @@ public class DenseLayer extends Layer {
         }
 
         if (nextLayer instanceof LayerNorm layerNorm) {
-            Z = layerNorm.forward(cache, Z, training);
+            Z = layerNorm.forward(index, cache, Z, training);
         }
 
         Tensor activated = activation.activate(Z);
@@ -64,13 +69,18 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
-        Tensor input = cache.getInputTensor(this);
-        Tensor output = cache.getOutputTensor(this);
+    public Tensor backward(
+        int index,
+        StatesCache cache,
+        Layer previous,
+        Tensor delta
+    ) {
+        Tensor input = cache.getInputTensor(index);
+        Tensor output = cache.getOutputTensor(index);
         Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
 
-        Tensor weightsNext = previous.getWeights();  // [n_out, n_out_next]
-        Tensor deltaProjected = delta.matmul(weightsNext.transpose());  // [batch_size x n_out]
+        Tensor weightsNext = previous.getWeights(); // [n_out, n_out_next]
+        Tensor deltaProjected = delta.matmul(weightsNext.transpose()); // [batch_size x n_out]
 
         Tensor deltaThisLayer = deltaProjected.mul(derivative); // [batch_size x n_out]
 
