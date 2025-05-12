@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.brain4j.core.serializing.ModelAdapter;
 import org.brain4j.core.model.Model;
+import org.brain4j.core.serializing.ModelAdapter;
 import org.brain4j.math.Brain4JUtils;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
@@ -77,12 +77,12 @@ public class SafeTensorsAdapter implements ModelAdapter {
 
     @Override
     public void serialize(String path, Model model) throws Exception {
-
+        throw new IllegalArgumentException("Not implemented yet for this class!");
     }
 
     @Override
     public void serialize(File file, Model model) throws Exception {
-
+        throw new IllegalArgumentException("Not implemented yet for this class!");
     }
 
     @Override

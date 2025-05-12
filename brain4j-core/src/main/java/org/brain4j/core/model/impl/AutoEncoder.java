@@ -1,7 +1,6 @@
 package org.brain4j.core.model.impl;
 
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.impl.LayerNorm;
 import org.brain4j.core.structure.StatesCache;
 import org.brain4j.core.training.evaluation.EvaluationResult;
 import org.brain4j.math.Brain4JUtils;
@@ -113,11 +112,7 @@ public class AutoEncoder extends Sequential {
 
             cache.setInputTensor(layer, denseResult);
 
-            denseResult = layer.forward(i, cache, denseResult, training);
-
-            if (layer.canPropagate() && !(layer instanceof LayerNorm)) {
-                workingLayer = layer;
-            }
+            denseResult = layer.forward(l, cache, denseResult, training);
         }
 
         return denseResult;

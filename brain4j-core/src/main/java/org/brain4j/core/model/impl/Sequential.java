@@ -3,7 +3,6 @@ package org.brain4j.core.model.impl;
 import org.brain4j.core.initialization.WeightInit;
 import org.brain4j.core.initialization.WeightInitializer;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.impl.LayerNorm;
 import org.brain4j.core.loss.Loss;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.model.Model;
@@ -130,11 +129,7 @@ public class Sequential extends Model {
 
             cache.setInputTensor(layer, denseResult);
 
-            denseResult = layer.forward(i, cache, denseResult, training);
-
-            if (layer.canPropagate() && !(layer instanceof LayerNorm)) {
-                workingLayer = layer;
-            }
+            denseResult = layer.forward(l, cache, denseResult, training);
         }
 
         return denseResult;
