@@ -12,11 +12,17 @@ public final class Constants {
 
     public static final String WHITE = "\033[97m";
 
+    public static final String LIGHT_GREEN = "\033[32m";
+
     public static final String GREEN = "\033[92m";
+
+    public static final String LIGHT_BLUE = "\033[34m";
 
     public static final String BLUE = "\033[94m";
 
     public static final String CYAN = "\033[96m";
+
+    public static final String LIGHT_YELLOW = "\033[33m";
 
     public static final String YELLOW = "\033[93m";
 

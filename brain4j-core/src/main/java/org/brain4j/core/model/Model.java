@@ -61,7 +61,7 @@ public abstract class Model implements BinarySerializable {
         for (Layer layer : layers) {
             layer.compile(weightInit, lossFunction, optimizer, updater);
 
-            if (layer.canPropagate()) {
+            if (layer.canPropagate() && layer.canConnect()) {
                 double bound = 0;
 
                 if (previousLayer != null) {
@@ -77,7 +77,8 @@ public abstract class Model implements BinarySerializable {
         }
     }
 
-    public abstract Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss);
+    public abstract Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications,
+                                          AtomicReference<Double> totalLoss);
 
     public abstract void fit(ListDataSource dataSource);
 
@@ -92,13 +93,7 @@ public abstract class Model implements BinarySerializable {
     }
 
     public EvaluationResult evaluate(ListDataSource dataSource) {
-        int classes = dataSource.getSamples().getFirst().label().elements();
-
-        // Binary classification
-        if (classes == 1) {
-            classes = 2;
-        }
-
+        int classes = Math.max(2, dataSource.getSamples().getFirst().label().elements());
         Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
 
         for (int i = 0; i < classes; i++) {
@@ -160,13 +155,22 @@ public abstract class Model implements BinarySerializable {
             }
 
             if (currentEpoch % evaluateEvery == 0) {
-                EvaluationResult result = evaluate(testSource.clone());
-                System.out.printf("[%s/%s] Loss: %.4f | Accuracy: %.2f%% | F1-Score: %.2f%%\n", currentEpoch, epoches,
-                        result.loss(), result.accuracy() * 100, result.f1Score() * 100);
+                printEvaluation(currentEpoch, epoches, testSource);
             }
         }
     }
 
+    public void printEvaluation(int currentEpoch, int epoches, ListDataSource testSource) {
+        EvaluationResult result = evaluate(testSource.clone());
+
+        String lossMsg = "Loss: " + MAGENTA + "%.4f" + RESET;
+        String accuracyMsg = "Accuracy: " + LIGHT_BLUE + "%.2f%%" + RESET;
+        String f1ScoreMsg = "F1-Score: " + LIGHT_GREEN + "%.2f%%" + RESET;
+
+        String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg;
+        String formatted = String.format(message, currentEpoch, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
+        System.out.println(formatted);
+    }
 
     public void printProgressBar(double tookMs, int currentEpoch, int epoches, int evaluateEvery) {
         int progressBarLength = 20;
@@ -185,8 +189,8 @@ public abstract class Model implements BinarySerializable {
         String timeStr = BrainUtils.formatDuration(seconds);
 
         String heading = WHITE + "[%s/%s] ";
-        String progressBar = BLUE + barChar.repeat(repetitions) + RESET + barChar.repeat(remaining);
-        String percentual = YELLOW + " %.2f%%" + RESET;
+        String progressBar = LIGHT_GREEN + barChar.repeat(repetitions) + RESET + barChar.repeat(remaining);
+        String percentual = LIGHT_YELLOW + " %.2f%%" + RESET;
         String time = GRAY + " [%s/epoch | %s remaining]" + RESET;
 
         String message = String.format(heading + progressBar + percentual + time,

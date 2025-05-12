@@ -61,7 +61,7 @@ public class EmbedLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
         if (input.dimension() > 2) {
             throw new IllegalArgumentException("Input must be a 1D or 2D matrix!");
         }

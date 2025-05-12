@@ -38,7 +38,7 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
         Tensor Z = input.matmul(weights); // [batch_size, n_out]
 
         int batchSize = Z.shape()[0];
@@ -54,7 +54,7 @@ public class DenseLayer extends Layer {
         }
 
         if (nextLayer instanceof LayerNorm layerNorm) {
-            Z = layerNorm.forward(cache, this, Z, training);
+            Z = layerNorm.forward(cache, Z, training);
         }
 
         Tensor activated = activation.activate(Z);

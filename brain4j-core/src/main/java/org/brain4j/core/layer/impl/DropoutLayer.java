@@ -72,7 +72,7 @@ public class DropoutLayer extends Layer {
      * @return The resulting tensor.
      */
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
         if (training) {
             return scale(input);
         }

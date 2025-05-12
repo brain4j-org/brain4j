@@ -21,30 +21,31 @@ public class ConvLayer extends Layer {
     private int stride;
 
     public ConvLayer(Activations activation, int filters, int filtersWidth, int filtersHeight) {
-        this(activation, filters, 1, filtersWidth, filtersHeight);
+        this(activation.getFunction(), filters, filtersWidth, filtersHeight, 1, 1);
     }
 
-    public ConvLayer(Activations activation, int filters, int channels, int filtersWidth, int filtersHeight) {
-        this(activation.getFunction(), filters, channels, filtersWidth, filtersHeight, 0, 1);
-    }
-
-    public ConvLayer(Activation activation, int filters, int channels, int filtersWidth, int filtersHeight, int padding, int stride) {
+    public ConvLayer(Activation activation, int filters, int filtersWidth, int filtersHeight, int padding, int stride) {
         this.id = totalLayers++;
         this.activation = activation;
         this.filters = filters;
-        this.channels = channels;
         this.filtersWidth = filtersWidth;
         this.filtersHeight = filtersHeight;
         this.padding = padding;
         this.stride = stride;
-
-        this.bias = Tensors.matrix(channels, filtersHeight, filtersWidth);
         this.weights = Tensors.create(filters);
     }
 
     @Override
     public void connect(Random generator, Layer previous, double bound) {
-        if (previous == null) return;
+        if (previous instanceof ConvLayer convLayer) {
+            this.channels = convLayer.getChannels();
+        } else if (previous instanceof InputLayer inputLayer) {
+            this.channels = inputLayer.getChannels();
+        } else {
+            throw new IllegalArgumentException("Convolutional layer is not preceded by anything!");
+        }
+
+        this.bias = Tensors.matrix(channels, filtersHeight, filtersWidth);
 
         for (int i = 0; i < bias.elements(); i++) {
             bias.getData()[i] = (float) (2 * generator.nextDouble() - 1);
@@ -78,7 +79,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
         // [batch_size, channels, height, width]
         return input.convolve(weights)
                 .map(x -> activation.activate(x));

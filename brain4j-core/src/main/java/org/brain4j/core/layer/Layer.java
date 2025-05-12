@@ -18,7 +18,7 @@ import java.util.Random;
 
 public abstract class Layer implements BinarySerializable {
 
-    public static int totalLayers = 0;
+    protected static int totalLayers = 0;
 
     protected WeightInitializer weightInit;
     protected LossFunction lossFunction;
@@ -66,8 +66,8 @@ public abstract class Layer implements BinarySerializable {
         return true;
     }
 
-    public boolean isConvolutional() {
-        return false;
+    public boolean canConnect() {
+        return true;
     }
 
     @Override
@@ -145,7 +145,7 @@ public abstract class Layer implements BinarySerializable {
         }
     }
 
-    public abstract Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training);
+    public abstract Tensor forward(StatesCache cache, Tensor input, boolean training);
 
     public Tensor backward(StatesCache cache, Layer previous, Tensor delta) {
         throw new UnsupportedOperationException("Not implemented for " + this.getClass().getSimpleName());
@@ -155,12 +155,12 @@ public abstract class Layer implements BinarySerializable {
         return activation;
     }
 
-    public Tensor getBias() {
-        return bias;
-    }
-
     public Tensor getWeights() {
         return weights;
+    }
+
+    public Tensor getBias() {
+        return bias;
     }
 
     public int getTotalWeights() {

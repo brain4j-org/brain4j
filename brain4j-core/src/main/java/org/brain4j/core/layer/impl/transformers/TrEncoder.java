@@ -111,7 +111,7 @@ public class TrEncoder extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Layer lastLayer, Tensor input, boolean training) {
+    public Tensor forward(StatesCache cache, Tensor input, boolean training) {
         int[] shape = input.shape();
 
         if (shape.length != 3) {
@@ -133,9 +133,9 @@ public class TrEncoder extends Layer {
 
             Tensor attended = attention.attend(cache, batch);
 
-            if (training) attended = dropout.forward(cache, this, attended, true);
+            if (training) attended = dropout.forward(cache, attended, true);
 
-            Tensor attentionOut = normalizer.forward(cache, this, batch.add(attended), training);
+            Tensor attentionOut = normalizer.forward(cache, batch.add(attended), training);
             Tensor cached = cache.getFeedForwardCache(i, this); // [tokens, dimension]
 
             if (cached == null) cached = Tensors.create(0, embeddingDim);
@@ -151,9 +151,9 @@ public class TrEncoder extends Layer {
 
             cache.setFeedForwardCache(i, this, stacked);
 
-            if (training) stacked = dropout.forward(cache, this, stacked, true);
+            if (training) stacked = dropout.forward(cache, stacked, true);
 
-            stacked = normalizer.forward(cache, this, attentionOut.add(stacked), training);
+            stacked = normalizer.forward(cache, attentionOut.add(stacked), training);
 
             result.setChannel(i, stacked);
         }
