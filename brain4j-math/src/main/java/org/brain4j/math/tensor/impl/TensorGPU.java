@@ -227,7 +227,7 @@ public class TensorGPU extends TensorCPU {
 
     public static Tensor of(int[] shape, float... data) {
         TensorGPU tensor = new TensorGPU(shape);
-        System.arraycopy(data, 0, tensor.getData(), 0, data.length);
+        System.arraycopy(data, 0, tensor.data(), 0, data.length);
         return tensor;
     }
     
@@ -318,8 +318,8 @@ public class TensorGPU extends TensorCPU {
             int K = shapeA[1];
             int N = shapeB[1];
             
-            float[] dataA = getData();
-            float[] dataB = other.getData();
+            float[] dataA = data();
+            float[] dataB = other.data();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
@@ -368,8 +368,8 @@ public class TensorGPU extends TensorCPU {
             }
             
             int elements = elements();
-            float[] dataA = getData();
-            float[] dataB = other.getData();
+            float[] dataA = data();
+            float[] dataB = other.data();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
@@ -416,8 +416,8 @@ public class TensorGPU extends TensorCPU {
             }
             
             int elements = elements();
-            float[] dataA = getData();
-            float[] dataB = other.getData();
+            float[] dataA = data();
+            float[] dataB = other.data();
             
             cl_mem memA = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                     (long) Sizeof.cl_float * dataA.length, Pointer.to(dataA), null);
@@ -486,8 +486,8 @@ public class TensorGPU extends TensorCPU {
         
         boolean useFFT = kernelSize > FFT_THRESHOLD;
         
-        float[] inputData = getData();
-        float[] kernelData = kernel.getData();
+        float[] inputData = data();
+        float[] kernelData = kernel.data();
         float[] resultData = new float[inputSize];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -591,8 +591,8 @@ public class TensorGPU extends TensorCPU {
         
         boolean useFFT = (kernelRows * kernelCols) > FFT_THRESHOLD;
         
-        float[] inputData = getData();
-        float[] kernelData = kernel.getData();
+        float[] inputData = data();
+        float[] kernelData = kernel.data();
         float[] resultData = new float[inputRows * inputCols];
         
         cl_mem memInput = clCreateBuffer(CONTEXT, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,

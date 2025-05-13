@@ -46,7 +46,7 @@ public class BackPropagation {
 
     public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {
         List<Layer> layers = model.layers();
-        LossFunction lossFunction = model.lossFunction().function();
+        LossFunction lossFunction = model.lossFunction();
 
         int count = layers.size() - 1;
 

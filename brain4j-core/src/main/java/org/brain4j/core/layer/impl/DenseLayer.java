@@ -21,8 +21,8 @@ public class DenseLayer extends Layer {
     public void connect(Layer previous) {
         if (previous == null) return;
         // Shape: [output_size, input_size]
-        this.weights = Tensors.create(neurons, previous.size());
-        this.bias = Tensors.create(neurons);
+        this.weights = Tensors.create(neurons, previous.size()).withGrad();
+        this.bias = Tensors.create(neurons).withGrad();
     }
 
     @Override
@@ -35,7 +35,7 @@ public class DenseLayer extends Layer {
     @Override
     public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
         // Shape: [batch_size, output_size]
-        Tensor output = input.matmulWithGrad(weights.transpose());
+        Tensor output = input.matmulGrad(weights.transpose());
 
         int batchSize = output.shape()[0];
         int elements = output.shape()[1];
@@ -49,7 +49,7 @@ public class DenseLayer extends Layer {
             }
         }
 
-        Tensor activated = output.activateWithGrad(activation);
+        Tensor activated = output.activateGrad(activation);
 
         cache.setInput(index, input);
         cache.setOutput(index, activated);

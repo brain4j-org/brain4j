@@ -45,7 +45,6 @@ public class TensorCPU implements Cloneable, Tensor {
     private final int[] strides;
     private AutogradContext autogradContext;
 
-
     public TensorCPU(int... shape) {
         if (shape.length == 0) {
             throw new IllegalArgumentException("Shape cannot be empty");
@@ -127,17 +126,17 @@ public class TensorCPU implements Cloneable, Tensor {
         Tensor tensor = new TensorCPU(shape);
         
         for (int i = 0; i < data.length; i++) {
-            tensor.getData()[i] = data[i];
+            tensor.data()[i] = data[i];
         }
         
         return tensor;
     }
-    
+
     public static Tensor of(int[] shape, double... data) {
         Tensor tensor = new TensorCPU(shape);
         
         for (int i = 0; i < data.length; i++) {
-            tensor.getData()[i] = (float) data[i];
+            tensor.data()[i] = (float) data[i];
         }
         
         return tensor;
@@ -147,7 +146,7 @@ public class TensorCPU implements Cloneable, Tensor {
         Tensor tensor = new TensorCPU(shape);
         
         for (int i = 0; i < data.length; i++) {
-            tensor.getData()[i] = (float) data[i];
+            tensor.data()[i] = (float) data[i];
         }
 
         return tensor;
@@ -155,7 +154,7 @@ public class TensorCPU implements Cloneable, Tensor {
     
     public static Tensor ones(int... shape) {
         Tensor tensor = new TensorCPU(shape);
-        Arrays.fill(tensor.getData(), 1.0f);
+        Arrays.fill(tensor.data(), 1.0f);
         return tensor;
     }
 
@@ -170,8 +169,8 @@ public class TensorCPU implements Cloneable, Tensor {
     private static Tensor random(Random random, int... shape) {
         Tensor tensor = new TensorCPU(shape);
 
-        for (int i = 0; i < tensor.getData().length; i++) {
-            tensor.getData()[i] = random.nextFloat();
+        for (int i = 0; i < tensor.data().length; i++) {
+            tensor.data()[i] = random.nextFloat();
         }
 
         return tensor;
@@ -189,8 +188,8 @@ public class TensorCPU implements Cloneable, Tensor {
         Tensor tensor = new TensorCPU(shape);
         double range = upperBound - lowerBound;
 
-        for (int i = 0; i < tensor.getData().length; i++) {
-            tensor.getData()[i] = (float) (random.nextDouble() * range + lowerBound);
+        for (int i = 0; i < tensor.data().length; i++) {
+            tensor.data()[i] = (float) (random.nextDouble() * range + lowerBound);
         }
 
         return tensor;
@@ -207,15 +206,14 @@ public class TensorCPU implements Cloneable, Tensor {
     public static Tensor randn(Random random, double mean, double stddev, int... shape) {
         Tensor tensor = new TensorCPU(shape);
 
-        for (int i = 0; i < tensor.getData().length; i++) {
-            tensor.getData()[i] = (float) (random.nextGaussian() * stddev + mean);
+        for (int i = 0; i < tensor.data().length; i++) {
+            tensor.data()[i] = (float) (random.nextGaussian() * stddev + mean);
         }
 
         return tensor;
     }
 
-    @Override
-    public AutogradContext getAutogradContext() {
+    public AutogradContext autogradContext() {
         return autogradContext;
     }
 
@@ -225,8 +223,13 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public float[] getData() {
+    public float[] data() {
         return data;
+    }
+
+    @Override
+    public int[] strides() {
+        return strides;
     }
 
     @Override
@@ -266,7 +269,7 @@ public class TensorCPU implements Cloneable, Tensor {
         checkSameShape(other);
 
         for (int i = 0; i < data.length; i++) {
-            data[i] += other.getData()[i];
+            data[i] += other.data()[i];
         }
 
         return this;
@@ -296,7 +299,7 @@ public class TensorCPU implements Cloneable, Tensor {
         checkSameShape(other);
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = data[i] - other.getData()[i];
+            data[i] = data[i] - other.data()[i];
         }
 
         return this;
@@ -326,7 +329,7 @@ public class TensorCPU implements Cloneable, Tensor {
         checkSameShape(other);
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = data[i] * other.getData()[i];
+            data[i] = data[i] * other.data()[i];
         }
 
         return this;
@@ -356,11 +359,11 @@ public class TensorCPU implements Cloneable, Tensor {
         checkSameShape(other);
 
         for (int i = 0; i < data.length; i++) {
-            if (other.getData()[i] == 0) {
+            if (other.data()[i] == 0) {
                 throw new ArithmeticException("Division by zero");
             }
 
-            data[i] = data[i] / other.getData()[i];
+            data[i] = data[i] / other.data()[i];
         }
 
         return this;
@@ -445,7 +448,7 @@ public class TensorCPU implements Cloneable, Tensor {
         double sum = 0;
 
         for (int i = 0; i < data.length; i++) {
-            sum += data[i] * other.getData()[i];
+            sum += data[i] * other.data()[i];
         }
 
         return sum;
@@ -491,7 +494,7 @@ public class TensorCPU implements Cloneable, Tensor {
         double sum = 0;
 
         for (int i = 0; i < data.length; i++) {
-            double diff = data[i] - other.getData()[i];
+            double diff = data[i] - other.data()[i];
             sum += diff * diff;
         }
 
@@ -551,7 +554,7 @@ public class TensorCPU implements Cloneable, Tensor {
 
         if (shape.length != 2) {
             throw new UnsupportedOperationException("transpose() is supported only for 2D tensors, not for tensors with "
-                    + shape.length + " dimensions");
+                + shape.length + " dimensions");
         }
 
         int rows = shape[0];
@@ -563,6 +566,10 @@ public class TensorCPU implements Cloneable, Tensor {
             for (int j = 0; j < cols; j++) {
                 result.set(get(i, j), j, i);
             }
+        }
+
+        if (usesGrad()) {
+            result.withGrad();
         }
 
         return result;
@@ -733,9 +740,9 @@ public class TensorCPU implements Cloneable, Tensor {
 
         Tensor result = new TensorCPU(resultShape);
 
-        float[] A = this.getData();
-        float[] B = other.getData();
-        float[] C = result.getData();
+        float[] A = this.data();
+        float[] B = other.data();
+        float[] C = result.data();
 
         MATMUL.multiply(batch, m, n, p, A, B, C, POOL);
         return result;
@@ -785,7 +792,7 @@ public class TensorCPU implements Cloneable, Tensor {
         checkSameShape(other);
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = (float) Math.pow(data[i], other.getData()[i]);
+            data[i] = (float) Math.pow(data[i], other.data()[i]);
         }
 
         return this;
@@ -950,11 +957,11 @@ public class TensorCPU implements Cloneable, Tensor {
 
         for (int i = 0; i < data.length; i++) {
             if (data[i] > 0) {
-                result.getData()[i] = 1;
+                result.data()[i] = 1;
             } else if (data[i] < 0) {
-                result.getData()[i] = -1;
+                result.data()[i] = -1;
             } else {
-                result.getData()[i] = 0;
+                result.data()[i] = 0;
             }
         }
 
@@ -1070,7 +1077,7 @@ public class TensorCPU implements Cloneable, Tensor {
         int height = shape[1];
         int width = shape[2];
 
-        float[] sliceData = other.getData();
+        float[] sliceData = other.data();
         int offset = channel * height * width;
 
         System.arraycopy(sliceData, 0, data, offset, height * width);
@@ -1200,16 +1207,16 @@ public class TensorCPU implements Cloneable, Tensor {
     public Tensor forward(Operation op, Tensor other) {
         Tensor result = op.forward(this, other);
 
-        if (result.getAutogradContext() == null) {
+        if (result.autogradContext() == null) {
             result.setAutogradContext(new AutogradContext(true));
         }
 
-        result.getAutogradContext().setOperation(op, this, other);
+        result.autogradContext().setOperation(op, this, other);
         return result;
     }
 
     @Override
-    public Tensor addWithGrad(Tensor other) {
+    public Tensor addGrad(Tensor other) {
         if (!usesGrad() && !other.usesGrad()) {
             return plus(other);
         }
@@ -1218,7 +1225,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor mulWithGrad(Tensor other) {
+    public Tensor mulGrad(Tensor other) {
         if (!usesGrad() && !other.usesGrad()) {
             return times(other);
         }
@@ -1227,7 +1234,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor subWithGrad(Tensor other) {
+    public Tensor subGrad(Tensor other) {
         if (!usesGrad() && !other.usesGrad()) {
             return minus(other);
         }
@@ -1236,7 +1243,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor divWithGrad(Tensor other) {
+    public Tensor divGrad(Tensor other) {
         if (!usesGrad() && !other.usesGrad()) {
             return divide(other);
         }
@@ -1245,7 +1252,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor matmulWithGrad(Tensor other) {
+    public Tensor matmulGrad(Tensor other) {
         if (!usesGrad() && !other.usesGrad()) {
             return matmul(other);
         }
@@ -1254,12 +1261,12 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor activateWithGrad(Activation activation) {
+    public Tensor activateGrad(Activation activation) {
         if (!usesGrad()) {
             return activation.activate(this);
         }
 
-        return forward(new ActivationOperation(activation), null);
+        return forward(new ActivationOperation(activation), ones(shape));
     }
 
     @Override
@@ -1274,7 +1281,7 @@ public class TensorCPU implements Cloneable, Tensor {
         double epsilon = 1e-5;
 
         for (int i = 0; i < data.length; i++) {
-            if (Math.abs(data[i] - other.getData()[i]) > epsilon) {
+            if (Math.abs(data[i] - other.data()[i]) > epsilon) {
                 return false;
             }
         }
@@ -1370,7 +1377,7 @@ public class TensorCPU implements Cloneable, Tensor {
         int dataSize = stream.readInt();
 
         for (int i = 0; i < dataSize; i++) {
-            data.getData()[i] = stream.readFloat();
+            data.data()[i] = stream.readFloat();
         }
 
         return data;

@@ -27,7 +27,13 @@ public interface Tensor extends Iterable<Float> {
      * Retrieves the data of the tensor as a float array.
      * @return The tensor's data
      */
-    float[] getData();
+    float[] data();
+
+    /**
+     * Retrieves the strides of the tensor as an array of integers.
+     * @return The strides of the tensor
+     */
+    int[] strides();
 
     /**
      * Gets the value at the specified indices in the tensor.
@@ -269,7 +275,7 @@ public interface Tensor extends Iterable<Float> {
      * Gets the autograd context for this tensor.
      * @return The autograd context instance
      */
-    AutogradContext getAutogradContext();
+    AutogradContext autogradContext();
 
     /**
      * Updates the autograd context instance for this tensor.
@@ -323,41 +329,41 @@ public interface Tensor extends Iterable<Float> {
      * Delegates to {@link #forward(Operation, Tensor)} using {@link AddOperation}
      * @return The result of the operation
      */
-    Tensor addWithGrad(Tensor other);
+    Tensor addGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MulOperation}
      * @return The result of the operation
      */
-    Tensor mulWithGrad(Tensor other);
+    Tensor mulGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link DivOperation}
      * @param other The other tensor
      * @return The result of the operation
      */
-    Tensor divWithGrad(Tensor other);
+    Tensor divGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link SubOperation}
      * @param other The other tensor
      * @return The result of the operation
      */
-    Tensor subWithGrad(Tensor other);
+    Tensor subGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MatMulOperation}
      * @param other The other tensor
      * @return The result of the operation
      */
-    Tensor matmulWithGrad(Tensor other);
+    Tensor matmulGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link Activation}
      * @param activation The activation to apply
      * @return The resulting tensor
      */
-    Tensor activateWithGrad(Activation activation);
+    Tensor activateGrad(Activation activation);
 
     /**
      * Performs a convolution between this tensor and the specified kernel tensor.
@@ -391,7 +397,7 @@ public interface Tensor extends Iterable<Float> {
      */
     default Tensor to(DeviceType deviceType) {
         return switch (deviceType) {
-            case CPU, DEFAULT -> TensorCPU.of(shape(), getData());
+            case CPU, DEFAULT -> TensorCPU.of(shape(), data());
             case GPU -> TensorGPU.fromTensor(this);
             default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
         };

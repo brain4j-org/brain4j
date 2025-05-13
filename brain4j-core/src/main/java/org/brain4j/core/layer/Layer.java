@@ -5,6 +5,7 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.core.training.StatesCache;
+import org.brain4j.math.tensor.Tensors;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -53,11 +54,16 @@ public abstract class Layer {
 
     public Tensor backward(Updater updater, StatesCache cache, Layer last, Tensor delta, int index) {
         Tensor output = cache.output(index); // [batch_size, output_size]
-
         output.backward();
 
+        System.out.println("Output shape: " + Arrays.toString(output.shape()));
+        System.out.println("Output grad: " + output.grad());
+        System.out.println("Weights shape: " + Arrays.toString(weights().shape()));
         Tensor gradWeights = weights.grad(); // [output_size, input_size]
         Tensor gradBias = bias.grad(); // [output_size]
+
+        System.out.println("Weights grad: " + gradWeights);
+        System.out.println("Bias grad: " + gradBias);
 
         updater.change(gradWeights, gradBias, index);
 

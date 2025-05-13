@@ -45,16 +45,14 @@ public interface Activation {
         int[] shape = input.shape();
         Tensor result = Tensors.create(shape);
 
-        if (input.dimension() == 2) {
-            for (int i = 0; i < shape[0]; i++) {
-                for (int j = 0; j < shape[1]; j++) {
-                    result.set(getDerivative(input.get(i, j)), i, j);
-                }
-            }
-        } else {
-            for (int i = 0; i < input.elements(); i++) {
-                result.set(getDerivative(input.get(i)), i);
-            }
+        if (input.dimension() != 2) {
+            return getDerivative(input.reshape(1, input.elements()));
+        }
+
+        float[] data = input.data();
+
+        for (int i = 0; i < data.length; i++) {
+            result.data()[i] = (float) getDerivative(data[i]);
         }
 
         return result;

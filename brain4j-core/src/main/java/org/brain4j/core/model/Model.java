@@ -1,13 +1,14 @@
 package org.brain4j.core.model;
 
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.loss.Loss;
+import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.BackPropagation;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
-import org.brain4j.core.weights.WeightInit;
+import org.brain4j.core.weights.WeightInitialization;
+import org.brain4j.core.weights.impl.UniformXavierInit;
 import org.brain4j.math.data.AsyncDataSource;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
@@ -25,8 +26,8 @@ public class Model {
     private BackPropagation backPropagation;
     private Optimizer optimizer;
     private Updater updater;
-    private WeightInit weightInit;
-    private Loss lossFunction;
+    private WeightInitialization weightInit;
+    private LossFunction lossFunction;
 
     public Model(Layer... layers) {
         this.layers = List.of(layers);
@@ -116,7 +117,7 @@ public class Model {
                 Tensor samplePrediction = prediction.slice(range).vector();
                 Tensor sampleLabel = label.slice(range).vector();
 
-                double error = lossFunction.function().calculate(sampleLabel, samplePrediction);
+                double error = lossFunction.calculate(sampleLabel, samplePrediction);
                 loss.updateAndGet(v -> v + error);
             }
         });
@@ -124,15 +125,15 @@ public class Model {
         return loss.get();
     }
 
-    public Model compile(Optimizer optimizer, Loss loss) {
-        return compile(optimizer, new StochasticUpdater(), WeightInit.UNIFORM_XAVIER, loss);
+    public Model compile(LossFunction lossFunction, Optimizer optimizer) {
+        return compile(lossFunction, optimizer, new StochasticUpdater(), new UniformXavierInit());
     }
 
-    public Model compile(Optimizer optimizer, Updater updater, WeightInit weightInit, Loss loss) {
+    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater, WeightInitialization weightInit) {
         this.optimizer = optimizer;
         this.updater = updater;
         this.weightInit = weightInit;
-        this.lossFunction = loss;
+        this.lossFunction = lossFunction;
         this.backPropagation = new BackPropagation(this, optimizer, updater);
         connectLayers();
         return this;
@@ -148,7 +149,7 @@ public class Model {
             int input = previous.size();
             int output = layer.size();
 
-            double bound = weightInit.function().getBound(input, output);
+            double bound = weightInit.getBound(input, output);
 
             layer.connect(previous);
             layer.initWeights(random, bound);
@@ -177,11 +178,11 @@ public class Model {
         return updater;
     }
 
-    public WeightInit weightInit() {
+    public WeightInitialization weightInit() {
         return weightInit;
     }
 
-    public Loss lossFunction() {
+    public LossFunction lossFunction() {
         return lossFunction;
     }
 }
