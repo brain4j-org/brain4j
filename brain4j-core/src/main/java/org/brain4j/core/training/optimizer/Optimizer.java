@@ -15,7 +15,7 @@ public abstract class Optimizer {
         this.learningRate = learningRate;
     }
 
-    public abstract Tensor step(Layer layer, Tensor delta, Tensor output);
+    public abstract Tensor step(int index, Layer layer, Tensor gradient);
 
     public void postInitialize(Model model) {
     }

@@ -19,7 +19,7 @@ public class AsyncDataSource extends ListDataSource {
         super(samples, shuffle, batchSize);
     }
 
-    public void propagate(Consumer<Pair<Tensor, Tensor>> task) {
+    public void accept(Consumer<Pair<Tensor, Tensor>> task) {
         reset();
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();

@@ -32,10 +32,6 @@ public class ListDataSource implements Cloneable {
         computeBatches();
     }
 
-    public List<Sample> getSamples() {
-        return samples;
-    }
-
     public boolean hasNext() {
         return cursor < batches;
     }
@@ -88,7 +84,7 @@ public class ListDataSource implements Cloneable {
         return this;
     }
 
-    public void propagate(Consumer<Pair<Tensor, Tensor>> task) {
+    public void accept(Consumer<Pair<Tensor, Tensor>> task) {
         reset();
 
         while (hasNext()) {
@@ -104,10 +100,6 @@ public class ListDataSource implements Cloneable {
 
         cursor++;
         return new Pair<>(input, label);
-    }
-
-    public int size() {
-        return samples.size();
     }
 
     private void computeBatches() {
@@ -139,5 +131,33 @@ public class ListDataSource implements Cloneable {
     @Override
     public ListDataSource clone() {
         return new ListDataSource(samples, false, batchSize);
+    }
+
+    public int size() {
+        return samples.size();
+    }
+
+    public List<Sample> samples() {
+        return samples;
+    }
+
+    public List<Tensor> batchedInputs() {
+        return batchedInputs;
+    }
+
+    public List<Tensor> batchedLabels() {
+        return batchedLabels;
+    }
+
+    public int batchSize() {
+        return batchSize;
+    }
+
+    public int batches() {
+        return batches;
+    }
+
+    public int cursor() {
+        return cursor;
     }
 }

@@ -2,7 +2,7 @@ package org.brain4j.core.layer.impl;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
-import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
@@ -10,19 +10,19 @@ import java.util.Random;
 
 public class DenseLayer extends Layer {
 
-    private final int units;
+    private final int neurons;
 
-    public DenseLayer(int units, Activation activation) {
-        super(activation);
-        this.units = units;
+    public DenseLayer(int neurons, Activations activation) {
+        super(activation.getFunction());
+        this.neurons = neurons;
     }
 
     @Override
     public void connect(Layer previous) {
         if (previous == null) return;
         // Shape: [output_size, input_size]
-        this.weights = Tensors.create(units, previous.size());
-        this.bias = Tensors.create(units);
+        this.weights = Tensors.create(neurons, previous.size());
+        this.bias = Tensors.create(neurons);
     }
 
     @Override
@@ -37,7 +37,17 @@ public class DenseLayer extends Layer {
         // Shape: [batch_size, output_size]
         Tensor output = input.matmulWithGrad(weights.transpose());
 
-        // TODO: broadcast adding the bias
+        int batchSize = output.shape()[0];
+        int elements = output.shape()[1];
+
+        for (int i = 0; i < batchSize; i++) {
+            for (int j = 0; j < elements; j++) {
+                float value = output.get(i, j);
+                float biasValue = bias.get(j);
+
+                output.set(value + biasValue, i, j);
+            }
+        }
 
         Tensor activated = output.activateWithGrad(activation);
 
@@ -49,6 +59,6 @@ public class DenseLayer extends Layer {
 
     @Override
     public int size() {
-        return units;
+        return neurons;
     }
 }

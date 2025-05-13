@@ -8,10 +8,15 @@ import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.weights.WeightInit;
+import org.brain4j.math.data.AsyncDataSource;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.index.Range;
 
 import java.util.List;
+import java.util.Random;
+import java.util.SplittableRandom;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Model {
 
@@ -73,7 +78,7 @@ public class Model {
             );
         }
 
-        Tensor pass = input;
+        Tensor pass = input.withGrad();
 
         cache.setInput(0, input);
         cache.setOutput(0, pass);
@@ -93,6 +98,32 @@ public class Model {
         return pass;
     }
 
+    public double loss(ListDataSource source) {
+        AsyncDataSource asyncSource = new AsyncDataSource(source.samples(), false, source.batchSize());
+        AtomicReference<Double> loss = new AtomicReference<>(0.0);
+
+        asyncSource.accept(batch -> {
+            Tensor input = batch.first();
+            Tensor label = batch.second();
+
+            Tensor prediction = predict(input);
+
+            int batchSize = input.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor samplePrediction = prediction.slice(range).vector();
+                Tensor sampleLabel = label.slice(range).vector();
+
+                double error = lossFunction.function().calculate(sampleLabel, samplePrediction);
+                loss.updateAndGet(v -> v + error);
+            }
+        });
+
+        return loss.get();
+    }
+
     public Model compile(Optimizer optimizer, Loss loss) {
         return compile(optimizer, new StochasticUpdater(), WeightInit.UNIFORM_XAVIER, loss);
     }
@@ -109,10 +140,20 @@ public class Model {
 
     private void connectLayers() {
         Layer previous = layers.getFirst();
+        Random random = Random.from(new SplittableRandom());
 
         for (int i = 1; i < size(); i++) {
             Layer layer = layerAt(i);
+
+            int input = previous.size();
+            int output = layer.size();
+
+            double bound = weightInit.function().getBound(input, output);
+
             layer.connect(previous);
+            layer.initWeights(random, bound);
+
+            previous = layer;
         }
     }
 

@@ -21,6 +21,7 @@ public class BackPropagation {
         this.model = model;
         this.optimizer = optimizer;
         this.updater = updater;
+        updater.resetGradients(model);
     }
 
     public void propagatePartition(Pair<Tensor, Tensor> partition) {
@@ -39,7 +40,7 @@ public class BackPropagation {
     }
 
     public void iteration(ListDataSource dataSource) {
-        dataSource.propagate(this::propagatePartition);
+        dataSource.accept(this::propagatePartition);
         updater.postFit(model, optimizer.learningRate(), dataSource.size());
     }
 
@@ -57,7 +58,7 @@ public class BackPropagation {
 
             if (!layer.canPropagate()) continue;
 
-            delta = layer.backward(cache, last, delta, l);
+            delta = layer.backward(updater, cache, last, delta, l);
             last = layer;
         }
     }

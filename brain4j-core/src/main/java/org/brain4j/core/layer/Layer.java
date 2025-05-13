@@ -6,6 +6,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.core.training.StatesCache;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public abstract class Layer {
@@ -37,10 +38,12 @@ public abstract class Layer {
         Tensor error = outputs.minus(targets);
         Tensor derivatives = activation.getDerivative(outputs);
 
-        Tensor input = cache.input(index);
-        Tensor delta = lossFunction.getDelta(error, derivatives);
+        Tensor input = cache.input(index); // [batch_size, input_size]
+        Tensor delta = lossFunction.getDelta(error, derivatives); // [batch_size, output_size]
 
-        Tensor weightsGradient = input.transpose().matmul(delta);
+        // delta.T = [output_size, batch_size]
+        // Shape: [output_size, input_size]
+        Tensor weightsGradient = delta.transpose().matmul(input);
         Tensor biasesGradient = delta.sum(0, false);
 
         updater.change(weightsGradient, biasesGradient, index);
@@ -48,8 +51,18 @@ public abstract class Layer {
         return delta;
     }
 
-    public Tensor backward(StatesCache cache, Layer last, Tensor delta, int index) {
-        return delta; // TODO: Implement this using computational graphs
+    public Tensor backward(Updater updater, StatesCache cache, Layer last, Tensor delta, int index) {
+        Tensor output = cache.output(index); // [batch_size, output_size]
+
+        output.backward();
+
+        Tensor gradWeights = weights.grad(); // [output_size, input_size]
+        Tensor gradBias = bias.grad(); // [output_size]
+
+        updater.change(gradWeights, gradBias, index);
+
+        Tensor input = cache.input(index); // [batch_size, input_size]
+        return input.grad();
     }
 
     public boolean canPropagate() {
