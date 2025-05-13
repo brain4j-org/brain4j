@@ -64,20 +64,30 @@ public abstract class Layer {
         Tensor delta,
         int index
     ) {
+        Tensor output = cache.output(index); // [batch_size, output_size]
         Tensor input = cache.input(index); // [batch_size, input_size]
-        Tensor deltaThis = input.grad();
 
-        Tensor gradWeights = weights.grad().transpose(); // [output_size, input_size]
-        Tensor gradBias = delta.sum(0, false); // [output_size]
+        Tensor derivative = activation.getDerivative(output);
+        Tensor projectedDelta = delta.mul(derivative);
 
-        gradWeights = optimizer.step(index, this, gradWeights);
+        Tensor manualGradient = projectedDelta.transpose().matmul(input);
+//        Tensor gradWeights = weights.grad().transpose(); // [output_size, input_size]
+        Tensor gradBias = projectedDelta.sum(0, false);
+
+//        System.out.println("m = " + Arrays.toString(manualGradient.shape()));
+//        System.out.println("a = " + Arrays.toString(gradWeights.shape()));
+//
+//        double diff = manualGradient.distance(gradWeights);
+//        System.out.println(diff);
+
+        Tensor gradWeights = optimizer.step(index, this, manualGradient);
 
         clipper.clip(gradWeights);
         clipper.clip(gradBias);
 
         updater.change(gradWeights, gradBias, index);
 
-        return deltaThis;
+        return delta.matmul(weights);
     }
 
     public boolean canPropagate() {

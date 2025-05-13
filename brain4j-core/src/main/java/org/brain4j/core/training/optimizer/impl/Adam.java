@@ -51,9 +51,9 @@ public class Adam extends Optimizer {
             secondMomentum = Tensors.create(gradient.shape());
         }
 
-        Tensor gradSquared = gradient.clone().mul(gradient);
+        Tensor gradSquared = gradient.times(gradient);
 
-        firstMomentum = firstMomentum.mul(beta1).add(gradient.mul(1 - beta1));
+        firstMomentum = firstMomentum.mul(beta1).add(gradient.times(1 - beta1));
         secondMomentum = secondMomentum.mul(beta2).add(gradSquared.mul(1 - beta2));
 
         this.firstMomentum[index] = firstMomentum;

@@ -64,7 +64,7 @@ public interface Tensor extends Iterable<Float> {
      * Sets the value at the specified indices in the tensor.
      * @param value The value to set
      * @param indices The indices where the value should be set
-     * @return The modified tensor
+     * @return The current tensor modified
      */
     Tensor set(double value, int... indices);
 
@@ -72,7 +72,7 @@ public interface Tensor extends Iterable<Float> {
      * Adds a value to the tensor at the specified indices.
      * @param value The value to add
      * @param indices The indices where the value should be added
-     * @return The modified tensor
+     * @return The current tensor modified
      */
     Tensor add(double value, int... indices);
 
@@ -85,14 +85,14 @@ public interface Tensor extends Iterable<Float> {
     /**
      * Adds this tensor with another tensor element-wise.
      * @param other The tensor to add
-     * @return A new tensor with the result
+     * @return The current tensor modified
      */
     Tensor add(Tensor other);
 
     /**
      * Adds this tensor with a constant value element-wise.
      * @param value The constant value to add
-     * @return A new tensor with the result
+     * @return The current tensor modified
      */
     Tensor add(double value);
 
@@ -113,14 +113,14 @@ public interface Tensor extends Iterable<Float> {
     /**
      * Subtracts another tensor from this tensor element-wise.
      * @param other The tensor to subtract
-     * @return A new tensor with the result
+     * @return The current tensor modified
      */
     Tensor sub(Tensor other);
 
     /**
      * Subtracts a constant value from this tensor element-wise.
      * @param value The constant value to subtract
-     * @return A new tensor with the result
+     * @return The current tensor modified
      */
     Tensor sub(double value);
 
@@ -141,7 +141,7 @@ public interface Tensor extends Iterable<Float> {
     /**
      * Multiplies this tensor with another tensor element-wise.
      * @param other The tensor to multiply
-     * @return A new tensor with the result
+     * @return The current tensor modified
      */
     Tensor mul(Tensor other);
 
@@ -169,14 +169,14 @@ public interface Tensor extends Iterable<Float> {
     /**
      * Divides this tensor by another tensor element-wise.
      * @param other The tensor to divide by
-     * @return A new tensor with the result
+     * @return The current tensor modified
      */
     Tensor div(Tensor other);
 
     /**
      * Divides this tensor by a constant value element-wise.
      * @param value The constant value to divide by
-     * @return A new tensor with the result
+     * @return The current tensor modified
      */
     Tensor div(double value);
 
