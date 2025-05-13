@@ -3,6 +3,8 @@ package org.brain4j.math.tensor.autograd;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.TensorCPU;
 
+import java.util.Arrays;
+
 public class AutogradContext {
 
     private final boolean requiresGrad;
@@ -40,9 +42,15 @@ public class AutogradContext {
     public void backward(Tensor gradOutput) {
         if (!requiresGrad) return;
 
+//        System.out.println("Gotten grad output = " + gradOutput);
         this.grad = grad == null ? gradOutput.clone() : grad.plus(gradOutput);
 
         if (operation == null) return;
+
+//        System.out.println("---------------------------------");
+//        System.out.println("Launched backward pass for operation: " + operation.getClass().getSimpleName());
+//        System.out.println("Gradient output shape: " + Arrays.toString(gradOutput.shape()));
+//        System.out.println("Gradient output: " + gradOutput);
 
         Tensor[] inputGrads = operation.backward(gradOutput, inputs);
 
@@ -54,4 +62,12 @@ public class AutogradContext {
             input.backward(inputGrads[i]);
         }
     }
-} 
+
+    public Tensor[] inputs() {
+        return inputs;
+    }
+
+    public Operation operation() {
+        return operation;
+    }
+}

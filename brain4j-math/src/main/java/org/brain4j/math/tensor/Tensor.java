@@ -359,11 +359,17 @@ public interface Tensor extends Iterable<Float> {
     Tensor matmulGrad(Tensor other);
 
     /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link Activation}
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link ActivationOperation}
      * @param activation The activation to apply
      * @return The resulting tensor
      */
     Tensor activateGrad(Activation activation);
+
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link TransposeOperation}
+     * @return The transposed tensor
+     */
+    Tensor transposeGrad();
 
     /**
      * Performs a convolution between this tensor and the specified kernel tensor.

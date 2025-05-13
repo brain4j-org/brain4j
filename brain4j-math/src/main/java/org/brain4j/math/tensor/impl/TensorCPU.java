@@ -570,6 +570,7 @@ public class TensorCPU implements Cloneable, Tensor {
 
         if (usesGrad()) {
             result.withGrad();
+            result.setAutogradContext(autogradContext);
         }
 
         return result;
@@ -1183,6 +1184,7 @@ public class TensorCPU implements Cloneable, Tensor {
     @Override
     public Tensor grad() {
         if (autogradContext != null) {
+            System.out.println("getting grad with op: " + autogradContext.operation());
             return autogradContext.getGrad();
         }
 
@@ -1267,6 +1269,15 @@ public class TensorCPU implements Cloneable, Tensor {
         }
 
         return forward(new ActivationOperation(activation), ones(shape));
+    }
+
+    @Override
+    public Tensor transposeGrad() {
+        if (!usesGrad()) {
+            return transpose();
+        }
+
+        return forward(new TransposeOperation(), ones(shape));
     }
 
     @Override

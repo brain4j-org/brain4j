@@ -34,11 +34,11 @@ public class Model {
     }
 
     public void fit(ListDataSource train) {
-        fit(train, train);
+        fit(train, train, 1, Integer.MAX_VALUE);
     }
 
     public void fit(ListDataSource train, ListDataSource validation) {
-        fit(train, validation, 1);
+        fit(train, validation, 1, Integer.MAX_VALUE);
     }
 
     public void fit(ListDataSource train, ListDataSource validation, int epoches) {

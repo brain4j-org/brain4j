@@ -36,6 +36,9 @@ public abstract class Layer {
         LossFunction lossFunction,
         int index
     ) {
+        System.out.println("launching backward!!!!!!!");
+        outputs.backward();
+
         Tensor error = outputs.minus(targets);
         Tensor derivatives = activation.getDerivative(outputs);
 
@@ -53,12 +56,8 @@ public abstract class Layer {
     }
 
     public Tensor backward(Updater updater, StatesCache cache, Layer last, Tensor delta, int index) {
-        Tensor output = cache.output(index); // [batch_size, output_size]
-        output.backward();
+        Tensor activated = cache.output(index); // [batch_size, output_size]
 
-        System.out.println("Output shape: " + Arrays.toString(output.shape()));
-        System.out.println("Output grad: " + output.grad());
-        System.out.println("Weights shape: " + Arrays.toString(weights().shape()));
         Tensor gradWeights = weights.grad(); // [output_size, input_size]
         Tensor gradBias = bias.grad(); // [output_size]
 

@@ -19,11 +19,11 @@ public class MatMulOperation implements Operation {
         
         // For matrix multiplication: C = A @ B
         // dL/dA = dL/dC @ B.T
-        Tensor gradA = gradOutput.matmul(b.transpose());
+        Tensor gradA = gradOutput.matmulGrad(b.transpose());
         
         // dL/dB = A.T @ dL/dC
-        Tensor gradB = a.transpose().matmul(gradOutput);
-        
+        Tensor gradB = a.transpose().matmulGrad(gradOutput);
+
         return new Tensor[] { gradA, gradB };
     }
 } 
