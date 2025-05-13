@@ -170,4 +170,8 @@ public class Common {
 
         return (T) constructor.newInstance();
     }
+
+    public static double clamp(float value, double minimum, double maximum) {
+        return Math.min(Math.max(value, minimum), maximum);
+    }
 }
