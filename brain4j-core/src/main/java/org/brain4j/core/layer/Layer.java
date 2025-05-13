@@ -1,6 +1,7 @@
 package org.brain4j.core.layer;
 
 import org.brain4j.core.loss.LossFunction;
+import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
@@ -36,7 +37,6 @@ public abstract class Layer {
         LossFunction lossFunction,
         int index
     ) {
-        System.out.println("launching backward!!!!!!!");
         outputs.backward();
 
         Tensor error = outputs.minus(targets);
@@ -55,16 +55,15 @@ public abstract class Layer {
         return delta;
     }
 
-    public Tensor backward(Updater updater, StatesCache cache, Layer last, Tensor delta, int index) {
+    public Tensor backward(Updater updater, Optimizer optimizer,  StatesCache cache, Tensor delta, int index) {
         Tensor activated = cache.output(index); // [batch_size, output_size]
 
-        Tensor gradWeights = weights.grad(); // [output_size, input_size]
+        Tensor gradWeights = weights.grad().transpose(); // [output_size, input_size]
         Tensor gradBias = bias.grad(); // [output_size]
 
-        System.out.println("Weights grad: " + gradWeights);
-        System.out.println("Bias grad: " + gradBias);
+        gradWeights = optimizer.step(index, this, gradWeights);
 
-        updater.change(gradWeights, gradBias, index);
+        updater.change(gradWeights, Tensors.create(bias.shape()[0]), index);
 
         Tensor input = cache.input(index); // [batch_size, input_size]
         return input.grad();

@@ -58,7 +58,7 @@ public class BackPropagation {
 
             if (!layer.canPropagate()) continue;
 
-            delta = layer.backward(updater, cache, last, delta, l);
+            delta = layer.backward(updater, optimizer, cache, delta, l);
             last = layer;
         }
     }

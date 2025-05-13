@@ -33,7 +33,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void postInitialize(Model model) {
+    public void initialize(Model model) {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 

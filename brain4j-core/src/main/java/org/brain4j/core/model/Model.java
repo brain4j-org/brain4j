@@ -9,6 +9,7 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.weights.WeightInitialization;
 import org.brain4j.core.weights.impl.UniformXavierInit;
+import org.brain4j.math.Pair;
 import org.brain4j.math.data.AsyncDataSource;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
@@ -100,10 +101,14 @@ public class Model {
     }
 
     public double loss(ListDataSource source) {
-        AsyncDataSource asyncSource = new AsyncDataSource(source.samples(), false, source.batchSize());
         AtomicReference<Double> loss = new AtomicReference<>(0.0);
 
-        asyncSource.accept(batch -> {
+        ListDataSource copy = source.clone();
+        copy.reset();
+
+        while (copy.hasNext()) {
+            Pair<Tensor, Tensor> batch = copy.nextBatch();
+
             Tensor input = batch.first();
             Tensor label = batch.second();
 
@@ -120,7 +125,7 @@ public class Model {
                 double error = lossFunction.calculate(sampleLabel, samplePrediction);
                 loss.updateAndGet(v -> v + error);
             }
-        });
+        }
 
         return loss.get();
     }
@@ -135,6 +140,10 @@ public class Model {
         this.weightInit = weightInit;
         this.lossFunction = lossFunction;
         this.backPropagation = new BackPropagation(this, optimizer, updater);
+
+        this.updater.resetGradients(this);
+        this.optimizer.initialize(this);
+
         connectLayers();
         return this;
     }

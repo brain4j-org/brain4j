@@ -1184,7 +1184,6 @@ public class TensorCPU implements Cloneable, Tensor {
     @Override
     public Tensor grad() {
         if (autogradContext != null) {
-            System.out.println("getting grad with op: " + autogradContext.operation());
             return autogradContext.getGrad();
         }
 

@@ -37,17 +37,17 @@ public class DenseLayer extends Layer {
         // Shape: [batch_size, output_size]
         Tensor output = input.matmulGrad(weights.transpose());
 
-        int batchSize = output.shape()[0];
-        int elements = output.shape()[1];
-
-        for (int i = 0; i < batchSize; i++) {
-            for (int j = 0; j < elements; j++) {
-                float value = output.get(i, j);
-                float biasValue = bias.get(j);
-
-                output.set(value + biasValue, i, j);
-            }
-        }
+//        int batchSize = output.shape()[0];
+//        int elements = output.shape()[1];
+//
+//        for (int i = 0; i < batchSize; i++) {
+//            for (int j = 0; j < elements; j++) {
+//                float value = output.get(i, j);
+//                float biasValue = bias.get(j);
+//
+//                output.set(value + biasValue, i, j);
+//            }
+//        }
 
         Tensor activated = output.activateGrad(activation);
 

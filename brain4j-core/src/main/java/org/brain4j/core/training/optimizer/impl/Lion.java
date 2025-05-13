@@ -37,7 +37,7 @@ public class Lion extends Optimizer {
     }
 
     @Override
-    public void postInitialize(Model model) {
+    public void initialize(Model model) {
         this.momentumHistory = new Tensor[model.size()];
     }
 

@@ -17,7 +17,7 @@ public abstract class Optimizer {
 
     public abstract Tensor step(int index, Layer layer, Tensor gradient);
 
-    public void postInitialize(Model model) {
+    public void initialize(Model model) {
     }
 
     public void postBatch() {

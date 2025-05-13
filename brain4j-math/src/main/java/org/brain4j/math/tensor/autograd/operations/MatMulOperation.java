@@ -3,8 +3,6 @@ package org.brain4j.math.tensor.autograd.operations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
 
-import java.util.Arrays;
-
 public class MatMulOperation implements Operation {
 
     @Override
@@ -19,10 +17,10 @@ public class MatMulOperation implements Operation {
         
         // For matrix multiplication: C = A @ B
         // dL/dA = dL/dC @ B.T
-        Tensor gradA = gradOutput.matmulGrad(b.transpose());
+        Tensor gradA = gradOutput.matmul(b.transpose());
         
         // dL/dB = A.T @ dL/dC
-        Tensor gradB = a.transpose().matmulGrad(gradOutput);
+        Tensor gradB = a.transpose().matmul(gradOutput);
 
         return new Tensor[] { gradA, gradB };
     }
