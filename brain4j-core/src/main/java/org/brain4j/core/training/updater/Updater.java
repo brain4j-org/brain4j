@@ -47,6 +47,18 @@ public abstract class Updater {
     public void resetGradients(Model model) {
         this.weightsGradients = new Tensor[model.size()];
         this.biasesGradients = new Tensor[model.size()];
+
+        for (int i = 0; i < model.size(); i++) {
+            Layer layer = model.layerAt(i);
+
+            if (layer.weights() != null) {
+                layer.weights().zerograd();
+            }
+
+            if (layer.bias() != null) {
+                layer.bias().zerograd();
+            }
+        }
     }
 
     public void postFit(Model model, double learningRate, int samples) {

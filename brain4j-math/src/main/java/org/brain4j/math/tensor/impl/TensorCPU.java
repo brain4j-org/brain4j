@@ -266,13 +266,36 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor add(Tensor other) {
-        checkSameShape(other);
+        int[] shape = this.shape();
+        int[] otherShape = other.shape();
 
-        for (int i = 0; i < data.length; i++) {
-            data[i] += other.data()[i];
+        if (Arrays.equals(shape, otherShape)) {
+            for (int i = 0; i < data.length; i++) {
+                data[i] += other.data()[i];
+            }
+
+            return this;
         }
 
-        return this;
+        if (shape.length == 2 && otherShape.length == 1 && shape[1] == otherShape[0]) {
+            int batch = shape[0];
+            int dimension = shape[1];
+            float[] otherData = other.data();
+
+            for (int i = 0; i < batch; i++) {
+                int base = i * dimension;
+
+                for (int j = 0; j < dimension; j++) {
+                    data[base + j] += otherData[j];
+                }
+            }
+
+            return this;
+        }
+
+        throw new IllegalArgumentException(
+            "Cannot broadcast shapes " + Arrays.toString(shape) + " and " + Arrays.toString(otherShape)
+        );
     }
 
     @Override

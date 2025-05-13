@@ -1,5 +1,7 @@
 package org.brain4j.core.layer.impl;
 
+import org.brain4j.core.clipper.GradientClipper;
+import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activations;
@@ -13,7 +15,11 @@ public class DenseLayer extends Layer {
     private final int neurons;
 
     public DenseLayer(int neurons, Activations activation) {
-        super(activation.getFunction());
+        this(neurons, activation, new HardClipper(5));
+    }
+
+    public DenseLayer(int neurons, Activations activation, GradientClipper clipper) {
+        super(activation.getFunction(), clipper);
         this.neurons = neurons;
     }
 
@@ -35,26 +41,15 @@ public class DenseLayer extends Layer {
     @Override
     public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
         // Shape: [batch_size, output_size]
-        Tensor output = input.matmulGrad(weights.transpose());
-
-//        int batchSize = output.shape()[0];
-//        int elements = output.shape()[1];
-//
-//        for (int i = 0; i < batchSize; i++) {
-//            for (int j = 0; j < elements; j++) {
-//                float value = output.get(i, j);
-//                float biasValue = bias.get(j);
-//
-//                output.set(value + biasValue, i, j);
-//            }
-//        }
-
-        Tensor activated = output.activateGrad(activation);
+        Tensor output = input
+            .matmulGrad(weights.transpose())
+            .addGrad(bias)
+            .activateGrad(activation);
 
         cache.setInput(index, input);
-        cache.setOutput(index, activated);
+        cache.setOutput(index, output);
 
-        return activated;
+        return output;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.brain4j.core.layer;
 
+import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
@@ -14,11 +15,13 @@ import java.util.Random;
 public abstract class Layer {
 
     protected final Activation activation;
+    protected final GradientClipper clipper;
     protected Tensor weights;
     protected Tensor bias;
 
-    public Layer(Activation activation) {
+    public Layer(Activation activation, GradientClipper clipper) {
         this.activation = activation;
+        this.clipper = clipper;
     }
 
     public abstract void connect(Layer previous);
@@ -46,27 +49,35 @@ public abstract class Layer {
         Tensor delta = lossFunction.getDelta(error, derivatives); // [batch_size, output_size]
 
         // delta.T = [output_size, batch_size]
-        // Shape: [output_size, input_size]
-        Tensor weightsGradient = delta.transpose().matmul(input);
+        Tensor weightsGradient = delta.transpose().matmul(input); // [output_size, input_size]
         Tensor biasesGradient = delta.sum(0, false);
 
         updater.change(weightsGradient, biasesGradient, index);
 
-        return delta;
+        return delta.matmul(weights); // [batch_size, input_size]
     }
 
-    public Tensor backward(Updater updater, Optimizer optimizer,  StatesCache cache, Tensor delta, int index) {
-        Tensor activated = cache.output(index); // [batch_size, output_size]
+    public Tensor backward(
+        Updater updater,
+        Optimizer optimizer,
+        StatesCache cache,
+        Tensor delta,
+        int index
+    ) {
+        Tensor input = cache.input(index); // [batch_size, input_size]
+        Tensor deltaThis = input.grad();
 
         Tensor gradWeights = weights.grad().transpose(); // [output_size, input_size]
-        Tensor gradBias = bias.grad(); // [output_size]
+        Tensor gradBias = delta.sum(0, false); // [output_size]
 
         gradWeights = optimizer.step(index, this, gradWeights);
 
-        updater.change(gradWeights, Tensors.create(bias.shape()[0]), index);
+        clipper.clip(gradWeights);
+        clipper.clip(gradBias);
 
-        Tensor input = cache.input(index); // [batch_size, input_size]
-        return input.grad();
+        updater.change(gradWeights, gradBias, index);
+
+        return deltaThis;
     }
 
     public boolean canPropagate() {
