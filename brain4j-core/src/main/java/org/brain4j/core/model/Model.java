@@ -10,7 +10,6 @@ import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.weights.WeightInitialization;
 import org.brain4j.core.weights.impl.UniformXavierInit;
 import org.brain4j.math.Pair;
-import org.brain4j.math.data.AsyncDataSource;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.index.Range;
@@ -92,7 +91,7 @@ public class Model {
                 throw new IllegalStateException("Layer at index " + i + " is null!");
             }
 
-            if (!layer.canPropagate()) continue;
+            if (layer.skipPropagate()) continue;
 
             pass = layer.forward(cache, pass, i, training);
         }

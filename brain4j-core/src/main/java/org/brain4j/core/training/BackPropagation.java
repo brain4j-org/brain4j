@@ -56,7 +56,7 @@ public class BackPropagation {
         for (int l = count - 1; l >= 1; l--) {
             Layer layer = layers.get(l);
 
-            if (!layer.canPropagate()) continue;
+            if (layer.skipPropagate()) continue;
 
             delta = layer.backward(updater, optimizer, cache, delta, l);
             last = layer;
