@@ -49,15 +49,7 @@ public class TensorGPU extends TensorCPU {
         "/kernels/convolution/conv2d.cl"
     };
     
-    static {
-        try {
-            INITIALIZED = initializeOpenCL();
-        } catch (NativeException e) {
-            System.err.println("GPU acceleration not available: " + e.getMessage());
-        }
-    }
-    
-    private static boolean initializeOpenCL() throws NativeException {
+    public static boolean initializeGPU() throws NativeException {
         try {
             CL.setExceptionsEnabled(true);
             
@@ -99,7 +91,7 @@ public class TensorGPU extends TensorCPU {
                 CONVOLVE_1D_FFT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve1d_fft", null);
                 CONVOLVE_2D_FFT_EXTRACT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve2d_fft_extract", null);
 
-                System.out.println("GPU acceleration enabled using device: " + DeviceUtils.getDeviceName());
+                System.out.println("GPU acceleration available using device: " + DeviceUtils.getDeviceName());
                 return true;
             } catch (Exception e) {
                 throw new NativeException("Exception caught loading or compiling kernels! " + e.getMessage());
@@ -267,7 +259,7 @@ public class TensorGPU extends TensorCPU {
     public static void reinitializeGPU() {        
         if (!INITIALIZED) {
             try {
-                INITIALIZED = initializeOpenCL();
+                INITIALIZED = initializeGPU();
             } catch (Exception e) {
                 System.err.println("Failed to reinitialize GPU: " + e.getMessage());
             }

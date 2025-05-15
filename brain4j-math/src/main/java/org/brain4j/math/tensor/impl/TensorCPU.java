@@ -24,12 +24,12 @@ import java.util.function.Supplier;
 public class TensorCPU implements Cloneable, Tensor {
 
     private static final ForkJoinPool POOL = ForkJoinPool.commonPool();
-    private static final Matmul MATMUL;
+    private static Matmul MATMUL;
 
-    static {
+    public static void initializeCPU() {
         Optional<Module> module = ModuleLayer
-                .boot()
-                .findModule("jdk.incubator.vector");
+            .boot()
+            .findModule("jdk.incubator.vector");
 
         if (module.isPresent()) {
             MATMUL = new VectorParallelMatmul();
@@ -721,6 +721,12 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor matmul(Tensor other) {
+        if (MATMUL == null) {
+            throw new IllegalStateException(
+                "Matmul provider is not initialized. Make sure to call Brain4J.initialize(DeviceType) first."
+            );
+        }
+
         if (shape.length < 2 || other.shape().length < 2) {
             throw new IllegalArgumentException("Matrix multiplication requires at least 2D tensors!");
         }

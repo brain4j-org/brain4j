@@ -25,7 +25,6 @@ public class ActivationOperation implements Operation {
         Tensor derivative = activation.getDerivative(activated); // ∂activation/∂x
         Tensor gradInput = gradOutput.mul(derivative); // Chain rule: dL/dx = dL/dy * dy/dx
 
-        System.out.println("Delta backward = " + gradInput);
         return new Tensor[] { gradInput };
     }
 }

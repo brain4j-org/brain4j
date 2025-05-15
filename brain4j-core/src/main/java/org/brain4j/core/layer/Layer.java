@@ -40,7 +40,6 @@ public abstract class Layer {
         int index
     ) {
         Tensor error = outputs.subGrad(targets);
-        error.backward();
 
         Tensor derivatives = activation.getDerivative(outputs);
 
@@ -53,9 +52,7 @@ public abstract class Layer {
 
         updater.change(weightsGradient, biasesGradient, index);
 
-        Tensor newDelta = delta.matmul(weights); // [batch_size, input_size]
-        System.out.println("last layer delta = " + newDelta);
-        return newDelta; // [batch_size, input_size]
+        return delta.matmul(weights); // [batch_size, input_size]
     }
 
     public Tensor backward(
@@ -72,25 +69,6 @@ public abstract class Layer {
         Tensor projectedDelta = delta.mul(derivative); // [batch_size, output_size]
 
         Tensor manualGradient = projectedDelta.transpose().matmul(input);
-        Tensor automaticGradient = weights.grad().transpose(); // [output_size, input_size]
-
-        System.out.println("delta = " + Arrays.toString(delta.shape()));
-        System.out.println("input = " + Arrays.toString(input.shape()));
-        System.out.println("deriv = " + Arrays.toString(derivative.shape()));
-        System.out.println("manua = " + Arrays.toString(manualGradient.shape()));
-        System.out.println("autom = " + Arrays.toString(automaticGradient.shape()));
-
-        System.out.println("derivative:");
-        System.out.println(derivative);
-
-        System.out.println("input:");
-        System.out.println(input);
-
-        System.out.println("manual:");
-        System.out.println(manualGradient);
-
-        System.out.println("automatic:");
-        System.out.println(automaticGradient);
         Tensor gradBias = projectedDelta.sum(0, false);
 
         Tensor gradWeights = optimizer.step(index, this, manualGradient);
