@@ -13,7 +13,7 @@ Brain4J is available on [JitPack](https://jitpack.io/), for more details follow 
 
 ## Preview
 
-This are some screenshots taken from the MNIST example.
+Screenshots taken from the MNIST example.
 
 <p align="center">
   <img height="400px" src="https://github.com/user-attachments/assets/04dc0bc3-f429-4809-ab10-a187004085c5" />
