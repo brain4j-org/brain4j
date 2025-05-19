@@ -6,10 +6,11 @@ import org.brain4j.math.tensor.Tensors;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ListDataSource implements Cloneable {
+public class ListDataSource implements Cloneable, Iterable<Sample> {
 
     protected final List<Sample> samples;
     protected final List<Tensor> batchedInputs;
@@ -159,5 +160,10 @@ public class ListDataSource implements Cloneable {
 
     public int cursor() {
         return cursor;
+    }
+
+    @Override
+    public Iterator<Sample> iterator() {
+        return samples.iterator();
     }
 }

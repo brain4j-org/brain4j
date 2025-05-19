@@ -9,7 +9,6 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
-import java.util.Arrays;
 import java.util.Random;
 
 public class RecurrentLayer extends Layer {
@@ -34,11 +33,11 @@ public class RecurrentLayer extends Layer {
     public void connect(Layer previous) {
         if (previous == null) return;
 
-        this.inputWeights = Tensors.create(hiddenDimension, previous.size());
-        this.hiddenWeights = Tensors.create(hiddenDimension, hiddenDimension);
-        this.weights = Tensors.create(hiddenDimension, dimension);
-        this.bias = Tensors.create(dimension);
-        this.hiddenStateBias = Tensors.create(hiddenDimension);
+        this.inputWeights = Tensors.create(hiddenDimension, previous.size()).withGrad();
+        this.hiddenWeights = Tensors.create(hiddenDimension, hiddenDimension).withGrad();
+        this.weights = Tensors.create(dimension, hiddenDimension).withGrad();
+        this.bias = Tensors.create(dimension).withGrad();
+        this.hiddenStateBias = Tensors.create(hiddenDimension).withGrad();
     }
 
     @Override
@@ -69,16 +68,16 @@ public class RecurrentLayer extends Layer {
         }
 
         // [batch_size, hidden_size]
-        Tensor projectedInput = input.matmul(inputWeights.transpose());
+        Tensor projectedInput = input.matmulGrad(inputWeights.transpose());
         // [1, hidden_size]
-        Tensor projectedHiddenState = previousState.matmul(hiddenWeights);
+        Tensor projectedHiddenState = previousState.matmulGrad(hiddenWeights);
         Tensor hiddenState = projectedInput
-            .add(projectedHiddenState) // [batch_size, hidden_size]
-            .add(hiddenStateBias) // [batch_size, hidden_size]
+            .addGrad(projectedHiddenState) // [batch_size, hidden_size]
+            .addGrad(hiddenStateBias) // [batch_size, hidden_size]
             .activateGrad(activation);
 
         // [batch_size, output_size]
-        Tensor output = hiddenState.matmul(weights).add(bias);
+        Tensor output = hiddenState.matmulGrad(weights.transpose()).addGrad(bias);
 
         cache.setInput(index, input);
         cache.setOutput(index, output);

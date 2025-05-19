@@ -8,7 +8,6 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.core.training.StatesCache;
 
-import java.util.Arrays;
 import java.util.Random;
 
 public abstract class Layer {
@@ -31,7 +30,7 @@ public abstract class Layer {
 
     public abstract int size();
 
-    public Tensor computeLoss(
+    public void computeLoss(
         Updater updater,
         StatesCache cache,
         Tensor targets,
@@ -39,30 +38,27 @@ public abstract class Layer {
         LossFunction lossFunction,
         int index
     ) {
-        Tensor error = outputs.subGrad(targets);
+        Tensor error = outputs.minus(targets);
         Tensor derivatives = activation.getDerivative(outputs);
 
         Tensor output = cache.output(index);
-        Tensor delta = lossFunction.getDelta(error, derivatives); // [batch_size, output_size]
+        Tensor delta = lossFunction.getDelta(error, derivatives);
 
         output.backward(delta);
 
-        // delta.T = [output_size, batch_size]
         Tensor weightsGradient = weights.grad().transpose();
         Tensor biasesGradient = bias.grad().sum(0, false);
 
         updater.change(weightsGradient, biasesGradient, index);
-
-        return delta.matmul(weights); // [batch_size, input_size]
     }
 
-    public Tensor backward(
+    public void backward(
         Updater updater,
         Optimizer optimizer,
-        StatesCache cache,
-        Tensor delta,
         int index
     ) {
+        if (weights == null) return;
+
         Tensor weightsGradient = weights.grad().transpose();
         Tensor biasGradient = bias.grad().sum(0, false);
 
@@ -72,8 +68,6 @@ public abstract class Layer {
         clipper.clip(biasGradient);
 
         updater.change(weightsGradient, biasGradient, index);
-
-        return delta.matmul(weights);
     }
 
     public boolean skipPropagate() {
