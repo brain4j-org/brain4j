@@ -11,6 +11,11 @@ import org.brain4j.math.tensor.Tensors;
 
 import java.util.Random;
 
+/**
+ * Implementation of a recurrent layer.
+ * @author xEcho1337
+ * @since 3.0
+ */
 public class RecurrentLayer extends Layer {
 
     private final int dimension;
@@ -19,10 +24,23 @@ public class RecurrentLayer extends Layer {
     private Tensor hiddenWeights;
     private Tensor hiddenStateBias;
 
+    /**
+     * Constructs a new recurrent layer instance.
+     * @param dimension the dimension of the output
+     * @param hiddenDimension the dimension of the hidden states
+     * @param activation the activation function
+     */
     public RecurrentLayer(int dimension, int hiddenDimension, Activations activation) {
         this(dimension, hiddenDimension, activation.getFunction(), new HardClipper(5));
     }
 
+    /**
+     * Constructs a new recurrent layer instance.
+     * @param dimension the dimension of the output
+     * @param hiddenDimension the dimension of the hidden states
+     * @param activation the activation function
+     * @param clipper the gradient clip function
+     */
     public RecurrentLayer(int dimension, int hiddenDimension, Activation activation, GradientClipper clipper) {
         super(activation, clipper);
         this.dimension = dimension;

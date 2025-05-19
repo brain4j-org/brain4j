@@ -10,17 +10,32 @@ import org.brain4j.math.tensor.Tensors;
 
 import java.util.Random;
 
+/**
+ * Implementation of a dense (or fully connected) layer.
+ * @author xEcho1337
+ */
 public class DenseLayer extends Layer {
 
     private final int dimension;
 
-    public DenseLayer(int neurons, Activations activation) {
-        this(neurons, activation, new HardClipper(5));
+    /**
+     * Constructs a new instance of a dense layer.
+     * @param dimension the dimension of the output
+     * @param activation the activation function to use
+     */
+    public DenseLayer(int dimension, Activations activation) {
+        this(dimension, activation, new HardClipper(5));
     }
 
-    public DenseLayer(int neurons, Activations activation, GradientClipper clipper) {
+    /**
+     * Constructs a new instance of a dense layer.
+     * @param dimension the dimension of the output
+     * @param activation the activation function to use
+     * @param clipper the gradient clip function to use
+     */
+    public DenseLayer(int dimension, Activations activation, GradientClipper clipper) {
         super(activation.getFunction(), clipper);
-        this.dimension = neurons;
+        this.dimension = dimension;
     }
 
     @Override
@@ -37,9 +52,9 @@ public class DenseLayer extends Layer {
         this.bias.map(x -> (2 * generator.nextDouble() - 1) * bound);
     }
 
-    // Input has the shape [batch_size, input_size]
     @Override
     public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+        // Input shape: [batch_size, input_size]
         int inputDim = input.shape()[1];
         int expectedDim = weights.shape()[1];
 

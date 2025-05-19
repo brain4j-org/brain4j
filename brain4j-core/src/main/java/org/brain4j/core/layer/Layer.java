@@ -10,6 +10,9 @@ import org.brain4j.core.training.StatesCache;
 
 import java.util.Random;
 
+/**
+ *
+ */
 public abstract class Layer {
 
     protected final Activation activation;
@@ -22,13 +25,17 @@ public abstract class Layer {
         this.clipper = clipper;
     }
 
-    public abstract void connect(Layer previous);
-
-    public abstract void initWeights(Random generator, double bound);
-
     public abstract Tensor forward(StatesCache cache, Tensor input, int index, boolean training);
 
     public abstract int size();
+
+    public void connect(Layer previous) {
+        // No-op
+    }
+
+    public void initWeights(Random generator, double bound) {
+        // No-op
+    }
 
     public void computeLoss(
         Updater updater,
@@ -52,11 +59,7 @@ public abstract class Layer {
         updater.change(weightsGradient, biasesGradient, index);
     }
 
-    public void backward(
-        Updater updater,
-        Optimizer optimizer,
-        int index
-    ) {
+    public void backward(Updater updater, Optimizer optimizer, int index) {
         if (weights == null) return;
 
         Tensor weightsGradient = weights.grad().transpose();
