@@ -12,7 +12,7 @@ import java.util.Random;
 
 public class DenseLayer extends Layer {
 
-    private final int neurons;
+    private final int dimension;
 
     public DenseLayer(int neurons, Activations activation) {
         this(neurons, activation, new HardClipper(5));
@@ -20,15 +20,15 @@ public class DenseLayer extends Layer {
 
     public DenseLayer(int neurons, Activations activation, GradientClipper clipper) {
         super(activation.getFunction(), clipper);
-        this.neurons = neurons;
+        this.dimension = neurons;
     }
 
     @Override
     public void connect(Layer previous) {
         if (previous == null) return;
         // Shape: [output_size, input_size]
-        this.weights = Tensors.create(neurons, previous.size()).withGrad();
-        this.bias = Tensors.create(neurons).withGrad();
+        this.weights = Tensors.create(dimension, previous.size()).withGrad();
+        this.bias = Tensors.create(dimension).withGrad();
     }
 
     @Override
@@ -40,6 +40,15 @@ public class DenseLayer extends Layer {
     // Input has the shape [batch_size, input_size]
     @Override
     public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+        int inputDim = input.shape()[1];
+        int expectedDim = weights.shape()[1];
+
+        if (inputDim != expectedDim) {
+            throw new IllegalArgumentException(
+                "Input dimension mismatch: " + inputDim + " != " + expectedDim
+            );
+        }
+
         // Shape: [batch_size, output_size]
         Tensor output = input
             .matmulGrad(weights.transpose())
@@ -54,6 +63,6 @@ public class DenseLayer extends Layer {
 
     @Override
     public int size() {
-        return neurons;
+        return dimension;
     }
 }

@@ -40,15 +40,16 @@ public abstract class Layer {
         int index
     ) {
         Tensor error = outputs.subGrad(targets);
-
         Tensor derivatives = activation.getDerivative(outputs);
 
-        Tensor input = cache.input(index); // [batch_size, input_size]
+        Tensor output = cache.output(index);
         Tensor delta = lossFunction.getDelta(error, derivatives); // [batch_size, output_size]
 
+        output.backward(delta);
+
         // delta.T = [output_size, batch_size]
-        Tensor weightsGradient = delta.transpose().matmul(input); // [output_size, input_size]
-        Tensor biasesGradient = delta.sum(0, false);
+        Tensor weightsGradient = weights.grad().transpose();
+        Tensor biasesGradient = bias.grad().sum(0, false);
 
         updater.change(weightsGradient, biasesGradient, index);
 
@@ -62,21 +63,15 @@ public abstract class Layer {
         Tensor delta,
         int index
     ) {
-        Tensor output = cache.output(index); // [batch_size, output_size]
-        Tensor input = cache.input(index); // [batch_size, input_size]
+        Tensor weightsGradient = weights.grad().transpose();
+        Tensor biasGradient = bias.grad().sum(0, false);
 
-        Tensor derivative = activation.getDerivative(output);
-        Tensor projectedDelta = delta.mul(derivative); // [batch_size, output_size]
+        weightsGradient = optimizer.step(index, this, weightsGradient);
 
-        Tensor manualGradient = projectedDelta.transpose().matmul(input);
-        Tensor gradBias = projectedDelta.sum(0, false);
+        clipper.clip(weightsGradient);
+        clipper.clip(biasGradient);
 
-        Tensor gradWeights = optimizer.step(index, this, manualGradient);
-
-        clipper.clip(gradWeights);
-        clipper.clip(gradBias);
-
-        updater.change(gradWeights, gradBias, index);
+        updater.change(weightsGradient, biasGradient, index);
 
         return delta.matmul(weights);
     }

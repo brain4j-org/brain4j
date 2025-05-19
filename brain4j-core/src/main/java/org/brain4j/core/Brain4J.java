@@ -6,6 +6,9 @@ import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.impl.TensorCPU;
 import org.brain4j.math.tensor.impl.TensorGPU;
 
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+
 public class Brain4J {
 
     public static String version() {
@@ -13,14 +16,16 @@ public class Brain4J {
     }
 
     public static void initialize(DeviceType deviceType) {
+        TensorCPU.initializeCPU();
+
         try {
             TensorGPU.initializeGPU();
         } catch (NativeException e) {
             e.printStackTrace(System.err);
         }
-        TensorCPU.initializeCPU();
 
         useDevice(deviceType);
+        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     }
 
     public static void useDevice(DeviceType deviceType) {

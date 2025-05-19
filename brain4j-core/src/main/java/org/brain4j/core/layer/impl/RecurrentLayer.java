@@ -1,0 +1,94 @@
+package org.brain4j.core.layer.impl;
+
+import org.brain4j.core.clipper.GradientClipper;
+import org.brain4j.core.clipper.impl.HardClipper;
+import org.brain4j.core.layer.Layer;
+import org.brain4j.core.training.StatesCache;
+import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.Activations;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
+
+import java.util.Arrays;
+import java.util.Random;
+
+public class RecurrentLayer extends Layer {
+
+    private final int dimension;
+    private final int hiddenDimension;
+    private Tensor inputWeights;
+    private Tensor hiddenWeights;
+    private Tensor hiddenStateBias;
+
+    public RecurrentLayer(int dimension, int hiddenDimension, Activations activation) {
+        this(dimension, hiddenDimension, activation.getFunction(), new HardClipper(5));
+    }
+
+    public RecurrentLayer(int dimension, int hiddenDimension, Activation activation, GradientClipper clipper) {
+        super(activation, clipper);
+        this.dimension = dimension;
+        this.hiddenDimension = hiddenDimension;
+    }
+
+    @Override
+    public void connect(Layer previous) {
+        if (previous == null) return;
+
+        this.inputWeights = Tensors.create(hiddenDimension, previous.size());
+        this.hiddenWeights = Tensors.create(hiddenDimension, hiddenDimension);
+        this.weights = Tensors.create(hiddenDimension, dimension);
+        this.bias = Tensors.create(dimension);
+        this.hiddenStateBias = Tensors.create(hiddenDimension);
+    }
+
+    @Override
+    public void initWeights(Random generator, double bound) {
+        this.inputWeights.map(x -> (2 * generator.nextDouble() - 1) * bound);
+        this.hiddenWeights.map(x -> (2 * generator.nextDouble() - 1) * bound);
+        this.weights.map(x -> (2 * generator.nextDouble() - 1) * bound);
+        this.bias.map(x -> (2 * generator.nextDouble() - 1) * bound);
+        this.hiddenStateBias.map(x -> (2 * generator.nextDouble() - 1) * bound);
+    }
+
+    @Override
+    public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+        int batchSize = input.shape()[0];
+        int inputDim = input.shape()[1];
+        int expectedDim = inputWeights.shape()[1];
+
+        if (inputDim != expectedDim) {
+            throw new IllegalArgumentException(
+                "Input dimension mismatch: " + inputDim + " != " + expectedDim
+            );
+        }
+
+        Tensor previousState = cache.hiddenState(index);
+
+        if (previousState == null) {
+            previousState = Tensors.create(batchSize, hiddenDimension);
+        }
+
+        // [batch_size, hidden_size]
+        Tensor projectedInput = input.matmul(inputWeights.transpose());
+        // [1, hidden_size]
+        Tensor projectedHiddenState = previousState.matmul(hiddenWeights);
+        Tensor hiddenState = projectedInput
+            .add(projectedHiddenState) // [batch_size, hidden_size]
+            .add(hiddenStateBias) // [batch_size, hidden_size]
+            .activateGrad(activation);
+
+        // [batch_size, output_size]
+        Tensor output = hiddenState.matmul(weights).add(bias);
+
+        cache.setInput(index, input);
+        cache.setOutput(index, output);
+        cache.setHiddenState(index, hiddenState);
+
+        return output;
+    }
+
+    @Override
+    public int size() {
+        return dimension;
+    }
+}

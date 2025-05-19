@@ -3,20 +3,23 @@ package org.brain4j.core.model;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.BackPropagation;
+import org.brain4j.core.training.EvaluationResult;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.weights.WeightInitialization;
 import org.brain4j.core.weights.impl.UniformXavierInit;
+import org.brain4j.math.Common;
+import org.brain4j.math.Common;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.index.Range;
 
-import java.util.List;
-import java.util.Random;
-import java.util.SplittableRandom;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Model {
@@ -31,6 +34,59 @@ public class Model {
 
     public Model(Layer... layers) {
         this.layers = List.of(layers);
+    }
+    
+    private Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+        return Thread.startVirtualThread(() -> {
+            Tensor inputs = batch.first(); // [batch_size, input_size]
+            Tensor expected = batch.second(); // [batch_size, output_size]
+
+            Tensor prediction = predict(inputs); // [batch_size, output_size]
+            int batchSize = inputs.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor output = prediction.slice(range).vector();
+                Tensor target = expected.slice(range).vector();
+
+                int predIndex = output.argmax();
+                int targetIndex = target.argmax();
+
+                if (output.elements() == 1) {
+                    predIndex = output.get(0) > 0.5 ? 1 : 0;
+                    targetIndex = (int) target.get(0);
+                }
+
+                double loss = lossFunction.calculate(target, output);
+                totalLoss.updateAndGet(v -> v + loss);
+
+                Tensor predictions = classifications.get(targetIndex);
+                int pred = (int) predictions.get(predIndex);
+
+                predictions.set(pred + 1, predIndex);
+            }
+        });
+    }
+    
+    private Thread predictPartition(Pair<Tensor, Tensor> partition, AtomicReference<Double> totalError) {
+        return Thread.startVirtualThread(() -> {
+            Tensor inputs = partition.first();
+            Tensor targets = partition.second();
+            Tensor outputs = predict(inputs);
+
+            int batchSize = outputs.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor output = outputs.slice(range).vector();
+                Tensor target = targets.slice(range).vector();
+
+                double loss = lossFunction.calculate(target, output);
+                totalError.updateAndGet(v -> v + loss);
+            }
+        });
     }
 
     public void fit(ListDataSource train) {
@@ -79,7 +135,7 @@ public class Model {
             );
         }
 
-        Tensor pass = input.withGrad();
+        Tensor pass = input;
 
         cache.setInput(0, input);
         cache.setOutput(0, pass);
@@ -99,34 +155,43 @@ public class Model {
         return pass;
     }
 
-    public double loss(ListDataSource source) {
-        AtomicReference<Double> loss = new AtomicReference<>(0.0);
+    public EvaluationResult evaluate(ListDataSource dataSource) {
+        int classes = Math.max(2, dataSource.samples().getFirst().label().elements());
+        Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
 
-        ListDataSource copy = source.clone();
-        copy.reset();
-
-        while (copy.hasNext()) {
-            Pair<Tensor, Tensor> batch = copy.nextBatch();
-
-            Tensor input = batch.first();
-            Tensor label = batch.second();
-
-            Tensor prediction = predict(input);
-
-            int batchSize = input.shape()[0];
-
-            for (int i = 0; i < batchSize; i++) {
-                Range range = new Range(i, i + 1);
-
-                Tensor samplePrediction = prediction.slice(range).vector();
-                Tensor sampleLabel = label.slice(range).vector();
-
-                double error = lossFunction.calculate(sampleLabel, samplePrediction);
-                loss.updateAndGet(v -> v + error);
-            }
+        for (int i = 0; i < classes; i++) {
+            classifications.put(i, Tensors.create(classes));
         }
 
-        return loss.get();
+        List<Thread> threads = new ArrayList<>();
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Pair<Tensor, Tensor> partition = dataSource.nextBatch();
+            threads.add(makeEvaluation(partition, classifications, totalLoss));
+        }
+
+        Common.waitAll(threads);
+
+        return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
+    }
+
+    public double loss(ListDataSource dataSource) {
+        AtomicReference<Double> totalError = new AtomicReference<>(0.0);
+        List<Thread> threads = new ArrayList<>();
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Pair<Tensor, Tensor> partition = dataSource.nextBatch();
+            threads.add(predictPartition(partition, totalError));
+        }
+
+        Common.waitAll(threads);
+
+        return totalError.get() / dataSource.size();
     }
 
     public Model compile(LossFunction lossFunction, Optimizer optimizer) {

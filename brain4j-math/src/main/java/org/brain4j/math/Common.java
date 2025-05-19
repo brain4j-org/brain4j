@@ -174,4 +174,18 @@ public class Common {
     public static double clamp(float value, double minimum, double maximum) {
         return Math.min(Math.max(value, minimum), maximum);
     }
+
+    public static void waitAll(List<Thread> threads) {
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace(System.err);
+            }
+        }
+    }
+
+    public static String getHeaderChar() {
+        return "━";
+    }
 }
