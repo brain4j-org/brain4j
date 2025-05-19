@@ -1,7 +1,7 @@
 package org.brain4j.core.loss.impl;
 
 import org.brain4j.core.loss.LossFunction;
-import org.brain4j.math.Common;
+import org.brain4j.math.Commons;
 import org.brain4j.math.tensor.Tensor;
 
 public class BinaryCrossEntropy implements LossFunction {
@@ -11,7 +11,7 @@ public class BinaryCrossEntropy implements LossFunction {
         double loss = 0.0;
 
         for (int i = 0; i < expected.elements(); i++) {
-            double p = Common.clamp(predicted.get(i), 1e-15, 1 - 1e-15);
+            double p = Commons.clamp(predicted.get(i), 1e-15, 1 - 1e-15);
             loss += -expected.get(i) * Math.log(p) - (1 - expected.get(i)) * Math.log(1 - p);
         }
 

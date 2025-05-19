@@ -4,6 +4,9 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 import org.brain4j.math.tensor.Tensor;
 
+/**
+ *
+ */
 public abstract class Updater {
 
     protected Tensor[] weightsGradients;

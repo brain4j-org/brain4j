@@ -1,7 +1,6 @@
 package org.brain4j.math;
 
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
 
 import java.lang.reflect.Constructor;
 import java.time.Duration;
@@ -10,7 +9,7 @@ import java.util.List;
 /**
  * General utilities class
  */
-public class Common {
+public class Commons {
 
     private static final int[] EXP_TABLE = new int[64];
     private static final int[] MANT_TABLE = new int[2048];

@@ -8,10 +8,14 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.core.training.StatesCache;
 
+import java.util.List;
 import java.util.Random;
 
 /**
- *
+ * Abstract base class for all neural network layers.
+ * Each layer processes input tensors, computes forward and backward passes independently,
+ * and holds its own parameters such as weights, biases, activation function and gradient clipper.
+ * @author xEcho1337
  */
 public abstract class Layer {
 
@@ -27,6 +31,10 @@ public abstract class Layer {
 
     public abstract Tensor forward(StatesCache cache, Tensor input, int index, boolean training);
 
+    /**
+     * Returns the output size of this layer, i.e. the number of neurons.
+     * @return the output size
+     */
     public abstract int size();
 
     public void connect(Layer previous) {
@@ -77,14 +85,26 @@ public abstract class Layer {
         return false;
     }
 
+    /**
+     * Gets the activation function for this layer.
+     * @return the activation function
+     */
     public Activation activation() {
         return activation;
     }
 
+    /**
+     * Gets the weights of this layer.
+     * @return the weights
+     */
     public Tensor weights() {
         return weights;
     }
 
+    /**
+     * Gets the bias of this layer.
+     * @return the bias
+     */
     public Tensor bias() {
         return bias;
     }

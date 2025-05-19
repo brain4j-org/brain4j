@@ -5,7 +5,7 @@ import org.brain4j.math.fft.FFT;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
-import static org.brain4j.math.Common.nextPowerOf2;
+import static org.brain4j.math.Commons.nextPowerOf2;
 import static org.brain4j.math.constants.Constants.EPSILON;
 import static org.brain4j.math.constants.Constants.FFT_THRESHOLD;
 

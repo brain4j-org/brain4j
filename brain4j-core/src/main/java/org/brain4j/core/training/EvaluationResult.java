@@ -1,7 +1,6 @@
 package org.brain4j.core.training;
 
-import org.brain4j.core.Brain4J;
-import org.brain4j.math.Common;
+import org.brain4j.math.Commons;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
@@ -69,7 +68,7 @@ public class EvaluationResult {
 
     public String results() {
         StringBuilder matrix = new StringBuilder();
-        String divider = Common.getHeader(" Evaluation Results ", Common.getHeaderChar());
+        String divider = Commons.getHeader(" Evaluation Results ", Commons.getHeaderChar());
 
         matrix.append(divider);
         matrix.append("Out of ").append(classifications.size()).append(" classes\n\n");
@@ -82,7 +81,7 @@ public class EvaluationResult {
         matrix.append(secondary.formatted("F1-score:", "%.4f".formatted(f1Score)));
 
         if (!classifications.isEmpty()) {
-            divider = Common.getHeader(" Confusion Matrix ", Common.getHeaderChar());
+            divider = Commons.getHeader(" Confusion Matrix ", Commons.getHeaderChar());
             matrix.append(divider);
             matrix.append("First column is the actual class, top row are the predicted classes.\n\n");
             matrix.append(" ".repeat(7));
@@ -110,7 +109,7 @@ public class EvaluationResult {
             matrix.append("\n");
         }
 
-        matrix.append(Common.getHeader("", Common.getHeaderChar()));
+        matrix.append(Commons.getHeader("", Commons.getHeaderChar()));
 
         return matrix.toString();
     }

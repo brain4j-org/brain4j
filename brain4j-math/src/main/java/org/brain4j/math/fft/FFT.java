@@ -4,8 +4,8 @@ import org.brain4j.math.complex.Complex;
 
 import java.util.Arrays;
 
-import static org.brain4j.math.Common.isPowerOf2;
-import static org.brain4j.math.Common.nextPowerOf2;
+import static org.brain4j.math.Commons.isPowerOf2;
+import static org.brain4j.math.Commons.nextPowerOf2;
 import static org.brain4j.math.constants.Constants.PI;
 import static org.brain4j.math.constants.Constants.TWO_PI;
 

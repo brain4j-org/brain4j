@@ -25,4 +25,9 @@ public class Pair<K, V> {
     public void setSecond(V second) {
         this.second = second;
     }
+
+    @Override
+    public String toString() {
+        return first + " -> " + second;
+    }
 }

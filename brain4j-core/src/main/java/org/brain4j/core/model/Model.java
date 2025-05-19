@@ -10,8 +10,7 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.weights.WeightInitialization;
 import org.brain4j.core.weights.impl.UniformXavierInit;
-import org.brain4j.math.Common;
-import org.brain4j.math.Common;
+import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
@@ -22,6 +21,16 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.brain4j.math.constants.Constants.*;
+import static org.brain4j.math.constants.Constants.GRAY;
+import static org.brain4j.math.constants.Constants.LIGHT_GREEN;
+import static org.brain4j.math.constants.Constants.LIGHT_YELLOW;
+import static org.brain4j.math.constants.Constants.RESET;
+import static org.brain4j.math.constants.Constants.WHITE;
+
+/**
+ * Implementation of a simple neural network. Supports multiple types of layers, loss functions, and optimizers.
+ */
 public class Model {
 
     private final List<Layer> layers;
@@ -32,6 +41,10 @@ public class Model {
     private WeightInitialization weightInit;
     private LossFunction lossFunction;
 
+    /**
+     * Constructs a new model instance with the given layers.
+     * @param layers the layers of this neural network
+     */
     public Model(Layer... layers) {
         this.layers = List.of(layers);
     }
@@ -89,6 +102,59 @@ public class Model {
         });
     }
 
+    private void printEvaluation(
+        int step,
+        int epoches,
+        ListDataSource testSource
+    ) {
+        EvaluationResult result = evaluate(testSource.clone());
+
+        String lossMsg = "Loss: " + MAGENTA + "%.4f" + RESET;
+        String accuracyMsg = "Accuracy: " + LIGHT_BLUE + "%.2f%%" + RESET;
+        String f1ScoreMsg = "F1-Score: " + LIGHT_GREEN + "%.2f%%" + RESET;
+
+        String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg + "\n";
+        System.out.printf(message, step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
+    }
+
+    private void printProgressBar(
+        double tookMs,
+        int currentEpoch,
+        int epoches,
+        int evaluateEvery
+    ) {
+        int progressBarLength = 20;
+        double percentage = (double) currentEpoch / epoches;
+
+        String barChar = Commons.getHeaderChar();
+        int remainingEpoches = epoches - currentEpoch;
+
+        double seconds = tookMs / 1000;
+        double remainingTime = seconds * remainingEpoches;
+
+        String remainingTimeStr = Commons.formatDuration(remainingTime);
+        String timeStr = Commons.formatDuration(seconds);
+
+        String progressMsg = WHITE + "[%s/%s] ";
+        String progressBar = LIGHT_GREEN + Commons.createProgressBar(
+            percentage,
+            progressBarLength,
+            barChar,
+            RESET + barChar
+        );
+
+        String percentual = LIGHT_YELLOW + " %.2f%%" + RESET;
+        String time = GRAY + " [%s/epoch | %s remaining]" + RESET;
+        String message = String.format(progressMsg + progressBar + percentual + time,
+            currentEpoch, epoches, percentage * 100, timeStr, remainingTimeStr);
+
+        System.out.print("\r" + message);
+
+        if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
+            System.out.println();
+        }
+    }
+
     public void fit(ListDataSource train) {
         fit(train, train, 1, Integer.MAX_VALUE);
     }
@@ -103,7 +169,15 @@ public class Model {
 
     public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {
         for (int i = 1; i <= epoches; i++) {
+            long start = System.nanoTime();
             backPropagation.iteration(train);
+            long tookNanos = System.nanoTime() - start;
+
+            printProgressBar(tookNanos / 1e6, i, epoches, evaluateEvery);
+
+            if (i % evaluateEvery == 0) {
+                printEvaluation(i, epoches, validation);
+            }
         }
     }
 
@@ -173,7 +247,7 @@ public class Model {
             threads.add(makeEvaluation(partition, classifications, totalLoss));
         }
 
-        Common.waitAll(threads);
+        Commons.waitAll(threads);
 
         return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
     }
@@ -189,7 +263,7 @@ public class Model {
             threads.add(predictPartition(partition, totalError));
         }
 
-        Common.waitAll(threads);
+        Commons.waitAll(threads);
 
         return totalError.get() / dataSource.size();
     }
