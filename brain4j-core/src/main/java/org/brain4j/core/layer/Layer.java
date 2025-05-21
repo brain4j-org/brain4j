@@ -29,6 +29,14 @@ public abstract class Layer {
         this.clipper = clipper;
     }
 
+    /**
+     * Performs a forward pass through this layer.
+     * @param cache the cache of this inference
+     * @param input the input tensor
+     * @param index the index of this layer
+     * @param training whether inference or training
+     * @return the output tensor
+     */
     public abstract Tensor forward(StatesCache cache, Tensor input, int index, boolean training);
 
     /**
@@ -107,5 +115,17 @@ public abstract class Layer {
      */
     public Tensor bias() {
         return bias;
+    }
+
+    public int totalNeurons() {
+        if (bias == null) return 0;
+
+        return bias.elements();
+    }
+
+    public int totalWeights() {
+        if (weights == null) return 0;
+
+        return weights.elements();
     }
 }

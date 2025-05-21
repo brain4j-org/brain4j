@@ -1,5 +1,6 @@
 package org.brain4j.core.model;
 
+import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.BackPropagation;
@@ -17,6 +18,7 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.index.Range;
 
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,13 +35,13 @@ import static org.brain4j.math.constants.Constants.WHITE;
  */
 public class Model {
 
-    private final List<Layer> layers;
+    protected final List<Layer> layers;
 
-    private BackPropagation backPropagation;
-    private Optimizer optimizer;
-    private Updater updater;
-    private WeightInitialization weightInit;
-    private LossFunction lossFunction;
+    protected BackPropagation backPropagation;
+    protected Optimizer optimizer;
+    protected Updater updater;
+    protected WeightInitialization weightInit;
+    protected LossFunction lossFunction;
 
     /**
      * Constructs a new model instance with the given layers.
@@ -49,7 +51,7 @@ public class Model {
         this.layers = List.of(layers);
     }
     
-    private Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+    protected Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
         return Thread.startVirtualThread(() -> {
             Tensor inputs = batch.first(); // [batch_size, input_size]
             Tensor expected = batch.second(); // [batch_size, output_size]
@@ -81,12 +83,12 @@ public class Model {
             }
         });
     }
-    
-    private Thread predictPartition(Pair<Tensor, Tensor> partition, AtomicReference<Double> totalError) {
+
+    protected Thread predictPartition(Pair<Tensor, Tensor> partition, AtomicReference<Double> totalError) {
         return Thread.startVirtualThread(() -> {
             Tensor inputs = partition.first();
             Tensor targets = partition.second();
-            Tensor outputs = predict(inputs);
+            Tensor outputs = predict(new StatesCache(this), inputs, true);
 
             int batchSize = outputs.shape()[0];
 
@@ -102,11 +104,7 @@ public class Model {
         });
     }
 
-    private void printEvaluation(
-        int step,
-        int epoches,
-        ListDataSource testSource
-    ) {
+    protected void printEvaluation(int step, int epoches, ListDataSource testSource) {
         EvaluationResult result = evaluate(testSource.clone());
 
         String lossMsg = "Loss: " + MAGENTA + "%.4f" + RESET;
@@ -117,7 +115,7 @@ public class Model {
         System.out.printf(message, step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
     }
 
-    private void printProgressBar(
+    protected void printProgressBar(
         double tookMs,
         int currentEpoch,
         int epoches,
@@ -214,7 +212,7 @@ public class Model {
         cache.setInput(0, input);
         cache.setOutput(0, pass);
 
-        for (int i = 1; i < size(); i++) {
+        for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
 
             if (layer == null) {
@@ -284,6 +282,61 @@ public class Model {
 
         connectLayers();
         return this;
+    }
+
+
+    public String summary() {
+        if (updater == null || optimizer == null || weightInit == null) {
+            throw new IllegalStateException("The network is not compiled! Make sure to call compile() before.");
+        }
+
+        StringBuilder stats = new StringBuilder();
+        DecimalFormat format = new DecimalFormat("#,###");
+
+        String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
+        String divider = Commons.getHeader(" Architecture ", Commons.getHeaderChar());
+
+        stats.append(divider);
+        stats.append(pattern.formatted("Index", "Layer", "Neurons", "Weights", "Activation")).append("\n");
+
+        long totalWeights = 0;
+        long totalBiases = 0;
+
+        for (int i = 0; i < this.layers.size(); i++) {
+            Layer layer = this.layers.get(i);
+
+            String layerType = layer.getClass().getSimpleName();
+
+            int neurons = layer.totalNeurons();
+            int weights = layer.totalWeights();
+
+            String formatNeurons = neurons == 0 ? "-" : format.format(neurons);
+            String formatWeights = weights == 0 ? "-" : format.format(weights);
+
+            stats.append(pattern.formatted(i, layerType, formatNeurons, formatWeights, layer.activation().getName()));
+
+            totalWeights += weights;
+            totalBiases += neurons;
+        }
+
+        long params = totalWeights + totalBiases;
+
+        String parameters = format.format(params);
+        String weights = format.format(totalWeights);
+        String biases = format.format(totalBiases);
+
+        byte floatSize = Float.BYTES; // 4 bytes
+        String sizeOfParams = Commons.formatNumber(params * floatSize);
+        String sizeOfWeights = Commons.formatNumber(totalWeights * floatSize);
+        String sizeOfBiases = Commons.formatNumber(totalBiases * floatSize);
+
+        stats.append(Commons.getHeader(" Recap ", Commons.getHeaderChar()));
+        stats.append("Total weights: %s (%s)\n".formatted(weights, sizeOfWeights));
+        stats.append("Total biases: %s (%s)\n".formatted(biases, sizeOfBiases));
+        stats.append("Total parameters: %s (%s)\n".formatted(parameters, sizeOfParams));
+        stats.append(Commons.getHeader("", Commons.getHeaderChar()));
+
+        return stats.toString();
     }
 
     private void connectLayers() {

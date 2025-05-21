@@ -1,5 +1,6 @@
 package org.brain4j.core.layer.impl;
 
+import jdk.jshell.spi.SPIResolutionException;
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.Layer;
@@ -54,6 +55,8 @@ public class DenseLayer extends Layer {
 
     @Override
     public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+        if (weights == null) return input;
+
         // Input shape: [batch_size, input_size]
         int inputDim = input.shape()[1];
         int expectedDim = weights.shape()[1];
