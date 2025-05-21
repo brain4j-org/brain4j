@@ -19,18 +19,22 @@ public class LayerNorm extends Layer {
     /**
      * Constructs a layer normalization instance with a default epsilon.
      */
-    public LayerNorm(int input) {
-        this(input, 1e-5);
+    public LayerNorm() {
+        this(1e-5);
     }
 
     /**
      * Constructs a layer normalization instance with an epsilon.
      * @param epsilon the epsilon used to avoid division by zero
      */
-    public LayerNorm(int input, double epsilon) {
+    public LayerNorm(double epsilon) {
         super(new LinearActivation(), new NoClipper());
         this.epsilon = epsilon;
-        this.weights = Tensors.ones(input);
+    }
+
+    @Override
+    public void connect(Layer previous) {
+        this.weights = Tensors.create(previous.size()).withGrad();
     }
 
     @Override
@@ -56,7 +60,7 @@ public class LayerNorm extends Layer {
 
     @Override
     public int size() {
-        return 0;
+        return weights.elements();
     }
 
     @Override

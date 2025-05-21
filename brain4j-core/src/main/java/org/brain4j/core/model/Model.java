@@ -345,13 +345,13 @@ public class Model {
 
         for (int i = 1; i < size(); i++) {
             Layer layer = layerAt(i);
+            layer.connect(previous);
 
             int input = previous.size();
             int output = layer.size();
 
             double bound = weightInit.getBound(input, output);
 
-            layer.connect(previous);
             layer.initWeights(random, bound);
 
             previous = layer;

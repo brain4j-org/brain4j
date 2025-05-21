@@ -1,6 +1,7 @@
 package org.brain4j.math.tensor.impl;
 
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.lang.DoubleToDoubleFunction;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
@@ -26,7 +27,7 @@ public class TensorCPU implements Cloneable, Tensor {
     private static final ForkJoinPool POOL = ForkJoinPool.commonPool();
     private static Matmul MATMUL;
 
-    public static void initializeCPU() {
+    public static void initializeCPU(DeviceType deviceType) {
         Optional<Module> module = ModuleLayer
             .boot()
             .findModule("jdk.incubator.vector");
@@ -34,8 +35,11 @@ public class TensorCPU implements Cloneable, Tensor {
         if (module.isPresent()) {
             MATMUL = new VectorParallelMatmul();
         } else {
-            System.out.println("WARNING: The Vector incubator API is not available. For better performance, use:");
-            System.out.println("\t--add-modules jdk.incubator.vector");
+            if (deviceType == DeviceType.CPU) {
+                System.out.println("WARNING: The Vector incubator API is not available. For better performance, check out " +
+                        "this guide: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD");
+            }
+            
             MATMUL = new ScalarParallelMatmul();
         }
     }

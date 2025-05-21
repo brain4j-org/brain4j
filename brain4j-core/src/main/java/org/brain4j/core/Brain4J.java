@@ -1,6 +1,7 @@
 package org.brain4j.core;
 
 import org.brain4j.math.device.DeviceType;
+import org.brain4j.math.device.DeviceUtils;
 import org.brain4j.math.exceptions.NativeException;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.impl.TensorCPU;
@@ -16,16 +17,25 @@ public class Brain4J {
     }
 
     public static void initialize(DeviceType deviceType) {
-        TensorCPU.initializeCPU();
+        initialize(deviceType, null);
+    }
+
+    public static void initialize(DeviceType deviceType, String deviceName) {
+        TensorCPU.initializeCPU(deviceType);
 
         try {
-            TensorGPU.initializeGPU();
+            System.out.println("Available devices: " + availableDevices());
+            TensorGPU.initializeGPU(deviceName, deviceType);
         } catch (NativeException e) {
             e.printStackTrace(System.err);
         }
 
         useDevice(deviceType);
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+    }
+
+    public static String availableDevices() {
+        return String.join(", ", DeviceUtils.getAllDeviceNames());
     }
 
     public static void useDevice(DeviceType deviceType) {

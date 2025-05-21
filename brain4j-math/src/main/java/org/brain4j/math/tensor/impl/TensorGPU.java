@@ -49,18 +49,27 @@ public class TensorGPU extends TensorCPU {
         "/kernels/convolution/conv2d.cl"
     };
     
-    public static boolean initializeGPU() throws NativeException {
+    public static boolean initializeGPU(String deviceName, DeviceType deviceType) throws NativeException {
         try {
             CL.setExceptionsEnabled(true);
             
-            cl_device_id device = DeviceUtils.findDevice(DeviceType.GPU);
+            cl_device_id device = DeviceUtils.findDevice(DeviceType.GPU, deviceName);
 
             if (device == null) {
-                System.out.println("No GPU device found, falling back to CPU");
-                device = DeviceUtils.findDevice(DeviceType.CPU);
+                if (deviceType == DeviceType.GPU) {
+                    System.out.println("No GPU device found, falling back to CPU");
+                }
+
+                device = DeviceUtils.findDevice(DeviceType.CPU, null);
             }
-            
+
+            DeviceUtils.setDevice(device);
             cl_device_id[] devices = {device};
+
+            if (deviceType == DeviceType.GPU) {
+                System.out.println("GPU acceleration enabled with " + DeviceUtils.getDeviceName(device));
+            }
+
             DEVICE_ID = device;
             CONTEXT = clCreateContext(null, 1, devices, null, null, null);
             COMMAND_QUEUE = clCreateCommandQueue(CONTEXT, device, 0, null);
@@ -74,7 +83,7 @@ public class TensorGPU extends TensorCPU {
                 
                 if (buildResult != CL_SUCCESS) {
                     checkKernelStatus(MAIN_PROGRAM, DEVICE_ID, "main_program");
-                    return false;
+                    throw new NativeException("Failed to build main program! " + buildResult);
                 }
                 
                 MAT_MULT_KERNEL = clCreateKernel(MAIN_PROGRAM, "matmul", null);
@@ -91,7 +100,6 @@ public class TensorGPU extends TensorCPU {
                 CONVOLVE_1D_FFT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve1d_fft", null);
                 CONVOLVE_2D_FFT_EXTRACT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve2d_fft_extract", null);
 
-                System.out.println("GPU acceleration available using device: " + DeviceUtils.getDeviceName());
                 return true;
             } catch (Exception e) {
                 throw new NativeException("Exception caught loading or compiling kernels! " + e.getMessage());
@@ -256,10 +264,10 @@ public class TensorGPU extends TensorCPU {
         }
     }
 
-    public static void reinitializeGPU() {        
+    public static void reinitializeGPU(String deviceName) {
         if (!INITIALIZED) {
             try {
-                INITIALIZED = initializeGPU();
+                INITIALIZED = initializeGPU(deviceName, DeviceType.GPU);
             } catch (Exception e) {
                 System.err.println("Failed to reinitialize GPU: " + e.getMessage());
             }
