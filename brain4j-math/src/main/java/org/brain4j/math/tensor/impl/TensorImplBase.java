@@ -60,33 +60,33 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
     }
 
-    protected void appendTensor(StringBuilder sb, int dim, int[] indices, String format) {
+    protected void appendTensor(StringBuilder result, int dim, int[] indices, String format) {
         if (dim == shape.length - 1) {
-            sb.append("[");
+            result.append("[");
             for (int i = 0; i < shape[dim]; i++) {
                 indices[dim] = i;
 
                 float value = get(indices);
-                sb.append(format.formatted(value));
+                result.append(format.formatted(value));
 
                 if (i < shape[dim] - 1) {
-                    sb.append(", ");
+                    result.append(", ");
                 }
             }
-            sb.append("]");
+            result.append("]");
         } else {
-            sb.append("[");
+            result.append("[");
             for (int i = 0; i < shape[dim]; i++) {
                 indices[dim] = i;
-                appendTensor(sb, dim + 1, indices, format);
+                appendTensor(result, dim + 1, indices, format);
 
                 if (i < shape[dim] - 1) {
-                    sb.append(",\n");
-                    sb.append(" ".repeat(dim + 1));
+                    result.append(",\n");
+                    result.append(" ".repeat(dim + 1));
                 }
             }
 
-            sb.append("]");
+            result.append("]");
         }
     }
 
