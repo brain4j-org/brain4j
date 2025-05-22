@@ -58,8 +58,7 @@ public class Tensors {
     }
     
     public static Tensor ones(int... shape) {
-        DeviceType device = useGPU ? DeviceType.GPU : DeviceType.CPU;
-        return TensorCPU.ones(shape).to(device);
+        return useGPU ? TensorGPU.ones(shape) : TensorCPU.ones(shape);
     }
     
     public static Tensor random(int... shape) {

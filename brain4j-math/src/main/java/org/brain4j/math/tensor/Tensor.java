@@ -101,14 +101,18 @@ public interface Tensor extends Iterable<Float> {
      * @param other The tensor to add
      * @return A new tensor with the result
      */
-    Tensor plus(Tensor other);
+    default Tensor plus(Tensor other) {
+        return clone().add(other);
+    }
 
     /**
      * Adds a constant value to this tensor element-wise (alias for `add`).
      * @param value The constant value to add
      * @return A new tensor with the result
      */
-    Tensor plus(double value);
+    default Tensor plus(double value) {
+        return clone().add(value);
+    }
 
     /**
      * Subtracts another tensor from this tensor element-wise.
@@ -129,14 +133,18 @@ public interface Tensor extends Iterable<Float> {
      * @param other The tensor to subtract
      * @return A new tensor with the result
      */
-    Tensor minus(Tensor other);
+    default Tensor minus(Tensor other) {
+        return clone().sub(other);
+    }
 
     /**
      * Subtracts a constant value from this tensor element-wise (alias for `sub`).
      * @param value The constant value to subtract
      * @return A new tensor with the result
      */
-    Tensor minus(double value);
+    default Tensor minus(double value) {
+        return clone().sub(value);
+    }
 
     /**
      * Multiplies this tensor with another tensor element-wise.
@@ -157,14 +165,18 @@ public interface Tensor extends Iterable<Float> {
      * @param other The tensor to multiply
      * @return A new tensor with the result
      */
-    Tensor times(Tensor other);
+    default Tensor times(Tensor other) {
+        return clone().mul(other);
+    }
 
     /**
      * Multiplies a constant value with this tensor element-wise (alias for `mul`).
      * @param value The constant value to multiply
      * @return A new tensor with the result
      */
-    Tensor times(double value);
+    default Tensor times(double value) {
+        return clone().mul(value);
+    }
 
     /**
      * Divides this tensor by another tensor element-wise.
@@ -185,14 +197,18 @@ public interface Tensor extends Iterable<Float> {
      * @param other The tensor to divide by
      * @return A new tensor with the result
      */
-    Tensor divide(Tensor other);
+    default Tensor divide(Tensor other) {
+        return clone().div(other);
+    }
 
     /**
      * Divides this tensor by a constant value element-wise (alias for `div`).
      * @param value The constant value to divide by
      * @return A new tensor with the result
      */
-    Tensor divide(double value);
+    default Tensor divide(double value) {
+        return clone().div(value);
+    }
 
     /**
      * Raises each element of the tensor to the power of the given value.
@@ -225,7 +241,6 @@ public interface Tensor extends Iterable<Float> {
     //=============================================================
 
     Tensor matmul(Tensor other);
-    double dot(Tensor other);
     double norm();
     double normSquared();
     Tensor normalize();
@@ -264,7 +279,6 @@ public interface Tensor extends Iterable<Float> {
     Tensor select(int dim, int index);
     Tensor slice(int channel);
     Tensor slice(Range... ranges);
-    Tensor setChannel(int channel, Tensor data);
 
     Tensor mapWithIndex(BiFunction<Integer, Float, Float> function);
     Tensor map(DoubleToDoubleFunction function);
@@ -437,12 +451,6 @@ public interface Tensor extends Iterable<Float> {
             default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
         };
     }
-
-    /**
-     * Checks if any of the values inside the tensor are NaN.
-     * @return True if any of the values are NaN, false otherwise
-     */
-    boolean checkNaN();
 
     /**
      * Gets a string containing all the values of this tensor in the specified format.

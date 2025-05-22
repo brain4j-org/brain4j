@@ -1,4 +1,4 @@
-package org.brain4j.math.tensor.impl.cpu.matmul;
+package org.brain4j.math.tensor.cpu.matmul;
 
 public record MatmulParameters(
         int m,

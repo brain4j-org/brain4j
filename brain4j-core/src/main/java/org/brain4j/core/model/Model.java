@@ -161,8 +161,16 @@ public class Model {
         fit(train, validation, 1, Integer.MAX_VALUE);
     }
 
+    public void fit(ListDataSource train, int epoches) {
+        fit(train, train, epoches, Integer.MAX_VALUE);
+    }
+
     public void fit(ListDataSource train, ListDataSource validation, int epoches) {
         fit(train, validation, epoches, Integer.MAX_VALUE);
+    }
+
+    public void fit(ListDataSource train, int epoches, int evaluateEvery) {
+        fit(train, train, epoches, evaluateEvery);
     }
 
     public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {

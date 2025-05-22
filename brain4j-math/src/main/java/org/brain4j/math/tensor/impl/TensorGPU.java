@@ -49,7 +49,7 @@ public class TensorGPU extends TensorCPU {
         "/kernels/convolution/conv2d.cl"
     };
     
-    public static boolean initializeGPU(String deviceName, DeviceType deviceType) throws NativeException {
+    public static void initializeGPU(String deviceName, DeviceType deviceType) throws NativeException {
         try {
             CL.setExceptionsEnabled(true);
             
@@ -83,6 +83,7 @@ public class TensorGPU extends TensorCPU {
                 
                 if (buildResult != CL_SUCCESS) {
                     checkKernelStatus(MAIN_PROGRAM, DEVICE_ID, "main_program");
+                    INITIALIZED = false;
                     throw new NativeException("Failed to build main program! " + buildResult);
                 }
                 
@@ -100,7 +101,7 @@ public class TensorGPU extends TensorCPU {
                 CONVOLVE_1D_FFT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve1d_fft", null);
                 CONVOLVE_2D_FFT_EXTRACT_KERNEL = clCreateKernel(MAIN_PROGRAM, "convolve2d_fft_extract", null);
 
-                return true;
+                INITIALIZED = true;
             } catch (Exception e) {
                 throw new NativeException("Exception caught loading or compiling kernels! " + e.getMessage());
             }
@@ -207,6 +208,12 @@ public class TensorGPU extends TensorCPU {
         super(shape);
     }
 
+    public static Tensor ones(int... shape) {
+        Tensor tensor = new TensorGPU(shape);
+        Arrays.fill(tensor.data(), 1.0f);
+        return tensor;
+    }
+
     public static Tensor fromTensor(Tensor tensor) {
         Tensor gpuTensor = new TensorGPU(tensor.shape());
         int[] shape = tensor.shape();
@@ -267,7 +274,7 @@ public class TensorGPU extends TensorCPU {
     public static void reinitializeGPU(String deviceName) {
         if (!INITIALIZED) {
             try {
-                INITIALIZED = initializeGPU(deviceName, DeviceType.GPU);
+                initializeGPU(deviceName, DeviceType.GPU);
             } catch (Exception e) {
                 System.err.println("Failed to reinitialize GPU: " + e.getMessage());
             }
@@ -399,8 +406,7 @@ public class TensorGPU extends TensorCPU {
             
             return TensorGPU.of(shape(), resultData);
         } catch (Exception e) {
-            System.err.println("GPU element-wise addition failed: " + e.getMessage());
-            return super.add(other);
+            throw new RuntimeException("GPU element-wise addition failed: " + e.getMessage());
         }
     }
     

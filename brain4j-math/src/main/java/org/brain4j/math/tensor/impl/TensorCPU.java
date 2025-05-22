@@ -8,10 +8,10 @@ import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.*;
-import org.brain4j.math.tensor.impl.cpu.map.ParallelMap;
-import org.brain4j.math.tensor.impl.cpu.matmul.Matmul;
-import org.brain4j.math.tensor.impl.cpu.matmul.ScalarParallelMatmul;
-import org.brain4j.math.tensor.impl.cpu.matmul.VectorParallelMatmul;
+import org.brain4j.math.tensor.cpu.map.ParallelMap;
+import org.brain4j.math.tensor.cpu.matmul.Matmul;
+import org.brain4j.math.tensor.cpu.matmul.ScalarParallelMatmul;
+import org.brain4j.math.tensor.cpu.matmul.VectorParallelMatmul;
 import org.brain4j.math.tensor.index.Range;
 import org.brain4j.math.tensor.ops.Convolution;
 
@@ -45,7 +45,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     protected float[] data;
-    private final int[] shape;
+    protected int[] shape;
     private final int[] strides;
     private AutogradContext autogradContext;
 
@@ -127,7 +127,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     public static Tensor of(int[] shape, float... data) {
-        Tensor tensor = new TensorCPU(shape);
+        Tensor tensor = Tensors.create(shape);
         
         for (int i = 0; i < data.length; i++) {
             tensor.data()[i] = data[i];
@@ -137,7 +137,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     public static Tensor of(int[] shape, double... data) {
-        Tensor tensor = new TensorCPU(shape);
+        Tensor tensor = Tensors.create(shape);
         
         for (int i = 0; i < data.length; i++) {
             tensor.data()[i] = (float) data[i];
@@ -147,7 +147,7 @@ public class TensorCPU implements Cloneable, Tensor {
     }
     
     public static Tensor of(int[] shape, int... data) {
-        Tensor tensor = new TensorCPU(shape);
+        Tensor tensor = Tensors.create(shape);
         
         for (int i = 0; i < data.length; i++) {
             tensor.data()[i] = (float) data[i];
@@ -491,18 +491,6 @@ public class TensorCPU implements Cloneable, Tensor {
         }
 
         return min;
-    }
-
-    @Override
-    public double dot(Tensor other) {
-        checkSameShape(other);
-        double sum = 0;
-
-        for (int i = 0; i < data.length; i++) {
-            sum += data[i] * other.data()[i];
-        }
-
-        return sum;
     }
 
     @Override
@@ -1123,27 +1111,6 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor setChannel(int channel, Tensor other) {
-        if (dimension() != 3) {
-            throw new IllegalArgumentException("Tensor must be 3-dimensional!");
-        }
-
-        if (channel < 0 || channel >= shape[0]) {
-            throw new IllegalArgumentException("Invalid channel index: " + channel);
-        }
-
-        int height = shape[1];
-        int width = shape[2];
-
-        float[] sliceData = other.data();
-        int offset = channel * height * width;
-
-        System.arraycopy(sliceData, 0, data, offset, height * width);
-
-        return null;
-    }
-
-    @Override
     public Tensor slice(int channel) {
         if (dimension() != 3) {
             throw new IllegalArgumentException("Tensor must be 3-dimensional!");
@@ -1474,17 +1441,6 @@ public class TensorCPU implements Cloneable, Tensor {
         }
 
         return result;
-    }
-
-    @Override
-    public boolean checkNaN() {
-        for (float element : data) {
-            if (Float.isNaN(element)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void softmax1D(double temperature, Tensor tensor) {

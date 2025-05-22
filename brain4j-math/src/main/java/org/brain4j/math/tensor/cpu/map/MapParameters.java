@@ -1,4 +1,4 @@
-package org.brain4j.math.tensor.impl.cpu.map;
+package org.brain4j.math.tensor.cpu.map;
 
 import org.brain4j.math.lang.DoubleToDoubleFunction;
 
