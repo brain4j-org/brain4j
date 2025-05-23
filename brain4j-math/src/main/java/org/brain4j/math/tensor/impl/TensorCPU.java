@@ -541,16 +541,6 @@ public class TensorCPU implements Cloneable, Tensor {
     }
 
     @Override
-    public Tensor mapWithIndex(BiFunction<Integer, Float, Float> function) {
-        for (int i = 0; i < data.length; i++) {
-            float value = data[i];
-            data[i] = function.apply(i, value);
-        }
-
-        return this;
-    }
-
-    @Override
     public Tensor map(DoubleToDoubleFunction function) {
         ParallelMap.map(function, POOL, data);
         return this;
@@ -1108,27 +1098,6 @@ public class TensorCPU implements Cloneable, Tensor {
         System.arraycopy(shape, dim, newShape, dim + 1, shape.length - dim);
 
         return reshape(newShape);
-    }
-
-    @Override
-    public Tensor slice(int channel) {
-        if (dimension() != 3) {
-            throw new IllegalArgumentException("Tensor must be 3-dimensional!");
-        }
-
-        if (channel < 0 || channel >= shape[0]) {
-            throw new IllegalArgumentException("Invalid channel index: " + channel);
-        }
-
-        int height = shape[1];
-        int width = shape[2];
-
-        float[] sliceData = new float[height * width];
-        int offset = channel * height * width;
-
-        System.arraycopy(data, offset, sliceData, 0, height * width);
-
-        return Tensors.of(new int[]{height, width}, sliceData);
     }
 
     @Override

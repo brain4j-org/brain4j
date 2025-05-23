@@ -172,6 +172,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         for (int i = 0; i < data.length; i++) {
             data[i] += (float) value;
         }
+
         return this;
     }
 
@@ -185,6 +186,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         for (int i = 0; i < data.length; i++) {
             data[i] -= (float) value;
         }
+
         return this;
     }
 
@@ -198,6 +200,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         for (int i = 0; i < data.length; i++) {
             data[i] *= (float) value;
         }
+
         return this;
     }
 
@@ -211,6 +214,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         for (int i = 0; i < data.length; i++) {
             data[i] /= (float) value;
         }
+
         return this;
     }
 
@@ -219,6 +223,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) Math.pow(data[i], value);
         }
+
         return this;
     }
 
@@ -232,6 +237,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) Math.sqrt(data[i]);
         }
+
         return this;
     }
 
@@ -367,14 +373,75 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         return min;
     }
 
+    private int[] computeNewShape(int[] shape, int dim, boolean keepDim) {
+        int[] newShape = keepDim ? Arrays.copyOf(shape, shape.length) : new int[shape.length - 1];
+
+        if (keepDim) {
+            newShape[dim] = 1;
+        } else {
+            for (int i = 0, j = 0; i < shape.length; i++) {
+                if (i != dim) {
+                    newShape[j++] = shape[i];
+                }
+            }
+        }
+
+        return newShape;
+    }
+
     @Override
     public Tensor sum(int dim, boolean keepDim) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        if (dim < 0 || dim >= shape.length) {
+            throw new IllegalArgumentException("Dimension " + dim + " out of bounds for tensor of shape " + Arrays.toString(shape));
+        }
+
+        int[] newShape = computeNewShape(shape, dim, keepDim);
+        int reducedSize = shape[dim];
+
+        Tensor result = Tensors.create(newShape);
+        float[] resultData = result.data();
+
+        int outerSize = 1;
+
+        for (int i = 0; i < dim; i++) {
+            outerSize *= shape[i];
+        }
+
+        int innerSize = 1;
+
+        for (int i = dim + 1; i < shape.length; i++) {
+            innerSize *= shape[i];
+        }
+
+        for (int outer = 0; outer < outerSize; outer++) {
+            for (int inner = 0; inner < innerSize; inner++) {
+                float sum = 0;
+
+                for (int i = 0; i < reducedSize; i++) {
+                    int index = outer * reducedSize * innerSize + i * innerSize + inner;
+                    sum += data[index];
+                }
+
+                int resultIndex = outer * innerSize + inner;
+                resultData[resultIndex] = sum;
+            }
+        }
+
+        return result;
     }
 
     @Override
     public Tensor mean(int dim, boolean keepDim) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        Tensor summed = this.sum(dim, keepDim);
+
+        float divisor = shape[dim];
+        float[] resultData = summed.data().clone();
+
+        for (int i = 0; i < resultData.length; i++) {
+            resultData[i] /= divisor;
+        }
+
+        return Tensors.of(summed.shape(), resultData);
     }
 
     @Override
@@ -400,6 +467,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
         return Tensors.of(newShape, data);
     }
+
 
     @Override
     public Tensor view(int... newShape) {
@@ -432,22 +500,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
-    public Tensor slice(int channel) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    @Override
     public Tensor slice(Range... ranges) {
         throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    @Override
-    public Tensor mapWithIndex(BiFunction<Integer, Float, Float> function) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = function.apply(i, data[i]);
-        }
-
-        return this;
     }
 
     @Override
@@ -461,10 +515,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor fill(float value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = value;
-        }
-
+        Arrays.fill(data, value);
         return this;
     }
 
@@ -591,7 +642,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     @Override
     public Tensor activateGrad(Activation activation) {
         if (!usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+            throw new IllegalArgumentException("Tensor does not use backflow!");
         }
 
         return forward(new ActivationOperation(activation), null);
@@ -600,7 +651,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     @Override
     public Tensor transposeGrad() {
         if (!usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+            throw new IllegalArgumentException("Tensor does not use backflow!");
         }
 
         return forward(new TransposeOperation(), null);

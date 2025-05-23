@@ -19,87 +19,87 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Returns the shape of the tensor as an array of integers.
-     * @return The shape of the tensor
+     * @return The shape of the tensor.
      */
     int[] shape();
 
     /**
      * Retrieves the data of the tensor as a float array.
-     * @return The tensor's data
+     * @return The tensor's data.
      */
     float[] data();
 
     /**
      * Retrieves the strides of the tensor as an array of integers.
-     * @return The strides of the tensor
+     * @return The strides of the tensor.
      */
     int[] strides();
 
     /**
      * Gets the value at the specified indices in the tensor.
-     * @param indices The indices for which the value is requested
-     * @return The value at the specified indices
+     * @param indices The indices for which the value is requested.
+     * @return The value at the specified indices.
      */
     float get(int... indices);
 
     /**
      * Returns the number of dimensions of the tensor.
-     * @return The number of dimensions
+     * @return The number of dimensions.
      */
     int dimension();
 
     /**
      * Returns the number of elements in the tensor.
-     * @return The number of elements
+     * @return The number of elements.
      */
     int elements();
 
     /**
      * Finds the index of the maximum value in the tensor.
-     * @return The index of the maximum value
+     * @return The index of the maximum value.
      */
     int argmax();
 
     /**
      * Sets the value at the specified indices in the tensor.
-     * @param value The value to set
-     * @param indices The indices where the value should be set
-     * @return The current tensor modified
+     * @param value The value to set.
+     * @param indices The indices where the value should be set.
+     * @return The current tensor modified.
      */
     Tensor set(double value, int... indices);
 
     /**
      * Adds a value to the tensor at the specified indices.
-     * @param value The value to add
-     * @param indices The indices where the value should be added
-     * @return The current tensor modified
+     * @param value The value to add.
+     * @param indices The indices where the value should be added.
+     * @return The current tensor modified.
      */
     Tensor add(double value, int... indices);
 
     /**
      * Creates a clone of the tensor.
-     * @return A new tensor that is a clone of this tensor
+     * @return A new tensor that is a clone of this tensor.
      */
     Tensor clone();
 
     /**
      * Adds this tensor with another tensor element-wise.
-     * @param other The tensor to add
-     * @return The current tensor modified
+     * @param other The tensor to add.
+     * @return The current tensor modified.
      */
     Tensor add(Tensor other);
 
     /**
      * Adds this tensor with a constant value element-wise.
-     * @param value The constant value to add
-     * @return The current tensor modified
+     * @param value The constant value to add.
+     * @return The current tensor modified.
      */
     Tensor add(double value);
 
     /**
      * Performs element-wise addition of two tensors (alias for `add`).
-     * @param other The tensor to add
-     * @return A new tensor with the result
+     * @param other The tensor to add.
+     * @return A new tensor with the result.
      */
     default Tensor plus(Tensor other) {
         return clone().add(other);
@@ -107,8 +107,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Adds a constant value to this tensor element-wise (alias for `add`).
-     * @param value The constant value to add
-     * @return A new tensor with the result
+     * @param value The constant value to add.
+     * @return A new tensor with the result.
      */
     default Tensor plus(double value) {
         return clone().add(value);
@@ -116,22 +116,22 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Subtracts another tensor from this tensor element-wise.
-     * @param other The tensor to subtract
-     * @return The current tensor modified
+     * @param other The tensor to subtract.
+     * @return The current tensor modified.
      */
     Tensor sub(Tensor other);
 
     /**
      * Subtracts a constant value from this tensor element-wise.
-     * @param value The constant value to subtract
-     * @return The current tensor modified
+     * @param value The constant value to subtract.
+     * @return The current tensor modified.
      */
     Tensor sub(double value);
 
     /**
      * Performs element-wise subtraction of two tensors (alias for `sub`).
-     * @param other The tensor to subtract
-     * @return A new tensor with the result
+     * @param other The tensor to subtract.
+     * @return A new tensor with the result.
      */
     default Tensor minus(Tensor other) {
         return clone().sub(other);
@@ -139,8 +139,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Subtracts a constant value from this tensor element-wise (alias for `sub`).
-     * @param value The constant value to subtract
-     * @return A new tensor with the result
+     * @param value The constant value to subtract.
+     * @return A new tensor with the result.
      */
     default Tensor minus(double value) {
         return clone().sub(value);
@@ -148,22 +148,22 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Multiplies this tensor with another tensor element-wise.
-     * @param other The tensor to multiply
-     * @return The current tensor modified
+     * @param other The tensor to multiply.
+     * @return The current tensor modified.
      */
     Tensor mul(Tensor other);
 
     /**
      * Multiplies this tensor with a constant value element-wise.
-     * @param value The constant value to multiply
-     * @return A new tensor with the result
+     * @param value The constant value to multiply.
+     * @return A new tensor with the result.
      */
     Tensor mul(double value);
 
     /**
      * Performs element-wise multiplication of two tensors (alias for `mul`).
-     * @param other The tensor to multiply
-     * @return A new tensor with the result
+     * @param other The tensor to multiply.
+     * @return A new tensor with the result.
      */
     default Tensor times(Tensor other) {
         return clone().mul(other);
@@ -171,8 +171,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Multiplies a constant value with this tensor element-wise (alias for `mul`).
-     * @param value The constant value to multiply
-     * @return A new tensor with the result
+     * @param value The constant value to multiply.
+     * @return A new tensor with the result.
      */
     default Tensor times(double value) {
         return clone().mul(value);
@@ -180,22 +180,22 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Divides this tensor by another tensor element-wise.
-     * @param other The tensor to divide by
-     * @return The current tensor modified
+     * @param other The tensor to divide by.
+     * @return The current tensor modified.
      */
     Tensor div(Tensor other);
 
     /**
      * Divides this tensor by a constant value element-wise.
-     * @param value The constant value to divide by
-     * @return The current tensor modified
+     * @param value The constant value to divide by.
+     * @return The current tensor modified.
      */
     Tensor div(double value);
 
     /**
      * Performs element-wise division of two tensors (alias for `div`).
-     * @param other The tensor to divide by
-     * @return A new tensor with the result
+     * @param other The tensor to divide by.
+     * @return A new tensor with the result.
      */
     default Tensor divide(Tensor other) {
         return clone().div(other);
@@ -203,8 +203,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Divides this tensor by a constant value element-wise (alias for `div`).
-     * @param value The constant value to divide by
-     * @return A new tensor with the result
+     * @param value The constant value to divide by.
+     * @return A new tensor with the result.
      */
     default Tensor divide(double value) {
         return clone().div(value);
@@ -212,27 +212,27 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Raises each element of the tensor to the power of the given value.
-     * @param value The exponent
-     * @return A new tensor with the result
+     * @param value The exponent.
+     * @return A new tensor with the result.
      */
     Tensor pow(double value);
 
     /**
      * Raises each element of the tensor to the power of the corresponding element in another tensor.
-     * @param other The tensor containing the exponents
-     * @return A new tensor with the result
+     * @param other The tensor containing the exponents.
+     * @return A new tensor with the result.
      */
     Tensor pow(Tensor other);
 
     /**
      * Takes the square root of each element of the tensor.
-     * @return A new tensor with the result
+     * @return A new tensor with the result.
      */
     Tensor sqrt();
 
     /**
      * Reshapes the tensor to a 1D vector.
-     * @return A new tensor
+     * @return A new tensor.
      */
     Tensor vector();
 
@@ -271,41 +271,68 @@ public interface Tensor extends Iterable<Float> {
     Tensor squeeze();
     Tensor squeeze(int dim);
     Tensor unsqueeze(int dim);
-    
-    //=============================================================
-    // Indexing and selection
-    //=============================================================
-    
+
+    /**
+     * Selects a sub-tensor from this tensor, given the specified dimension
+     * and index.
+     *
+     * @param dim The dimension to select from.
+     * @param index The index in the specified dimension to select.
+     * @return A new tensor with the selected values.
+     */
     Tensor select(int dim, int index);
-    Tensor slice(int channel);
+
+    /**
+     * Slices the tensor according to the specified ranges for each dimension.
+     *
+     * @param ranges The ranges specifying the slice for each dimension.
+     * @return A new tensor containing the sliced data.
+     * @throws IllegalArgumentException if more ranges are specified than the number of dimensions.
+     */
     Tensor slice(Range... ranges);
 
-    Tensor mapWithIndex(BiFunction<Integer, Float, Float> function);
+    /**
+     * Applies a given function to each element of the tensor and returns a new tensor with the results.
+     * @param function The function to apply.
+     * @return A new tensor with the result.
+     */
     Tensor map(DoubleToDoubleFunction function);
+
+    /**
+     * Sets all elements of this tensor to the given value.
+     * @param value The value to fill the tensor with.
+     * @return This tensor.
+     */
     Tensor fill(float value);
+
+    /**
+     * Fills the tensor with the values generated by the given supplier.
+     * @param supplier The supplier of values.
+     * @return The filled tensor.
+     */
     Tensor fill(Supplier<Double> supplier);
 
     /**
      * Gets the autograd context for this tensor.
-     * @return The autograd context instance
+     * @return The autograd context instance.
      */
     AutogradContext autogradContext();
 
     /**
      * Updates the autograd context instance for this tensor.
-     * @param autogradContext The new autograd context
+     * @param autogradContext The new autograd context.
      */
     void setAutogradContext(AutogradContext autogradContext);
 
     /**
      * Enables autograd for this tensor.
-     * @return This tensor
+     * @return This tensor.
      */
     Tensor withGrad();
 
     /**
      * Returns whether this tensor uses autograd.
-     * @return True if this tensor uses autograd, false otherwise
+     * @return True if this tensor uses autograd, false otherwise.
      */
     boolean usesGrad();
 
@@ -327,61 +354,61 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Computes the backward pass for this tensor with the specified gradient.
-     * @param gradOutput The gradient
+     * @param gradOutput The gradient.
      */
     void backward(Tensor gradOutput);
 
     /**
      * Executes the specified operation on this tensor and the specified other tensor.
-     * @param operation The operation to execute
-     * @param other The other tensor
-     * @return The result of the operation
+     * @param operation The operation to execute.
+     * @param other The other tensor.
+     * @return The result of the operation.
      */
     Tensor forward(Operation operation, Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link AddOperation}
-     * @return The result of the operation
+     * @return The result of the operation.
      */
     Tensor addGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MulOperation}
-     * @return The result of the operation
+     * @return The result of the operation.
      */
     Tensor mulGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link DivOperation}
-     * @param other The other tensor
-     * @return The result of the operation
+     * @param other The other tensor.
+     * @return The result of the operation.
      */
     Tensor divGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link SubOperation}
-     * @param other The other tensor
-     * @return The result of the operation
+     * @param other The other tensor.
+     * @return The result of the operation.
      */
     Tensor subGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MatMulOperation}
-     * @param other The other tensor
-     * @return The result of the operation
+     * @param other The other tensor.
+     * @return The result of the operation.
      */
     Tensor matmulGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link ActivationOperation}
-     * @param activation The activation to apply
-     * @return The resulting tensor
+     * @param activation The activation to apply.
+     * @return The resulting tensor.
      */
     Tensor activateGrad(Activation activation);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link TransposeOperation}
-     * @return The transposed tensor
+     * @return The transposed tensor.
      */
     Tensor transposeGrad();
 
@@ -389,31 +416,33 @@ public interface Tensor extends Iterable<Float> {
      * Performs a convolution between this tensor and the specified kernel tensor.
      * Implicitly uses SAME padding and FFT implementation for larger dimensions.
      * Convolution is supported for both 1D and 2D tensors.
-     * @param kernel The kernel tensor to use for convolution
-     * @return A new tensor resulting from the convolution
-     * @throws IllegalArgumentException If tensor dimensions are not compatible
+     *
+     * @param kernel The kernel tensor to use for convolution.
+     * @return A new tensor resulting from the convolution.
+     * @throws IllegalArgumentException If tensor dimensions are not compatible.
      */
     Tensor convolve(Tensor kernel);
 
     /**
      * Applies softmax to the tensor with a default temperature of 1.
-     * @return The soft-maxed tensor
+     * @return The soft-maxed tensor.
      */
     Tensor softmax();
 
     /**
      * Applies softmax to the tensor with the specified temperature.
-     * @param temperature A parameter indicating how much to smooth the distribution
-     * @return The soft-maxed tensor
+     * @param temperature A parameter indicating how much to smooth the distribution.
+     * @return The soft-maxed tensor.
      */
     Tensor softmax(double temperature);
 
     /**
      * Converts a tensor to the specified device type.
-     * It currently accepts: CPU, GPU, DEFAULT (delegates to CPU)
-     * @param deviceType The target device
-     * @return The tensor on the target device
-     * @throws IllegalArgumentException If the device type is not supported
+     * It currently accepts: CPU, GPU, DEFAULT (delegates to CPU).
+     *
+     * @param deviceType The target device.
+     * @return The tensor on the target device.
+     * @throws IllegalArgumentException If the device type is not supported.
      */
     default Tensor to(DeviceType deviceType) {
         return switch (deviceType) {
@@ -425,7 +454,7 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Moves the tensor to the GPU if available.
-     * @return the tensor on the GPU
+     * @return the tensor on the GPU.
      */
     default Tensor gpu() {
         return to(DeviceType.GPU);
@@ -433,7 +462,7 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Moves the tensor to the CPU.
-     * @return the tensor on the CPU
+     * @return the tensor on the CPU.
      */
     default Tensor cpu() {
         return to(DeviceType.CPU);
@@ -441,8 +470,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Checks if the tensor is loaded on the specified device type.
-     * @param deviceType The device type to check
-     * @return True if the tensor is loaded on the specified device, false otherwise
+     * @param deviceType The device type to check.
+     * @return True if the tensor is loaded on the specified device, false otherwise.
      */
     default boolean isOn(DeviceType deviceType) {
         return switch (deviceType) {
@@ -454,23 +483,23 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Gets a string containing all the values of this tensor in the specified format.
-     * @param format The string format
-     * @return The tensor values on a string
+     * @param format The string format.
+     * @return The tensor values on a string.
      */
     String toString(String format);
 
     /**
      * Serializes the tensor to the specified label stream.
-     * @param stream The stream to write on
-     * @throws Exception If serialization fails
+     * @param stream The stream to write on.
+     * @throws Exception If serialization fails.
      */
     void serialize(DataOutputStream stream) throws Exception;
 
     /**
      * Deserializes the tensor to the specified input stream.
-     * @param stream The stream to read from
-     * @return A new tensor with the values from the stream
-     * @throws Exception If deserialization fails
+     * @param stream The stream to read from.
+     * @return A new tensor with the values from the stream.
+     * @throws Exception If deserialization fails.
      */
     Tensor deserialize(DataInputStream stream) throws Exception;
 }
