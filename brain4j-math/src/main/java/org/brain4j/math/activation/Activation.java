@@ -16,7 +16,7 @@ public interface Activation {
      */
     default Tensor activate(Tensor input) {
         int[] shape = input.shape();
-        Tensor result = Tensors.create(shape);
+        Tensor result = Tensors.zeros(shape);
 
         if (input.dimension() == 2) {
             for (int i = 0; i < shape[0]; i++) {
@@ -43,7 +43,7 @@ public interface Activation {
      */
     default Tensor getDerivative(Tensor input) {
         int[] shape = input.shape();
-        Tensor result = Tensors.create(shape);
+        Tensor result = Tensors.zeros(shape);
 
         if (input.dimension() != 2) {
             return getDerivative(input.reshape(1, input.elements()));

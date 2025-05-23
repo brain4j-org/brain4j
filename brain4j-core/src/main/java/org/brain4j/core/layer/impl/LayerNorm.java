@@ -34,7 +34,7 @@ public class LayerNorm extends Layer {
 
     @Override
     public void connect(Layer previous) {
-        this.weights = Tensors.create(previous.size()).withGrad();
+        this.weights = Tensors.zeros(previous.size()).withGrad();
     }
 
     @Override

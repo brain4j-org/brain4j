@@ -59,7 +59,7 @@ public class SafeTensorsImpl implements ModelSerializer {
                 byte[] data = stream.readNBytes(byteLen);
                 ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
 
-                Tensor tensor = Tensors.create(shape);
+                Tensor tensor = Tensors.zeros(shape);
                 float[] dest = tensor.data();
 
                 for (int i = 0; i < dest.length; i++) {

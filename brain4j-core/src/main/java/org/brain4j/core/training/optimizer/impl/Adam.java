@@ -47,8 +47,8 @@ public class Adam extends Optimizer {
         Tensor secondMomentum = this.secondMomentum[index];
 
         if (firstMomentum == null || secondMomentum == null) {
-            firstMomentum = Tensors.create(gradient.shape());
-            secondMomentum = Tensors.create(gradient.shape());
+            firstMomentum = Tensors.zeros(gradient.shape());
+            secondMomentum = Tensors.zeros(gradient.shape());
         }
 
         Tensor gradSquared = gradient.times(gradient);

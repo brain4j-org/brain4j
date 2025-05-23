@@ -43,8 +43,8 @@ public class DenseLayer extends Layer {
     public void connect(Layer previous) {
         if (previous == null) return;
         // Shape: [output_size, input_size]
-        this.weights = Tensors.create(dimension, previous.size()).withGrad();
-        this.bias = Tensors.create(dimension).withGrad();
+        this.weights = Tensors.zeros(dimension, previous.size()).withGrad();
+        this.bias = Tensors.zeros(dimension).withGrad();
     }
 
     @Override

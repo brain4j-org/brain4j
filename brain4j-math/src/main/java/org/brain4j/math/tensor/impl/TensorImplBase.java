@@ -11,7 +11,7 @@ import org.brain4j.math.tensor.broadcast.TensorBroadcast;
 import org.brain4j.math.tensor.index.Range;
 
 import java.util.Arrays;
-import java.util.function.BiFunction;
+import java.util.Iterator;
 import java.util.function.Supplier;
 
 public abstract class TensorImplBase implements Tensor, Cloneable {
@@ -87,6 +87,107 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             }
 
             result.append("]");
+        }
+    }
+
+    protected int[] computeNewShape(int[] shape, int dim, boolean keepDim) {
+        int[] newShape = keepDim ? Arrays.copyOf(shape, shape.length) : new int[shape.length - 1];
+
+        if (keepDim) {
+            newShape[dim] = 1;
+        } else {
+            for (int i = 0, j = 0; i < shape.length; i++) {
+                if (i != dim) {
+                    newShape[j++] = shape[i];
+                }
+            }
+        }
+
+        return newShape;
+    }
+
+    protected int[] computeStrides(int[] shape) {
+        int[] strides = new int[shape.length];
+        int stride = 1;
+
+        for (int i = shape.length - 1; i >= 0; i--) {
+            strides[i] = stride;
+            stride *= shape[i];
+        }
+
+        return strides;
+    }
+
+    protected void sliceCopy(
+            Tensor result,
+            Range[] ranges,
+            int[] srcIndices,
+            int[] dstIndices,
+            int dim
+    ) {
+        if (dim == shape.length) {
+            result.set(get(srcIndices), dstIndices);
+            return;
+        }
+
+        Range range = dim < ranges.length ? ranges[dim] : null;
+        int start = 0;
+        int end = shape[dim];
+        int step = 1;
+
+        if (range != null) {
+            start = range.start(shape[dim]);
+            end = range.end(shape[dim]);
+            step = range.step();
+        }
+
+        for (int i = start, j = 0; i < end; i += step, j++) {
+            srcIndices[dim] = i;
+            dstIndices[dim] = j;
+            sliceCopy(result, ranges, srcIndices, dstIndices, dim + 1);
+        }
+    }
+
+    protected void softmax1D(double temperature, Tensor tensor) {
+        double max = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < tensor.elements(); i++) {
+            max = Math.max(max, tensor.get(i));
+        }
+
+        double sum = 0.0;
+
+        for (int i = 0; i < tensor.elements(); i++) {
+            sum += Math.exp((tensor.get(i) - max) / temperature);
+        }
+
+        for (int i = 0; i < tensor.elements(); i++) {
+            double value = Math.exp((tensor.get(i) - max) / temperature) / sum;
+            tensor.set(value, i);
+        }
+    }
+
+    protected void softmaxRows(double temperature, Tensor tensor) {
+        int rows = tensor.shape()[0];
+        int cols = tensor.shape()[1];
+
+        for (int i = 0; i < rows; i++) {
+            double max = Double.NEGATIVE_INFINITY;
+
+            for (int j = 0; j < cols; j++) {
+                max = Math.max(max, tensor.get(i, j));
+            }
+
+            double sum = 0.0;
+
+            for (int j = 0; j < cols; j++) {
+                sum += Math.exp((tensor.get(i, j) - max) / temperature);
+            }
+
+            for (int j = 0; j < cols; j++) {
+                double value = Math.exp((tensor.get(i, j) - max) / temperature) / sum;
+                tensor.set(value, i, j);
+            }
         }
     }
 
@@ -373,22 +474,6 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         return min;
     }
 
-    private int[] computeNewShape(int[] shape, int dim, boolean keepDim) {
-        int[] newShape = keepDim ? Arrays.copyOf(shape, shape.length) : new int[shape.length - 1];
-
-        if (keepDim) {
-            newShape[dim] = 1;
-        } else {
-            for (int i = 0, j = 0; i < shape.length; i++) {
-                if (i != dim) {
-                    newShape[j++] = shape[i];
-                }
-            }
-        }
-
-        return newShape;
-    }
-
     @Override
     public Tensor sum(int dim, boolean keepDim) {
         if (dim < 0 || dim >= shape.length) {
@@ -398,7 +483,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         int[] newShape = computeNewShape(shape, dim, keepDim);
         int reducedSize = shape[dim];
 
-        Tensor result = Tensors.create(newShape);
+        Tensor result = Tensors.zeros(newShape);
         float[] resultData = result.data();
 
         int outerSize = 1;
@@ -441,12 +526,12 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             resultData[i] /= divisor;
         }
 
-        return Tensors.of(summed.shape(), resultData);
+        return Tensors.create(summed.shape(), resultData);
     }
 
     @Override
     public Tensor sign() {
-        Tensor result = Tensors.create(shape);
+        Tensor result = Tensors.zeros(shape);
 
         for (int i = 0; i < data.length; i++) {
             result.data()[i] = Math.signum(data[i]);
@@ -465,9 +550,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             );
         }
 
-        return Tensors.of(newShape, data);
+        return Tensors.create(newShape, data);
     }
-
 
     @Override
     public Tensor view(int... newShape) {
@@ -501,7 +585,28 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor slice(Range... ranges) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        if (ranges.length > shape.length) {
+            throw new IllegalArgumentException("Too many ranges specified");
+        }
+
+        int[] newShape = new int[shape.length];
+
+        for (int i = 0; i < shape.length; i++) {
+            if (i < ranges.length && ranges[i] != null) {
+                newShape[i] = ranges[i].size(shape[i]);
+            } else {
+                newShape[i] = shape[i];
+            }
+        }
+
+        Tensor result = new TensorCPU(newShape);
+
+        int[] srcIndices = new int[shape.length];
+        int[] dstIndices = new int[shape.length];
+
+        sliceCopy(result, ranges, srcIndices, dstIndices, 0);
+
+        return result;
     }
 
     @Override
@@ -582,14 +687,12 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     @Override
     public Tensor forward(Operation operation, Tensor other) {
         Tensor result = operation.forward(this, other);
-        AutogradContext resultContext = result.autogradContext();
 
-        if (resultContext == null) {
-            resultContext = new AutogradContext(true);
+        if (result.autogradContext() == null) {
+            result.setAutogradContext(new AutogradContext(true));
         }
 
-        resultContext.setOperation(operation, this, other);
-        result.setAutogradContext(resultContext);
+        result.autogradContext().setOperation(operation, this, other);
 
         return result;
     }
@@ -669,7 +772,23 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor softmax(double temperature) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        int dim = dimension() > 1 ? 1 : 0;
+
+        if (dim >= dimension()) {
+            throw new IllegalArgumentException(
+                    "Dimension " + dim + " out of bounds for limits of tensor shape " + Arrays.toString(shape)
+            );
+        }
+
+        Tensor result = clone();
+
+        switch (dimension()) {
+            case 1 -> softmax1D(temperature, result);
+            case 2 -> softmaxRows(temperature, result);
+            default -> throw new UnsupportedOperationException("Softmax operation is only supported for 1D/2D tensors.");
+        }
+
+        return result;
     }
 
     @Override
@@ -687,5 +806,22 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     @Override
     public String toString() {
         return toString("%.16f");
+    }
+
+    @Override
+    public Iterator<Float> iterator() {
+        return new Iterator<>() {
+            private int currentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                return currentIndex < data.length;
+            }
+
+            @Override
+            public Float next() {
+                return data[currentIndex++];
+            }
+        };
     }
 }

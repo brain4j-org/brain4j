@@ -1,84 +1,33 @@
 package org.brain4j.math.tensor;
 
-import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.impl.TensorCPU;
-import org.brain4j.math.tensor.impl.TensorGPU;
-import org.brain4j.math.tensor.index.Range;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Tensors {
-    
-    private static boolean useGPU;
-
-    public static void forceCPU() {
-        useGPU = false;
-    }
-    
-    public static void useGPUIfAvailable() {
-        try {
-            useGPU = TensorGPU.isGpuAvailable();
-        } catch (Throwable t) {
-            System.err.println("GPU acceleration not available: " + t.getMessage());
-        }
-    }
-    
-    public static boolean isUsingGPU() {
-        return useGPU;
-    }
 
     public static Tensor scalar(double value) {
-        return TensorCPU.of(new int[]{1}, value);
+        return new TensorCPU(new int[]{1}, (float) value);
     }
 
-    public static Tensor create(int... shape) {
-        return useGPU ? new TensorGPU(shape) : new TensorCPU(shape);
-    }
-    
-    public static Tensor of(int[] shape, float... data) {
-        return useGPU ? TensorGPU.of(shape, data) : TensorCPU.of(shape, data);
-    }
-    
-    public static Tensor of(int[] shape, double... data) {
-        Tensor result = TensorCPU.of(shape, data);
-        return useGPU ? TensorGPU.fromTensor(result) : result;
+    public static Tensor create(int[] shape, float... data) {
+        return new TensorCPU(shape, data);
     }
     
     public static Tensor vector(float... data) {
-        return of(new int[]{data.length}, data);
+        return create(new int[]{data.length}, data);
     }
 
     public static Tensor matrix(int rows, int cols, float... data) {
-        return of(new int[]{rows, cols}, data);
+        return create(new int[]{rows, cols}, data);
     }
     
     public static Tensor zeros(int... shape) {
-        return useGPU ? new TensorGPU(shape) : new TensorCPU(shape);
+        return new TensorCPU(shape);
     }
     
     public static Tensor ones(int... shape) {
-        return useGPU ? TensorGPU.ones(shape) : TensorCPU.ones(shape);
-    }
-    
-    public static Tensor random(int... shape) {
-        Tensor tensor = TensorCPU.random(shape);
-        return useGPU ? tensor.gpu() : tensor;
-    }
-
-    public static Tensor random(long seed, int... shape) {
-        Tensor tensor = TensorCPU.random(seed, shape);
-        return useGPU ? tensor.gpu() : tensor;
-    }
-    
-    public static Tensor uniform(double lowerBound, double upperBound, int... shape) {
-        Tensor tensor = TensorCPU.uniform(lowerBound, upperBound, shape);
-        return useGPU ? tensor.gpu() : tensor;
-    }
-
-    public static Tensor random(double mean, double standardDeviation, int... shape) {
-        Tensor tensor = TensorCPU.randn(mean, standardDeviation, shape);
-        return useGPU ? tensor.gpu() : tensor;
+        return zeros(shape).fill(1);
     }
 
     public static Tensor concat(List<Tensor> inputs) {
@@ -104,31 +53,6 @@ public class Tensors {
                     result.set(value, r, currentColumn + c);
                 }
             }
-        }
-
-        return result;
-    }
-
-    public static List<Tensor> toList(Tensor input) {
-        if (input.dimension() == 1) {
-            return List.of(input);
-        }
-
-        if (input.dimension() != 2) {
-            throw new IllegalArgumentException("Tensor must be 1D or 2D!");
-        }
-
-        List<Tensor> result = new ArrayList<>();
-        
-        int rows = input.shape()[0];
-        int columns = input.shape()[1];
-
-        for (int i = 0; i < rows; i++) {
-            Range range = new Range(i, i + 1);
-            Tensor token = input.slice(range);
-
-            token = token.reshape(1, columns);
-            result.add(token);
         }
 
         return result;
@@ -164,7 +88,7 @@ public class Tensors {
             elements += shape[0];
         }
 
-        Tensor result = Tensors.create(elements, dimension);
+        Tensor result = Tensors.zeros(elements, dimension);
         int rowOffset = 0;
 
         for (Tensor tensor : tensors) {
@@ -232,7 +156,6 @@ public class Tensors {
             }
         }
     }
-
 
     public static Tensor triangularMask(int dimension) {
         Tensor mask = Tensors.zeros(dimension, dimension);

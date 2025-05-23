@@ -1,20 +1,25 @@
 package org.brain4j.math.tensor.cpu.matmul;
 
+import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorSpecies;
+
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
-public class ScalarParallelMatmul implements Matmul {
+public class SimdMatmulProvider implements MatmulProvider {
+
+    private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
 
     private static final int WORK_THRESHOLD = 1;
     private static final int COMPLEXITY_THRESHOLD = 65536;
 
-    private static class ScalarAction extends RecursiveAction {
+    private static class VectorAction extends RecursiveAction {
 
         private final MatmulParameters parameters;
         private final int start;
         private final int end;
 
-        public ScalarAction(MatmulParameters parameters, int start, int end) {
+        public VectorAction(MatmulParameters parameters, int start, int end) {
             this.parameters = parameters;
             this.start = start;
             this.end = end;
@@ -30,8 +35,8 @@ public class ScalarParallelMatmul implements Matmul {
             if (isOverThreshold(work, np)) {
                 int mid = (start + end) >>> 1;
                 invokeAll(
-                        new ScalarAction(parameters, start, mid),
-                        new ScalarAction(parameters, mid, end)
+                        new VectorAction(parameters, start, mid),
+                        new VectorAction(parameters, mid, end)
                 );
                 return;
             }
@@ -49,10 +54,7 @@ public class ScalarParallelMatmul implements Matmul {
     }
 
     public void multiply(
-            int batch,
-            int m, int n, int p,
-            float[] A, float[] B, float[] C,
-            ForkJoinPool pool
+            int batch, int m, int n, int p, float[] A, float[] B, float[] C, ForkJoinPool pool
     ) {
         int start = 0;
         int end = batch * m;
@@ -61,21 +63,19 @@ public class ScalarParallelMatmul implements Matmul {
         int mp = m * p;
 
         int work = end - start;
-
         if (!isOverThreshold(work, np)) {
             multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
             return;
         }
 
         MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp);
-        ScalarAction action = new ScalarAction(parameters, start, end);
+        VectorAction action = new VectorAction(parameters, start, end);
         pool.invoke(action);
     }
 
     private static void multiplySection(
             int start, int end,
-            int m, int n, int p,
-            float[] A, float[] B, float[] C,
+            int m, int n, int p, float[] A, float[] B, float[] C,
             int mn, int np, int mp
     ) {
         for (int r = start; r < end; r++) {
@@ -91,7 +91,15 @@ public class ScalarParallelMatmul implements Matmul {
                 float aVal = A[rowA + t];
                 int colB = offsetB + t * p;
 
-                for (int j = 0; j < p; j++) {
+                int j = 0;
+
+                for (; j < SPECIES.loopBound(p); j += SPECIES.length()) {
+                    FloatVector vb = FloatVector.fromArray(SPECIES, B, colB + j);
+                    FloatVector vc = FloatVector.fromArray(SPECIES, C, rowC + j);
+                    vc.add(vb.mul(aVal)).intoArray(C, rowC + j);
+                }
+
+                for (; j < p; j++) {
                     C[rowC + j] += aVal * B[colB + j];
                 }
             }

@@ -2,10 +2,14 @@ package org.brain4j.core.training.updater;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
+import org.brain4j.core.training.updater.impl.NormalUpdater;
+import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.tensor.Tensor;
 
 /**
- *
+ * Abstract class to define a gradient updater.
+ * @see StochasticUpdater
+ * @see NormalUpdater
  */
 public abstract class Updater {
 

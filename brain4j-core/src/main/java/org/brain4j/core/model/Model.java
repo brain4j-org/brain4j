@@ -240,7 +240,7 @@ public class Model {
         Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
 
         for (int i = 0; i < classes; i++) {
-            classifications.put(i, Tensors.create(classes));
+            classifications.put(i, Tensors.zeros(classes));
         }
 
         List<Thread> threads = new ArrayList<>();

@@ -51,11 +51,11 @@ public class RecurrentLayer extends Layer {
     public void connect(Layer previous) {
         if (previous == null) return;
 
-        this.inputWeights = Tensors.create(hiddenDimension, previous.size()).withGrad();
-        this.hiddenWeights = Tensors.create(hiddenDimension, hiddenDimension).withGrad();
-        this.weights = Tensors.create(dimension, hiddenDimension).withGrad();
-        this.bias = Tensors.create(dimension).withGrad();
-        this.hiddenStateBias = Tensors.create(hiddenDimension).withGrad();
+        this.inputWeights = Tensors.zeros(hiddenDimension, previous.size()).withGrad();
+        this.hiddenWeights = Tensors.zeros(hiddenDimension, hiddenDimension).withGrad();
+        this.weights = Tensors.zeros(dimension, hiddenDimension).withGrad();
+        this.bias = Tensors.zeros(dimension).withGrad();
+        this.hiddenStateBias = Tensors.zeros(hiddenDimension).withGrad();
     }
 
     @Override
@@ -82,7 +82,7 @@ public class RecurrentLayer extends Layer {
         Tensor previousState = cache.hiddenState(index);
 
         if (previousState == null) {
-            previousState = Tensors.create(batchSize, hiddenDimension);
+            previousState = Tensors.zeros(batchSize, hiddenDimension);
         }
 
         // [batch_size, hidden_size]

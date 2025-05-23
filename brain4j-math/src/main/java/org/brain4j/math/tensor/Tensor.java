@@ -1,18 +1,12 @@
 package org.brain4j.math.tensor;
 
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.lang.DoubleToDoubleFunction;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.*;
-import org.brain4j.math.tensor.impl.TensorCPU;
-import org.brain4j.math.tensor.impl.TensorGPU;
 import org.brain4j.math.tensor.index.Range;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public interface Tensor extends Iterable<Float> {
@@ -437,69 +431,9 @@ public interface Tensor extends Iterable<Float> {
     Tensor softmax(double temperature);
 
     /**
-     * Converts a tensor to the specified device type.
-     * It currently accepts: CPU, GPU, DEFAULT (delegates to CPU).
-     *
-     * @param deviceType The target device.
-     * @return The tensor on the target device.
-     * @throws IllegalArgumentException If the device type is not supported.
-     */
-    default Tensor to(DeviceType deviceType) {
-        return switch (deviceType) {
-            case CPU, DEFAULT -> TensorCPU.of(shape(), data());
-            case GPU -> TensorGPU.fromTensor(this);
-            default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
-        };
-    }
-
-    /**
-     * Moves the tensor to the GPU if available.
-     * @return the tensor on the GPU.
-     */
-    default Tensor gpu() {
-        return to(DeviceType.GPU);
-    }
-
-    /**
-     * Moves the tensor to the CPU.
-     * @return the tensor on the CPU.
-     */
-    default Tensor cpu() {
-        return to(DeviceType.CPU);
-    }
-
-    /**
-     * Checks if the tensor is loaded on the specified device type.
-     * @param deviceType The device type to check.
-     * @return True if the tensor is loaded on the specified device, false otherwise.
-     */
-    default boolean isOn(DeviceType deviceType) {
-        return switch (deviceType) {
-            case CPU -> this instanceof TensorCPU;
-            case GPU -> this instanceof TensorGPU;
-            default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
-        };
-    }
-
-    /**
      * Gets a string containing all the values of this tensor in the specified format.
      * @param format The string format.
      * @return The tensor values on a string.
      */
     String toString(String format);
-
-    /**
-     * Serializes the tensor to the specified label stream.
-     * @param stream The stream to write on.
-     * @throws Exception If serialization fails.
-     */
-    void serialize(DataOutputStream stream) throws Exception;
-
-    /**
-     * Deserializes the tensor to the specified input stream.
-     * @param stream The stream to read from.
-     * @return A new tensor with the values from the stream.
-     * @throws Exception If deserialization fails.
-     */
-    Tensor deserialize(DataInputStream stream) throws Exception;
 }
