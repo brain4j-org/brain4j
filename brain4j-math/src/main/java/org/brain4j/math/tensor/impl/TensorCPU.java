@@ -30,10 +30,10 @@ public class TensorCPU extends TensorImplBase {
 
     public TensorCPU(int[] shape, float... data) {
         if (data.length == 0) {
-            this.data = new float[computeSize(shape)];
-        } else {
-            this.data = data;
+            data = new float[computeSize(shape)];
         }
+
+        this.data = data;
         this.shape = shape;
         this.strides = computeStrides(shape);
     }

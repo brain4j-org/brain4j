@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Supplier;
 
+import static org.brain4j.math.tensor.Tensors.ones;
+
 public abstract class TensorImplBase implements Tensor, Cloneable {
 
     protected AutogradContext autogradContext;
@@ -256,16 +258,23 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             copy.shape = shape.clone();
             copy.strides = strides.clone();
             copy.data = data.clone();
+            copy.autogradContext = null;
 
             return copy;
         } catch (CloneNotSupportedException e) {
-            throw new AssertionError("Clone not supported", e);
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public Tensor add(Tensor other) {
-        return TensorBroadcast.add(this, other);
+        Tensor result = TensorBroadcast.add(this, other);
+
+        this.data = result.data();
+        this.shape = result.shape();
+        this.strides = result.strides();
+
+        return this;
     }
 
     @Override
@@ -279,7 +288,13 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor sub(Tensor other) {
-        return TensorBroadcast.sub(this, other);
+        Tensor result = TensorBroadcast.sub(this, other);
+
+        this.data = result.data();
+        this.shape = result.shape();
+        this.strides = result.strides();
+
+        return this;
     }
 
     @Override
@@ -293,7 +308,13 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor mul(Tensor other) {
-        return TensorBroadcast.mul(this, other);
+        Tensor result = TensorBroadcast.mul(this, other);
+
+        this.data = result.data();
+        this.shape = result.shape();
+        this.strides = result.strides();
+
+        return this;
     }
 
     @Override
@@ -307,7 +328,13 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor div(Tensor other) {
-        return TensorBroadcast.div(this, other);
+        Tensor result = TensorBroadcast.div(this, other);
+
+        this.data = result.data();
+        this.shape = result.shape();
+        this.strides = result.strides();
+
+        return this;
     }
 
     @Override
@@ -330,7 +357,13 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor pow(Tensor other) {
-        return TensorBroadcast.pow(this, other);
+        Tensor result = TensorBroadcast.pow(this, other);
+
+        this.data = result.data();
+        this.shape = result.shape();
+        this.strides = result.strides();
+
+        return this;
     }
 
     @Override
@@ -672,7 +705,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public void backward() {
-        backward(Tensors.ones(shape));
+        backward(ones(shape));
     }
 
     @Override
@@ -693,7 +726,6 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
 
         result.autogradContext().setOperation(operation, this, other);
-
         return result;
     }
 
@@ -748,7 +780,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             throw new IllegalArgumentException("Tensor does not use backflow!");
         }
 
-        return forward(new ActivationOperation(activation), null);
+        return forward(new ActivationOperation(activation), ones(shape));
     }
 
     @Override
@@ -788,7 +820,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             default -> throw new UnsupportedOperationException("Softmax operation is only supported for 1D/2D tensors.");
         }
 
-        return result;
+        this.data = result.data();
+        return this;
     }
 
     @Override

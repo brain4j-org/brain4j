@@ -42,10 +42,10 @@ public abstract class Updater {
         Tensor biasW = biasesGradients[index];
 
         if (gradW == null) gradW = weightChange;
-        else gradW.add(weightChange);
+        else gradW = gradW.add(weightChange);
 
         if (biasW == null) biasW = biasChange;
-        else biasW.add(biasChange);
+        else biasW = biasW.add(biasChange);
 
         this.weightsGradients[index] = gradW;
         this.biasesGradients[index] = biasW;

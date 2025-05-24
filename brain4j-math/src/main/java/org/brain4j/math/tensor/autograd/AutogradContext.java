@@ -45,6 +45,8 @@ public class AutogradContext {
 
             if (!input.usesGrad()) continue;
 
+//            System.out.println(operation.getClass().getSimpleName());
+//            System.out.println(gradOutput.hashCode() + " | " + input.hashCode() + " | " + inputGrads[i].hashCode());
             input.backward(inputGrads[i]);
         }
     }

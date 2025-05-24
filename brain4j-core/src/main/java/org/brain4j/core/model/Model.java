@@ -315,7 +315,7 @@ public class Model {
 
             String layerType = layer.getClass().getSimpleName();
 
-            int neurons = layer.totalNeurons();
+            int neurons = layer.size();
             int weights = layer.totalWeights();
 
             String formatNeurons = neurons == 0 ? "-" : format.format(neurons);

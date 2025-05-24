@@ -23,7 +23,7 @@ public class ActivationOperation implements Operation {
     public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
         Tensor activated = activation.activate(inputs[0]);
         Tensor derivative = activation.getDerivative(activated); // ∂activation/∂x
-        Tensor gradInput = gradOutput.mul(derivative); // Chain rule: dL/dx = dL/dy * dy/dx
+        Tensor gradInput = gradOutput.times(derivative); // Chain rule: dL/dx = dL/dy * dy/dx
 
         return new Tensor[] { gradInput };
     }

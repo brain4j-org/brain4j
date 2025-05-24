@@ -18,16 +18,8 @@ public interface Activation {
         int[] shape = input.shape();
         Tensor result = Tensors.zeros(shape);
 
-        if (input.dimension() == 2) {
-            for (int i = 0; i < shape[0]; i++) {
-                for (int j = 0; j < shape[1]; j++) {
-                    result.set(activate(input.get(i, j)), i, j);
-                }
-            }
-        } else {
-            for (int i = 0; i < input.elements(); i++) {
-                result.set(activate(input.get(i)), i);
-            }
+        for (int i = 0; i < result.elements(); i++) {
+            result.data()[i] = (float) activate(input.data()[i]);
         }
 
         return result;
@@ -43,13 +35,9 @@ public interface Activation {
      */
     default Tensor getDerivative(Tensor input) {
         int[] shape = input.shape();
-        Tensor result = Tensors.zeros(shape);
-
-        if (input.dimension() != 2) {
-            return getDerivative(input.reshape(1, input.elements()));
-        }
-
         float[] data = input.data();
+
+        Tensor result = Tensors.zeros(shape);
 
         for (int i = 0; i < data.length; i++) {
             result.data()[i] = (float) getDerivative(data[i]);
