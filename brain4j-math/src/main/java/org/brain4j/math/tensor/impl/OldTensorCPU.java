@@ -101,8 +101,9 @@ public class OldTensorCPU implements Cloneable, Tensor {
 
         return strides;
     }
-    
-    private int getLinearIndex(int... indices) {
+
+    @Override
+    public int getLinearIndex(int... indices) {
         if (indices.length != shape.length) {
             throw new IllegalArgumentException("The shape of the tensor does not match the number of indices");
         }

@@ -30,6 +30,13 @@ public interface Tensor extends Iterable<Float> {
     int[] strides();
 
     /**
+     * Gets the linear index of the specified indices in the tensor.
+     * @param indices The multidimensional indices of the tensor.
+     * @return A linear index that represent the specified indices in 1 dimension.
+     */
+    int getLinearIndex(int... indices);
+
+    /**
      * Gets the value at the specified indices in the tensor.
      * @param indices The indices for which the value is requested.
      * @return The value at the specified indices.

@@ -6,5 +6,4 @@ public record MapParameters(
         DoubleToDoubleFunction function,
         float[] data
 ) {
-
 }

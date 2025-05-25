@@ -23,26 +23,6 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     protected int[] strides;
     protected float[] data;
 
-    protected int getLinearIndex(int... indices) {
-        if (indices.length != shape.length) {
-            throw new IllegalArgumentException("The shape of the tensor does not match the number of indices");
-        }
-
-        int linearIndex = 0;
-
-        for (int i = 0; i < indices.length; i++) {
-            if (indices[i] < 0 || indices[i] >= shape[i]) {
-                throw new IndexOutOfBoundsException(
-                        "Index " + indices[i] + " for dimension " + i + " is out of bounds [0, " + shape[i] + ")"
-                );
-            }
-
-            linearIndex += indices[i] * strides[i];
-        }
-
-        return linearIndex;
-    }
-
     protected int computeSize(int[] shape) {
         int size = 1;
 
@@ -207,6 +187,30 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     public int[] strides() {
         return strides;
     }
+
+    @Override
+    public int getLinearIndex(int... indices) {
+        if (indices.length != shape.length) {
+            throw new IllegalArgumentException("The shape of the tensor does not match the number of indices");
+        }
+
+        for (int i = 0; i < indices.length; i++) {
+            if (indices[i] < 0 || indices[i] >= shape[i]) {
+                throw new IndexOutOfBoundsException(
+                        "Index " + indices[i] + " for dimension " + i + " is out of bounds [0, " + shape[i] + ")"
+                );
+            }
+        }
+
+        int linearIndex = 0;
+
+        for (int i = 0; i < indices.length; i++) {
+            linearIndex += indices[i] * strides[i];
+        }
+
+        return linearIndex;
+    }
+
 
     @Override
     public float get(int... indices) {
@@ -428,7 +432,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
-    public Tensor transpose() { // TODO: This must be optimized.
+    public Tensor transpose() {
         if (dimension() == 1) {
             return reshape(1, elements());
         }
@@ -439,23 +443,40 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             );
         }
 
-        final int rows = shape[0];
-        final int cols = shape[1];
+        int rows = shape[0];
+        int cols = shape[1];
 
         Tensor result = Tensors.matrix(cols, rows);
 
-        float[] srcData = this.data;
-        float[] destData = ((TensorImplBase) result).data;
-
-        for (int i = 0; i < rows; i++) {
-            final int rowOffset = i * cols;
-            for (int j = 0; j < cols; j++) {
-                destData[j * rows + i] = srcData[rowOffset + j];
-            }
-        }
-
         if (usesGrad()) {
             result.setAutogradContext(autogradContext);
+        }
+
+        int rowsStride = strides[0];
+        int colsStride = strides[1];
+
+        float[] resultData = result.data();
+        int[] resultStrides = result.strides();
+
+        int resultRowsStride = resultStrides[0];
+        int resultColsStride = resultStrides[1];
+
+        int baseLinearIndex = 0;
+        int baseInverseLinearIndex = 0;
+
+        for (int i = 0; i < rows; i++) {
+            int linearIndex = baseLinearIndex;
+            int inverseLinearIndex = baseInverseLinearIndex;
+
+            for (int j = 0; j < cols - 1; j++) {
+                resultData[inverseLinearIndex] = data[linearIndex];
+
+                linearIndex += colsStride;
+                inverseLinearIndex += resultRowsStride;
+            }
+
+            baseLinearIndex += rowsStride;
+            baseInverseLinearIndex += resultColsStride;
         }
 
         return result;

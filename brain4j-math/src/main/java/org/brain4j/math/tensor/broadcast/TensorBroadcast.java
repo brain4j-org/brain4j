@@ -6,6 +6,14 @@ import org.brain4j.math.tensor.impl.TensorImplBase;
 
 public class TensorBroadcast {
 
+    private static int[] padStrides(int[] strides, int L) {
+        int pad = L - strides.length;
+        int[] out = new int[L];
+
+        System.arraycopy(strides, 0, out, pad, strides.length);
+        return out;
+    }
+
     private static int[] padShape(int[] shape, int L) {
         int[] padded = new int[L];
         int diff = L - shape.length;
@@ -18,23 +26,16 @@ public class TensorBroadcast {
         return padded;
     }
 
-    private static int[] padStrides(int[] strides, int L) {
-        int pad = L - strides.length;
-        int[] out = new int[L];
-
-        System.arraycopy(strides, 0, out, pad, strides.length);
-        return out;
-    }
-
     public static Tensor add(Tensor A, Tensor B) {
         float[] dataA = A.data(), dataB = B.data();
         int[] shapeA = A.shape(), shapeB = B.shape();
         int[] strideA = A.strides(), strideB = B.strides();
 
         int L = Math.max(shapeA.length, shapeB.length);
-
         int[] padA = padShape(shapeA, L);
         int[] padB = padShape(shapeB, L);
+        int[] stridePA = padStrides(strideA, L);
+        int[] stridePB = padStrides(strideB, L);
 
         int[] shapeC = new int[L];
 
@@ -50,28 +51,27 @@ public class TensorBroadcast {
 
         Tensor C = Tensors.zeros(shapeC);
         float[] dataC = C.data();
-        int[] strideC = C.strides();
-        int total = C.elements();
 
-        int[] padStrideA = padStrides(strideA, L);
-        int[] padStrideB = padStrides(strideB, L);
+        int total = C.elements();
+        int[] coord = new int[L];
+
+        int offA = 0, offB = 0;
 
         for (int idx = 0; idx < total; idx++) {
-            int rem = idx;
-            int offA = 0, offB = 0;
-
-            for (int i = 0; i < L; i++) {
-                int coord = rem / strideC[i];
-                rem %= strideC[i];
-
-                int coordA = (padA[i] == 1) ? 0 : coord;
-                int coordB = (padB[i] == 1) ? 0 : coord;
-
-                offA += coordA * padStrideA[i];
-                offB += coordB * padStrideB[i];
-            }
-
             dataC[idx] = dataA[offA] + dataB[offB];
+
+            for (int dim = L - 1; dim >= 0; dim--) {
+                coord[dim]++;
+                if (coord[dim] < shapeC[dim]) {
+                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
+                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
+                    break;
+                } else {
+                    coord[dim] = 0;
+                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
+                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                }
+            }
         }
 
         return C;
@@ -83,9 +83,10 @@ public class TensorBroadcast {
         int[] strideA = A.strides(), strideB = B.strides();
 
         int L = Math.max(shapeA.length, shapeB.length);
-
         int[] padA = padShape(shapeA, L);
         int[] padB = padShape(shapeB, L);
+        int[] stridePA = padStrides(strideA, L);
+        int[] stridePB = padStrides(strideB, L);
 
         int[] shapeC = new int[L];
 
@@ -101,28 +102,27 @@ public class TensorBroadcast {
 
         Tensor C = Tensors.zeros(shapeC);
         float[] dataC = C.data();
-        int[] strideC = C.strides();
-        int total = C.elements();
 
-        int[] padStrideA = padStrides(strideA, L);
-        int[] padStrideB = padStrides(strideB, L);
+        int total = C.elements();
+        int[] coord = new int[L];
+
+        int offA = 0, offB = 0;
 
         for (int idx = 0; idx < total; idx++) {
-            int rem = idx;
-            int offA = 0, offB = 0;
-
-            for (int i = 0; i < L; i++) {
-                int coord = rem / strideC[i];
-                rem %= strideC[i];
-
-                int coordA = (padA[i] == 1) ? 0 : coord;
-                int coordB = (padB[i] == 1) ? 0 : coord;
-
-                offA += coordA * padStrideA[i];
-                offB += coordB * padStrideB[i];
-            }
-
             dataC[idx] = dataA[offA] - dataB[offB];
+
+            for (int dim = L - 1; dim >= 0; dim--) {
+                coord[dim]++;
+                if (coord[dim] < shapeC[dim]) {
+                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
+                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
+                    break;
+                } else {
+                    coord[dim] = 0;
+                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
+                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                }
+            }
         }
 
         return C;
@@ -134,9 +134,10 @@ public class TensorBroadcast {
         int[] strideA = A.strides(), strideB = B.strides();
 
         int L = Math.max(shapeA.length, shapeB.length);
-
         int[] padA = padShape(shapeA, L);
         int[] padB = padShape(shapeB, L);
+        int[] stridePA = padStrides(strideA, L);
+        int[] stridePB = padStrides(strideB, L);
 
         int[] shapeC = new int[L];
 
@@ -152,28 +153,27 @@ public class TensorBroadcast {
 
         Tensor C = Tensors.zeros(shapeC);
         float[] dataC = C.data();
-        int[] strideC = C.strides();
-        int total = C.elements();
 
-        int[] padStrideA = padStrides(strideA, L);
-        int[] padStrideB = padStrides(strideB, L);
+        int total = C.elements();
+        int[] coord = new int[L];
+
+        int offA = 0, offB = 0;
 
         for (int idx = 0; idx < total; idx++) {
-            int rem = idx;
-            int offA = 0, offB = 0;
-
-            for (int i = 0; i < L; i++) {
-                int coord = rem / strideC[i];
-                rem %= strideC[i];
-
-                int coordA = (padA[i] == 1) ? 0 : coord;
-                int coordB = (padB[i] == 1) ? 0 : coord;
-
-                offA += coordA * padStrideA[i];
-                offB += coordB * padStrideB[i];
-            }
-
             dataC[idx] = dataA[offA] * dataB[offB];
+
+            for (int dim = L - 1; dim >= 0; dim--) {
+                coord[dim]++;
+                if (coord[dim] < shapeC[dim]) {
+                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
+                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
+                    break;
+                } else {
+                    coord[dim] = 0;
+                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
+                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                }
+            }
         }
 
         return C;
@@ -185,9 +185,10 @@ public class TensorBroadcast {
         int[] strideA = A.strides(), strideB = B.strides();
 
         int L = Math.max(shapeA.length, shapeB.length);
-
         int[] padA = padShape(shapeA, L);
         int[] padB = padShape(shapeB, L);
+        int[] stridePA = padStrides(strideA, L);
+        int[] stridePB = padStrides(strideB, L);
 
         int[] shapeC = new int[L];
 
@@ -203,28 +204,27 @@ public class TensorBroadcast {
 
         Tensor C = Tensors.zeros(shapeC);
         float[] dataC = C.data();
-        int[] strideC = C.strides();
-        int total = C.elements();
 
-        int[] padStrideA = padStrides(strideA, L);
-        int[] padStrideB = padStrides(strideB, L);
+        int total = C.elements();
+        int[] coord = new int[L];
+
+        int offA = 0, offB = 0;
 
         for (int idx = 0; idx < total; idx++) {
-            int rem = idx;
-            int offA = 0, offB = 0;
-
-            for (int i = 0; i < L; i++) {
-                int coord = rem / strideC[i];
-                rem %= strideC[i];
-
-                int coordA = (padA[i] == 1) ? 0 : coord;
-                int coordB = (padB[i] == 1) ? 0 : coord;
-
-                offA += coordA * padStrideA[i];
-                offB += coordB * padStrideB[i];
-            }
-
             dataC[idx] = dataA[offA] / dataB[offB];
+
+            for (int dim = L - 1; dim >= 0; dim--) {
+                coord[dim]++;
+                if (coord[dim] < shapeC[dim]) {
+                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
+                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
+                    break;
+                } else {
+                    coord[dim] = 0;
+                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
+                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                }
+            }
         }
 
         return C;
@@ -236,9 +236,10 @@ public class TensorBroadcast {
         int[] strideA = A.strides(), strideB = B.strides();
 
         int L = Math.max(shapeA.length, shapeB.length);
-
         int[] padA = padShape(shapeA, L);
         int[] padB = padShape(shapeB, L);
+        int[] stridePA = padStrides(strideA, L);
+        int[] stridePB = padStrides(strideB, L);
 
         int[] shapeC = new int[L];
 
@@ -254,28 +255,27 @@ public class TensorBroadcast {
 
         Tensor C = Tensors.zeros(shapeC);
         float[] dataC = C.data();
-        int[] strideC = C.strides();
-        int total = C.elements();
 
-        int[] padStrideA = padStrides(strideA, L);
-        int[] padStrideB = padStrides(strideB, L);
+        int total = C.elements();
+        int[] coord = new int[L];
+
+        int offA = 0, offB = 0;
 
         for (int idx = 0; idx < total; idx++) {
-            int rem = idx;
-            int offA = 0, offB = 0;
-
-            for (int i = 0; i < L; i++) {
-                int coord = rem / strideC[i];
-                rem %= strideC[i];
-
-                int coordA = (padA[i] == 1) ? 0 : coord;
-                int coordB = (padB[i] == 1) ? 0 : coord;
-
-                offA += coordA * padStrideA[i];
-                offB += coordB * padStrideB[i];
-            }
-
             dataC[idx] = (float) Math.pow(dataA[offA], dataB[offB]);
+
+            for (int dim = L - 1; dim >= 0; dim--) {
+                coord[dim]++;
+                if (coord[dim] < shapeC[dim]) {
+                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
+                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
+                    break;
+                } else {
+                    coord[dim] = 0;
+                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
+                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                }
+            }
         }
 
         return C;
