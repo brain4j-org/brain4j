@@ -4,280 +4,183 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.impl.TensorImplBase;
 
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 public class TensorBroadcast {
 
-    private static int[] padStrides(int[] strides, int L) {
-        int pad = L - strides.length;
-        int[] out = new int[L];
-
-        System.arraycopy(strides, 0, out, pad, strides.length);
-        return out;
-    }
-
-    private static int[] padShape(int[] shape, int L) {
-        int[] padded = new int[L];
-        int diff = L - shape.length;
-
-        for (int i = 0; i < diff; i++) {
-            padded[i] = 1;
-        }
-
-        System.arraycopy(shape, 0, padded, diff, shape.length);
-        return padded;
-    }
-
     public static Tensor add(Tensor A, Tensor B) {
-        float[] dataA = A.data(), dataB = B.data();
-        int[] shapeA = A.shape(), shapeB = B.shape();
-        int[] strideA = A.strides(), strideB = B.strides();
+        int[] shape = A.shape();
+        int[] otherShape = B.shape();
 
-        int L = Math.max(shapeA.length, shapeB.length);
-        int[] padA = padShape(shapeA, L);
-        int[] padB = padShape(shapeB, L);
-        int[] stridePA = padStrides(strideA, L);
-        int[] stridePB = padStrides(strideB, L);
+        float[] aData = A.data();
+        float[] bData = B.data();
 
-        int[] shapeC = new int[L];
-
-        for (int i = 0; i < L; i++) {
-            int a = padA[i], b = padB[i];
-
-            if (a == b || a == 1 || b == 1) {
-                shapeC[i] = Math.max(a, b);
-            } else {
-                throw new IllegalArgumentException("Shape mismatch in dimension " + i + ": " + a + " vs " + b);
+        if (Arrays.equals(shape, otherShape)) {
+            for (int i = 0; i < aData.length; i++) {
+                aData[i] += bData[i];
             }
+
+            return A;
         }
 
-        Tensor C = Tensors.zeros(shapeC);
-        float[] dataC = C.data();
+        if (shape.length == 2 && otherShape.length == 1 && shape[1] == otherShape[0]) {
+            int batch = shape[0];
+            int dimension = shape[1];
 
-        int total = C.elements();
-        int[] coord = new int[L];
+            for (int i = 0; i < batch; i++) {
+                int base = i * dimension;
 
-        int offA = 0, offB = 0;
-
-        for (int idx = 0; idx < total; idx++) {
-            dataC[idx] = dataA[offA] + dataB[offB];
-
-            for (int dim = L - 1; dim >= 0; dim--) {
-                coord[dim]++;
-                if (coord[dim] < shapeC[dim]) {
-                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
-                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
-                    break;
-                } else {
-                    coord[dim] = 0;
-                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
-                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                for (int j = 0; j < dimension; j++) {
+                    aData[base + j] += bData[j];
                 }
             }
+
+            return A;
         }
 
-        return C;
+        throw new IllegalArgumentException(
+            "Cannot broadcast shapes " + Arrays.toString(shape) + " and " + Arrays.toString(otherShape)
+        );
     }
 
     public static Tensor sub(Tensor A, Tensor B) {
-        float[] dataA = A.data(), dataB = B.data();
-        int[] shapeA = A.shape(), shapeB = B.shape();
-        int[] strideA = A.strides(), strideB = B.strides();
+        int[] shape = A.shape();
+        int[] otherShape = B.shape();
 
-        int L = Math.max(shapeA.length, shapeB.length);
-        int[] padA = padShape(shapeA, L);
-        int[] padB = padShape(shapeB, L);
-        int[] stridePA = padStrides(strideA, L);
-        int[] stridePB = padStrides(strideB, L);
+        float[] aData = A.data();
+        float[] bData = B.data();
 
-        int[] shapeC = new int[L];
-
-        for (int i = 0; i < L; i++) {
-            int a = padA[i], b = padB[i];
-
-            if (a == b || a == 1 || b == 1) {
-                shapeC[i] = Math.max(a, b);
-            } else {
-                throw new IllegalArgumentException("Shape mismatch in dimension " + i + ": " + a + " vs " + b);
+        if (Arrays.equals(shape, otherShape)) {
+            for (int i = 0; i < aData.length; i++) {
+                aData[i] -= bData[i];
             }
+
+            return A;
         }
 
-        Tensor C = Tensors.zeros(shapeC);
-        float[] dataC = C.data();
+        if (shape.length == 2 && otherShape.length == 1 && shape[1] == otherShape[0]) {
+            int batch = shape[0];
+            int dimension = shape[1];
 
-        int total = C.elements();
-        int[] coord = new int[L];
+            for (int i = 0; i < batch; i++) {
+                int base = i * dimension;
 
-        int offA = 0, offB = 0;
-
-        for (int idx = 0; idx < total; idx++) {
-            dataC[idx] = dataA[offA] - dataB[offB];
-
-            for (int dim = L - 1; dim >= 0; dim--) {
-                coord[dim]++;
-                if (coord[dim] < shapeC[dim]) {
-                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
-                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
-                    break;
-                } else {
-                    coord[dim] = 0;
-                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
-                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                for (int j = 0; j < dimension; j++) {
+                    aData[base + j] -= bData[j];
                 }
             }
+
+            return A;
         }
 
-        return C;
+        throw new IllegalArgumentException(
+            "Cannot broadcast shapes " + Arrays.toString(shape) + " and " + Arrays.toString(otherShape)
+        );
     }
 
     public static Tensor mul(Tensor A, Tensor B) {
-        float[] dataA = A.data(), dataB = B.data();
-        int[] shapeA = A.shape(), shapeB = B.shape();
-        int[] strideA = A.strides(), strideB = B.strides();
+        int[] shape = A.shape();
+        int[] otherShape = B.shape();
 
-        int L = Math.max(shapeA.length, shapeB.length);
-        int[] padA = padShape(shapeA, L);
-        int[] padB = padShape(shapeB, L);
-        int[] stridePA = padStrides(strideA, L);
-        int[] stridePB = padStrides(strideB, L);
+        float[] aData = A.data();
+        float[] bData = B.data();
 
-        int[] shapeC = new int[L];
-
-        for (int i = 0; i < L; i++) {
-            int a = padA[i], b = padB[i];
-
-            if (a == b || a == 1 || b == 1) {
-                shapeC[i] = Math.max(a, b);
-            } else {
-                throw new IllegalArgumentException("Shape mismatch in dimension " + i + ": " + a + " vs " + b);
+        if (Arrays.equals(shape, otherShape)) {
+            for (int i = 0; i < aData.length; i++) {
+                aData[i] *= bData[i];
             }
+
+            return A;
         }
 
-        Tensor C = Tensors.zeros(shapeC);
-        float[] dataC = C.data();
+        if (shape.length == 2 && otherShape.length == 1 && shape[1] == otherShape[0]) {
+            int batch = shape[0];
+            int dimension = shape[1];
 
-        int total = C.elements();
-        int[] coord = new int[L];
+            for (int i = 0; i < batch; i++) {
+                int base = i * dimension;
 
-        int offA = 0, offB = 0;
-
-        for (int idx = 0; idx < total; idx++) {
-            dataC[idx] = dataA[offA] * dataB[offB];
-
-            for (int dim = L - 1; dim >= 0; dim--) {
-                coord[dim]++;
-                if (coord[dim] < shapeC[dim]) {
-                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
-                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
-                    break;
-                } else {
-                    coord[dim] = 0;
-                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
-                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                for (int j = 0; j < dimension; j++) {
+                    aData[base + j] *= bData[j];
                 }
             }
+
+            return A;
         }
 
-        return C;
+        throw new IllegalArgumentException(
+            "Cannot broadcast shapes " + Arrays.toString(shape) + " and " + Arrays.toString(otherShape)
+        );
     }
 
     public static Tensor div(Tensor A, Tensor B) {
-        float[] dataA = A.data(), dataB = B.data();
-        int[] shapeA = A.shape(), shapeB = B.shape();
-        int[] strideA = A.strides(), strideB = B.strides();
+        int[] shape = A.shape();
+        int[] otherShape = B.shape();
 
-        int L = Math.max(shapeA.length, shapeB.length);
-        int[] padA = padShape(shapeA, L);
-        int[] padB = padShape(shapeB, L);
-        int[] stridePA = padStrides(strideA, L);
-        int[] stridePB = padStrides(strideB, L);
+        float[] aData = A.data();
+        float[] bData = B.data();
 
-        int[] shapeC = new int[L];
-
-        for (int i = 0; i < L; i++) {
-            int a = padA[i], b = padB[i];
-
-            if (a == b || a == 1 || b == 1) {
-                shapeC[i] = Math.max(a, b);
-            } else {
-                throw new IllegalArgumentException("Shape mismatch in dimension " + i + ": " + a + " vs " + b);
+        if (Arrays.equals(shape, otherShape)) {
+            for (int i = 0; i < aData.length; i++) {
+                aData[i] /= bData[i];
             }
+
+            return A;
         }
 
-        Tensor C = Tensors.zeros(shapeC);
-        float[] dataC = C.data();
+        if (shape.length == 2 && otherShape.length == 1 && shape[1] == otherShape[0]) {
+            int batch = shape[0];
+            int dimension = shape[1];
 
-        int total = C.elements();
-        int[] coord = new int[L];
+            for (int i = 0; i < batch; i++) {
+                int base = i * dimension;
 
-        int offA = 0, offB = 0;
-
-        for (int idx = 0; idx < total; idx++) {
-            dataC[idx] = dataA[offA] / dataB[offB];
-
-            for (int dim = L - 1; dim >= 0; dim--) {
-                coord[dim]++;
-                if (coord[dim] < shapeC[dim]) {
-                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
-                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
-                    break;
-                } else {
-                    coord[dim] = 0;
-                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
-                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                for (int j = 0; j < dimension; j++) {
+                    aData[base + j] /= bData[j];
                 }
             }
+
+            return A;
         }
 
-        return C;
+        throw new IllegalArgumentException(
+            "Cannot broadcast shapes " + Arrays.toString(shape) + " and " + Arrays.toString(otherShape)
+        );
     }
 
     public static Tensor pow(Tensor A, Tensor B) {
-        float[] dataA = A.data(), dataB = B.data();
-        int[] shapeA = A.shape(), shapeB = B.shape();
-        int[] strideA = A.strides(), strideB = B.strides();
+        int[] shape = A.shape();
+        int[] otherShape = B.shape();
 
-        int L = Math.max(shapeA.length, shapeB.length);
-        int[] padA = padShape(shapeA, L);
-        int[] padB = padShape(shapeB, L);
-        int[] stridePA = padStrides(strideA, L);
-        int[] stridePB = padStrides(strideB, L);
+        float[] aData = A.data();
+        float[] bData = B.data();
 
-        int[] shapeC = new int[L];
-
-        for (int i = 0; i < L; i++) {
-            int a = padA[i], b = padB[i];
-
-            if (a == b || a == 1 || b == 1) {
-                shapeC[i] = Math.max(a, b);
-            } else {
-                throw new IllegalArgumentException("Shape mismatch in dimension " + i + ": " + a + " vs " + b);
+        if (Arrays.equals(shape, otherShape)) {
+            for (int i = 0; i < aData.length; i++) {
+                aData[i] = (float) Math.pow(aData[i], bData[i]);
             }
+
+            return A;
         }
 
-        Tensor C = Tensors.zeros(shapeC);
-        float[] dataC = C.data();
+        if (shape.length == 2 && otherShape.length == 1 && shape[1] == otherShape[0]) {
+            int batch = shape[0];
+            int dimension = shape[1];
 
-        int total = C.elements();
-        int[] coord = new int[L];
+            for (int i = 0; i < batch; i++) {
+                int base = i * dimension;
 
-        int offA = 0, offB = 0;
-
-        for (int idx = 0; idx < total; idx++) {
-            dataC[idx] = (float) Math.pow(dataA[offA], dataB[offB]);
-
-            for (int dim = L - 1; dim >= 0; dim--) {
-                coord[dim]++;
-                if (coord[dim] < shapeC[dim]) {
-                    offA += (padA[dim] == 1 ? 0 : stridePA[dim]);
-                    offB += (padB[dim] == 1 ? 0 : stridePB[dim]);
-                    break;
-                } else {
-                    coord[dim] = 0;
-                    offA -= (padA[dim] == 1 ? 0 : stridePA[dim] * (shapeC[dim] - 1));
-                    offB -= (padB[dim] == 1 ? 0 : stridePB[dim] * (shapeC[dim] - 1));
+                for (int j = 0; j < dimension; j++) {
+                    aData[base + j] = (float) Math.pow(aData[base + j], bData[j]);
                 }
             }
+
+            return A;
         }
 
-        return C;
+        throw new IllegalArgumentException(
+            "Cannot broadcast shapes " + Arrays.toString(shape) + " and " + Arrays.toString(otherShape)
+        );
     }
 }

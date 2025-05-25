@@ -272,12 +272,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor add(Tensor other) {
-        Tensor result = TensorBroadcast.add(this, other);
-
-        this.data = result.data();
-        this.shape = result.shape();
-        this.strides = result.strides();
-
+        TensorBroadcast.add(this, other);
         return this;
     }
 
@@ -292,12 +287,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor sub(Tensor other) {
-        Tensor result = TensorBroadcast.sub(this, other);
-
-        this.data = result.data();
-        this.shape = result.shape();
-        this.strides = result.strides();
-
+        TensorBroadcast.sub(this, other);
         return this;
     }
 
@@ -312,12 +302,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor mul(Tensor other) {
-        Tensor result = TensorBroadcast.mul(this, other);
-
-        this.data = result.data();
-        this.shape = result.shape();
-        this.strides = result.strides();
-
+        TensorBroadcast.mul(this, other);
         return this;
     }
 
@@ -332,12 +317,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor div(Tensor other) {
-        Tensor result = TensorBroadcast.div(this, other);
-
-        this.data = result.data();
-        this.shape = result.shape();
-        this.strides = result.strides();
-
+        TensorBroadcast.div(this, other);
         return this;
     }
 
@@ -361,12 +341,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor pow(Tensor other) {
-        Tensor result = TensorBroadcast.pow(this, other);
-
-        this.data = result.data();
-        this.shape = result.shape();
-        this.strides = result.strides();
-
+        TensorBroadcast.pow(this, other);
         return this;
     }
 
