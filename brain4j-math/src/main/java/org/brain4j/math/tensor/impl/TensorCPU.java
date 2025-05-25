@@ -125,17 +125,15 @@ public class TensorCPU implements Cloneable, Tensor {
 
     public static Tensor of(int[] shape, float... data) {
         Tensor tensor = new TensorCPU(shape);
-        
-        for (int i = 0; i < data.length; i++) {
-            tensor.getData()[i] = data[i];
-        }
+
+        System.arraycopy(data, 0, tensor.getData(), 0, data.length);
         
         return tensor;
     }
     
     public static Tensor of(int[] shape, double... data) {
         Tensor tensor = new TensorCPU(shape);
-        
+
         for (int i = 0; i < data.length; i++) {
             tensor.getData()[i] = (float) data[i];
         }
@@ -559,10 +557,30 @@ public class TensorCPU implements Cloneable, Tensor {
 
         Tensor result = Tensors.matrix(cols, rows);
 
+        int rowsStride = strides[0];
+        int colsStride = strides[1];
+
+        float[] resultData = result.getData();
+        int[] resultStrides = ((TensorCPU) result).strides;
+
+        int resultRowsStride = resultStrides[0];
+        int resultColsStride = resultStrides[1];
+
+        int baseLinearIndex = 0;
+        int baseInverseLinearIndex = 0;
         for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                result.set(get(i, j), j, i);
+            int linearIndex = baseLinearIndex;
+            int inverseLinearIndex = baseInverseLinearIndex;
+
+            for (int j = 0; j < cols - 1; j++) {
+                resultData[inverseLinearIndex] = data[linearIndex];
+
+                linearIndex += colsStride;
+                inverseLinearIndex += resultRowsStride;
             }
+
+            baseLinearIndex += rowsStride;
+            baseInverseLinearIndex += resultColsStride;
         }
 
         return result;
@@ -773,22 +791,12 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor pow(double value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (float) Math.pow(data[i], value);
-        }
-
-        return this;
+        return map(data -> Math.pow(data, value));
     }
 
     @Override
     public Tensor pow(Tensor other) {
-        checkSameShape(other);
-
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (float) Math.pow(data[i], other.getData()[i]);
-        }
-
-        return this;
+        return mapWithIndex((i, data) -> (float) Math.pow(data, other.getData()[i]));
     }
 
     @Override
@@ -889,52 +897,66 @@ public class TensorCPU implements Cloneable, Tensor {
             }
         }
 
-        Tensor result = new TensorCPU(newShape);
+        TensorCPU result = new TensorCPU(newShape);
         int[] indices = new int[shape.length];
         int[] resultIndices = keepDim ? new int[shape.length] : new int[shape.length - 1];
 
-        sumAlongDimension(result, dim, keepDim, indices, resultIndices, 0);
+        sumAlongDimensions(result, dim, keepDim, indices, resultIndices);
 
         return result;
     }
 
-    private void sumAlongDimension(
-        Tensor result,
-        int dim,
-        boolean keepDim,
-        int[] indices,
-        int[] resultIndices,
-        int currDim
+    void sumAlongDimensions(
+            TensorCPU result,
+            int dim,
+            boolean keepDim,
+            int[] indices,
+            int[] resultIndices
     ) {
-        if (currDim == shape.length) {
-            float value = get(indices);
+        int batch = 1;
+        for (int currentDim = 0; currentDim < shape.length; currentDim++) {
+            if (currentDim != dim || keepDim) {
+                batch *= shape[currentDim];
+            }
+        }
 
-            if (keepDim) {
-                System.arraycopy(indices, 0, resultIndices, 0, indices.length);
-                resultIndices[dim] = 0;
-            } else {
-                int resultIdx = 0;
-                for (int i = 0; i < indices.length; i++) {
-                    if (i != dim) {
-                        resultIndices[resultIdx++] = indices[i];
-                    }
+        for (int linearIndex = 0; linearIndex < batch; linearIndex++) {
+            int remainingIndex = linearIndex;
+            int skippedDimIndex = 0;
+
+            for (int currentDim = 0; currentDim < shape.length; currentDim++) {
+                if (currentDim == dim && !keepDim) {
+                    continue;
+                }
+
+                int stride = shape[currentDim];
+                indices[currentDim] = remainingIndex % stride;
+                remainingIndex /= stride;
+                if (keepDim) {
+                    resultIndices[currentDim] = indices[currentDim];
+                } else {
+                    resultIndices[skippedDimIndex++] = indices[currentDim];
                 }
             }
 
-            result.set(result.get(resultIndices) + value, resultIndices);
-            return;
-        }
+            float sum = 0;
+            for (int i = 0; i < shape[dim]; i++) {
+                indices[dim] = i;
+                int offset = 0;
 
-        if (currDim == dim) {
-            for (int i = 0; i < shape[currDim]; i++) {
-                indices[currDim] = i;
-                sumAlongDimension(result, dim, keepDim, indices, resultIndices, currDim + 1);
+                for (int currentDim = 0; currentDim < shape.length; currentDim++) {
+                    offset += indices[currentDim] * strides[currentDim];
+                }
+
+                sum += data[offset];
             }
-        } else {
-            for (int i = 0; i < shape[currDim]; i++) {
-                indices[currDim] = i;
-                sumAlongDimension(result, dim, keepDim, indices, resultIndices, currDim + 1);
+
+            int resultOffset = 0;
+            for (int currentDim = 0; currentDim < resultIndices.length; currentDim++) {
+                resultOffset += resultIndices[currentDim] * result.strides[currentDim];
             }
+
+            result.getData()[resultOffset] = sum;
         }
     }
 
