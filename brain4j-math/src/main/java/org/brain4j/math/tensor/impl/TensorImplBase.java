@@ -428,7 +428,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
-    public Tensor transpose() {
+    public Tensor transpose() { // TODO: This must be optimized.
         if (dimension() == 1) {
             return reshape(1, elements());
         }
@@ -439,14 +439,18 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             );
         }
 
-        int rows = shape[0];
-        int cols = shape[1];
+        final int rows = shape[0];
+        final int cols = shape[1];
 
         Tensor result = Tensors.matrix(cols, rows);
 
+        float[] srcData = this.data;
+        float[] destData = ((TensorImplBase) result).data;
+
         for (int i = 0; i < rows; i++) {
+            final int rowOffset = i * cols;
             for (int j = 0; j < cols; j++) {
-                result.set(get(i, j), j, i);
+                destData[j * rows + i] = srcData[rowOffset + j];
             }
         }
 
