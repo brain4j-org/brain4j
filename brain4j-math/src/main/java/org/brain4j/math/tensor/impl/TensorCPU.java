@@ -21,8 +21,12 @@ public class TensorCPU extends TensorImplBase {
         if (module.isPresent()) {
             matmulProvider = new SimdMatmulProvider();
         } else {
-            System.out.println("WARNING: The Vector incubator API is not available and it's recommended to use.");
-            System.out.println("Check out this guide to learn more: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD");
+            System.out.println(
+                    """
+                    WARNING: The Vector incubator API is not available and it's recommended to use.
+                    Check out this guide to learn more: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD
+                    """
+            );
 
             matmulProvider = new NormalMatmulProvider();
         }
