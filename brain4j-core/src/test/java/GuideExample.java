@@ -43,7 +43,11 @@ public class GuideExample {
         ListDataSource dataSource = new ListDataSource(samples, false, 4);
 
         // Fit the model for 50 epoches, evaluate every 10
+        long start = System.nanoTime();
         model.fit(dataSource, 50, 10);
+        long took = System.nanoTime() - start;
+
+        System.out.printf("Took: %.4f ms%n", took / 1e6);
 
         // You can evaluate the model like this
         EvaluationResult evaluation = model.evaluate(dataSource);
