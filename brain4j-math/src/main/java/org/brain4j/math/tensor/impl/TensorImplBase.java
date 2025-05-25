@@ -804,14 +804,6 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor softmax(double temperature) {
-        int dim = dimension() > 1 ? 1 : 0;
-
-        if (dim >= dimension()) {
-            throw new IllegalArgumentException(
-                    "Dimension " + dim + " out of bounds for limits of tensor shape " + Arrays.toString(shape)
-            );
-        }
-
         Tensor result = clone();
 
         switch (dimension()) {
@@ -820,8 +812,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             default -> throw new UnsupportedOperationException("Softmax operation is only supported for 1D/2D tensors.");
         }
 
-        this.data = result.data();
-        return this;
+        return result;
     }
 
     @Override
