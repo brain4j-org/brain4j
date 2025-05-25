@@ -897,7 +897,7 @@ public class TensorCPU implements Cloneable, Tensor {
             }
         }
 
-        Tensor result = new TensorCPU(newShape);
+        TensorCPU result = new TensorCPU(newShape);
         int[] indices = new int[shape.length];
         int[] resultIndices = keepDim ? new int[shape.length] : new int[shape.length - 1];
 
@@ -906,34 +906,58 @@ public class TensorCPU implements Cloneable, Tensor {
         return result;
     }
 
-    private void sumAlongDimensions(
-            Tensor result,
+    void sumAlongDimensions(
+            TensorCPU result,
             int dim,
             boolean keepDim,
             int[] indices,
             int[] resultIndices
     ) {
-        for (int currDim = 0; currDim < shape.length; currDim++) {
-            for (int i = 0; i < shape[currDim]; i++) {
-                indices[currDim] = i;
+        int batch = 1;
+        for (int currentDim = 0; currentDim < shape.length; currentDim++) {
+            if (currentDim != dim || keepDim) {
+                batch *= shape[currentDim];
             }
         }
 
-        float value = get(indices);
+        for (int linearIndex = 0; linearIndex < batch; linearIndex++) {
+            int remainingIndex = linearIndex;
+            int skippedDimIndex = 0;
 
-        if (keepDim) {
-            System.arraycopy(indices, 0, resultIndices, 0, indices.length);
-            resultIndices[dim] = 0;
-        } else {
-            int resultIdx = 0;
-            for (int i = 0; i < indices.length; i++) {
-                if (i != dim) {
-                    resultIndices[resultIdx++] = indices[i];
+            for (int currentDim = 0; currentDim < shape.length; currentDim++) {
+                if (currentDim == dim && !keepDim) {
+                    continue;
+                }
+
+                int stride = shape[currentDim];
+                indices[currentDim] = remainingIndex % stride;
+                remainingIndex /= stride;
+                if (keepDim) {
+                    resultIndices[currentDim] = indices[currentDim];
+                } else {
+                    resultIndices[skippedDimIndex++] = indices[currentDim];
                 }
             }
-        }
 
-        result.set(result.get(resultIndices) + value, resultIndices);
+            float sum = 0;
+            for (int i = 0; i < shape[dim]; i++) {
+                indices[dim] = i;
+                int offset = 0;
+
+                for (int currentDim = 0; currentDim < shape.length; currentDim++) {
+                    offset += indices[currentDim] * strides[currentDim];
+                }
+
+                sum += data[offset];
+            }
+
+            int resultOffset = 0;
+            for (int currentDim = 0; currentDim < resultIndices.length; currentDim++) {
+                resultOffset += resultIndices[currentDim] * result.strides[currentDim];
+            }
+
+            result.getData()[resultOffset] = sum;
+        }
     }
 
     @Override
