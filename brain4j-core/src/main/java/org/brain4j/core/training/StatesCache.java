@@ -8,11 +8,13 @@ public class StatesCache {
 
     private final Tensor[] inputs;
     private final Tensor[] outputs;
+    private final Tensor[] preActivations;
     private final Tensor[] hiddenStates;
 
     public StatesCache(Model model) {
         this.inputs = new Tensor[model.size()];
         this.outputs = new Tensor[model.size()];
+        this.preActivations = new Tensor[model.size()];
         this.hiddenStates = new Tensor[model.size()];
     }
 
@@ -30,6 +32,14 @@ public class StatesCache {
 
     public void setOutput(int index, Tensor output) {
         outputs[index] = output;
+    }
+
+    public Tensor preActivation(int index) {
+        return preActivations[index];
+    }
+
+    public void setPreActivation(int index, Tensor preActivation) {
+        preActivations[index] = preActivation;
     }
 
     public Tensor hiddenState(int index) {

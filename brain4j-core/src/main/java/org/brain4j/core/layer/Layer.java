@@ -64,7 +64,7 @@ public abstract class Layer {
         Tensor error = outputs.minus(targets);
         Tensor derivatives = activation.getDerivative(outputs);
 
-        Tensor output = cache.output(index);
+        Tensor output = cache.preActivation(index);
         Tensor delta = lossFunction.getDelta(error, derivatives);
 
         output.backward(delta);

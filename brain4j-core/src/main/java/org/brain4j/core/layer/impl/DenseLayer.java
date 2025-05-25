@@ -70,13 +70,15 @@ public class DenseLayer extends Layer {
         // Shape: [batch_size, output_size]
         Tensor output = input
             .matmulGrad(weights.transpose())
-            .addGrad(bias)
-            .activateGrad(activation);
+            .addGrad(bias);
 
         cache.setInput(index, input);
-        cache.setOutput(index, output);
+        cache.setPreActivation(index, output);
 
-        return output;
+        Tensor activated = output.activateGrad(activation);
+        cache.setOutput(index, activated);
+
+        return activated;
     }
 
     @Override
