@@ -2,6 +2,7 @@ package org.brain4j.math.tensor;
 
 import org.brain4j.math.tensor.impl.TensorCPU;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class Tensors {
@@ -27,7 +28,9 @@ public class Tensors {
     }
     
     public static Tensor ones(int... shape) {
-        return zeros(shape).fill(1);
+        Tensor result = new TensorCPU(shape);
+        Arrays.fill(result.data(), 1);
+        return result;
     }
 
     public static Tensor concat(List<Tensor> inputs) {
