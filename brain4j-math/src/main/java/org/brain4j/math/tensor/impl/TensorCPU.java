@@ -791,22 +791,12 @@ public class TensorCPU implements Cloneable, Tensor {
 
     @Override
     public Tensor pow(double value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (float) Math.pow(data[i], value);
-        }
-
-        return this;
+        return map(data -> Math.pow(data, value));
     }
 
     @Override
     public Tensor pow(Tensor other) {
-        checkSameShape(other);
-
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (float) Math.pow(data[i], other.getData()[i]);
-        }
-
-        return this;
+        return mapWithIndex((i, data) -> (float) Math.pow(data, other.getData()[i]));
     }
 
     @Override
