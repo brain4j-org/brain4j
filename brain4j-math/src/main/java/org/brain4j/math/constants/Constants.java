@@ -74,5 +74,7 @@ public final class Constants {
     
     public static final int MAX_WORKGROUP_SIZE = 1024;
 
+    public static final int WORK_THRESHOLD = 1024;
+
     public static final double PRECISION_THRESHOLD = 1e-7;
 } 

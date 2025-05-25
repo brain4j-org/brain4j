@@ -5,9 +5,9 @@ import org.brain4j.math.lang.DoubleToDoubleFunction;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
-public class ParallelMap extends RecursiveAction {
+import static org.brain4j.math.constants.Constants.WORK_THRESHOLD;
 
-    private static final int WORK_THRESHOLD = 1024;
+public class ParallelMap extends RecursiveAction {
 
     private final MapParameters parameters;
     private final int start;
