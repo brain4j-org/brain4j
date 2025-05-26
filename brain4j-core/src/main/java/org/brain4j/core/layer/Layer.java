@@ -50,7 +50,7 @@ public abstract class Layer implements BinarySerializable {
     public Layer(int input, Activation activation) {
         this.id = totalLayers++;
         this.activation = activation;
-        this.bias = Tensors.create(input);
+        this.bias = Tensors.zeros(input);
         this.weights = Tensors.zeros(0);
     }
 
@@ -148,13 +148,13 @@ public abstract class Layer implements BinarySerializable {
         int output = this.getTotalNeurons();
 
         for (int i = 0; i < bias.elements(); i++) {
-            bias.getData()[i] = (float) (2 * generator.nextDouble() - 1);
+            bias.getData()[i] = (float) (generator.nextDouble(2 * bound) - bound);
         }
 
         this.weights = Tensors.matrix(input, output);
 
         for (int i = 0; i < weights.elements(); i++) {
-            weights.getData()[i] = (float) (2 * generator.nextDouble() - 1);
+            weights.getData()[i] = (float) (generator.nextDouble(2 * bound) - bound);
         }
     }
 

@@ -57,6 +57,11 @@ public class LayerNorm extends Layer {
     }
 
     @Override
+    public boolean canConnect() {
+        return false;
+    }
+
+    @Override
     public Tensor forward(
         int index,
         StatesCache cache,
@@ -70,7 +75,7 @@ public class LayerNorm extends Layer {
             Range range = new Range(i, i + 1);
 
             Tensor token = input.slice(range).vector();
-            Tensor row = normalize1D(token).mul(weights).add(bias);
+            Tensor row = normalize1D(token);
 
             for (int j = 0; j < row.elements(); j++) {
                 result.set(row.get(j), i, j);

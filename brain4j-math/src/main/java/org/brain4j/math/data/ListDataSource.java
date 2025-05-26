@@ -46,13 +46,15 @@ public class ListDataSource implements Cloneable {
 
     public ListDataSource normalize() {
         List<Tensor> inputs = new ArrayList<>();
+        List<Tensor> labels = new ArrayList<>();
 
         for (Sample sample : samples) {
             inputs.add(sample.input());
+            labels.add(sample.label());
         }
 
         Tensor first = inputs.getFirst();
-        int features = first.dimension();
+        int features = first.elements();
 
         float[] means = new float[features];
         float[] stds = new float[features];
@@ -78,6 +80,14 @@ public class ListDataSource implements Cloneable {
 
         for (Tensor input : inputs) {
             input.sub(mean).div(std);
+        }
+
+        samples.clear();
+
+        for (int i = 0; i < inputs.size(); i++) {
+            Tensor input = inputs.get(i);
+            Tensor label = labels.get(i);
+            samples.add(new Sample(input, label));
         }
 
         batchedInputs.clear();
