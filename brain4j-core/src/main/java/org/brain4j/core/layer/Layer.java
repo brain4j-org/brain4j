@@ -129,12 +129,6 @@ public abstract class Layer {
         return bias;
     }
 
-    public int totalNeurons() {
-        if (bias == null) return 0;
-
-        return bias.elements();
-    }
-
     public int totalWeights() {
         if (weights == null) return 0;
 
