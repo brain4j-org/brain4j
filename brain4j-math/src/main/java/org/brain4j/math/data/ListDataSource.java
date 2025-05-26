@@ -6,6 +6,7 @@ import org.brain4j.math.tensor.Tensors;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ListDataSource implements Cloneable, Iterable<Sample> {
 
@@ -20,7 +21,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         this.samples = samples;
         this.batchedInputs = new ArrayList<>();
         this.batchedLabels = new ArrayList<>();
-        this.batches = samples.size() / batchSize;
+        this.batches = (samples.size() + batchSize - 1) / batchSize;
         this.batchSize = batchSize;
 
         if (shuffle) {
@@ -138,7 +139,10 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
     @Override
     public ListDataSource clone() {
-        return new ListDataSource(samples, false, batchSize);
+        List<Sample> copied = samples.stream()
+                .map(s -> new Sample(s.input().clone(), s.label().clone()))
+                .collect(Collectors.toList());
+        return new ListDataSource(copied, false, batchSize);
     }
 
     public int size() {

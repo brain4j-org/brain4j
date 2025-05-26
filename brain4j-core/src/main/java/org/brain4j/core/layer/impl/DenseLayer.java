@@ -1,6 +1,5 @@
 package org.brain4j.core.layer.impl;
 
-import jdk.jshell.spi.SPIResolutionException;
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.Layer;
@@ -40,17 +39,20 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect(Layer previous, Layer next) {
+        super.connect(previous, next);
+
         if (previous == null) return;
+
         // Shape: [output_size, input_size]
         this.weights = Tensors.zeros(dimension, previous.size()).withGrad();
         this.bias = Tensors.zeros(dimension).withGrad();
     }
 
     @Override
-    public void initWeights(Random generator, double bound) {
-        this.weights.map(x -> (2 * generator.nextDouble() - 1) * bound);
-        this.bias.map(x -> (2 * generator.nextDouble() - 1) * bound);
+    public void initWeights(Random generator, int input, int output) {
+        this.weights.map(x -> weightInit.randomValue(generator, input, output));
+        this.bias.map(x -> weightInit.randomValue(generator, input, output));
     }
 
     @Override
@@ -73,9 +75,14 @@ public class DenseLayer extends Layer {
             .addGrad(bias);
 
         cache.setInput(index, input);
-        cache.setPreActivation(index, output);
+
+        if (next instanceof LayerNorm layerNorm) {
+            output = layerNorm.forward(cache, output, index + 1, training);
+        }
 
         Tensor activated = output.activateGrad(activation);
+
+        cache.setPreActivation(index, output);
         cache.setOutput(index, activated);
 
         return activated;

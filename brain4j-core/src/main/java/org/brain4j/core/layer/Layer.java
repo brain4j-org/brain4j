@@ -4,11 +4,11 @@ import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
+import org.brain4j.math.weights.WeightInitialization;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.core.training.StatesCache;
 
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -21,12 +21,20 @@ public abstract class Layer {
 
     protected final Activation activation;
     protected final GradientClipper clipper;
+    protected final WeightInitialization weightInit;
+
     protected Tensor weights;
     protected Tensor bias;
+    protected Layer next;
 
     public Layer(Activation activation, GradientClipper clipper) {
+        this(activation, clipper, activation.defaultWeightInit());
+    }
+
+    public Layer(Activation activation, GradientClipper clipper, WeightInitialization weightInit) {
         this.activation = activation;
         this.clipper = clipper;
+        this.weightInit = weightInit;
     }
 
     /**
@@ -45,11 +53,11 @@ public abstract class Layer {
      */
     public abstract int size();
 
-    public void connect(Layer previous) {
-        // No-op
+    public void connect(Layer previous, Layer next) {
+        this.next = next;
     }
 
-    public void initWeights(Random generator, double bound) {
+    public void initWeights(Random generator, int input, int output) {
         // No-op
     }
 
@@ -87,6 +95,10 @@ public abstract class Layer {
         clipper.clip(biasGradient);
 
         updater.change(weightsGradient, biasGradient, index);
+    }
+
+    public boolean skipForward() {
+        return false;
     }
 
     public boolean skipPropagate() {

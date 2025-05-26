@@ -1,6 +1,5 @@
 package org.brain4j.core.model;
 
-import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.BackPropagation;
@@ -9,8 +8,6 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
-import org.brain4j.core.weights.WeightInitialization;
-import org.brain4j.core.weights.impl.UniformXavierInit;
 import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
@@ -40,7 +37,6 @@ public class Model {
     protected BackPropagation backPropagation;
     protected Optimizer optimizer;
     protected Updater updater;
-    protected WeightInitialization weightInit;
     protected LossFunction lossFunction;
 
     /**
@@ -223,11 +219,9 @@ public class Model {
         for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
 
-            if (layer == null) {
+            if (layer == null || layer.skipForward()) {
                 throw new IllegalStateException("Layer at index " + i + " is null!");
             }
-
-            if (layer.skipPropagate()) continue;
 
             pass = layer.forward(cache, pass, i, training);
         }
@@ -275,13 +269,12 @@ public class Model {
     }
 
     public Model compile(LossFunction lossFunction, Optimizer optimizer) {
-        return compile(lossFunction, optimizer, new StochasticUpdater(), new UniformXavierInit());
+        return compile(lossFunction, optimizer, new StochasticUpdater());
     }
 
-    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater, WeightInitialization weightInit) {
+    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         this.optimizer = optimizer;
         this.updater = updater;
-        this.weightInit = weightInit;
         this.lossFunction = lossFunction;
         this.backPropagation = new BackPropagation(this, optimizer, updater);
 
@@ -294,7 +287,7 @@ public class Model {
 
 
     public String summary() {
-        if (updater == null || optimizer == null || weightInit == null) {
+        if (updater == null || optimizer == null) {
             throw new IllegalStateException("The network is not compiled! Make sure to call compile() before.");
         }
 
@@ -353,14 +346,18 @@ public class Model {
 
         for (int i = 1; i < size(); i++) {
             Layer layer = layerAt(i);
-            layer.connect(previous);
+            Layer next = null;
+
+            if (i < size() - 1) {
+                next = layerAt(i + 1);
+            }
+
+            layer.connect(previous, next);
 
             int input = previous.size();
             int output = layer.size();
 
-            double bound = weightInit.getBound(input, output);
-
-            layer.initWeights(random, bound);
+            layer.initWeights(random, input, output);
 
             previous = layer;
         }
@@ -384,10 +381,6 @@ public class Model {
 
     public Updater updater() {
         return updater;
-    }
-
-    public WeightInitialization weightInit() {
-        return weightInit;
     }
 
     public LossFunction lossFunction() {

@@ -1,8 +1,15 @@
 package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.weights.WeightInitialization;
+import org.brain4j.math.weights.impl.NormalXavierInit;
 
 public class MishActivation implements Activation {
+
+    @Override
+    public WeightInitialization defaultWeightInit() {
+        return new NormalXavierInit();
+    }
 
     @Override
     public double activate(double input) {

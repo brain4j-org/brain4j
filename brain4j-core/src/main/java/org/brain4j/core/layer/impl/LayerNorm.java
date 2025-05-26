@@ -33,29 +33,27 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
-        this.weights = Tensors.zeros(previous.size()).withGrad();
+    public void connect(Layer previous, Layer next) {
+        this.weights = Tensors.ones(previous.size()).withGrad();
+        this.bias = Tensors.zeros(previous.size()).withGrad();
     }
 
     @Override
     public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
         int batchSize = input.shape()[0];
-        Tensor result = input.clone();
 
         for (int i = 0; i < batchSize; i++) {
             Range range = new Range(i, i + 1);
 
             Tensor token = input.slice(range).vector();
-            Tensor row = normalize1D(token)
-                .mul(weights)
-                .add(bias);
+            Tensor row = normalize1D(token).mul(weights).add(bias);
 
             for (int j = 0; j < row.elements(); j++) {
-                result.set(row.get(j), i, j);
+                input.set(row.get(j), i, j);
             }
         }
 
-        return result;
+        return input;
     }
 
     @Override

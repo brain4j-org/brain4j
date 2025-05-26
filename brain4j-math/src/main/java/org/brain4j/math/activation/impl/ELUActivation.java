@@ -1,10 +1,17 @@
 package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.weights.WeightInitialization;
+import org.brain4j.math.weights.impl.NormalHeInit;
 
 public class ELUActivation implements Activation {
 
     private final double alpha = 1.0;
+
+    @Override
+    public WeightInitialization defaultWeightInit() {
+        return new NormalHeInit();
+    }
 
     @Override
     public double activate(double input) {

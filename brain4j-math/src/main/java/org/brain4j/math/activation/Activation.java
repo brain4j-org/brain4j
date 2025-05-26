@@ -2,8 +2,15 @@ package org.brain4j.math.activation;
 
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.weights.WeightInitialization;
 
 public interface Activation {
+
+    /**
+     * The default weight initialization for this activation function.
+     * @return The default weight initialization.
+     */
+    WeightInitialization defaultWeightInit();
 
     /**
      * Activate a single scalar value (e.g. ReLU, Sigmoid, Tanh, etc.).
