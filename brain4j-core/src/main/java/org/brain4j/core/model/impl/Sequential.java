@@ -129,6 +129,8 @@ public class Sequential extends Model {
 
             cache.setInputTensor(layer, denseResult);
 
+            if (!layer.canConnect()) continue;
+
             denseResult = layer.forward(l, cache, denseResult, training);
         }
 

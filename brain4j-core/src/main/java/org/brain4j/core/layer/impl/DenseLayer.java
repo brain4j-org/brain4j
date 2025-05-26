@@ -59,7 +59,7 @@ public class DenseLayer extends Layer {
         }
 
         if (nextLayer instanceof LayerNorm layerNorm) {
-            Z = layerNorm.forward(index, cache, Z, training);
+            Z = layerNorm.forward(index + 1, cache, Z, training);
         }
 
         Tensor activated = activation.activate(Z);
