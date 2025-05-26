@@ -13,26 +13,26 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Returns the shape of the tensor as an array of integers.
-     * @return The shape of the tensor.
+     * @return the shape of the tensor
      */
     int[] shape();
 
     /**
      * Retrieves the data of the tensor as a float array.
-     * @return The tensor's data.
+     * @return the tensor's data
      */
     float[] data();
 
     /**
      * Retrieves the strides of the tensor as an array of integers.
-     * @return The strides of the tensor.
+     * @return the strides of the tensor
      */
     int[] strides();
 
     /**
      * Gets the linear index of the specified indices in the tensor.
-     * @param indices The multidimensional indices of the tensor.
-     * @return A linear index that represent the specified indices in 1 dimension.
+     * @param indices the multidimensional indices of the tensor
+     * @return a linear index that represent the specified indices in 1 dimension
      */
     int getLinearIndex(int... indices);
 

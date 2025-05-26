@@ -29,8 +29,8 @@ public class AutoEncoder extends Model {
 
     /**
      * Constructs an autoencoder.
-     * @param bottleNeckIndex The index of the bottleneck layer, starting from 1.
-     * @param layers The layers of the autoencoder, both encoder and decoder.
+     * @param bottleNeckIndex the index of the bottleneck layer, starting from 1
+     * @param layers the layers of the autoencoder, both encoder and decoder
      */
     public AutoEncoder(int bottleNeckIndex, Layer... layers) {
         super(layers);

@@ -22,7 +22,7 @@ public class DropoutLayer extends Layer {
     /**
      * Constructs a new dropout layer instance.
      * @param dropoutRate the dropout rate (0 < dropout < 1), specifying the probability of deactivating each neuron
-     * @throws IllegalArgumentException if dropout is outside the range 0-1.
+     * @throws IllegalArgumentException if dropout is outside the range 0-1
      */
     public DropoutLayer(double dropoutRate) {
         super(new LinearActivation(), new NoClipper());

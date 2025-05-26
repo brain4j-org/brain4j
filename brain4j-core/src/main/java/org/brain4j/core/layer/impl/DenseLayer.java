@@ -7,12 +7,14 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.Random;
 
 /**
  * Implementation of a dense (or fully connected) layer.
  * @author xEcho1337
+ * @since 2.0
  */
 public class DenseLayer extends Layer {
 
@@ -21,7 +23,7 @@ public class DenseLayer extends Layer {
     /**
      * Constructs a new instance of a dense layer.
      * @param dimension the dimension of the output
-     * @param activation the activation function to use
+     * @param activation the activation function
      */
     public DenseLayer(int dimension, Activations activation) {
         this(dimension, activation, new HardClipper(5));
@@ -29,12 +31,25 @@ public class DenseLayer extends Layer {
 
     /**
      * Constructs a new instance of a dense layer.
+     *
      * @param dimension the dimension of the output
-     * @param activation the activation function to use
-     * @param clipper the gradient clip function to use
+     * @param activation the activation function
+     * @param clipper the gradient clip function
      */
     public DenseLayer(int dimension, Activations activation, GradientClipper clipper) {
-        super(activation.getFunction(), clipper);
+        this(dimension, activation, clipper, activation.getFunction().defaultWeightInit());
+    }
+
+    /**
+     * Constructs a new instance of a dense layer.
+     *
+     * @param dimension the dimension of the output
+     * @param activation the activation function
+     * @param clipper the gradient clip function
+     * @param weightInit the weight initialization function
+     */
+    public DenseLayer(int dimension, Activations activation, GradientClipper clipper, WeightInitialization weightInit) {
+        super(activation.getFunction(), clipper, weightInit);
         this.dimension = dimension;
     }
 

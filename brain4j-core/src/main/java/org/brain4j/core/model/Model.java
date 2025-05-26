@@ -28,7 +28,11 @@ import static org.brain4j.math.constants.Constants.RESET;
 import static org.brain4j.math.constants.Constants.WHITE;
 
 /**
- * Implementation of a simple neural network. Supports multiple types of layers, loss functions, and optimizers.
+ * Represents a feedforward neural network model.
+ * <p>
+ * Supports multiple layer types, loss functions, optimizers, and training via backpropagation.
+ * Provides methods for training (fit), prediction, evaluation, and model summary.
+ * </p>
  */
 public class Model {
 
@@ -41,12 +45,35 @@ public class Model {
 
     /**
      * Constructs a new model instance with the given layers.
-     * @param layers the layers of this neural network
+     * @param layers the sequence of layers forming the neural network
      */
     public Model(Layer... layers) {
         this.layers = List.of(layers);
     }
-    
+
+    private void connectLayers() {
+        Layer previous = layers.getFirst();
+        Random random = Random.from(new SplittableRandom());
+
+        for (int i = 1; i < size(); i++) {
+            Layer layer = layerAt(i);
+            Layer next = null;
+
+            if (i < size() - 1) {
+                next = layerAt(i + 1);
+            }
+
+            layer.connect(previous, next);
+
+            int input = previous.size();
+            int output = layer.size();
+
+            layer.initWeights(random, input, output);
+
+            previous = layer;
+        }
+    }
+
     protected Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
         return Thread.startVirtualThread(() -> {
             Tensor inputs = batch.first(); // [batch_size, input_size]
@@ -149,26 +176,59 @@ public class Model {
         }
     }
 
+    /**
+     * Trains the model using the provided training dataset.
+     * @param train the dataset for training
+     */
     public void fit(ListDataSource train) {
         fit(train, train, 1, Integer.MAX_VALUE);
     }
-
+    /**
+     * Trains the model using the training dataset and evaluates on a validation dataset.
+     * @param train the training dataset
+     * @param validation the validation dataset for periodic evaluation
+     */
     public void fit(ListDataSource train, ListDataSource validation) {
         fit(train, validation, 1, Integer.MAX_VALUE);
     }
 
+    /**
+     * Trains the model for a specified number of epochs.
+     * @param train the training dataset
+     * @param epoches number of epochs to train
+     */
     public void fit(ListDataSource train, int epoches) {
         fit(train, train, epoches, Integer.MAX_VALUE);
     }
 
+    /**
+     * Trains the model for a specified number of epochs and evaluates on a validation dataset.
+     * @param train the training dataset
+     * @param validation the validation dataset for periodic evaluation
+     * @param epoches number of epochs to train
+     */
     public void fit(ListDataSource train, ListDataSource validation, int epoches) {
         fit(train, validation, epoches, Integer.MAX_VALUE);
     }
 
+    /**
+     * Trains the model for a specified number of epochs.
+     * @param train the training dataset
+     * @param epoches number of epochs to train
+     * @param evaluateEvery frequency (in epochs) for evaluation
+     */
     public void fit(ListDataSource train, int epoches, int evaluateEvery) {
         fit(train, train, epoches, evaluateEvery);
     }
 
+    /**
+     * Trains the model for a specified number of epochs and evaluates periodically.
+     *
+     * @param train the training dataset
+     * @param validation the validation dataset for evaluation
+     * @param epoches total epochs to train
+     * @param evaluateEvery frequency (in epochs) for evaluation
+     */
     public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {
         for (int i = 1; i <= epoches; i++) {
             long start = System.nanoTime();
@@ -183,14 +243,36 @@ public class Model {
         }
     }
 
+    /**
+     * Performs a forward pass to predict output given an input tensor.
+     *
+     * @param input the input tensor to the network
+     * @return the predicted output tensor
+     * @throws IllegalArgumentException if input is null or has invalid dimensions
+     */
     public Tensor predict(Tensor input) {
         return predict(new StatesCache(this), input);
     }
 
+    /**
+     * Performs a forward pass with cached states to predict output.
+     *
+     * @param cache the cache for storing intermediate states
+     * @param input the input tensor
+     * @return the output tensor predicted by the network
+     */
     public Tensor predict(StatesCache cache, Tensor input) {
         return predict(cache, input, false);
     }
 
+    /**
+     * Performs a forward pass with optional training mode.
+     *
+     * @param cache the cache to store intermediate states
+     * @param input the input tensor
+     * @param training whether the network is in training mode (affects layers like dropout)
+     * @return the predicted output tensor
+     */
     public Tensor predict(StatesCache cache, Tensor input, boolean training) {
         if (input == null || input.dimension() == 0) {
             throw new IllegalArgumentException("Input is either null or has dimension of 0!");
@@ -229,6 +311,12 @@ public class Model {
         return pass;
     }
 
+    /**
+     * Evaluates the model on a given dataset, computing loss and classification metrics.
+     *
+     * @param dataSource the dataset to evaluate
+     * @return an {@link EvaluationResult} containing loss, accuracy, and classification details
+     */
     public EvaluationResult evaluate(ListDataSource dataSource) {
         int classes = Math.max(2, dataSource.samples().getFirst().label().elements());
         Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
@@ -252,6 +340,12 @@ public class Model {
         return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
     }
 
+    /**
+     * Computes the average loss of the model over the given dataset.
+     *
+     * @param dataSource the dataset to compute loss on
+     * @return the average loss value
+     */
     public double loss(ListDataSource dataSource) {
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
@@ -268,10 +362,25 @@ public class Model {
         return totalError.get() / dataSource.size();
     }
 
+    /**
+     * Compiles the model by setting the loss function, optimizer, and default updater.
+     *
+     * @param lossFunction the loss function to use
+     * @param optimizer the optimization algorithm
+     * @return the compiled model instance for method chaining
+     */
     public Model compile(LossFunction lossFunction, Optimizer optimizer) {
         return compile(lossFunction, optimizer, new StochasticUpdater());
     }
 
+    /**
+     * Compiles the model by setting the loss function, optimizer, and custom updater.
+     *
+     * @param lossFunction the loss function to use
+     * @param optimizer the optimization algorithm
+     * @param updater the updater managing gradient application
+     * @return the compiled model instance for method chaining
+     */
     public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         this.optimizer = optimizer;
         this.updater = updater;
@@ -285,7 +394,13 @@ public class Model {
         return this;
     }
 
-
+    /**
+     * Returns a formatted summary of the model architecture,
+     * including layers, neuron counts, weights, activations, and total parameters.
+     *
+     * @return a human-readable summary string of the model
+     * @throws IllegalStateException if the model is not compiled before calling this method
+     */
     public String summary() {
         if (updater == null || optimizer == null) {
             throw new IllegalStateException("The network is not compiled! Make sure to call compile() before.");
@@ -340,49 +455,52 @@ public class Model {
         return stats.toString();
     }
 
-    private void connectLayers() {
-        Layer previous = layers.getFirst();
-        Random random = Random.from(new SplittableRandom());
-
-        for (int i = 1; i < size(); i++) {
-            Layer layer = layerAt(i);
-            Layer next = null;
-
-            if (i < size() - 1) {
-                next = layerAt(i + 1);
-            }
-
-            layer.connect(previous, next);
-
-            int input = previous.size();
-            int output = layer.size();
-
-            layer.initWeights(random, input, output);
-
-            previous = layer;
-        }
-    }
-
+    /**
+     * Retrieves the layer at the specified index.
+     *
+     * @param index the index of the layer
+     * @return the layer at the given index
+     */
     public Layer layerAt(int index) {
         return layers.get(index);
     }
 
+    /**
+     * Returns the total number of layers in the model.
+     * @return the number of layers
+     */
     public int size() {
         return layers.size();
     }
 
+    /**
+     * Returns an immutable list of layers composing the model.
+     * @return the list of layers
+     */
     public List<Layer> layers() {
         return layers;
     }
 
+    /**
+     * Returns the optimizer currently used by the model.
+     * @return the optimizer instance
+     */
     public Optimizer optimizer() {
         return optimizer;
     }
 
+    /**
+     * Returns the updater currently used by the model.
+     * @return the updater instance
+     */
     public Updater updater() {
         return updater;
     }
 
+    /**
+     * Returns the loss function currently set in the model.
+     * @return the loss function instance
+     */
     public LossFunction lossFunction() {
         return lossFunction;
     }
