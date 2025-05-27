@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.0.0-beta10'
+}
+
+dependencies {
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.17.0"
+    implementation "com.typesafe:config:1.4.3"
+    implementation "org.slf4j:slf4j-api:2.0.12"
+    implementation "org.apache.commons:commons-compress:1.26.1"
+    testRuntimeOnly 'ch.qos.logback:logback-classic:1.5.13'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+shadowJar {
+    archiveFileName = 'brain4j-datasets-${parent.version}.jar'
+}
+
+tasks.register('cleanCache') {
+    description = 'Cleans the local Brain4J datasets cache'
+    group = 'development'
+    doLast {
+        def cacheDir = new File(System.getProperty('user.home'), '.cache/brain4j/datasets')
+        if (cacheDir.exists()) {
+            delete cacheDir
+            println "Cleaned cache directory: ${cacheDir.absolutePath}"
+        } else {
+            println "Cache directory does not exist: ${cacheDir.absolutePath}"
+        }
+    }
+}
