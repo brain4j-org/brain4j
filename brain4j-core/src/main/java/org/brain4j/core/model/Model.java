@@ -52,6 +52,8 @@ public class Model {
     }
 
     private void connectLayers() {
+        if (layers.isEmpty()) return;
+
         Layer previous = layers.getFirst();
         Random random = Random.from(new SplittableRandom());
 

@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation project(':brain4j-math')
+    implementation project(':brain4j-datasets')
 
     implementation 'com.github.luben:zstd-jni:1.5.7-2'
     implementation 'com.google.code.gson:gson:2.13.1'

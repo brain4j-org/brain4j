@@ -13,7 +13,7 @@ import org.brain4j.math.tensor.index.Range;
  */
 public class BatchNorm extends Layer {
 
-    private double epsilon;
+    private final double epsilon;
 
     /**
      * Constructs a layer normalization instance with a default epsilon of 1e-5.

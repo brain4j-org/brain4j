@@ -48,12 +48,12 @@ public class BackPropagation {
         List<Layer> layers = model.layers();
         LossFunction lossFunction = model.lossFunction();
 
-        int count = layers.size() - 1;
+        int count = layers.size();
 
         Layer last = layers.getLast();
-        last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
+        last.computeLoss(updater, cache, targets, outputs, lossFunction, count - 1);
 
-        for (int l = count - 1; l >= 0; l--) {
+        for (int l = count - 2; l >= 0; l--) {
             Layer layer = layers.get(l);
 
             if (layer.skipPropagate()) continue;

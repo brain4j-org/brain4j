@@ -12,6 +12,6 @@ public class TransposeOperation implements Operation {
 
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
-        return new Tensor[]{ gradOutput.transpose() };
+        return new Tensor[]{ gradOutput };
     }
 }

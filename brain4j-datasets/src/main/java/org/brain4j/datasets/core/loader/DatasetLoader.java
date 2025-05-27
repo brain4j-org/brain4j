@@ -51,6 +51,7 @@ public class DatasetLoader implements AutoCloseable {
         logger.info("Loading dataset: {}", datasetId);
 
         Optional<DatasetInfo> infoOpt = client.getDatasetInfo(datasetId);
+
         if (infoOpt.isEmpty()) {
             throw new DatasetException("Dataset not found: " + datasetId);
         }
