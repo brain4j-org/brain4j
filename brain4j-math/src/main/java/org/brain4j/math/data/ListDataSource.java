@@ -1,14 +1,22 @@
 package org.brain4j.math.data;
 
+import org.brain4j.datasets.core.dataset.Dataset;
+import org.brain4j.datasets.core.dataset.Dataset.DatasetFile;
 import org.brain4j.math.Pair;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +36,8 @@ import java.util.stream.Collectors;
  * <p><b>Thread Safety:</b> This class is not thread-safe. Synchronization is required if accessed concurrently.
  *
  * @author xEcho1337
- * @version 2.7
+ * @author Adversing
+ * @version 3.0
  */
 public class ListDataSource implements Cloneable, Iterable<Sample> {
 
@@ -60,6 +69,119 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
         computeBatches();
     }
+
+    /**
+     * Creates a ListDataSource from a {@link Dataset} object.
+     * 
+     * @param dataset the dataset to load data from
+     * @param inputFeatures a function that converts a line of data to input features tensor
+     * @param outputLabels a function that converts a line of data to output labels tensor
+     * @param shuffle whether to shuffle the data
+     * @param batchSize the size of each batch
+     * @param fileFormat the format of files to use (e.g., "csv", "json")
+     * @return a new ListDataSource containing the loaded data
+     * @throws IOException if an error occurs while reading the dataset files
+     */
+    public static ListDataSource fromDataset(
+            Dataset dataset,
+            Function<String, Tensor> inputFeatures,
+            Function<String, Tensor> outputLabels,
+            boolean shuffle,
+            int batchSize,
+            String fileFormat
+    ) throws IOException {
+        
+        List<Sample> samples = new ArrayList<>();
+        List<DatasetFile> dataFiles = dataset.getFilesByFormat(fileFormat);
+        
+        for (DatasetFile file : dataFiles) {
+            Path filePath = file.path();
+            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    Tensor input = inputFeatures.apply(line);
+                    Tensor label = outputLabels.apply(line);
+                    samples.add(new Sample(input, label));
+                }
+            }
+        }
+        
+        return new ListDataSource(samples, shuffle, batchSize);
+    }
+    
+    /**
+     * Creates a ListDataSource from a {@link Dataset} object with a custom parser.
+     * 
+     * @param dataset the dataset to load data from
+     * @param parser a function that converts a line of data to a Sample
+     * @param shuffle whether to shuffle the data
+     * @param batchSize the size of each batch
+     * @param fileFormat the format of files to use (e.g., "csv", "json")
+     * @return a new ListDataSource containing the loaded data
+     * @throws IOException if an error occurs while reading the dataset files
+     */
+    public static ListDataSource fromDataset(
+            Dataset dataset,
+            Function<String, Sample> parser,
+            boolean shuffle,
+            int batchSize,
+            String fileFormat
+    ) throws IOException {
+        
+        List<Sample> samples = new ArrayList<>();
+        List<DatasetFile> dataFiles = dataset.getFilesByFormat(fileFormat);
+        
+        for (DatasetFile file : dataFiles) {
+            Path filePath = file.path();
+            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    Sample sample = parser.apply(line);
+                    samples.add(sample);
+                }
+            }
+        }
+        
+        return new ListDataSource(samples, shuffle, batchSize);
+    }
+    
+    /**
+     * Creates a ListDataSource from a {@link Dataset} object with a split function.
+     * 
+     * @param dataset the dataset to load data from
+     * @param lineSplitter a function that splits a line into input and label tensors
+     * @param shuffle whether to shuffle the data
+     * @param batchSize the size of each batch
+     * @param fileFormat the format of files to use (e.g., "csv", "json")
+     * @return a new ListDataSource containing the loaded data
+     * @throws IOException if an error occurs while reading the dataset files
+     */
+    public static ListDataSource fromDataset(
+            Dataset dataset,
+            BiFunction<String, Integer, Pair<Tensor, Tensor>> lineSplitter,
+            boolean shuffle,
+            int batchSize,
+            String fileFormat
+    ) throws IOException {
+        
+        List<Sample> samples = new ArrayList<>();
+        List<DatasetFile> dataFiles = dataset.getFilesByFormat(fileFormat);
+        
+        for (DatasetFile file : dataFiles) {
+            Path filePath = file.path();
+            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+                String line;
+                int lineNum = 0;
+                while ((line = reader.readLine()) != null) {
+                    Pair<Tensor, Tensor> pair = lineSplitter.apply(line, lineNum++);
+                    samples.add(new Sample(pair.first(), pair.second()));
+                }
+            }
+        }
+        
+        return new ListDataSource(samples, shuffle, batchSize);
+    }
+
     /**
      * Returns true if there are remaining batches to iterate over.
      * @return true if more batches are available, false otherwise

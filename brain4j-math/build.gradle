@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    implementation project(':brain4j-datasets')
     implementation 'org.jocl:jocl:2.0.5'
 }
 
