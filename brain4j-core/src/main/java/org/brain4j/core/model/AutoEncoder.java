@@ -1,5 +1,6 @@
 package org.brain4j.core.model;
 
+import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.EvaluationResult;
 import org.brain4j.core.training.StatesCache;
@@ -107,7 +108,7 @@ public class AutoEncoder extends Model {
         cache.setInput(0, input);
         cache.setOutput(0, pass);
 
-        int size = training ? layers.size() : bottleNeckIndex;
+        int size = training ? size() : bottleNeckIndex;
 
         for (int i = 0; i < size; i++) {
             Layer layer = layerAt(i);
@@ -118,7 +119,7 @@ public class AutoEncoder extends Model {
 
             if (layer.skipPropagate()) continue;
 
-            pass = layer.forward(cache, pass, i, training);
+            pass = layer.forward(new ForwardContext(cache, pass, i, training));
         }
 
         return pass;

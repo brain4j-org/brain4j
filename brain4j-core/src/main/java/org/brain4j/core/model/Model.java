@@ -1,5 +1,6 @@
 package org.brain4j.core.model;
 
+import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.BackPropagation;
@@ -307,7 +308,7 @@ public class Model {
                 throw new IllegalStateException("Layer at index " + i + " is null!");
             }
 
-            pass = layer.forward(cache, pass, i, training);
+            pass = layer.forward(new ForwardContext(cache, pass, i, training));
         }
 
         return pass;

@@ -1,6 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import org.brain4j.core.clipper.impl.NoClipper;
+import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.impl.LinearActivation;
@@ -32,7 +33,8 @@ public class BatchNorm extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+    public Tensor forward(ForwardContext context) {
+        Tensor input = context.input();
         int batchSize = input.shape()[0];
 
         Tensor transposed = input.transpose(); // [dimension, batch_size]

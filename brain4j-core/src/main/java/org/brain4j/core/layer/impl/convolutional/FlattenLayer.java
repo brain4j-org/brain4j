@@ -1,6 +1,7 @@
 package org.brain4j.core.layer.impl.convolutional;
 
 import org.brain4j.core.clipper.GradientClipper;
+import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activation;
@@ -21,7 +22,7 @@ public class FlattenLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+    public Tensor forward(ForwardContext context) {
         return null;
     }
 

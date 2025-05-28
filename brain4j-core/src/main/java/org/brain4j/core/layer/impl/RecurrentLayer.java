@@ -2,6 +2,7 @@ package org.brain4j.core.layer.impl;
 
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.clipper.impl.HardClipper;
+import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activation;
@@ -91,7 +92,11 @@ public class RecurrentLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+    public Tensor forward(ForwardContext context) {
+        Tensor input = context.input();
+        StatesCache cache = context.cache();
+        int index = context.index();
+
         int batchSize = input.shape()[0];
         int inputDim = input.shape()[1];
         int expectedDim = inputWeights.shape()[1];

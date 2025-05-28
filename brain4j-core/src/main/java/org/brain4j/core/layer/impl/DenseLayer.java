@@ -2,6 +2,7 @@ package org.brain4j.core.layer.impl;
 
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.clipper.impl.HardClipper;
+import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activations;
@@ -71,7 +72,12 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public Tensor forward(StatesCache cache, Tensor input, int index, boolean training) {
+    public Tensor forward(ForwardContext context) {
+        Tensor input = context.input();
+        StatesCache cache = context.cache();
+        int index = context.index();
+        boolean training = context.training();
+
         if (weights == null) return input;
 
         // Input shape: [batch_size, input_size]
@@ -92,7 +98,7 @@ public class DenseLayer extends Layer {
         cache.setInput(index, input);
 
         if (next instanceof LayerNorm layerNorm) {
-            output = layerNorm.forward(cache, output, index + 1, training);
+            output = layerNorm.forward(new ForwardContext(cache, output, index + 1, training));
         }
 
         Tensor activated = output.activateGrad(activation);

@@ -39,13 +39,10 @@ public abstract class Layer {
 
     /**
      * Performs a forward pass through this layer.
-     * @param cache the cache of this inference
-     * @param input the input tensor
-     * @param index the index of this layer
-     * @param training whether inference or training
+     * @param context the forward context
      * @return the output tensor
      */
-    public abstract Tensor forward(StatesCache cache, Tensor input, int index, boolean training);
+    public abstract Tensor forward(ForwardContext context);
 
     /**
      * Returns the output size of this layer, i.e. the number of neurons.
