@@ -48,8 +48,10 @@ public class HuggingFaceClient implements AutoCloseable {
             try (CloseableHttpResponse response = httpClient.execute(request)) {
                 return processDatasetInfoResponse(response, datasetId);
             }
-        } catch (IOException | ParseException e) {
+        } catch (IOException e) {
             throw new DatasetException("Network error while retrieving dataset info for: " + datasetId, e);
+        } catch (ParseException e) {
+            throw new DatasetException("Failed to parse dataset info response for: " + datasetId, e);
         }
     }
 
@@ -85,8 +87,10 @@ public class HuggingFaceClient implements AutoCloseable {
             }
 
             return new FileDownloadResponse(response, response.getEntity().getContent());
-        } catch (IOException | ParseException e) {
+        } catch (IOException e) {
             throw new DatasetException("Network error while downloading file: " + filename, e);
+        } catch (ParseException e) {
+            throw new DatasetException("Failed to parse file download response for: " + filename, e);
         }
     }
 
