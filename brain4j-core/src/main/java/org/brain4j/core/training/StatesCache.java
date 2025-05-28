@@ -1,6 +1,5 @@
 package org.brain4j.core.training;
 
-import org.brain4j.core.layer.impl.RecurrentLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.math.tensor.Tensor;
 

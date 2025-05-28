@@ -6,8 +6,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
-import static org.brain4j.math.constants.Constants.WORK_THRESHOLD;
-
 public class ParallelMap extends RecursiveAction {
 
     private static final int PARALLELISM = Runtime.getRuntime().availableProcessors();

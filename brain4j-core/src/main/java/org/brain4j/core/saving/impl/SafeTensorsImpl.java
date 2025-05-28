@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.saving.ModelSerializer;
 import org.brain4j.math.Commons;

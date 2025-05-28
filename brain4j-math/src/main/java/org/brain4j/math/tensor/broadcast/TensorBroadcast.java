@@ -1,11 +1,8 @@
 package org.brain4j.math.tensor.broadcast;
 
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.impl.TensorImplBase;
 
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
 public class TensorBroadcast {
 

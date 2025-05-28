@@ -2,12 +2,12 @@ package org.brain4j.core.layer;
 
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.loss.LossFunction;
+import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.math.weights.WeightInitialization;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.core.training.StatesCache;
+import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.Random;
 

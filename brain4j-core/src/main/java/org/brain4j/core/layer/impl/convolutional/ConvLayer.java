@@ -4,7 +4,6 @@ import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;

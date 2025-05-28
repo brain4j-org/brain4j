@@ -1,6 +1,9 @@
 package org.brain4j.math.device;
 
-import org.jocl.*;
+import org.jocl.CL;
+import org.jocl.Pointer;
+import org.jocl.cl_device_id;
+import org.jocl.cl_platform_id;
 
 import java.util.ArrayList;
 import java.util.List;

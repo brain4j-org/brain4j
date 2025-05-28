@@ -3,7 +3,6 @@ package org.brain4j.core.layer.impl;
 import org.brain4j.core.clipper.impl.NoClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;

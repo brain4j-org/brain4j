@@ -17,8 +17,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.brain4j.math.constants.Constants.*;
-import static org.brain4j.math.constants.Constants.LIGHT_GREEN;
-import static org.brain4j.math.constants.Constants.RESET;
 
 /**
  * Autoencoder neural network model implementation. This class is an extension of the {@link Model} class.

@@ -22,11 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.brain4j.math.constants.Constants.*;
-import static org.brain4j.math.constants.Constants.GRAY;
-import static org.brain4j.math.constants.Constants.LIGHT_GREEN;
-import static org.brain4j.math.constants.Constants.LIGHT_YELLOW;
-import static org.brain4j.math.constants.Constants.RESET;
-import static org.brain4j.math.constants.Constants.WHITE;
 
 /**
  * Represents a feedforward neural network model.

@@ -3,7 +3,6 @@ package org.brain4j.core.transformer.impl;
 import org.brain4j.core.transformer.Tokenizer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class RegexTokenizer implements Tokenizer {

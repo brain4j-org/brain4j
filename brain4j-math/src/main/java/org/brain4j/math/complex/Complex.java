@@ -1,6 +1,5 @@
 package org.brain4j.math.complex;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 

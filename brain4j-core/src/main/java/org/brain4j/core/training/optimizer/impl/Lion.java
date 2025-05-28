@@ -6,9 +6,6 @@ import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-
 public class Lion extends Optimizer {
 
     private Tensor[] momentumHistory;

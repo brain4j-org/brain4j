@@ -3,9 +3,6 @@ package org.brain4j.core.training.optimizer.impl;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.tensor.Tensor;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-
 public class AdamW extends Adam {
 
     private double weightDecay;
