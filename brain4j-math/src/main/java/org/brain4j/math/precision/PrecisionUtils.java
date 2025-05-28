@@ -10,7 +10,7 @@ public final class PrecisionUtils {
     }
 
     /**
-     * Check if a double value can be accurately represented as a float without significant org.brain4j.core.loss of precision.
+     * Check if a double value can be accurately represented as a float without significant loss of precision.
      *
      * @param value the double value to check
      * @return true if the value can be represented as float, false otherwise
