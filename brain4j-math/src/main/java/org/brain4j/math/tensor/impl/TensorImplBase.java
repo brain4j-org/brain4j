@@ -612,6 +612,11 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
+    public Tensor activate(Activation activation) {
+        return activation.activate(this);
+    }
+
+    @Override
     public Tensor select(int dim, int index) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }

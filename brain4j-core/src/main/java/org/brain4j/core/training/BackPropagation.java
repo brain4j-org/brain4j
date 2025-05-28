@@ -48,17 +48,18 @@ public class BackPropagation {
         List<Layer> layers = model.layers();
         LossFunction lossFunction = model.lossFunction();
 
-        int count = layers.size();
+        int count = layers.size() - 1;
 
         Layer last = layers.getLast();
-        last.computeLoss(updater, cache, targets, outputs, lossFunction, count - 1);
+        Tensor delta = last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
 
-        for (int l = count - 2; l >= 0; l--) {
+        for (int l = count - 1; l >= 0; l--) {
             Layer layer = layers.get(l);
 
             if (layer.skipPropagate()) continue;
 
-            layer.backward(updater, optimizer, l);
+            delta = layer.backward(cache, updater, optimizer, last, l, delta);
+            last = layer;
         }
     }
 }

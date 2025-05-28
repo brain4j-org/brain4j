@@ -65,7 +65,8 @@ public class Adam extends Optimizer {
         Tensor mHat = firstMomentum.divide(biasCorrection1);
         Tensor vHat = secondMomentum.divide(biasCorrection2);
 
-        return mHat.div(vHat.sqrt().add(epsilon));
+        // transpose of 2.9
+        return mHat.div(vHat.sqrt().add(epsilon)).transpose();
     }
 
     @Override

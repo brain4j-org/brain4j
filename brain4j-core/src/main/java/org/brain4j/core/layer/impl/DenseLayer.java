@@ -46,6 +46,17 @@ public class DenseLayer extends Layer {
      *
      * @param dimension the dimension of the output
      * @param activation the activation function
+     * @param weightInit the weight initialization function
+     */
+    public DenseLayer(int dimension, Activations activation, WeightInitialization weightInit) {
+        this(dimension, activation, new HardClipper(5), weightInit);
+    }
+
+    /**
+     * Constructs a new instance of a dense layer.
+     *
+     * @param dimension the dimension of the output
+     * @param activation the activation function
      * @param clipper the gradient clip function
      * @param weightInit the weight initialization function
      */
@@ -91,8 +102,10 @@ public class DenseLayer extends Layer {
         }
 
         // Shape: [batch_size, output_size]
+        Tensor transposed = weights.transpose();
+        System.out.println("Weights hash: " + transposed.hashCode());
         Tensor output = input
-            .matmulGrad(weights.transpose())
+            .matmulGrad(transposed)
             .addGrad(bias);
 
         cache.setInput(index, input);

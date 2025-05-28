@@ -38,12 +38,13 @@ public class AutogradContext {
 
         if (operation == null) return;
 
+        System.out.println("Backwarding to op: " + operation.getClass().getSimpleName());
         Tensor[] inputGrads = operation.backward(gradOutput, inputs);
 
         for (int i = 0; i < inputs.length; i++) {
             Tensor input = inputs[i];
 
-            if (!input.usesGrad()) continue;
+            if (input == null || !input.usesGrad()) continue;
 
             input.backward(inputGrads[i]);
         }

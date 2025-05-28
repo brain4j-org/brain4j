@@ -277,6 +277,13 @@ public interface Tensor extends Iterable<Float> {
     Tensor unsqueeze(int dim);
 
     /**
+     * Activates all the elements of this tensor using the specified activation function.
+     * @param activation the activation function
+     * @return the resultning tensor
+     */
+    Tensor activate(Activation activation);
+
+    /**
      * Selects a sub-tensor from this tensor, given the specified dimension
      * and index.
      *

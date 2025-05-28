@@ -9,6 +9,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.weights.WeightInitialization;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -58,7 +59,7 @@ public abstract class Layer {
         // No-op
     }
 
-    public void computeLoss(
+    public Tensor computeLoss(
         Updater updater,
         StatesCache cache,
         Tensor targets,
@@ -69,29 +70,59 @@ public abstract class Layer {
         Tensor error = outputs.minus(targets);
         Tensor derivatives = activation.getDerivative(outputs);
 
-        Tensor output = cache.preActivation(index);
-        Tensor delta = lossFunction.getDelta(error, derivatives);
+        Tensor input = cache.input(index); // [4, 32] -> [batch_size, input_size]
+        Tensor delta = lossFunction.getDelta(error, derivatives); // [4, 1] -> [batch_size, output_size]
 
+        Tensor output = cache.preActivation(index);
         output.backward(delta);
 
-        Tensor weightsGradient = weights.grad().transpose();
-        Tensor biasesGradient = bias.grad().sum(0, false);
+        Tensor weightsGradient = delta.transpose().matmul(input);
+        Tensor biasesGradient = delta.sum(0, false);
 
         updater.change(weightsGradient, biasesGradient, index);
+
+        return delta;
     }
 
-    public void backward(Updater updater, Optimizer optimizer, int index) {
-        if (weights == null) return;
+    public Tensor backward(StatesCache cache, Updater updater, Optimizer optimizer, Layer previous, int index, Tensor delta) {
+        if (weights == null) return delta;
 
-        Tensor weightsGradient = weights.grad().transpose();
-        Tensor biasGradient = bias.grad().sum(0, false);
+        Tensor input = cache.input(index);
+        Tensor output = cache.preActivation(index);
+        Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
 
-        weightsGradient = optimizer.step(index, this, weightsGradient);
+        Tensor weightsNext = previous.weights(); // [n_out, n_out_next]
+        Tensor deltaProjected = delta.matmul(weightsNext); // [batch_size x n_out]
 
-        clipper.clip(weightsGradient);
-        clipper.clip(biasGradient);
+        Tensor deltaThisLayer = deltaProjected.mul(derivative); // [batch_size x n_out]
+        Tensor weightsGradient = input.transpose().matmul(deltaThisLayer);
+        Tensor autoGradWeights = weights.grad().transpose();
 
-        updater.change(weightsGradient, biasGradient, index);
+        System.out.println("Auto grad:");
+        System.out.println(autoGradWeights.toString("%.2f"));
+        System.out.println("Manual:");
+        System.out.println(weightsGradient.toString("%.2f"));
+
+        throw new RuntimeException("Auto grad and manual grad are different");
+
+//        Tensor optimized = optimizer.step(index, this, gradient); // [n_in x n_out]
+//        Tensor biasGradient = deltaThisLayer.sum(0, false); // [n_out]
+//
+//        clipper.clip(optimized);
+//        clipper.clip(biasGradient);
+//
+//        updater.change(optimized, biasGradient, index);
+//        return deltaThisLayer;
+
+//        Tensor weightsGradient = weights.grad().transpose();
+//        Tensor biasGradient = bias.grad().sum(0, false);
+//
+//        weightsGradient = optimizer.step(index, this, weightsGradient);
+//
+//        clipper.clip(weightsGradient);
+//        clipper.clip(biasGradient);
+//
+//        updater.change(weightsGradient, biasGradient, index);
     }
 
     public boolean skipForward() {

@@ -291,10 +291,10 @@ public class Model {
             );
         }
 
-        Tensor pass = input;
+        Tensor pass = input.withGrad();
 
         cache.setInput(0, input);
-        cache.setOutput(0, pass);
+        cache.setOutput(0, pass.clone());
 
         for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);

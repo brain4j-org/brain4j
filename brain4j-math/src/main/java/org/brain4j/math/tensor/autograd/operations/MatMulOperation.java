@@ -22,6 +22,16 @@ public class MatMulOperation implements Operation {
         // dL/dB = A.T @ dL/dC
         Tensor gradB = a.transpose().matmul(gradOutput);
 
+//        System.out.println("A:");
+//        System.out.println(a.toString("%.2f"));
+
+        System.out.println("Grad out:");
+        System.out.println(gradOutput.toString("%.2f"));
+
+        System.out.println("Input b hashcode: " + b.hashCode());
+        System.out.println("Gradient of b:");
+        System.out.println(gradB.toString("%.2f"));
+
         return new Tensor[] { gradA, gradB };
     }
 } 

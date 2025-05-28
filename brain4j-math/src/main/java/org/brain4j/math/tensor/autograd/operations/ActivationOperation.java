@@ -23,6 +23,20 @@ public class ActivationOperation implements Operation {
         Tensor derivative = activation.getDerivative(activated); // ∂activation/∂x
         Tensor gradInput = gradOutput.times(derivative); // Chain rule: dL/dx = dL/dy * dy/dx
 
+        System.out.println("inputs[0]:");
+        System.out.println(inputs[0].toString("%.2f"));
+
+        System.out.println("activation type: " + activation.getClass().getSimpleName());
+
+        System.out.println("Activation gradient:");
+        System.out.println(gradInput.toString("%.2f"));
+
+        System.out.println("Gradoutput:");
+        System.out.println(gradOutput.toString("%.2f"));
+
+        System.out.println("Derivative:");
+        System.out.println(derivative.toString("%.2f"));
+
         return new Tensor[] { gradInput };
     }
 }

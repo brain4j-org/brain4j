@@ -1100,6 +1100,11 @@ public class OldTensorCPU implements Cloneable, Tensor {
     }
 
     @Override
+    public Tensor activate(Activation activation) {
+        return null;
+    }
+
+    @Override
     public Tensor slice(Range... ranges) {
         if (ranges.length > shape.length) {
             throw new IllegalArgumentException("Too many ranges specified");
