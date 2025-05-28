@@ -1,7 +1,7 @@
 package org.brain4j.math.constants;
 
 /*
- * All constants are calculated through default strictfp directive to avoid precision org.brain4j.core.loss.
+ * All constants are calculated through default strictfp directive to avoid precision loss
  */
 public final class Constants {
     
