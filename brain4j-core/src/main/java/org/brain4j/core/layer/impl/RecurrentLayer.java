@@ -1,15 +1,11 @@
 package org.brain4j.core.layer.impl;
 
-import org.brain4j.core.clipper.GradientClipper;
-import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
-import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.Random;
 
@@ -34,41 +30,10 @@ public class RecurrentLayer extends Layer {
      * @param activation the activation function
      */
     public RecurrentLayer(int dimension, int hiddenDimension, Activations activation) {
-        this(dimension, hiddenDimension, activation.getFunction(), new HardClipper(5));
-    }
-
-    /**
-     * Constructs a new recurrent layer instance.
-     *
-     * @param dimension the dimension of the output
-     * @param hiddenDimension the dimension of the hidden states
-     * @param activation the activation function
-     * @param clipper the gradient clip function
-     */
-    public RecurrentLayer(int dimension, int hiddenDimension, Activation activation, GradientClipper clipper) {
-        super(activation, clipper);
         this.dimension = dimension;
         this.hiddenDimension = hiddenDimension;
-    }
-
-    /**
-     * Constructs a new recurrent layer instance.
-     * @param dimension the dimension of the output
-     * @param hiddenDimension the dimension of the hidden states
-     * @param activation the activation function
-     * @param clipper the gradient clip function
-     * @param weightInit the weight initialization function
-     */
-    public RecurrentLayer(
-            int dimension,
-            int hiddenDimension,
-            Activation activation,
-            GradientClipper clipper,
-            WeightInitialization weightInit
-    ) {
-        super(activation, clipper);
-        this.dimension = dimension;
-        this.hiddenDimension = hiddenDimension;
+        this.activation = activation.getFunction();
+        this.weightInit = this.activation.defaultWeightInit();
     }
 
     @Override

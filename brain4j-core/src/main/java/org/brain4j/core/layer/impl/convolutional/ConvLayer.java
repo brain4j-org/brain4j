@@ -1,13 +1,9 @@
 package org.brain4j.core.layer.impl.convolutional;
 
-import org.brain4j.core.clipper.GradientClipper;
-import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.weights.WeightInitialization;
 
 public class ConvLayer extends Layer {
 
@@ -19,27 +15,10 @@ public class ConvLayer extends Layer {
     private int padding;
 
     public ConvLayer(Activations activation, int filters, int kernelWidth, int kernelHeight) {
-        this(activation, filters, kernelWidth, kernelHeight, 1);
-    }
-
-    public ConvLayer(Activations activation, int filters, int kernelWidth, int kernelHeight, int stride) {
-        this(activation, filters, kernelWidth, kernelHeight, stride, 0);
-    }
-
-
-    public ConvLayer(Activations activation, int filters, int kernelWidth, int kernelHeight, int stride, int padding) {
-        this(activation.getFunction(), new HardClipper(5), activation.getFunction().defaultWeightInit(), filters,
-            kernelWidth, kernelHeight, stride, padding);
-    }
-
-    public ConvLayer(Activation activation, GradientClipper clipper, WeightInitialization weightInit, int filters,
-                     int kernelWidth, int kernelHeight, int stride, int padding) {
-        super(activation, clipper, weightInit);
+        this.activation = activation.getFunction();
         this.filters = filters;
         this.kernelWidth = kernelWidth;
         this.kernelHeight = kernelHeight;
-        this.stride = stride;
-        this.padding = padding;
     }
 
     @Override
@@ -50,5 +29,55 @@ public class ConvLayer extends Layer {
     @Override
     public int size() {
         return filters;
+    }
+
+    public int filters() {
+        return filters;
+    }
+
+    public ConvLayer filters(int filters) {
+        this.filters = filters;
+        return this;
+    }
+
+    public int kernelWidth() {
+        return kernelWidth;
+    }
+
+    public int kernelHeight() {
+        return kernelHeight;
+    }
+
+    public ConvLayer kernelSize(int kernelWidth, int kernelHeight) {
+        this.kernelWidth = kernelWidth;
+        this.kernelHeight = kernelHeight;
+        return this;
+    }
+
+    public int channels() {
+        return channels;
+    }
+
+    public ConvLayer channels(int channels) {
+        this.channels = channels;
+        return this;
+    }
+
+    public int stride() {
+        return stride;
+    }
+
+    public ConvLayer stride(int stride) {
+        this.stride = stride;
+        return this;
+    }
+
+    public int padding() {
+        return padding;
+    }
+
+    public ConvLayer padding(int padding) {
+        this.padding = padding;
+        return this;
     }
 }

@@ -1,11 +1,13 @@
 package org.brain4j.core.layer;
 
 import org.brain4j.core.clipper.GradientClipper;
+import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.weights.WeightInitialization;
 
@@ -20,23 +22,13 @@ import java.util.Random;
  */
 public abstract class Layer {
 
-    protected final Activation activation;
-    protected final GradientClipper clipper;
-    protected final WeightInitialization weightInit;
+    protected Activation activation = new LinearActivation();
+    protected GradientClipper clipper = new HardClipper(5);
+    protected WeightInitialization weightInit = activation.defaultWeightInit();
 
     protected Tensor weights;
     protected Tensor bias;
     protected Layer next;
-
-    public Layer(Activation activation, GradientClipper clipper) {
-        this(activation, clipper, activation.defaultWeightInit());
-    }
-
-    public Layer(Activation activation, GradientClipper clipper, WeightInitialization weightInit) {
-        this.activation = activation;
-        this.clipper = clipper;
-        this.weightInit = weightInit;
-    }
 
     /**
      * Performs a forward pass through this layer.
@@ -139,6 +131,24 @@ public abstract class Layer {
      */
     public Activation activation() {
         return activation;
+    }
+
+    public GradientClipper clipper() {
+        return clipper;
+    }
+
+    public Layer clipper(GradientClipper clipper) {
+        this.clipper = clipper;
+        return this;
+    }
+
+    public WeightInitialization weightInit() {
+        return weightInit;
+    }
+
+    public Layer weightInit(WeightInitialization weightInit) {
+        this.weightInit = weightInit;
+        return this;
     }
 
     /**

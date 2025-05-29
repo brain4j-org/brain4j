@@ -1,9 +1,7 @@
 package org.brain4j.core.layer.impl;
 
-import org.brain4j.core.clipper.impl.NoClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.index.Range;
 
@@ -27,7 +25,6 @@ public class BatchNorm extends Layer {
      * @param epsilon the epsilon used to avoid division by zero
      */
     public BatchNorm(double epsilon) {
-        super(new LinearActivation(), new NoClipper());
         this.epsilon = epsilon;
     }
 

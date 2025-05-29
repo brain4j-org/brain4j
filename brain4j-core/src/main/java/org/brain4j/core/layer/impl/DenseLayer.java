@@ -1,14 +1,11 @@
 package org.brain4j.core.layer.impl;
 
-import org.brain4j.core.clipper.GradientClipper;
-import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.Random;
 
@@ -27,42 +24,8 @@ public class DenseLayer extends Layer {
      * @param activation the activation function
      */
     public DenseLayer(int dimension, Activations activation) {
-        this(dimension, activation, new HardClipper(5));
-    }
-
-    /**
-     * Constructs a new instance of a dense layer.
-     *
-     * @param dimension the dimension of the output
-     * @param activation the activation function
-     * @param clipper the gradient clip function
-     */
-    public DenseLayer(int dimension, Activations activation, GradientClipper clipper) {
-        this(dimension, activation, clipper, activation.getFunction().defaultWeightInit());
-    }
-
-    /**
-     * Constructs a new instance of a dense layer.
-     *
-     * @param dimension the dimension of the output
-     * @param activation the activation function
-     * @param weightInit the weight initialization function
-     */
-    public DenseLayer(int dimension, Activations activation, WeightInitialization weightInit) {
-        this(dimension, activation, new HardClipper(5), weightInit);
-    }
-
-    /**
-     * Constructs a new instance of a dense layer.
-     *
-     * @param dimension the dimension of the output
-     * @param activation the activation function
-     * @param clipper the gradient clip function
-     * @param weightInit the weight initialization function
-     */
-    public DenseLayer(int dimension, Activations activation, GradientClipper clipper, WeightInitialization weightInit) {
-        super(activation.getFunction(), clipper, weightInit);
         this.dimension = dimension;
+        this.activation = activation.getFunction();
     }
 
     @Override

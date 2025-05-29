@@ -28,7 +28,6 @@ public class LayerNorm extends Layer {
      * @param epsilon the epsilon used to avoid division by zero
      */
     public LayerNorm(double epsilon) {
-        super(new LinearActivation(), new NoClipper());
         this.epsilon = epsilon;
     }
 
