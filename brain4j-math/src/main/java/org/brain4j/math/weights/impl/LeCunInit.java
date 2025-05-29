@@ -4,13 +4,13 @@ import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.Random;
 
-public class LeCunInit implements WeightInitialization {
+import static org.brain4j.math.constants.Constants.SQRT3;
 
-    private static final double SQRT_OF_3 = Math.sqrt(3);
+public class LeCunInit implements WeightInitialization {
 
     @Override
     public double getBound(int input, int output) {
-        return SQRT_OF_3 / Math.sqrt(input);
+        return SQRT3 / Math.sqrt(input);
     }
 
     @Override

@@ -53,7 +53,9 @@ public final class Constants {
     public static final double LOG10E = 1.0 / LN10;
     
     public static final double SQRT2 = Math.sqrt(2.0);
-    
+
+    public static final double SQRT3 = Math.sqrt(3.0);
+
     public static final double SQRT1_2 = 1.0 / Math.sqrt(2.0);
     
     public static final double GOLDEN_RATIO = (1.0 + Math.sqrt(5.0)) / 2.0;
