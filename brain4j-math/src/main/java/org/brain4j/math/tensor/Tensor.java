@@ -279,7 +279,7 @@ public interface Tensor extends Iterable<Float> {
     /**
      * Activates all the elements of this tensor using the specified activation function.
      * @param activation the activation function
-     * @return the resultning tensor
+     * @return the resulting tensor
      */
     Tensor activate(Activation activation);
 
