@@ -34,8 +34,11 @@ public class OldTensorCPU implements Cloneable, Tensor {
             MatMulProvider = new SimdMatmulProvider();
         } else {
             if (deviceType == DeviceType.CPU) {
-                System.out.println("WARNING: The Vector incubator API is not available. For better performance, check out " +
-                        "this guide: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD");
+                System.out.println(
+                        """
+                        WARNING: The Vector incubator API is not available. For better performance, check out this guide: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD
+                        """
+                );
             }
             
             MatMulProvider = new NormalMatmulProvider();
