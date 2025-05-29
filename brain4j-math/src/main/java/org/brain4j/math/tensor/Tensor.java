@@ -428,11 +428,13 @@ public interface Tensor extends Iterable<Float> {
      * Implicitly uses SAME padding and FFT implementation for larger dimensions.
      * Convolution is supported for both 1D and 2D tensors.
      *
-     * @param kernel The kernel tensor to use for convolution.
-     * @return A new tensor resulting from the convolution.
-     * @throws IllegalArgumentException If tensor dimensions are not compatible.
+     * @param kernel the kernel tensor to use for convolution.
+     * @param stride the stride to use for the convolution
+     * @param padding the padding to use for the convolution
+     * @return a new tensor resulting from the convolution.
+     * @throws IllegalArgumentException if tensor dimensions are not compatible.
      */
-    Tensor convolve(Tensor kernel);
+    Tensor convolve(Tensor kernel, int stride, int padding);
 
     /**
      * Applies softmax to the tensor with a default temperature of 1.

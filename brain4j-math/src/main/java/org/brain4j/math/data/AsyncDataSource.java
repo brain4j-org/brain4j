@@ -1,6 +1,7 @@
 package org.brain4j.math.data;
 
 import org.brain4j.datasets.core.dataset.Dataset;
+import org.brain4j.math.LineSplitting;
 import org.brain4j.math.Pair;
 import org.brain4j.math.tensor.Tensor;
 
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -43,7 +43,6 @@ public class AsyncDataSource extends ListDataSource {
             int batchSize,
             String fileFormat
     ) throws IOException {
-        
         ListDataSource dataSource = ListDataSource.fromDataset(
                 dataset, inputFeatures, outputLabels, shuffle, batchSize, fileFormat);
         
@@ -88,12 +87,11 @@ public class AsyncDataSource extends ListDataSource {
      */
     public static AsyncDataSource fromDataset(
             Dataset dataset,
-            BiFunction<String, Integer, Pair<Tensor, Tensor>> lineSplitter,
+            LineSplitting lineSplitter,
             boolean shuffle,
             int batchSize,
             String fileFormat
     ) throws IOException {
-        
         ListDataSource dataSource = ListDataSource.fromDataset(
                 dataset, lineSplitter, shuffle, batchSize, fileFormat);
         

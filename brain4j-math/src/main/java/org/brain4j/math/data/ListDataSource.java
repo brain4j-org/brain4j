@@ -2,6 +2,7 @@ package org.brain4j.math.data;
 
 import org.brain4j.datasets.core.dataset.Dataset;
 import org.brain4j.datasets.core.dataset.Dataset.DatasetFile;
+import org.brain4j.math.LineSplitting;
 import org.brain4j.math.Pair;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
@@ -14,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -158,7 +158,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      */
     public static ListDataSource fromDataset(
             Dataset dataset,
-            BiFunction<String, Integer, Pair<Tensor, Tensor>> lineSplitter,
+            LineSplitting lineSplitter,
             boolean shuffle,
             int batchSize,
             String fileFormat

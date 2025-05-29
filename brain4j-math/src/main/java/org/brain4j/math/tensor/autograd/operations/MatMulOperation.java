@@ -25,12 +25,21 @@ public class MatMulOperation implements Operation {
 //        System.out.println("A:");
 //        System.out.println(a.toString("%.2f"));
 
-        System.out.println("Grad out:");
-        System.out.println(gradOutput.toString("%.2f"));
-
-        System.out.println("Input b hashcode: " + b.hashCode());
-        System.out.println("Gradient of b:");
-        System.out.println(gradB.toString("%.2f"));
+//        System.out.println("Grad out:");
+//        System.out.println(gradOutput.toString("%.4f"));
+//
+//        System.out.println("Input b:");
+//        System.out.println(b.transpose().toString("%.4f"));
+//
+//        System.out.println("not transposed b:");
+//        System.out.println(b.toString("%.4f"));
+//
+//        System.out.println("Input b hashcode: " + b.hashCode());
+//        System.out.println("Gradient of b:");
+//        System.out.println(gradB.toString("%.4f"));
+//
+//        System.out.printf("Gradient of a:");
+//        System.out.println(gradA.toString("%.4f"));
 
         return new Tensor[] { gradA, gradB };
     }

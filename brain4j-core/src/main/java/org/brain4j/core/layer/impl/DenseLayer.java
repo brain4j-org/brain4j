@@ -7,6 +7,7 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -41,6 +42,8 @@ public class DenseLayer extends Layer {
 
     @Override
     public void initWeights(Random generator, int input, int output) {
+        if (input == 0) return;
+
         this.weights.map(x -> weightInit.randomValue(generator, input, output));
         this.bias.map(x -> weightInit.randomValue(generator, input, output));
     }
@@ -66,7 +69,9 @@ public class DenseLayer extends Layer {
 
         // Shape: [batch_size, output_size]
         Tensor transposed = weights.transpose();
-        System.out.println("Weights hash: " + transposed.hashCode());
+//        System.out.println("Weights hash: " + transposed.hashCode());
+//        System.out.println("Weights shape: " + Arrays.toString(transposed.shape()));
+//        System.out.println("Weights:" + transposed.toString("%.4f"));
         Tensor output = input
             .matmulGrad(transposed)
             .addGrad(bias);

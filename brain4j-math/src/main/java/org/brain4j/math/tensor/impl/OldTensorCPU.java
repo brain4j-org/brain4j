@@ -1457,7 +1457,7 @@ public class OldTensorCPU implements Cloneable, Tensor {
      * {@inheritDoc}
      */
     @Override
-    public Tensor convolve(Tensor kernel) {
+    public Tensor convolve(Tensor kernel, int stride, int padding) {
         int dim = this.dimension();
 
         if (kernel.dimension() != dim) {

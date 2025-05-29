@@ -12,8 +12,6 @@ public class AddOperation implements Operation {
     
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
-        System.out.println("back to op: " + this.getClass().getSimpleName());
-        System.out.println(gradOutput.toString("%.2f"));
         return new Tensor[] { gradOutput.clone(), gradOutput.clone() };
     }
 } 

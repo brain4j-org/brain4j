@@ -38,6 +38,8 @@ public class RecurrentLayer extends Layer {
 
     @Override
     public void connect(Layer previous, Layer next) {
+        super.connect(previous, next);
+
         if (previous == null) return;
 
         this.inputWeights = Tensors.zeros(hiddenDimension, previous.size()).withGrad();

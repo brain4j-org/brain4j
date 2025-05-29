@@ -4,6 +4,10 @@ import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
+
+import java.util.Arrays;
+import java.util.Random;
 
 public class ConvLayer extends Layer {
 
@@ -11,8 +15,8 @@ public class ConvLayer extends Layer {
     private int kernelWidth;
     private int kernelHeight;
     private int channels;
-    private int stride;
-    private int padding;
+    private int stride = 1;
+    private int padding = 0;
 
     public ConvLayer(Activations activation, int filters, int kernelWidth, int kernelHeight) {
         this.activation = activation.getFunction();
@@ -22,8 +26,35 @@ public class ConvLayer extends Layer {
     }
 
     @Override
+    public void connect(Layer previous, Layer next) {
+        super.connect(previous, next);
+
+        channels = 1;
+
+        if (previous != null) {
+            channels = previous.size();
+        }
+
+        this.bias = Tensors.zeros(filters);
+        this.weights = Tensors.zeros(filters, channels, kernelWidth, kernelHeight);
+    }
+
+    @Override
+    public void initWeights(Random generator, int input, int output) {
+        this.bias.map(x -> weightInit.randomValue(generator, input, output));
+        this.weights.map(x -> weightInit.randomValue(generator, input, output));
+    }
+
+    @Override
     public Tensor forward(ForwardContext context) {
-        return null;
+        Tensor input = context.input();
+        int[] shape = input.shape();
+
+        if (shape[1] != channels) {
+            throw new IllegalArgumentException("Input channel mismatch: " + shape[1] + " != " + channels);
+        }
+
+        return input.convolve(weights, stride, padding);
     }
 
     @Override

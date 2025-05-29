@@ -1,10 +1,9 @@
 package org.brain4j.core.layer.impl.convolutional;
 
-import org.brain4j.core.clipper.impl.HardClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 
 public class MaxPoolingLayer extends Layer {
 
@@ -12,14 +11,12 @@ public class MaxPoolingLayer extends Layer {
     private int kernelHeight;
     private int stride;
     private int channels;
-    private int outputSize;
 
     public MaxPoolingLayer(int kernelWidth, int kernelHeight) {
         this(kernelWidth, kernelHeight, 1);
     }
 
     public MaxPoolingLayer(int kernelWidth, int kernelHeight, int stride) {
-        super(new LinearActivation(), new HardClipper(5));
         this.kernelWidth = kernelWidth;
         this.kernelHeight = kernelHeight;
         this.stride = stride;
@@ -27,13 +24,50 @@ public class MaxPoolingLayer extends Layer {
 
     @Override
     public void connect(Layer previous, Layer next) {
-        Tensor weights = previous.weights();
-        this.channels = weights.shape()[0]; // [filters, channels, height, width]
+        super.connect(previous, next);
+        this.channels = previous.size();
     }
 
     @Override
     public Tensor forward(ForwardContext context) {
-        return null;
+        Tensor input = context.input(); // [batch_size, channels, height, width]
+        int[] shape = input.shape();
+
+        int batchSize = shape[0];
+        int channels = shape[1];
+        int inputHeight = shape[2];
+        int inputWidth = shape[3];
+
+        int outHeight = (inputHeight - kernelHeight) / stride + 1;
+        int outWidth = (inputWidth - kernelWidth) / stride + 1;
+
+        Tensor output = Tensors.zeros(batchSize, channels, outHeight, outWidth);
+
+        for (int b = 0; b < batchSize; b++) {
+            for (int c = 0; c < channels; c++) {
+                for (int oh = 0; oh < outHeight; oh++) {
+                    for (int ow = 0; ow < outWidth; ow++) {
+                        float max = Float.NEGATIVE_INFINITY;
+
+                        for (int kh = 0; kh < kernelHeight; kh++) {
+                            for (int kw = 0; kw < kernelWidth; kw++) {
+                                int ih = oh * stride + kh;
+                                int iw = ow * stride + kw;
+                                float value = input.get(b, c, ih, iw);
+
+                                if (value > max) {
+                                    max = value;
+                                }
+                            }
+                        }
+
+                        output.set(max, b, c, oh, ow);
+                    }
+                }
+            }
+        }
+
+        return output;
     }
 
     @Override

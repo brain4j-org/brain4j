@@ -395,7 +395,6 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public double distanceSquared(Tensor other) {
-        checkSameShape(other);
         double sum = 0;
 
         for (int i = 0; i < data.length; i++) {
@@ -443,7 +442,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             int linearIndex = baseLinearIndex;
             int inverseLinearIndex = baseInverseLinearIndex;
 
-            for (int j = 0; j < cols - 1; j++) {
+            for (int j = 0; j < cols; j++) {
                 resultData[inverseLinearIndex] = data[linearIndex];
 
                 linearIndex += colsStride;
@@ -798,8 +797,84 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
-    public Tensor convolve(Tensor kernel) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public Tensor convolve(Tensor kernel, int stride, int padding) {
+        int batchSize = shape[0];
+        int inChannels = shape[1];
+        int inRows = shape[2];
+        int inCols = shape[3];
+
+        int[] kShape = kernel.shape();
+        int filters = kShape[0];
+        int kChannels = kShape[1];
+        int kRows = kShape[2];
+        int kCols = kShape[3];
+
+        if (kChannels != inChannels) {
+            throw new IllegalArgumentException("Kernel channels must match input channels");
+        }
+
+        int outRows = (inRows - kRows + 2 * padding) / stride + 1;
+        int outCols = (inCols - kCols + 2 * padding) / stride + 1;
+
+        int[] outShape = new int[]{batchSize, filters, outRows, outCols};
+        float[] outData = new float[batchSize * filters * outRows * outCols];
+
+        float[] kData = kernel.data();
+
+        int inBatchStride = inChannels * inRows * inCols;
+        int inChannelStride = inRows * inCols;
+
+        int kFilterStride = kChannels * kRows * kCols;
+        int kChannelStride = kRows * kCols;
+
+        int outBatchStride = filters * outRows * outCols;
+        int outFilterStride = outRows * outCols;
+
+        for (int b = 0; b < batchSize; b++) {
+            int bInOffset = b * inBatchStride;
+            int bOutOffset = b * outBatchStride;
+
+            for (int f = 0; f < filters; f++) {
+                int fKOffset = f * kFilterStride;
+                int fOutOffset = bOutOffset + f * outFilterStride;
+
+                for (int orow = 0; orow < outRows; orow++) {
+                    int outRowOffset = fOutOffset + orow * outCols;
+                    int iRowStart = orow * stride - padding;
+
+                    for (int ocol = 0; ocol < outCols; ocol++) {
+                        float sum = 0.0f;
+                        int outIndex = outRowOffset + ocol;
+                        int iColStart = ocol * stride - padding;
+
+                        for (int c = 0; c < inChannels; c++) {
+                            int cInOffset = bInOffset + c * inChannelStride;
+                            int cKOffset = fKOffset + c * kChannelStride;
+
+                            for (int kr = 0; kr < kRows; kr++) {
+                                int iRow = iRowStart + kr;
+
+                                if (iRow < 0 || iRow >= inRows) continue;
+
+                                int rowInOffset = cInOffset + iRow * inCols;
+                                int rowKOffset = cKOffset + kr * kCols;
+
+                                for (int kc = 0; kc < kCols; kc++) {
+                                    int iCol = iColStart + kc;
+
+                                    if (iCol < 0 || iCol >= inCols) continue;
+
+                                    sum += data[rowInOffset + iCol] * kData[rowKOffset + kc];
+                                }
+                            }
+                        }
+                        outData[outIndex] = sum;
+                    }
+                }
+            }
+        }
+
+        return Tensors.create(outShape, outData);
     }
 
     @Override

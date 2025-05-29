@@ -50,10 +50,10 @@ public class Model {
     private void connectLayers() {
         if (layers.isEmpty()) return;
 
-        Layer previous = layers.getFirst();
+        Layer previous = null;
         Random random = Random.from(new SplittableRandom());
 
-        for (int i = 1; i < size(); i++) {
+        for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
             Layer next = null;
 
@@ -63,11 +63,15 @@ public class Model {
 
             layer.connect(previous, next);
 
-            int input = previous.size();
+            int input = 0;
+
+            if (previous != null) {
+                input = previous.size();
+            }
+
             int output = layer.size();
 
             layer.initWeights(random, input, output);
-
             previous = layer;
         }
     }
@@ -285,11 +289,11 @@ public class Model {
 
         Layer inputLayer = layers.getFirst();
 
-        if (inputLayer.size() != shape[1]) {
-            throw new IllegalArgumentException(
-                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
-            );
-        }
+//        if (inputLayer.size() != shape[1]) {
+//            throw new IllegalArgumentException(
+//                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
+//            );
+//        }
 
         Tensor pass = input.withGrad();
 
@@ -411,7 +415,7 @@ public class Model {
         String divider = Commons.getHeader(" Architecture ", Commons.getHeaderChar());
 
         stats.append(divider);
-        stats.append(pattern.formatted("Index", "Layer", "Neurons", "Weights", "Activation")).append("\n");
+        stats.append(pattern.formatted("Index", "Layer", "Biases", "Weights", "Activation")).append("\n");
 
         long totalWeights = 0;
         long totalBiases = 0;
@@ -421,7 +425,7 @@ public class Model {
 
             String layerType = layer.getClass().getSimpleName();
 
-            int neurons = layer.size();
+            int neurons = layer.totalBiases();
             int weights = layer.totalWeights();
 
             String formatNeurons = neurons == 0 ? "-" : format.format(neurons);

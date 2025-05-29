@@ -2,6 +2,8 @@ package org.brain4j.math.tensor.autograd;
 
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.Arrays;
+
 public class AutogradContext {
 
     private final boolean requiresGrad;
@@ -38,7 +40,6 @@ public class AutogradContext {
 
         if (operation == null) return;
 
-        System.out.println("Backwarding to op: " + operation.getClass().getSimpleName());
         Tensor[] inputGrads = operation.backward(gradOutput, inputs);
 
         for (int i = 0; i < inputs.length; i++) {

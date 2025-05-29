@@ -2,29 +2,27 @@ package org.brain4j.core.layer.impl.convolutional;
 
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.tensor.Tensor;
+
+import java.util.Arrays;
 
 public class FlattenLayer extends Layer {
 
     private int dimension;
 
-    public FlattenLayer() {
-        super(new LinearActivation(), null);
-    }
-
-    @Override
-    public void connect(Layer previous, Layer next) {
-        this.dimension = previous.size();
+    public FlattenLayer(int dimension) {
+        this.dimension = dimension;
     }
 
     @Override
     public Tensor forward(ForwardContext context) {
-        return null;
+        Tensor input = context.input();
+        int batchSize = input.shape()[0];
+        return context.input().reshape(batchSize, dimension);
     }
 
     @Override
     public int size() {
-        return 0;
+        return dimension;
     }
 }
