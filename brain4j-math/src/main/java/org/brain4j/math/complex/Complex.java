@@ -151,6 +151,47 @@ public final class Complex implements Serializable {
     public Complex tan() {
         return sin().divide(cos());
     }
+
+    public Complex asin() {
+        Complex z_squared = this.multiply(this);
+        Complex insideRoot = ONE.subtract(z_squared);
+        Complex iz = I.multiply(this);
+
+        return iz.add(insideRoot.sqrt())
+                .log()
+                .multiply(new Complex(0, -1));
+    }
+
+    public Complex acos() {
+        Complex z_squared = this.multiply(this);
+        Complex izRoot = I.multiply(ONE.subtract(z_squared).sqrt());
+
+        return this.add(izRoot)
+                .log()
+                .multiply(new Complex(0, -1));
+    }
+
+    public Complex atan() {
+        Complex iz = I.multiply(this);
+        Complex num = ONE.add(iz);
+        Complex den = ONE.subtract(iz);
+        Complex factor = new Complex(0, -0.5);
+
+        return num
+                .divide(den)
+                .log()
+                .multiply(factor);
+    }
+
+    public Complex sinh() {
+        return new Complex(Math.sinh(real) * Math.cos(imaginary),
+                          Math.cosh(real) * Math.sin(imaginary));
+    }
+
+    public Complex cosh() {
+        return new Complex(Math.cosh(real) * Math.cos(imaginary),
+                          Math.sinh(real) * Math.sin(imaginary));
+    }
     
     public static Complex fromPolar(double r, double theta) {
         return new Complex(r * Math.cos(theta), r * Math.sin(theta));
