@@ -1,4 +1,4 @@
-package org.brain4j.core.training;
+package org.brain4j.core.training.wrappers;
 
 import org.brain4j.math.Commons;
 import org.brain4j.math.tensor.Tensor;

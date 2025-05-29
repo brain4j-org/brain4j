@@ -2,7 +2,7 @@ package org.brain4j.core.model;
 
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.training.EvaluationResult;
+import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;

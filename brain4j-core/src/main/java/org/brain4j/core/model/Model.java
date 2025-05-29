@@ -4,8 +4,9 @@ import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.BackPropagation;
-import org.brain4j.core.training.EvaluationResult;
+import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.StatesCache;
+import org.brain4j.core.training.wrappers.TrainingParams;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
@@ -180,6 +181,14 @@ public class Model {
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
             System.out.println();
         }
+    }
+
+    /**
+     * Trains the model using the provided training parameters.
+     * @param params the training parameters
+     */
+    public void fit(TrainingParams params) {
+        fit(params.train(), params.validation(), params.epochs(), params.evaluateEvery());
     }
 
     /**
