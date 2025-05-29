@@ -63,59 +63,54 @@ public abstract class Layer {
         Tensor derivatives = activation.getDerivative(outputs);
 
         Tensor delta = lossFunction.getDelta(error, derivatives); // [4, 1] -> [batch_size, output_size]
-        Tensor input = cache.input(index);
+//        Tensor input = cache.input(index);
 
-        Tensor weightsGradient = delta.transpose().matmul(input);
-        Tensor biasesGradient = delta.sum(0, false);
-
-        updater.change(weightsGradient, biasesGradient, index);
-
-        return delta;
-
-//        Tensor output = cache.output(index);
-//        output.backward(delta);
-//
-//        Tensor weightsGradient = weights.grad().transpose(); // delta.transpose().matmul(input);
+//        Tensor weightsGradient = delta.transpose().matmul(input);
 //        Tensor biasesGradient = delta.sum(0, false);
 //
 //        updater.change(weightsGradient, biasesGradient, index);
 //
 //        return delta;
+
+        Tensor output = cache.output(index);
+        output.backward(delta);
+
+        Tensor weightsGradient = weights.grad().transpose(); // delta.transpose().matmul(input);
+        Tensor biasesGradient = delta.sum(0, false);
+
+        updater.change(weightsGradient, biasesGradient, index);
+
+        return delta;
     }
 
     public Tensor backward(StatesCache cache, Updater updater, Optimizer optimizer, Layer previous, int index, Tensor delta) {
         if (weights == null) return delta;
 
-        Tensor input = cache.input(index);
-        Tensor output = cache.output(index);
-        Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
+//        Tensor input = cache.input(index);
+//        Tensor output = cache.output(index);
+//        Tensor derivative = activation.getDerivative(output); // [batch_size, n_out]
+//
+//        Tensor weightsNext = previous.weights(); // [n_out, n_out_next]
+//        Tensor deltaProjected = delta.matmul(weightsNext); // [batch_size x n_out]
+//
+//        Tensor deltaThisLayer = deltaProjected.mul(derivative); // [batch_size x n_out]
+//        Tensor weightsGradient = input.transpose().matmul(deltaThisLayer);
 
-        Tensor weightsNext = previous.weights(); // [n_out, n_out_next]
-        Tensor deltaProjected = delta.matmul(weightsNext); // [batch_size x n_out]
+        Tensor weightsGradient = weights.grad();
+        Tensor biasGradient = bias.grad().sum(0, false);
 
-        Tensor deltaThisLayer = deltaProjected.mul(derivative); // [batch_size x n_out]
-        Tensor weightsGradient = input.transpose().matmul(deltaThisLayer);
+        weightsGradient = optimizer.step(index, this, weightsGradient);
 
-        Tensor optimized = optimizer.step(index, this, weightsGradient); // [n_in x n_out]
-        Tensor biasGradient = deltaThisLayer.sum(0, false); // [n_out]
-
-        clipper.clip(optimized);
+        clipper.clip(weightsGradient);
         clipper.clip(biasGradient);
 
-        updater.change(optimized, biasGradient, index);
-        return deltaThisLayer;
+        updater.change(weightsGradient, biasGradient, index);
 
-//        Tensor weightsGradient = weights.grad();
-//        Tensor biasGradient = bias.grad().sum(0, false);
-//
-//        weightsGradient = optimizer.step(index, this, weightsGradient);
-//
-//        clipper.clip(weightsGradient);
-//        clipper.clip(biasGradient);
-//
-//        updater.change(weightsGradient, biasGradient, index);
-//
-//        return null;
+        return null;
+    }
+
+    public boolean validateInput(Tensor input) {
+        return true;
     }
 
     public boolean skipForward() {

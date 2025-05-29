@@ -289,6 +289,12 @@ public class Model {
 
         Layer inputLayer = layers.getFirst();
 
+        if (!inputLayer.validateInput(input)) {
+            throw new IllegalArgumentException(
+                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
+            );
+        }
+
 //        if (inputLayer.size() != shape[1]) {
 //            throw new IllegalArgumentException(
 //                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
