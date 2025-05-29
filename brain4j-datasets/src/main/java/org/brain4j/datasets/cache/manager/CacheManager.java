@@ -46,12 +46,10 @@ public class CacheManager {
         return cacheStrategy.isValid(cachedPath);
     }
 
-    // TODO migrate this to void-returning type?
-    public Path ensureDatasetCacheDirectory(String datasetId) {
+    public void ensureDatasetCacheDirectory(String datasetId) {
         Path datasetDir = cacheDirectory.resolve(datasetId);
         try {
             Files.createDirectories(datasetDir);
-            return datasetDir;
         } catch (IOException e) {
             throw new RuntimeException("Failed to create cache directory: " + datasetDir, e);
         }
