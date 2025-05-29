@@ -39,11 +39,15 @@ public class Model {
     protected Updater updater;
     protected LossFunction lossFunction;
 
+    public static Model of(Layer... layers) {
+        return new Model(layers);
+    }
+
     /**
      * Constructs a new model instance with the given layers.
      * @param layers the sequence of layers forming the neural network
      */
-    public Model(Layer... layers) {
+    protected Model(Layer... layers) {
         this.layers = List.of(layers);
     }
 
