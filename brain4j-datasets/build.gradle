@@ -17,7 +17,7 @@ test {
 }
 
 shadowJar {
-    archiveFileName = 'brain4j-datasets-${parent.version}.jar'
+    archiveFileName = "brain4j-datasets-${parent.version}.jar"
 }
 
 tasks.register('cleanCache') {

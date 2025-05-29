@@ -63,22 +63,18 @@ public abstract class Layer {
         Tensor derivatives = activation.getDerivative(outputs);
 
         Tensor delta = lossFunction.getDelta(error, derivatives); // [4, 1] -> [batch_size, output_size]
-//        Tensor input = cache.input(index);
 
-//        Tensor weightsGradient = delta.transpose().matmul(input);
-//        Tensor biasesGradient = delta.sum(0, false);
-//
-//        updater.change(weightsGradient, biasesGradient, index);
-//
-//        return delta;
-
-        Tensor output = cache.output(index);
+        Tensor output = cache.preActivation(index);
         output.backward(delta);
 
-        Tensor weightsGradient = weights.grad().transpose(); // delta.transpose().matmul(input);
-        Tensor biasesGradient = delta.sum(0, false);
+        Tensor autoWeightsGradient = weights.grad().transpose(); // OK
+        Tensor autoBiasGradient = bias.grad().sum(0, false); // OK
 
-        updater.change(weightsGradient, biasesGradient, index);
+//        Tensor input = cache.input(index);
+//        Tensor weightsGradient = delta.transpose().matmul(input);
+//        Tensor biasesGradient = delta.sum(0, false);
+
+        updater.change(autoWeightsGradient, autoBiasGradient, index);
 
         return delta;
     }
@@ -94,17 +90,19 @@ public abstract class Layer {
 //        Tensor deltaProjected = delta.matmul(weightsNext); // [batch_size x n_out]
 //
 //        Tensor deltaThisLayer = deltaProjected.mul(derivative); // [batch_size x n_out]
+
 //        Tensor weightsGradient = input.transpose().matmul(deltaThisLayer);
+//        Tensor biasGradient = deltaThisLayer.sum(0, false);
 
-        Tensor weightsGradient = weights.grad();
-        Tensor biasGradient = bias.grad().sum(0, false);
+        Tensor autoGradWeights = weights.grad();
+        Tensor autoBiasGradient = bias.grad().sum(0, false);
 
-        weightsGradient = optimizer.step(index, this, weightsGradient);
+        autoGradWeights = optimizer.step(index, this, autoGradWeights);
 
-        clipper.clip(weightsGradient);
-        clipper.clip(biasGradient);
+        clipper.clip(autoGradWeights);
+        clipper.clip(autoBiasGradient);
 
-        updater.change(weightsGradient, biasGradient, index);
+        updater.change(autoGradWeights, autoBiasGradient, index);
 
         return null;
     }

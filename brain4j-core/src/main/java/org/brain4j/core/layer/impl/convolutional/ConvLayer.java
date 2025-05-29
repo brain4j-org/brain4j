@@ -62,6 +62,12 @@ public class ConvLayer extends Layer {
         return filters;
     }
 
+    @Override
+    public boolean validateInput(Tensor input) {
+        // [batch_size, channels, height, width]
+        return input.shape()[2] == channels;
+    }
+
     public int filters() {
         return filters;
     }

@@ -91,4 +91,9 @@ public class DenseLayer extends Layer {
     public int size() {
         return dimension;
     }
+
+    @Override
+    public boolean validateInput(Tensor input) {
+        return input.shape()[1] == dimension;
+    }
 }

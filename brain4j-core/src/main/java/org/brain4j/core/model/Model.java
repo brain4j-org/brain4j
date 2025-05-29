@@ -51,7 +51,7 @@ public class Model {
         if (layers.isEmpty()) return;
 
         Layer previous = null;
-        Random random = Random.from(new SplittableRandom());
+        Random random = Random.from(new SplittableRandom(0));
 
         for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
@@ -294,12 +294,6 @@ public class Model {
                 "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
             );
         }
-
-//        if (inputLayer.size() != shape[1]) {
-//            throw new IllegalArgumentException(
-//                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
-//            );
-//        }
 
         Tensor pass = input.withGrad();
 

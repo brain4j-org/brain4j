@@ -13,5 +13,5 @@ compileJava {
 }
 
 shadowJar {
-    archiveFileName = 'brain4j-math-${parent.version}.jar'
+    archiveFileName = "brain4j-math-${parent.version}.jar"
 }

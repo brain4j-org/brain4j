@@ -14,7 +14,7 @@ dependencies {
 }
 
 shadowJar {
-    archiveFileName = 'brain4j-core-${parent.version}.jar'
+    archiveFileName = "brain4j-core-${parent.version}.jar"
 }
 
 tasks.withType(JavaExec).configureEach {
