@@ -51,15 +51,14 @@ public class BackPropagation {
         int count = layers.size() - 1;
 
         Layer last = layers.getLast();
-        Tensor delta = last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
+        last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
 
         for (int l = count - 1; l >= 0; l--) {
             Layer layer = layers.get(l);
 
             if (layer.skipPropagate()) continue;
 
-            delta = layer.backward(cache, updater, optimizer, last, l, delta);
-            last = layer;
+            layer.backward(updater, optimizer, l);
         }
     }
 }
