@@ -69,9 +69,6 @@ public class DenseLayer extends Layer {
 
         // Shape: [batch_size, output_size]
         Tensor transposed = weights.transpose();
-//        System.out.println("Weights hash: " + transposed.hashCode());
-//        System.out.println("Weights shape: " + Arrays.toString(transposed.shape()));
-//        System.out.println("Weights:" + transposed.toString("%.4f"));
         Tensor output = input
             .matmulGrad(transposed)
             .addGrad(bias);
