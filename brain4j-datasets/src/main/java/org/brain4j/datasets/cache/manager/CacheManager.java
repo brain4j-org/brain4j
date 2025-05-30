@@ -35,7 +35,6 @@ public class CacheManager {
 
     public Path getCachedFilePath(String datasetId, String filename) {
         String normalizedFilename = filename.replace('/', java.io.File.separatorChar);
-
         String hashedPrefix = hashFilename(datasetId + "/" + filename);
 
         return cacheDirectory.resolve(datasetId).resolve(hashedPrefix + "_" + normalizedFilename);
@@ -89,15 +88,14 @@ public class CacheManager {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(input.getBytes());
+
             StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
+
+            for (int i = 0; i < 8; i++) {
+                hexString.append(String.format("%02x", hash[i]));
             }
-            return hexString.substring(0, 8); // only take the first 8 characters, yes, I'm lazy.
+
+            return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 algorithm not available", e);
         }

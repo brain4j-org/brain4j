@@ -1,7 +1,10 @@
 package org.brain4j.core;
 
+import org.brain4j.datasets.api.HuggingFaceClient;
 import org.brain4j.math.device.DeviceUtils;
 import org.brain4j.math.tensor.impl.TensorCPU;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -29,13 +32,16 @@ import java.nio.charset.StandardCharsets;
  */
 public class Brain4J {
 
+    private static final Logger logger = LoggerFactory.getLogger(Brain4J.class);
+
     public static String version() {
         return "3.0";
     }
 
     public static void initialize() {
         TensorCPU.initialize();
-        System.out.println("Available devices: " + availableDevices());
+        logger.info("Brain4J v{} initialized.", version());
+        logger.info("Available devices: {}", availableDevices());
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     }
 

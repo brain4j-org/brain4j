@@ -4,12 +4,15 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.cpu.matmul.MatmulProvider;
 import org.brain4j.math.tensor.cpu.matmul.NormalMatmulProvider;
 import org.brain4j.math.tensor.cpu.matmul.SimdMatmulProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 
 public class TensorCPU extends TensorImplBase {
 
+    private static Logger logger = LoggerFactory.getLogger(TensorCPU.class);
     private static ForkJoinPool pool;
     private static MatmulProvider matmulProvider;
 
@@ -21,12 +24,8 @@ public class TensorCPU extends TensorImplBase {
         if (module.isPresent()) {
             matmulProvider = new SimdMatmulProvider();
         } else {
-            System.out.println(
-                    """
-                    WARNING: The Vector incubator API is not available and it's recommended to use.
-                    Check out this guide to learn more: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD
-                    """
-            );
+            logger.warn("The Vector incubator API is not available. It's recommended to use for better performance.");
+            logger.warn("For more information consult this guide: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD");
 
             matmulProvider = new NormalMatmulProvider();
         }

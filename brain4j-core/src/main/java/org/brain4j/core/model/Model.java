@@ -16,6 +16,8 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.index.Range;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -33,6 +35,8 @@ import static org.brain4j.math.constants.Constants.*;
  */
 public class Model {
 
+    private static final Logger logger = LoggerFactory.getLogger(Model.class);
+    private static final Logger progressLogger = LoggerFactory.getLogger("dynamic");
     protected final List<Layer> layers;
 
     protected BackPropagation backPropagation;
@@ -145,7 +149,9 @@ public class Model {
         String f1ScoreMsg = "F1-Score: " + LIGHT_GREEN + "%.2f%%" + RESET;
 
         String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg + "\n";
-        System.out.printf(message, step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
+        String formatted = message.formatted(step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
+
+        progressLogger.info(formatted);
     }
 
     protected void printProgressBar(
@@ -179,7 +185,7 @@ public class Model {
         String message = String.format(progressMsg + progressBar + percentual + time,
             currentEpoch, epoches, percentage * 100, timeStr, remainingTimeStr);
 
-        System.out.print("\r" + message);
+        progressLogger.info(message);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
             System.out.println();
@@ -419,7 +425,7 @@ public class Model {
      * @return a human-readable summary string of the model
      * @throws IllegalStateException if the model is not compiled before calling this method
      */
-    public String summary() {
+    public void summary() {
         if (updater == null || optimizer == null) {
             throw new IllegalStateException("The network is not compiled! Make sure to call compile() before.");
         }
@@ -470,7 +476,7 @@ public class Model {
         stats.append("Total parameters: %s (%s)\n".formatted(parameters, sizeOfParams));
         stats.append(Commons.getHeader("", Commons.getHeaderChar()));
 
-        return stats.toString();
+        Arrays.stream(stats.toString().split("\n")).forEach(logger::info);
     }
 
     /**

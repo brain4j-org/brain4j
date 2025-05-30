@@ -6,7 +6,6 @@ public class TrainingParams {
 
     private ListDataSource trainSource;
     private ListDataSource validationSource;
-    private double learningRate;
     private int epochs;
     private int evaluateEvery;
 
@@ -34,15 +33,6 @@ public class TrainingParams {
 
     public TrainingParams validation(ListDataSource validationSource) {
         this.validationSource = validationSource;
-        return this;
-    }
-
-    public double learningRate() {
-        return learningRate;
-    }
-
-    public TrainingParams learningRate(double learningRate) {
-        this.learningRate = learningRate;
         return this;
     }
 
