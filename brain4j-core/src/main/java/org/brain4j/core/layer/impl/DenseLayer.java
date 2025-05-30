@@ -74,14 +74,9 @@ public class DenseLayer extends Layer {
             .addGrad(bias);
 
         cache.setInput(index, input);
-
-        if (next instanceof LayerNorm layerNorm) {
-            output = layerNorm.forward(new ForwardContext(cache, output, index + 1, training));
-        }
+        cache.setPreActivation(index, output);
 
         Tensor activated = output.activateGrad(activation);
-
-        cache.setPreActivation(index, output);
         cache.setOutput(index, activated);
 
         return activated;

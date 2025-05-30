@@ -40,6 +40,8 @@ public class Model {
     protected Updater updater;
     protected LossFunction lossFunction;
 
+    protected long seed;
+
     public static Model of(Layer... layers) {
         return new Model(layers);
     }
@@ -50,13 +52,14 @@ public class Model {
      */
     protected Model(Layer... layers) {
         this.layers = List.of(layers);
+        this.seed = System.currentTimeMillis();
     }
 
     private void connectLayers() {
         if (layers.isEmpty()) return;
 
         Layer previous = null;
-        Random random = Random.from(new SplittableRandom(0));
+        Random random = Random.from(new SplittableRandom(seed));
 
         for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
@@ -518,5 +521,23 @@ public class Model {
      */
     public LossFunction lossFunction() {
         return lossFunction;
+    }
+
+    /**
+     * Returns the seed value used to initialize the random number generator.
+     * @return the seed value
+     */
+    public long seed() {
+        return seed;
+    }
+
+    /**
+     * Updates the seed value used to initialize the random number generator.
+     * @param seed the new seed value
+     * @return the model instance
+     */
+    public Model setSeed(long seed) {
+        this.seed = seed;
+        return this;
     }
 }
