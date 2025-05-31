@@ -11,6 +11,7 @@ import java.util.Random;
 
 /**
  * Implementation of a recurrent layer.
+ * @apiNote This implementation is not completed and doesn't support training yet.
  * @author xEcho1337
  * @since 3.0
  */
@@ -37,9 +38,7 @@ public class RecurrentLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous, Layer next) {
-        super.connect(previous, next);
-
+    public void connect(Layer previous) {
         if (previous == null) return;
 
         this.inputWeights = Tensors.zeros(hiddenDimension, previous.size()).withGrad();
@@ -51,11 +50,11 @@ public class RecurrentLayer extends Layer {
 
     @Override
     public void initWeights(Random generator, int input, int output) {
-        this.inputWeights.map(x -> weightInit.randomValue(generator, input, output));
-        this.hiddenWeights.map(x -> weightInit.randomValue(generator, input, output));
-        this.weights.map(x -> weightInit.randomValue(generator, input, output));
-        this.bias.map(x -> weightInit.randomValue(generator, input, output));
-        this.hiddenStateBias.map(x -> weightInit.randomValue(generator, input, output));
+        this.inputWeights.map(x -> weightInit.generate(generator, input, output));
+        this.hiddenWeights.map(x -> weightInit.generate(generator, input, output));
+        this.weights.map(x -> weightInit.generate(generator, input, output));
+        this.bias.map(x -> weightInit.generate(generator, input, output));
+        this.hiddenStateBias.map(x -> weightInit.generate(generator, input, output));
     }
 
     @Override

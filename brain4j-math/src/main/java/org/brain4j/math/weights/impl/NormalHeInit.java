@@ -12,7 +12,7 @@ public class NormalHeInit implements WeightInitialization {
     }
 
     @Override
-    public double randomValue(Random generator, int input, int output) {
+    public double generate(Random generator, int input, int output) {
         return randomBetween(generator, 0, getBound(input, output));
     }
 }

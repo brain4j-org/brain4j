@@ -76,6 +76,7 @@ public class SafeTensorsImpl implements ModelSerializer {
 
         return new Metadata(activations, tensors);
     }
+    
     @Override
     public void serialize(File file, Model model) throws Exception {
 

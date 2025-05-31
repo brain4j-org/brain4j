@@ -32,6 +32,9 @@ import static org.brain4j.math.constants.Constants.*;
  * Supports multiple layer types, loss functions, optimizers, and training via backpropagation.
  * Provides methods for training (fit), prediction, evaluation, and model summary.
  * </p>
+ * @see Transformer
+ * @since 3.0
+ * @author xEcho1337
  */
 public class Model {
 
@@ -46,17 +49,38 @@ public class Model {
 
     protected long seed;
 
+    /**
+     * Constructs a new neural network with the given layers.
+     * @param layers the sequence of layers forming the neural network
+     */
     public static Model of(Layer... layers) {
         return new Model(layers);
     }
 
-    /**
-     * Constructs a new model instance with the given layers.
-     * @param layers the sequence of layers forming the neural network
-     */
     protected Model(Layer... layers) {
-        this.layers = List.of(layers);
+        this.layers = new ArrayList<>(List.of(layers));
         this.seed = System.currentTimeMillis();
+    }
+
+    /**
+     * Adds a layer at the last place of the neural network.
+     * @param layer the layer to add
+     * @return the current model instance
+     */
+    public Model add(Layer layer) {
+        layers.add(layer);
+        return this;
+    }
+
+    /**
+     * Adds a layer in a specified place of the neural network.
+     * @param index the index to insert the layer on
+     * @param layer the layer to insert
+     * @return the current model instance
+     */
+    public Model add(int index, Layer layer) {
+        layers.add(index, layer);
+        return this;
     }
 
     private void connectLayers() {
@@ -67,13 +91,7 @@ public class Model {
 
         for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
-            Layer next = null;
-
-            if (i < size() - 1) {
-                next = layerAt(i + 1);
-            }
-
-            layer.connect(previous, next);
+            layer.connect(previous);
 
             int input = 0;
 

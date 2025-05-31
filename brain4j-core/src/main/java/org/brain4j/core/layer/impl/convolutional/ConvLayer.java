@@ -6,7 +6,6 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
-import java.util.Arrays;
 import java.util.Random;
 
 public class ConvLayer extends Layer {
@@ -26,9 +25,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous, Layer next) {
-        super.connect(previous, next);
-
+    public void connect(Layer previous) {
         channels = 1;
 
         if (previous != null) {
@@ -41,8 +38,8 @@ public class ConvLayer extends Layer {
 
     @Override
     public void initWeights(Random generator, int input, int output) {
-        this.bias.map(x -> weightInit.randomValue(generator, input, output));
-        this.weights.map(x -> weightInit.randomValue(generator, input, output));
+        this.bias.map(x -> weightInit.generate(generator, input, output));
+        this.weights.map(x -> weightInit.generate(generator, input, output));
     }
 
     @Override

@@ -7,6 +7,16 @@ import org.brain4j.math.weights.impl.UniformXavierInit;
 
 public class SoftmaxActivation implements Activation {
 
+    private final double temperature;
+
+    public SoftmaxActivation() {
+        this(1.0);
+    }
+
+    public SoftmaxActivation(double temperature) {
+        this.temperature = temperature;
+    }
+
     @Override
     public WeightInitialization defaultWeightInit() {
         return new UniformXavierInit();
@@ -19,7 +29,7 @@ public class SoftmaxActivation implements Activation {
 
     @Override
     public Tensor activate(Tensor input) {
-        return input.softmax();
+        return input.softmax(temperature);
     }
 
     @Override

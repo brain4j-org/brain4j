@@ -14,7 +14,7 @@ public class LeCunInit implements WeightInitialization {
     }
 
     @Override
-    public double randomValue(Random generator, int input, int output) {
+    public double generate(Random generator, int input, int output) {
         double bound = getBound(input, output);
         return randomBetween(generator, -bound, bound);
     }

@@ -12,7 +12,7 @@ public class NormalInit implements WeightInitialization {
     }
 
     @Override
-    public double randomValue(Random generator, int input, int output) {
+    public double generate(Random generator, int input, int output) {
         return randomBetween(generator, -1, 1);
     }
 }

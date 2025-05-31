@@ -23,8 +23,7 @@ public class MaxPoolingLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous, Layer next) {
-        super.connect(previous, next);
+    public void connect(Layer previous) {
         this.channels = previous.size();
     }
 

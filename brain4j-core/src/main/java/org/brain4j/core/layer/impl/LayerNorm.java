@@ -1,9 +1,7 @@
 package org.brain4j.core.layer.impl;
 
-import org.brain4j.core.clipper.impl.NoClipper;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.index.Range;
@@ -32,7 +30,7 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public void connect(Layer previous, Layer next) {
+    public void connect(Layer previous) {
         this.weights = Tensors.ones(previous.size()).withGrad();
         this.bias = Tensors.zeros(previous.size()).withGrad();
     }

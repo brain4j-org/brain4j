@@ -7,13 +7,25 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
-import java.util.Arrays;
 import java.util.Random;
 
 /**
- * Implementation of a dense (or fully connected) layer.
+ * Implementation of a fully connected (dense) neural network layer.
+ * <p>
+ * This layer performs a linear transformation on the input tensor,
+ * followed by the application of a specified activation function.
+ * </p>
+ * <p>Inputs are expected to have the shape <code>[batch_size, input_size]</code>,
+ * outputs have the shape <code>[batch_size, dimension]</code> where <code>dimension</code>
+ * is the amount of neurons in this layer.
+ * </p>
+ * Weights are represented with the following shapes:
+ * <ul>
+ *   <li><code>weights</code> has shape <code>[output_size, input_size]</code></li>
+ *   <li><code>bias</code> has shape <code>[output_size]</code></li>
+ * </ul>
  * @author xEcho1337
- * @since 2.0
+ * @since 3.0
  */
 public class DenseLayer extends Layer {
 
@@ -30,9 +42,7 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous, Layer next) {
-        super.connect(previous, next);
-
+    public void connect(Layer previous) {
         if (previous == null) return;
 
         // Shape: [output_size, input_size]
@@ -44,8 +54,8 @@ public class DenseLayer extends Layer {
     public void initWeights(Random generator, int input, int output) {
         if (input == 0) return;
 
-        this.weights.map(x -> weightInit.randomValue(generator, input, output));
-        this.bias.map(x -> weightInit.randomValue(generator, input, output));
+        this.weights.map(x -> weightInit.generate(generator, input, output));
+        this.bias.map(x -> weightInit.generate(generator, input, output));
     }
 
     @Override

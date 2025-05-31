@@ -27,7 +27,6 @@ public abstract class Layer {
 
     protected Tensor weights;
     protected Tensor bias;
-    protected Layer next;
 
     /**
      * Performs a forward pass through this layer.
@@ -42,8 +41,8 @@ public abstract class Layer {
      */
     public abstract int size();
 
-    public void connect(Layer previous, Layer next) {
-        this.next = next;
+    public void connect(Layer previous) {
+        // No-op
     }
 
     public void initWeights(Random generator, int input, int output) {
