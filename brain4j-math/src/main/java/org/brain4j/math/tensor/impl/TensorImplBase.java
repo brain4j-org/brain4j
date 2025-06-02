@@ -798,6 +798,9 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor convolve(Tensor kernel, int stride, int padding) {
+        // this.shape = [batchSize, channels, height, width]
+        // kernel.shape = [filters, channels, kernelHeight, kernelWidth]
+
         int batchSize = shape[0];
         int inChannels = shape[1];
         int inRows = shape[2];

@@ -74,7 +74,7 @@ public abstract class Layer {
     public void backward(Updater updater, Optimizer optimizer, int index) {
         if (weights == null) return;
 
-        Tensor weightsGrad = weights.grad();
+        Tensor weightsGrad = weights.grad().transpose();
         Tensor biasGrad = bias.grad().sum(0, false);
 
         weightsGrad = optimizer.step(index, this, weightsGrad);
