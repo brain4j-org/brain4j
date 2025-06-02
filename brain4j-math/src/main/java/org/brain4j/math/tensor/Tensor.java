@@ -248,10 +248,7 @@ public interface Tensor extends Iterable<Float> {
     double distance(Tensor other);
     double distanceSquared(Tensor other);
     Tensor transpose();
-    default Tensor fastTranspose() {
-        return transpose();
-    }
-    
+
     //=============================================================
     // Statistical operations
     //=============================================================

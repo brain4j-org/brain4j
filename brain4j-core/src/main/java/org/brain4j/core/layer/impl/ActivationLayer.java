@@ -8,11 +8,10 @@ import org.brain4j.math.tensor.Tensor;
 
 public class ActivationLayer extends Layer {
 
-    private final Activations activation;
     private int dimension;
 
     public ActivationLayer(Activations activation) {
-        this.activation = activation;
+        this.activation = activation.getFunction();
     }
 
     @Override
@@ -25,7 +24,7 @@ public class ActivationLayer extends Layer {
         Tensor input = context.input();
         StatesCache cache = context.cache();
 
-        Tensor output = input.activateGrad(activation.getFunction());
+        Tensor output = input.activateGrad(activation );
 
         cache.setInput(context.index(), input);
         cache.setOutput(context.index(), output);
