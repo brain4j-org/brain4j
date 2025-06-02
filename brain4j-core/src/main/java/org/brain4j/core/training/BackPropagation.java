@@ -25,6 +25,7 @@ public class BackPropagation {
     }
 
     public void propagatePartition(Pair<Tensor, Tensor> partition) {
+        long start = System.nanoTime();
         Tensor inputs = partition.first();
         Tensor labels = partition.second();
 
@@ -37,6 +38,8 @@ public class BackPropagation {
 
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
+        long took = System.nanoTime() - start;
+        System.out.println("Took " + (took / 1e6) + " ms to compute batch");
     }
 
     public void iteration(ListDataSource dataSource) {

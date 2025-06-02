@@ -11,6 +11,11 @@ public class HardClipper implements GradientClipper {
 
     @Override
     public void clip(Tensor grad) {
-        grad.map(x -> Math.max(-bound, Math.min(bound, x)));
+        float[] gradData = grad.data();
+
+        for (int i = 0; i < grad.elements(); i++) {
+            double clamped = Math.max(-bound, Math.min(bound, gradData[i]));
+            gradData[i] = (float) clamped;
+        }
     }
 }
