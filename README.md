@@ -8,22 +8,18 @@ Brain4J is available on [JitPack](https://jitpack.io/), for more details follow 
 
 ## Resources
 
+* [Website](https://brain4j.org)
 * [Report an Issue](https://github.com/xEcho1337/brain4j/issues/new?template=Blank+issue)
 * [Documentation](https://github.com/xEcho1337/brain4j/wiki)
 
 ## Preview
 
-Screenshots taken from the MNIST example.
+Brain4J provides a simple and clean interface for training and evaluating.
 
 <p align="center">
   <img height="400px" src="https://github.com/user-attachments/assets/04dc0bc3-f429-4809-ab10-a187004085c5" />
   <img height="400px" src="https://github.com/user-attachments/assets/235cca1a-a1c1-4c48-a340-9bda88faa05b" />
 </p>
-
-## Contact
-
-* Discord: `@xecho1337`
-* Telegram: `@xEcho1337`
 
 ## License
 
