@@ -4,6 +4,7 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
 import org.brain4j.core.layer.impl.transformer.OutVocabulary;
 import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
+import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
 
 /**
  * Represents the transformer architecture as described
@@ -19,9 +20,9 @@ public class Transformer extends Model {
                 new PosEncodeLayer()
         );
 
-//        for (int i = 0; i < layers; i++) {
-//            model.add(null); // TODO
-//        }
+        for (int i = 0; i < layers; i++) {
+            model.add(new TransformerDecoder(heads, dimension, 0.1));
+        }
 
         model.add(new OutVocabulary(vocabSize, dimension, temperature));
 

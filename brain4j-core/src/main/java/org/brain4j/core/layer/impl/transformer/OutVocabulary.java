@@ -53,7 +53,7 @@ public class OutVocabulary extends Layer {
         int lastToken = shape[1] - 1;
         int dimension = shape[2];
 
-        Tensor result = Tensors.zeros(batchSize, dimension);
+        Tensor result = Tensors.zeros(batchSize, dimension).withGrad();
 
         for (int b = 0; b < batchSize; b++) {
             for (int d = 0; d < dimension; d++) {
