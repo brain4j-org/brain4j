@@ -89,6 +89,6 @@ public class EmbeddingLayer extends Layer {
 
     @Override
     public int size() {
-        return vocabSize * embeddingDim;
+        return embeddingDim;
     }
 }

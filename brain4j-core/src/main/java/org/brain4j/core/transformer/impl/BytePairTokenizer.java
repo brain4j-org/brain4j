@@ -1,17 +1,27 @@
 package org.brain4j.core.transformer.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.brain4j.core.transformer.Tokenizer;
 
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class BytePairTokenizer implements Tokenizer {
 
+    public static class TokenizerState {
+        Map<String, Integer> encodings = new LinkedHashMap<>();
+        Map<String, String[]> tokens = new LinkedHashMap<>();
+    }
+
+    private final ForkJoinPool threadPool = ForkJoinPool.commonPool();
     private final int numMerges;
-    private final Map<String, Integer> encodings;
+    private TokenizerState state;
 
     public BytePairTokenizer(int numMerges) {
         this.numMerges = numMerges;
-        this.encodings = new LinkedHashMap<>();
+        this.state = new TokenizerState();
     }
 
     @Override
@@ -25,32 +35,70 @@ public class BytePairTokenizer implements Tokenizer {
         return output;
     }
 
-    public void fit(List<String> corpus) {
-        Map<String, String[]> tokens = new LinkedHashMap<>();
+    @Override
+    public void save(String path) throws IOException {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-        for (String word : corpus) {
-            String token = String.join(" ", word.split(""));
-            tokens.put(token, token.split("\\s+"));
+        try (Writer writer = new FileWriter(path)) {
+            gson.toJson(state, writer);
+        }
+    }
+
+    @Override
+    public void load(String path) throws IOException {
+        Gson gson = new Gson();
+
+        try (Reader reader = new FileReader(path)) {
+            this.state = gson.fromJson(reader, TokenizerState.class);
+        }
+    }
+
+    public void fit(List<String> corpus) {
+        int totalTokens = 0;
+
+        if (state.tokens.isEmpty()) {
+            for (String word : corpus) {
+                String token = String.join(" ", word.split(""));
+                String[] symbols = token.split("\\s+");
+
+                state.tokens.put(token, symbols);
+            }
         }
 
-        for (int iter = 0; iter < numMerges; iter++) {
-            Map<String, Integer> pairCounts = new HashMap<>();
+        for (String[] symbols : state.tokens.values()) {
+            totalTokens += symbols.length;
+        }
 
-            for (String[] symbols : tokens.values()) {
-                for (int i = 0; i < symbols.length - 1; i++) {
-                    String pair = symbols[i] + symbols[i + 1];
-                    pairCounts.merge(pair, 1, Integer::sum);
-                }
+        System.out.println("Total of " + totalTokens + " tokens");
+
+        for (int iter = 0; iter < numMerges; iter++) {
+            long start = System.nanoTime();
+
+            Map<String, Integer> pairCounts = new HashMap<>();
+            List<Callable<Void>> tasks = new ArrayList<>();
+
+            for (String[] symbols : state.tokens.values()) {
+                Callable<Void> task = () -> {
+                    for (int i = 0; i < symbols.length - 1; i++) {
+                        String pair = symbols[i] + symbols[i + 1];
+                        pairCounts.merge(pair, 1, Integer::sum);
+                    }
+                    return null;
+                };
+
+                tasks.add(task);
             }
+
+            threadPool.invokeAll(tasks);
 
             if (pairCounts.isEmpty()) break;
 
             String bestPair = Collections.max(pairCounts.entrySet(), Map.Entry.comparingByValue()).getKey();
-            encodings.put(bestPair, iter);
+            state.encodings.put(bestPair, iter);
 
             Map<String, String[]> updated = new LinkedHashMap<>();
 
-            for (Map.Entry<String, String[]> entry : tokens.entrySet()) {
+            for (Map.Entry<String, String[]> entry : state.tokens.entrySet()) {
                 String[] symbols = entry.getValue();
                 List<String> merged = new ArrayList<>();
 
@@ -68,7 +116,13 @@ public class BytePairTokenizer implements Tokenizer {
                 updated.put(key, merged.toArray(new String[0]));
             }
 
-            tokens = updated;
+            state.tokens.clear();
+            state.tokens.putAll(updated);
+
+            double took = (System.nanoTime() - start) / 1e6;
+
+            System.out.println("Completed merge " + (iter + 1) + " in " + took + " ms");
+            System.gc();
         }
     }
 
@@ -81,7 +135,7 @@ public class BytePairTokenizer implements Tokenizer {
 
             for (int i = 0; i < symbols.size() - 1; i++) {
                 String pair = symbols.get(i) + symbols.get(i + 1);
-                int rank = encodings.getOrDefault(pair, Integer.MAX_VALUE);
+                int rank = state.encodings.getOrDefault(pair, Integer.MAX_VALUE);
 
                 candidates.put(pair, rank);
             }
@@ -123,10 +177,27 @@ public class BytePairTokenizer implements Tokenizer {
                 i++;
             }
         }
+
         return newSymbols;
     }
 
+    public TokenizerState state() {
+        return state;
+    }
+
     public Map<String, Integer> encodings() {
-        return Collections.unmodifiableMap(encodings);
+        return Collections.unmodifiableMap(state.encodings);
+    }
+
+    public Map<String, String[]> tokens() {
+        return Collections.unmodifiableMap(state.tokens);
+    }
+
+    public void clearTokens() {
+        state.tokens.clear();
+    }
+
+    public void clearEncodings() {
+        state.encodings.clear();
     }
 }
