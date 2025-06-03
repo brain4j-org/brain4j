@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 public class HuggingFaceClient implements AutoCloseable {
+
     private static final Logger logger = LoggerFactory.getLogger(HuggingFaceClient.class);
     private static final String BASE_URL = "https://huggingface.co";
     private static final String API_BASE_URL = "https://huggingface.co/api";

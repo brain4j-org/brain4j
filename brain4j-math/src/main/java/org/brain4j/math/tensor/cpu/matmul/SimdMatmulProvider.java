@@ -15,7 +15,7 @@ public class SimdMatmulProvider implements MatmulProvider {
     private static final int PARALLEL_COMPLEXITY_THRESHOLD = 65536;
     private static final int PARALLEL_WORK_THRESHOLD = PARALLELISM;
 
-    private static final int SPLIT_COMPLEXITY_THRESHOLD = 65536;
+    private static final int SPLIT_COMPLEXITY_THRESHOLD = 65536 * 4;
     private static final int SPLIT_WORK_THRESHOLD = 2;
 
     private static class VectorAction extends RecursiveAction {
@@ -82,9 +82,11 @@ public class SimdMatmulProvider implements MatmulProvider {
         VectorAction[] actions = new VectorAction[parallelism];
 
         int i;
+
         for (i = 0; i < parallelism - 1; i++) {
             actions[i] = new VectorAction(parameters, start + (i * step), start + ((i + 1) * step));
         }
+
         actions[i] = new VectorAction(parameters, start + (i * step), end);
 
         ForkJoinTask.invokeAll(actions);
