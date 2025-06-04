@@ -88,7 +88,17 @@ public class TensorGPU extends TensorImplBase {
         clSetKernelArg(kernelMatMul2D, arg++, Sizeof.cl_int, Pointer.to(new int[] { K }));
         clSetKernelArg(kernelMatMul2D, arg, Sizeof.cl_int, Pointer.to(new int[] { P }));
 
-        long[] globalWorkSize = new long[]{ (long) M, (long) P };
+        final int TILE_SIZE = 16;
+
+        long[] globalWorkSize = new long[] {
+                roundUp(TILE_SIZE, M),
+                roundUp(TILE_SIZE, P)
+        };
+
+        long[] localWorkSize = new long[] {
+                TILE_SIZE,
+                TILE_SIZE
+        };
 
         clEnqueueNDRangeKernel(
                 queue,
@@ -96,7 +106,7 @@ public class TensorGPU extends TensorImplBase {
                 2,
                 null,
                 globalWorkSize,
-                null,
+                localWorkSize,
                 0,
                 null,
                 null
@@ -145,5 +155,11 @@ public class TensorGPU extends TensorImplBase {
         clBuildProgram(program, 0, null, null, null, null);
 
         kernelMatMul2D = clCreateKernel(program, "matmul", null);
+    }
+
+    private long roundUp(int groupSize, int globalSize) {
+        int r = globalSize % groupSize;
+        if (r == 0) return globalSize;
+        return globalSize + groupSize - r;
     }
 }
