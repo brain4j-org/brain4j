@@ -1,10 +1,12 @@
 package org.brain4j.math.device;
 
-import org.jocl.CL;
-import org.jocl.Pointer;
-import org.jocl.cl_device_id;
-import org.jocl.cl_platform_id;
+import org.brain4j.math.tensor.impl.TensorGPU;
+import org.jocl.*;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,13 +14,13 @@ import static org.jocl.CL.*;
 
 public class DeviceUtils {
 
-    private static cl_device_id device;
+    private static Device device;
 
     static {
         CL.setExceptionsEnabled(true);
     }
 
-    public static cl_device_id findDevice(DeviceType deviceType, String name) {
+    public static Device findDevice(DeviceType deviceType, String name) {
         int[] numPlatformsArray = new int[1];
         clGetPlatformIDs(0, null, numPlatformsArray);
         int numPlatforms = numPlatformsArray[0];
@@ -38,12 +40,12 @@ public class DeviceUtils {
             clGetDeviceIDs(platform, deviceType.getMask(), numDevices, devices, null);
 
             if (name == null) {
-                return devices[0];
+                return new Device(platform, devices[0]);
             }
 
             for (cl_device_id dev : devices) {
                 if (getDeviceName(dev).contains(name)) {
-                    return dev;
+                    return new Device(platform, dev);
                 }
             }
         }
@@ -51,7 +53,7 @@ public class DeviceUtils {
         return null;
     }
 
-    public static void setDevice(cl_device_id value) {
+    public static void setDevice(Device value) {
         device = value;
     }
 
@@ -94,11 +96,38 @@ public class DeviceUtils {
         return deviceNames;
     }
 
-    public static cl_device_id getDevice() {
+    public static Device device() {
         return device;
     }
 
     public static String getDeviceName() {
-        return getDeviceName(device);
+        return getDeviceName(device.device());
+    }
+
+    public static cl_command_queue newCommandQueue(Device device) {
+        cl_queue_properties properties = new cl_queue_properties();
+        cl_command_queue commandQueue = clCreateCommandQueueWithProperties(
+                device.context(),
+                device.device(),
+                properties,
+                null
+        );
+
+        if (commandQueue == null) {
+            throw new RuntimeException("Failed to create command queue");
+        }
+
+        return commandQueue;
+    }
+
+    public static String readKernelSource(String resourcePath) {
+        try (InputStream input = TensorGPU.class.getResourceAsStream(resourcePath)) {
+            if (input == null) {
+                throw new IllegalArgumentException("Resource not found: " + resourcePath);
+            }
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read kernel source from: " + resourcePath, e);
+        }
     }
 }

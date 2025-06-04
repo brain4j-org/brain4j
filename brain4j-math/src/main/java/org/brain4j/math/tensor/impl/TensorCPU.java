@@ -12,7 +12,8 @@ import java.util.concurrent.ForkJoinPool;
 
 public class TensorCPU extends TensorImplBase {
 
-    private static Logger logger = LoggerFactory.getLogger(TensorCPU.class);
+    private static final Logger logger = LoggerFactory.getLogger(TensorCPU.class);
+
     private static ForkJoinPool pool;
     private static MatmulProvider matmulProvider;
 

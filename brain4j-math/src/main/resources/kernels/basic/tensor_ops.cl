@@ -1,6 +1,6 @@
 __kernel void matmul(
-    __global const float* A,
-    __global const float* B,
+    __global float* A,
+    __global float* B,
     __global float* C,
     const int m,
     const int n,
@@ -36,8 +36,8 @@ __kernel void matmul(
 }
 
 __kernel void element_wise_add(
-    __global const float* A,
-    __global const float* B,
+    __global float* A,
+    __global float* B,
     __global float* C,
     const int size
 ) {
@@ -57,8 +57,8 @@ __kernel void element_wise_add(
 }
 
 __kernel void element_wise_mul(
-    __global const float* A,
-    __global const float* B,
+    __global float* A,
+    __global float* B,
     __global float* C,
     const int size
 ) {

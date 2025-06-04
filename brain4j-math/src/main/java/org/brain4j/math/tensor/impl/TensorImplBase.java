@@ -396,9 +396,10 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     @Override
     public double distanceSquared(Tensor other) {
         double sum = 0;
+        float[] cached = data();
 
-        for (int i = 0; i < data.length; i++) {
-            double diff = data[i] - other.data()[i];
+        for (int i = 0; i < cached.length; i++) {
+            double diff = cached[i] - other.data()[i];
             sum += diff * diff;
         }
 
