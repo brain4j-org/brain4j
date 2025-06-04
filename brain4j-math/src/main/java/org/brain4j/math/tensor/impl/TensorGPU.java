@@ -36,8 +36,13 @@ public class TensorGPU extends TensorImplBase {
                 shapeSize, Pointer.to(shape), null);
         this.stridesBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                 stridesSize, Pointer.to(strides), null);
-        this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                dataSize, Pointer.to(data), null);
+
+        if (data.length > 0) {
+            this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                    dataSize, Pointer.to(data), null);
+        } else {
+            this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, dataSize, null, null);
+        }
     }
 
     @Override
