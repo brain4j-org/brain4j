@@ -55,6 +55,7 @@ public class DeviceUtils {
 
     public static void setDevice(Device value) {
         device = value;
+        TensorGPU.initKernels(value.context());
     }
 
     public static String getDeviceName(cl_device_id d) {
