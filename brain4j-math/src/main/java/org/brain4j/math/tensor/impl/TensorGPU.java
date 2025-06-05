@@ -25,7 +25,7 @@ public class TensorGPU extends TensorImplBase {
         this.shape = shape;
         this.strides = computeStrides(shape);
 
-        Device device = DeviceUtils.device();
+        Device device = DeviceUtils.currentDevice();
         cl_context context = device.context();
 
         long shapeSize = (long) Sizeof.cl_int * shape.length;
@@ -77,7 +77,7 @@ public class TensorGPU extends TensorImplBase {
         float[] dummy = new float[0];
         TensorGPU C = new TensorGPU(outShape, dummy);
 
-        Device device = DeviceUtils.device();
+        Device device = DeviceUtils.currentDevice();
         cl_command_queue queue = device.newCommandQueue();
 
         int arg = 0;
@@ -120,7 +120,7 @@ public class TensorGPU extends TensorImplBase {
     public float[] data() {
         float[] buffer = new float[size];
 
-        Device device = DeviceUtils.device();
+        Device device = DeviceUtils.currentDevice();
         cl_command_queue queue = device.newCommandQueue();
 
         clEnqueueReadBuffer(

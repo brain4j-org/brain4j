@@ -10,8 +10,10 @@ import org.brain4j.math.tensor.autograd.operations.*;
 import org.brain4j.math.tensor.broadcast.TensorBroadcast;
 import org.brain4j.math.tensor.index.Range;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static org.brain4j.math.tensor.Tensors.ones;
@@ -170,6 +172,26 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
                 double value = Math.exp((tensor.get(i, j) - max) / temperature) / sum;
                 tensor.set(value, i, j);
             }
+        }
+    }
+
+    protected void setSliceRecursive(int[] index, int dim, int offset, int sliceSize, Tensor input) {
+        if (dim == index.length - 1) {
+            for (int i = 0; i < sliceSize; i++) {
+                index[dim] = offset + i;
+
+                int[] inputIndex = Arrays.copyOf(index, index.length);
+                inputIndex[dim] = i;
+
+                double value = input.get(inputIndex);
+                this.set(value, index);
+            }
+            return;
+        }
+
+        for (int i = 0; i < this.shape()[dim]; i++) {
+            index[dim] = i;
+            setSliceRecursive(index, dim + 1, offset, sliceSize, input);
         }
     }
 
@@ -648,6 +670,18 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
+    public void setSliceAlongLastDim(int offset, Tensor input) {
+        int[] inputShape = input.shape();
+        int[] thisShape = this.shape();
+
+        int rank = thisShape.length;
+        int sliceSize = inputShape[rank - 1];
+
+        int[] current = new int[rank];
+        setSliceRecursive(current, 0, offset, sliceSize, input);
+    }
+
+    @Override
     public Tensor map(DoubleToDoubleFunction function) {
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) function.apply(data[i]);
@@ -735,6 +769,24 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
+    public Tensor forward(Operation operation, Tensor[] others) {
+        List<Tensor> allInputs = new ArrayList<>();
+
+        allInputs.add(this);
+        allInputs.addAll(Arrays.asList(others));
+
+        Tensor[] allInputsArray = allInputs.toArray(new Tensor[0]);
+        Tensor result = operation.forward(allInputsArray);
+
+        if (result.autogradContext() == null) {
+            result.setAutogradContext(new AutogradContext(true));
+        }
+
+        result.autogradContext().setOperation(operation, allInputsArray);
+        return result;
+    }
+
+    @Override
     public Tensor addGrad(Tensor other) {
         if (!usesGrad() && !other.usesGrad()) {
             throw new IllegalArgumentException("Both tensors should be used with backflow!");
@@ -786,15 +838,6 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
 
         return forward(new ActivationOperation(activation), ones(shape));
-    }
-
-    @Override
-    public Tensor transposeGrad() {
-        if (!usesGrad()) {
-            throw new IllegalArgumentException("Tensor does not use backflow!");
-        }
-
-        return forward(new TransposeOperation(), null);
     }
 
     @Override

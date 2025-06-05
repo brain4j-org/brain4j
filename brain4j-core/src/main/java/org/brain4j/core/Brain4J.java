@@ -1,6 +1,6 @@
 package org.brain4j.core;
 
-import org.brain4j.datasets.api.HuggingFaceClient;
+import org.brain4j.math.device.Device;
 import org.brain4j.math.device.DeviceUtils;
 import org.brain4j.math.tensor.impl.TensorCPU;
 import org.slf4j.Logger;
@@ -46,6 +46,14 @@ public class Brain4J {
     }
 
     public static String availableDevices() {
-        return String.join(", ", DeviceUtils.getAllDeviceNames());
+        return String.join(", ", DeviceUtils.allDeviceNames());
+    }
+
+    public static void useDevice(Device device) {
+        DeviceUtils.setCurrentDevice(device);
+    }
+
+    public static Device currentDevice() {
+        return DeviceUtils.currentDevice();
     }
 }

@@ -47,7 +47,7 @@ public class Device {
     }
 
     public String name() {
-        return DeviceUtils.getDeviceName(device);
+        return DeviceUtils.deviceName(device);
     }
 
     public cl_platform_id platform() {

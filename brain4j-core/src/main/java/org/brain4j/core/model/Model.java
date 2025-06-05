@@ -23,6 +23,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static org.brain4j.math.constants.Constants.*;
 
@@ -87,23 +88,28 @@ public class Model {
         if (layers.isEmpty()) return;
 
         Layer previous = null;
-        Random random = Random.from(new SplittableRandom(seed));
 
         for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
             layer.connect(previous);
-
-            int input = 0;
-
-            if (previous != null) {
-                input = previous.size();
-            }
-
-            int output = layer.size();
-
-            layer.initWeights(random, input, output);
             previous = layer;
         }
+
+        int[] inputSizes = new int[size()];
+
+        for (int i = 0; i < size(); i++) {
+            inputSizes[i] = (i == 0) ? 0 : layerAt(i - 1).size();
+        }
+
+        IntStream.range(0, size()).parallel().forEach(i -> {
+            Layer layer = layerAt(i);
+
+            int input = inputSizes[i];
+            int output = layer.size();
+
+            Random localRandom = Random.from(new SplittableRandom(seed + i));
+            layer.initWeights(localRandom, input, output);
+        });
     }
 
     protected Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
@@ -455,7 +461,7 @@ public class Model {
         String divider = Commons.getHeader(" Architecture ", Commons.getHeaderChar());
 
         stats.append(divider);
-        stats.append(pattern.formatted("Index", "Layer", "Biases", "Weights", "Activation")).append("\n");
+        stats.append(pattern.formatted("Index", "Layer Type", "Dimension", "Parameters", "Activation")).append("\n");
 
         long totalWeights = 0;
         long totalBiases = 0;
@@ -465,8 +471,8 @@ public class Model {
 
             String layerType = layer.getClass().getSimpleName();
 
-            int neurons = layer.totalBiases();
-            int weights = layer.totalWeights();
+            int neurons = layer.size();
+            int weights = layer.totalWeights() + layer.totalBiases();
 
             String formatNeurons = neurons == 0 ? "-" : format.format(neurons);
             String formatWeights = weights == 0 ? "-" : format.format(weights);

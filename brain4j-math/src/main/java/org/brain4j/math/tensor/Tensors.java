@@ -34,29 +34,48 @@ public class Tensors {
     }
 
     public static Tensor concat(List<Tensor> inputs) {
-        Tensor sample = inputs.getFirst();
+        Tensor base = inputs.getFirst();
 
-        int rows = sample.shape()[0];
-        int columns = sample.shape()[1];
+        int[] baseShape = base.shape();
+        int totalColumns = 0;
+        int rank = baseShape.length;;
 
-        Tensor result = zeros(rows, columns * inputs.size());
+        for (Tensor input : inputs) {
+            int[] shape = input.shape();
 
-        for (int t = 0; t < inputs.size(); t++) {
-            Tensor tensor = inputs.get(t);
-
-            if (tensor.shape()[0] != rows || tensor.shape()[1] != columns) {
-                throw new IllegalArgumentException("All tensors must have the same shape! (" + rows + "x" + columns + ")");
+            if (shape.length != rank) {
+                throw new IllegalArgumentException(
+                    "All tensors must have the same dimension!"
+                );
             }
 
-            int currentColumn = t * columns;
-
-            for (int r = 0; r < rows; r++) {
-                for (int c = 0; c < columns; c++) {
-                    float value = tensor.get(r, c);
-                    result.set(value, r, currentColumn + c);
+            for (int i = 0; i < shape.length - 1; i++) {
+                if (shape[i] != baseShape[i]) {
+                    throw new IllegalArgumentException(
+                        "All tensors must have the same base shape! [" + Arrays.toString(input.shape()) + "]"
+                    );
                 }
             }
+
+            totalColumns += shape[shape.length - 1];
         }
+
+        int[] paddedShape = new int[rank];
+
+        System.arraycopy(baseShape, 0, paddedShape, 0, paddedShape.length);
+        paddedShape[paddedShape.length - 1] = totalColumns;
+
+        Tensor result = zeros(paddedShape);;
+
+        int offset = 0;
+        for (Tensor input : inputs) {
+            int size = input.shape()[rank - 1];
+
+            result.setSliceAlongLastDim(offset, input);
+
+            offset += size;
+        }
+
 
         return result;
     }

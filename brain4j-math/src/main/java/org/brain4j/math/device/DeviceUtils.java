@@ -14,7 +14,7 @@ import static org.jocl.CL.*;
 
 public class DeviceUtils {
 
-    private static Device device;
+    private static Device currentDevice;
 
     static {
         CL.setExceptionsEnabled(true);
@@ -44,7 +44,7 @@ public class DeviceUtils {
             }
 
             for (cl_device_id dev : devices) {
-                if (getDeviceName(dev).contains(name)) {
+                if (deviceName(dev).contains(name)) {
                     return new Device(platform, dev);
                 }
             }
@@ -53,22 +53,22 @@ public class DeviceUtils {
         return null;
     }
 
-    public static void setDevice(Device value) {
-        device = value;
+    public static void setCurrentDevice(Device value) {
+        currentDevice = value;
         TensorGPU.initKernels(value.context());
     }
 
-    public static String getDeviceName(cl_device_id d) {
+    public static String deviceName(cl_device_id device) {
         long[] size = new long[1];
-        clGetDeviceInfo(d, CL_DEVICE_NAME, 0, null, size);
+        clGetDeviceInfo(device, CL_DEVICE_NAME, 0, null, size);
 
         byte[] buffer = new byte[(int) size[0]];
-        clGetDeviceInfo(d, CL_DEVICE_NAME, buffer.length, Pointer.to(buffer), null);
+        clGetDeviceInfo(device, CL_DEVICE_NAME, buffer.length, Pointer.to(buffer), null);
 
         return new String(buffer, 0, buffer.length - 1).trim();
     }
 
-    public static List<String> getAllDeviceNames() {
+    public static List<String> allDeviceNames() {
         List<String> deviceNames = new ArrayList<>();
 
         int[] numPlatformsArray = new int[1];
@@ -90,35 +90,19 @@ public class DeviceUtils {
             clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices, null);
 
             for (cl_device_id dev : devices) {
-                deviceNames.add(getDeviceName(dev));
+                deviceNames.add(deviceName(dev));
             }
         }
 
         return deviceNames;
     }
 
-    public static Device device() {
-        return device;
+    public static Device currentDevice() {
+        return currentDevice;
     }
 
-    public static String getDeviceName() {
-        return getDeviceName(device.device());
-    }
-
-    public static cl_command_queue newCommandQueue(Device device) {
-        cl_queue_properties properties = new cl_queue_properties();
-        cl_command_queue commandQueue = clCreateCommandQueueWithProperties(
-                device.context(),
-                device.device(),
-                properties,
-                null
-        );
-
-        if (commandQueue == null) {
-            throw new RuntimeException("Failed to create command queue");
-        }
-
-        return commandQueue;
+    public static String deviceName() {
+        return deviceName(currentDevice.device());
     }
 
     public static String readKernelSource(String resourcePath) {

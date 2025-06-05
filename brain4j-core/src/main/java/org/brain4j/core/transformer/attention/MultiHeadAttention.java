@@ -4,9 +4,11 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.transformer.attention.head.AttentionHead;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.autograd.operations.ConcatOperation;
 import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -49,7 +51,12 @@ public class MultiHeadAttention {
             outputs[i] = heads.get(i).attend(cache, input);
         }
 
-        return Tensors.concat(List.of(outputs));
+        Tensor first = outputs[0];
+
+        int[] shape = first.shape().clone();
+        shape[shape.length - 1] = 0;
+
+        return Tensors.zeros(shape).forward(new ConcatOperation(), outputs);
     }
 
     protected void initializeHeads() {

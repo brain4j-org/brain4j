@@ -7,6 +7,7 @@ import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.*;
 import org.brain4j.math.tensor.index.Range;
 
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 public interface Tensor extends Iterable<Float> {
@@ -300,6 +301,14 @@ public interface Tensor extends Iterable<Float> {
     Tensor slice(Range... ranges);
 
     /**
+     * Slices the tensor along the last dimension, starting at the specified offset.
+     *
+     * @param offset the offset along the last dimension
+     * @param input the tensor to slice
+     */
+    void setSliceAlongLastDim(int offset, Tensor input);
+
+    /**
      * Applies a given function to each element of the tensor and returns a new tensor with the results.
      * @param function The function to apply.
      * @return A new tensor with the result.
@@ -368,11 +377,19 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Executes the specified operation on this tensor and the specified other tensor.
-     * @param operation The operation to execute.
-     * @param other The other tensor.
-     * @return The result of the operation.
+     * @param operation the operation to execute.
+     * @param other the other tensor.
+     * @return the result of the operation.
      */
     Tensor forward(Operation operation, Tensor other);
+
+    /**
+     * Executes the specified operation on this tensor and the specified other tensors.
+     * @param operation the operation to execute.
+     * @param others the other tensors.
+     * @return the result of the operation.
+     */
+    Tensor forward(Operation operation, Tensor[] others);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link AddOperation}
@@ -413,12 +430,6 @@ public interface Tensor extends Iterable<Float> {
      * @return The resulting tensor.
      */
     Tensor activateGrad(Activation activation);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link TransposeOperation}
-     * @return The transposed tensor.
-     */
-    Tensor transposeGrad();
 
     /**
      * Performs a convolution between this tensor and the specified kernel tensor.
