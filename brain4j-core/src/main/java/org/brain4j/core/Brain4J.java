@@ -1,5 +1,6 @@
 package org.brain4j.core;
 
+import ch.qos.logback.classic.Level;
 import org.brain4j.math.device.Device;
 import org.brain4j.math.device.DeviceUtils;
 import org.brain4j.math.tensor.impl.TensorCPU;
@@ -34,8 +35,19 @@ public class Brain4J {
 
     private static final Logger logger = LoggerFactory.getLogger(Brain4J.class);
 
+
     public static String version() {
         return "3.0";
+    }
+
+    public static void disableLogging() {
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.OFF);
+    }
+
+    public static void enableLogging() {
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.DEBUG);
     }
 
     public static void initialize() {
