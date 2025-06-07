@@ -8,6 +8,7 @@ import org.brain4j.core.layer.impl.LayerNorm;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.transformer.attention.MultiHeadAttention;
 import org.brain4j.math.activation.Activations;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.index.Range;
@@ -54,6 +55,14 @@ public class TransformerEncoder extends Layer {
         this.normalizer.initWeights(generator, embeddingDim, embeddingDim);
         this.upProjection.initWeights(generator, embeddingDim, embeddingDim * 4);
         this.downProjection.initWeights(generator, embeddingDim * 4, embeddingDim);
+    }
+
+    @Override
+    public void to(DeviceType deviceType) {
+        this.normalizer.to(deviceType);
+        this.upProjection.to(deviceType);
+        this.downProjection.to(deviceType);
+        this.attention.to(deviceType);
     }
 
     @Override

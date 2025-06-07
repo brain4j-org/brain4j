@@ -28,16 +28,15 @@ public interface Activation {
         int[] shape = input.shape();
 
         DeviceType deviceType = input instanceof TensorCPU ? DeviceType.CPU : DeviceType.GPU;
-        Tensor result = Tensors.zeros(shape).to(deviceType);
 
-        float[] resultData = result.data();
+        float[] resultData = new float[input.elements()];
         float[] inputData = input.data();
 
         for (int i = 0; i < resultData.length; i++) {
             resultData[i] = (float) activate(inputData[i]);
         }
 
-        return result;
+        return Tensors.create(shape, resultData).to(deviceType);
     }
 
     /**

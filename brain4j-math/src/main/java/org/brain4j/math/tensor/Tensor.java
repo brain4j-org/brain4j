@@ -75,6 +75,8 @@ public interface Tensor extends Iterable<Float> {
         return (TensorCPU) to(DeviceType.CPU);
     }
 
+    void release();
+
     /**
      * Sets the value at the specified indices in the tensor.
      * @param value The value to set.

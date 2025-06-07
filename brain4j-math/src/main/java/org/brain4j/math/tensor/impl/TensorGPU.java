@@ -8,22 +8,34 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.jocl.*;
 
+import java.lang.ref.Cleaner;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jocl.CL.*;
 
 public class TensorGPU extends TensorImplBase {
 
-    private static cl_program program = null;
+    private static final Cleaner CLEANER = Cleaner.create();
+
     private static cl_kernel matmulKernel = null;
     private static cl_kernel addKernel = null;
+    private static cl_kernel subKernel = null;
     private static cl_kernel mulKernel = null;
+    private static cl_kernel divKernel = null;
     private static cl_kernel transposeKernel = null;
+    private static cl_kernel sumAlongDimKernel = null;
 
+    private static cl_kernel addScalarKernel = null;
+    private static cl_kernel subScalarKernel = null;
+    private static cl_kernel mulScalarKernel = null;
+    private static cl_kernel divScalarKernel = null;
+    private static cl_kernel powScalarKernel = null;
+
+    private final Cleaner.Cleanable cleanable;
     private final cl_mem shapeBuffer;
     private final cl_mem stridesBuffer;
     private final cl_mem dataBuffer;
-
     private final int size;
 
     public TensorGPU(int[] shape, float... data) {
@@ -49,26 +61,134 @@ public class TensorGPU extends TensorImplBase {
         } else {
             this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, dataSize, null, null);
         }
+
+        this.cleanable = CLEANER.register(this, new State(dataBuffer, shapeBuffer, stridesBuffer));
+    }
+
+    public TensorGPU(int[] shape, cl_mem otherBuffer) {
+        this.size = computeSize(shape);
+        this.shape = shape;
+        this.strides = computeStrides(shape);
+
+        Device device = DeviceUtils.currentDevice();
+        cl_context context = device.context();
+
+        long shapeSize = (long) Sizeof.cl_int * shape.length;
+        long stridesSize = (long) Sizeof.cl_int * strides.length;
+        long dataSize  = (long) Sizeof.cl_float * this.size;
+
+        this.shapeBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                shapeSize, Pointer.to(shape), null);
+        this.stridesBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                stridesSize, Pointer.to(strides), null);
+
+        this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, dataSize, null, null);
+
+        cl_command_queue queue = device.newCommandQueue();
+
+        clEnqueueCopyBuffer(queue, otherBuffer, this.dataBuffer, 0, 0, dataSize,
+                0, null, null);
+        clFinish(queue);
+        clReleaseCommandQueue(queue);
+
+        this.cleanable = CLEANER.register(this, new State(dataBuffer, shapeBuffer, stridesBuffer));
+    }
+
+    private static class State implements Runnable {
+        private final AtomicBoolean released = new AtomicBoolean(false);
+        private cl_mem shapeBuf, stridesBuf, dataBuf;
+
+        State(cl_mem dataBuf, cl_mem shapeBuf, cl_mem stridesBuf) {
+            this.dataBuf = dataBuf;
+            this.shapeBuf = shapeBuf;
+            this.stridesBuf = stridesBuf;
+        }
+
+        @Override
+        public void run() {
+            if (released.compareAndSet(false, true)) {
+                clReleaseMemObject(shapeBuf);
+                clReleaseMemObject(stridesBuf);
+                clReleaseMemObject(dataBuf);
+            }
+        }
     }
 
     public static synchronized void initKernels(cl_context context) {
-        if (program != null && matmulKernel != null) {
-            return;
+        String tensorOpsSource = DeviceUtils.readKernelSource("/kernels/basic/tensor_ops.cl");
+        String elementaryOpsSource = DeviceUtils.readKernelSource("/kernels/basic/elementary_ops.cl");
+
+        cl_program tensorOpsProgram = clCreateProgramWithSource(context, 1, new String[]{tensorOpsSource}, null, null);
+        cl_program elementaryOpsProgram = clCreateProgramWithSource(context, 1, new String[]{elementaryOpsSource}, null, null);
+
+        clBuildProgram(tensorOpsProgram, 0, null, null, null, null);
+        clBuildProgram(elementaryOpsProgram, 0, null, null, null, null);
+
+        matmulKernel = clCreateKernel(tensorOpsProgram, "matmul", null);
+        addKernel = clCreateKernel(tensorOpsProgram, "add", null);
+        subKernel = clCreateKernel(tensorOpsProgram, "sub", null);
+        mulKernel = clCreateKernel(tensorOpsProgram, "mul", null);
+        divKernel = clCreateKernel(tensorOpsProgram, "div", null);
+
+        transposeKernel = clCreateKernel(tensorOpsProgram, "transpose", null);
+        sumAlongDimKernel = clCreateKernel(tensorOpsProgram, "sum_along_dim", null);
+
+        addScalarKernel = clCreateKernel(elementaryOpsProgram, "add_scalar", null);
+        subScalarKernel = clCreateKernel(elementaryOpsProgram, "sub_scalar", null);
+        mulScalarKernel = clCreateKernel(elementaryOpsProgram, "mul_scalar", null);
+        divScalarKernel = clCreateKernel(elementaryOpsProgram, "div_scalar", null);
+        powScalarKernel = clCreateKernel(elementaryOpsProgram, "pow_scalar", null);
+    }
+
+    private Tensor launchScalarKernel(cl_kernel kernel, float value) {
+        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dataBuffer));
+        clSetKernelArg(kernel, 1, Sizeof.cl_float, Pointer.to(new float[]{value}));
+        clSetKernelArg(kernel, 2, Sizeof.cl_int, Pointer.to(new int[]{size}));
+
+        long[] globalWorkSize = new long[] { size };
+
+        Device device = DeviceUtils.currentDevice();
+        cl_command_queue queue = device.newCommandQueue();
+
+        clEnqueueNDRangeKernel(queue, kernel, 1, null, globalWorkSize, null,
+                0, null, null);
+        clFinish(queue);
+        clReleaseCommandQueue(queue);
+
+        return this;
+    }
+
+    private Tensor launchElementaryKernel(cl_kernel kernel, Tensor other) {
+        boolean releaseNext = false;
+
+        if (!(other instanceof TensorGPU)) {
+            other = other.gpu();
+            releaseNext = true;
         }
 
-        String source = DeviceUtils.readKernelSource("/kernels/basic/tensor_ops.cl");
+        TensorGPU B = (TensorGPU) other;
 
-        program = clCreateProgramWithSource(context, 1, new String[]{ source }, null, null);
-        clBuildProgram(program, 0, null, null, null, null);
+        int broadcastDim = (Arrays.equals(shape, B.shape)) ? -1 : shape[1];
+        int batch = (broadcastDim == -1) ? 0 : shape[0];
 
-        matmulKernel = clCreateKernel(program, "matmul", null);
-        addKernel = clCreateKernel(program, "add", null);
-        mulKernel = clCreateKernel(program, "mul", null);
-        transposeKernel = clCreateKernel(program, "transpose", null);
+        Pointer aPtr = Pointer.to(this.dataBuffer);
+        Pointer bPtr = Pointer.to(B.dataBuffer);
 
-        if (matmulKernel == null || addKernel == null || mulKernel == null || transposeKernel == null) {
-            throw new RuntimeException("Failed to create kernel.");
-        }
+        Device device = DeviceUtils.currentDevice();
+        cl_command_queue queue = device.newCommandQueue();
+
+        clSetKernelArg(kernel, 0, Sizeof.cl_mem, aPtr);
+        clSetKernelArg(kernel, 1, Sizeof.cl_mem, bPtr);
+        clSetKernelArg(kernel, 2, Sizeof.cl_int, Pointer.to(new int[]{size}));
+        clSetKernelArg(kernel, 3, Sizeof.cl_int, Pointer.to(new int[]{broadcastDim}));
+        clSetKernelArg(kernel, 4, Sizeof.cl_int, Pointer.to(new int[]{batch}));
+
+        clEnqueueNDRangeKernel(queue, kernel, 1, null, new long[]{size}, null,
+                0, null, null);
+        clFinish(queue);
+        clReleaseCommandQueue(queue);
+
+        return this;
     }
 
     private long roundUp(int groupSize, int globalSize) {
@@ -79,13 +199,13 @@ public class TensorGPU extends TensorImplBase {
 
     @Override
     public Tensor clone() {
-        return new TensorGPU(shape, data());
+        return new TensorGPU(shape, this.dataBuffer);
     }
 
     @Override
     public Tensor to(DeviceType deviceType) {
         return switch (deviceType) {
-            case CPU -> new TensorCPU(shape, data);
+            case CPU -> new TensorCPU(shape, data());
             case GPU -> this;
             default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
         };
@@ -135,66 +255,56 @@ public class TensorGPU extends TensorImplBase {
         long[] globalWorkSize = new long[]{ rows, cols };
 
         clEnqueueNDRangeKernel(queue, transposeKernel, 2, null, globalWorkSize,
-            null, 0, null, null
-        );
+            null, 0, null, null);
         clFinish(queue);
+        clReleaseCommandQueue(queue);
 
         return result;
     }
 
     @Override
     public Tensor add(Tensor other) {
-        if (!(other instanceof TensorGPU B)) {
-            throw new IllegalArgumentException("Other tensor is not an instance of TensorGPU.");
-        }
+        return launchElementaryKernel(addKernel, other);
+    }
 
-        int broadcastDim = (Arrays.equals(shape, B.shape)) ? -1 : shape[1];
-        int batch = (broadcastDim == -1) ? 0 : shape[0];
+    @Override
+    public Tensor add(double value) {
+        return launchScalarKernel(addScalarKernel, (float) value);
+    }
 
-        Pointer aPtr = Pointer.to(this.dataBuffer);
-        Pointer bPtr = Pointer.to(B.dataBuffer);
+    @Override
+    public Tensor sub(Tensor other) {
+        return launchElementaryKernel(subKernel, other);
+    }
 
-        Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
-
-        clSetKernelArg(addKernel, 0, Sizeof.cl_mem, aPtr);
-        clSetKernelArg(addKernel, 1, Sizeof.cl_mem, bPtr);
-        clSetKernelArg(addKernel, 2, Sizeof.cl_int, Pointer.to(new int[]{size}));
-        clSetKernelArg(addKernel, 3, Sizeof.cl_int, Pointer.to(new int[]{broadcastDim}));
-        clSetKernelArg(addKernel, 4, Sizeof.cl_int, Pointer.to(new int[]{batch}));
-
-        clEnqueueNDRangeKernel(queue, addKernel, 1, null, new long[]{size}, null,
-            0, null, null);
-        clFinish(queue);
-
-        return this;
+    @Override
+    public Tensor sub(double value) {
+        return launchScalarKernel(subScalarKernel, (float) value);
     }
 
     @Override
     public Tensor mul(Tensor other) {
-        if (!(other instanceof TensorGPU B)) {
-            throw new IllegalArgumentException("Other tensor is not an instance of TensorGPU.");
-        }
+        return launchElementaryKernel(mulKernel, other);
+    }
 
-        int broadcastDim = (Arrays.equals(shape, B.shape)) ? -1 : shape[1];
-        int batch = (broadcastDim == -1) ? 0 : shape[0];
+    @Override
+    public Tensor mul(double value) {
+        return launchScalarKernel(mulScalarKernel, (float) value);
+    }
 
-        Pointer aPtr = Pointer.to(this.dataBuffer);
-        Pointer bPtr = Pointer.to(B.dataBuffer);
+    @Override
+    public Tensor div(Tensor other) {
+        return launchElementaryKernel(divKernel, other);
+    }
 
-        Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+    @Override
+    public Tensor div(double value) {
+        return launchScalarKernel(divScalarKernel, (float) value);
+    }
 
-        clSetKernelArg(mulKernel, 0, Sizeof.cl_mem, aPtr);
-        clSetKernelArg(mulKernel, 1, Sizeof.cl_mem, bPtr);
-        clSetKernelArg(mulKernel, 2, Sizeof.cl_int, Pointer.to(new int[]{size}));
-        clSetKernelArg(mulKernel, 3, Sizeof.cl_int, Pointer.to(new int[]{broadcastDim}));
-        clSetKernelArg(mulKernel, 4, Sizeof.cl_int, Pointer.to(new int[]{batch}));
-
-        clEnqueueNDRangeKernel(queue, mulKernel, 1, null, new long[]{size}, null,
-            0, null, null);
-
-        return this;
+    @Override
+    public Tensor pow(double value) {
+        return launchScalarKernel(powScalarKernel, (float) value);
     }
 
     @Override
@@ -250,6 +360,44 @@ public class TensorGPU extends TensorImplBase {
         clEnqueueNDRangeKernel(queue, matmulKernel, 2, null, globalWorkSize, localWorkSize,
                 0, null, null);
         clFinish(queue);
+        clReleaseCommandQueue(queue);
+
+        return result;
+    }
+
+    @Override
+    public Tensor sum(int dim, boolean keepDim) {
+        if (dim < 0 || dim >= shape.length) {
+            throw new IllegalArgumentException("Dimension " + dim + " out of bounds for tensor of shape " + Arrays.toString(shape));
+        }
+
+        int[] newShape = computeNewShape(shape, dim, keepDim);
+        int reducedSize = shape[dim];
+
+        int outerSize = 1;
+        for (int i = 0; i < dim; i++) outerSize *= shape[i];
+
+        int innerSize = 1;
+        for (int i = dim + 1; i < shape.length; i++) innerSize *= shape[i];
+
+        Device device = DeviceUtils.currentDevice();
+        cl_command_queue queue = device.newCommandQueue();
+
+        float[] dummy = new float[0];
+        TensorGPU result = new TensorGPU(newShape, dummy);
+
+        clSetKernelArg(sumAlongDimKernel, 0, Sizeof.cl_mem, Pointer.to(dataBuffer));
+        clSetKernelArg(sumAlongDimKernel, 1, Sizeof.cl_mem, Pointer.to(result.dataBuffer));
+        clSetKernelArg(sumAlongDimKernel, 2, Sizeof.cl_int, Pointer.to(new int[] {outerSize}));
+        clSetKernelArg(sumAlongDimKernel, 3, Sizeof.cl_int, Pointer.to(new int[] {reducedSize}));
+        clSetKernelArg(sumAlongDimKernel, 4, Sizeof.cl_int, Pointer.to(new int[] {innerSize}));
+
+        long[] globalWorkSize = new long[] {outerSize, innerSize};
+
+        clEnqueueNDRangeKernel(queue, sumAlongDimKernel, 2, null, globalWorkSize,
+                null, 0, null, null);
+        clFinish(queue);
+        clReleaseCommandQueue(queue);
 
         return result;
     }
@@ -264,13 +412,13 @@ public class TensorGPU extends TensorImplBase {
         clEnqueueReadBuffer(queue, dataBuffer, CL_TRUE, 0, (long) size * Sizeof.cl_float, Pointer.to(buffer),
                 0, null, null);
         clFinish(queue);
+        clReleaseCommandQueue(queue);
 
         return buffer;
     }
 
+    @Override
     public void release() {
-        clReleaseMemObject(shapeBuffer);
-        clReleaseMemObject(stridesBuffer);
-        clReleaseMemObject(dataBuffer);
+        cleanable.clean();
     }
 }

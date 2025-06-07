@@ -10,6 +10,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.TensorGPU;
 import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.Random;
@@ -52,10 +53,10 @@ public abstract class Layer {
 
     public void to(DeviceType deviceType) {
         if (this.weights != null)
-            this.weights = weights.to(deviceType);
+            this.weights = weights.to(deviceType).withGrad();
 
         if (this.bias != null)
-            this.bias = bias.to(deviceType);
+            this.bias = bias.to(deviceType).withGrad();
     }
 
     public void computeLoss(
@@ -72,6 +73,9 @@ public abstract class Layer {
         Tensor delta = lossFunction.getDelta(error, derivatives);
         Tensor output = cache.preActivation(index);
 
+//        System.out.println(error);
+//        System.out.println(derivatives);
+//        System.out.println(delta);
         output.backward(delta);
 
         Tensor weightsGrad = weights.grad().transpose();

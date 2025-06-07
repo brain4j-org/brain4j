@@ -2,6 +2,7 @@ package org.brain4j.core;
 
 import ch.qos.logback.classic.Level;
 import org.brain4j.math.device.Device;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.device.DeviceUtils;
 import org.brain4j.math.tensor.impl.TensorCPU;
 import org.slf4j.Logger;
@@ -58,6 +59,10 @@ public class Brain4J {
 
     public static String availableDevices() {
         return String.join(", ", DeviceUtils.allDeviceNames());
+    }
+
+    public static void useDevice(DeviceType deviceType, String deviceName) {
+        useDevice(DeviceUtils.findDevice(deviceType, deviceName));
     }
 
     public static void useDevice(Device device) {

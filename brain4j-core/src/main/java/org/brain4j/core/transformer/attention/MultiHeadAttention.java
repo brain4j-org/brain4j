@@ -2,6 +2,7 @@ package org.brain4j.core.transformer.attention;
 
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.transformer.attention.head.AttentionHead;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.autograd.operations.ConcatOperation;
@@ -32,6 +33,12 @@ public class MultiHeadAttention {
         this.heads = new ArrayList<>();
 
         initializeHeads();
+    }
+
+    public void to(DeviceType deviceType) {
+        for (AttentionHead head : heads) {
+            head.to(deviceType);
+        }
     }
 
     public AttentionHead createAttentionHead() {

@@ -67,6 +67,27 @@ __kernel void add(
     }
 }
 
+__kernel void sub(
+    __global float* a,
+    __global const float* b,
+    int size,
+    int broadcast_dim,
+    int batch
+) {
+    int gid = get_global_id(0);
+
+    if (broadcast_dim == -1) {
+        if (gid < size) {
+            a[gid] -= b[gid];
+        }
+    } else {
+        if (gid < size) {
+            int j = gid % broadcast_dim;
+            a[gid] -= b[j];
+        }
+    }
+}
+
 __kernel void mul(
     __global float* a,
     __global const float* b,
@@ -88,6 +109,28 @@ __kernel void mul(
     }
 }
 
+__kernel void div(
+    __global float* a,
+    __global const float* b,
+    int size,
+    int broadcast_dim,
+    int batch
+) {
+    int gid = get_global_id(0);
+
+    if (broadcast_dim == -1) {
+        if (gid < size) {
+            a[gid] /= b[gid];
+        }
+    } else {
+        if (gid < size) {
+            int j = gid % broadcast_dim;
+            a[gid] /= b[j];
+        }
+    }
+}
+
+
 __kernel void transpose(
     __global const float* input,
     __global float* output,
@@ -106,4 +149,26 @@ __kernel void transpose(
         int outputIndex = col * outRowStride + row * outColStride;
         output[outputIndex] = input[inputIndex];
     }
+}
+
+__kernel void sum_along_dim(
+    __global const float* input,
+    __global float* output,
+    const int outerSize,
+    const int reducedSize,
+    const int innerSize
+) {
+    int gid_outer = get_global_id(0);
+    int gid_inner = get_global_id(1);
+
+    if (gid_outer >= outerSize || gid_inner >= innerSize) return;
+
+    float sum = 0.0f;
+    for (int i = 0; i < reducedSize; i++) {
+        int idx = gid_outer * reducedSize * innerSize + i * innerSize + gid_inner;
+        sum += input[idx];
+    }
+
+    int resultIndex = gid_outer * innerSize + gid_inner;
+    output[resultIndex] = sum;
 }

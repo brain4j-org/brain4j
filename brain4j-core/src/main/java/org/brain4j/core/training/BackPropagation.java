@@ -8,6 +8,7 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.TensorGPU;
 
 import java.util.List;
 
@@ -37,6 +38,8 @@ public class BackPropagation {
 
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
+
+//        cache.clear();
     }
 
     public void iteration(ListDataSource dataSource) {

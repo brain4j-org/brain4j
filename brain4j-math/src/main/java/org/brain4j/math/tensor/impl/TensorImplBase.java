@@ -266,6 +266,11 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
+    public void release() {
+
+    }
+
+    @Override
     public Tensor set(double value, int... indices) {
         data[getLinearIndex(indices)] = (float) value;
         return this;
@@ -484,6 +489,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     @Override
     public double sum() {
         double sum = 0.0;
+        float[] data = data();
 
         for (float value : data) {
             sum += value;
