@@ -13,6 +13,7 @@ import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.index.Range;
@@ -47,6 +48,7 @@ public class Model {
     protected Optimizer optimizer;
     protected Updater updater;
     protected LossFunction lossFunction;
+    protected DeviceType deviceType = DeviceType.CPU;
 
     protected long seed;
 
@@ -326,6 +328,8 @@ public class Model {
             throw new IllegalArgumentException("Input is either null or has dimension of 0!");
         }
 
+        input = input.to(deviceType);
+
         if (input.dimension() < 2) {
             // Shape: [batch_size, input_size]
             input = input.reshape(1, input.elements());
@@ -439,6 +443,20 @@ public class Model {
         this.optimizer.initialize(this);
 
         connectLayers();
+        return this;
+    }
+
+    public Model to(DeviceType deviceType) {
+        if (deviceType != DeviceType.CPU && deviceType != DeviceType.GPU) {
+            throw new IllegalArgumentException("Unsupported device type: " + deviceType);
+        }
+
+        this.deviceType = deviceType;
+
+        for (Layer layer : layers) {
+            layer.to(deviceType);
+        }
+
         return this;
     }
 

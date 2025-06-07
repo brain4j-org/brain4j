@@ -8,6 +8,7 @@ import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.LinearActivation;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.weights.WeightInitialization;
 
@@ -47,6 +48,14 @@ public abstract class Layer {
 
     public void initWeights(Random generator, int input, int output) {
         // No-op
+    }
+
+    public void to(DeviceType deviceType) {
+        if (this.weights != null)
+            this.weights = weights.to(deviceType);
+
+        if (this.bias != null)
+            this.bias = bias.to(deviceType);
     }
 
     public void computeLoss(

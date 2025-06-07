@@ -1,10 +1,13 @@
 package org.brain4j.math.tensor;
 
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.lang.DoubleToDoubleFunction;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.*;
+import org.brain4j.math.tensor.impl.TensorCPU;
+import org.brain4j.math.tensor.impl.TensorGPU;
 import org.brain4j.math.tensor.index.Range;
 
 import java.util.Arrays;
@@ -61,6 +64,16 @@ public interface Tensor extends Iterable<Float> {
      * @return The index of the maximum value.
      */
     int argmax();
+
+    Tensor to(DeviceType deviceType);
+
+    default TensorGPU gpu() {
+        return (TensorGPU) to(DeviceType.GPU);
+    }
+
+    default TensorCPU cpu() {
+        return (TensorCPU) to(DeviceType.CPU);
+    }
 
     /**
      * Sets the value at the specified indices in the tensor.

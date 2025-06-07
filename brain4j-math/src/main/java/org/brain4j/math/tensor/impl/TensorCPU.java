@@ -1,5 +1,6 @@
 package org.brain4j.math.tensor.impl;
 
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.cpu.matmul.MatmulProvider;
 import org.brain4j.math.tensor.cpu.matmul.NormalMatmulProvider;
@@ -40,6 +41,15 @@ public class TensorCPU extends TensorImplBase {
         this.data = data;
         this.shape = shape;
         this.strides = computeStrides(shape);
+    }
+
+    @Override
+    public Tensor to(DeviceType deviceType) {
+        return switch (deviceType) {
+            case CPU -> this;
+            case GPU -> new TensorGPU(shape, data);
+            default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
+        };
     }
 
     @Override

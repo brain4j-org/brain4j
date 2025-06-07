@@ -1,7 +1,10 @@
 package org.brain4j.math.activation;
 
+import org.brain4j.math.device.Device;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.impl.TensorCPU;
 import org.brain4j.math.weights.WeightInitialization;
 
 public interface Activation {
@@ -23,10 +26,15 @@ public interface Activation {
      */
     default Tensor activate(Tensor input) {
         int[] shape = input.shape();
-        Tensor result = Tensors.zeros(shape);
 
-        for (int i = 0; i < result.elements(); i++) {
-            result.data()[i] = (float) activate(input.data()[i]);
+        DeviceType deviceType = input instanceof TensorCPU ? DeviceType.CPU : DeviceType.GPU;
+        Tensor result = Tensors.zeros(shape).to(deviceType);
+
+        float[] resultData = result.data();
+        float[] inputData = input.data();
+
+        for (int i = 0; i < resultData.length; i++) {
+            resultData[i] = (float) activate(inputData[i]);
         }
 
         return result;
@@ -42,12 +50,15 @@ public interface Activation {
      */
     default Tensor getDerivative(Tensor input) {
         int[] shape = input.shape();
-        float[] data = input.data();
 
-        Tensor result = Tensors.zeros(shape);
+        DeviceType deviceType = input instanceof TensorCPU ? DeviceType.CPU : DeviceType.GPU;
+        Tensor result = Tensors.zeros(shape).to(deviceType);
 
-        for (int i = 0; i < data.length; i++) {
-            result.data()[i] = (float) getDerivative(data[i]);
+        float[] resultData = result.data();
+        float[] inputData = input.data();
+
+        for (int i = 0; i < inputData.length; i++) {
+            resultData[i] = (float) getDerivative(inputData[i]);
         }
 
         return result;

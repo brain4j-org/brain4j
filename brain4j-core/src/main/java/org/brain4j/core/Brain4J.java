@@ -35,7 +35,6 @@ public class Brain4J {
 
     private static final Logger logger = LoggerFactory.getLogger(Brain4J.class);
 
-
     public static String version() {
         return "3.0";
     }

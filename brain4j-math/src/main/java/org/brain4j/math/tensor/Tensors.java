@@ -33,6 +33,11 @@ public class Tensors {
         return result;
     }
 
+    public static Tensor random(int...  shape) {
+        Tensor result = Tensors.zeros(shape);
+        return result.map(x -> Math.random() * 2 - 1);
+    }
+
     public static Tensor concat(List<Tensor> inputs) {
         Tensor base = inputs.getFirst();
 

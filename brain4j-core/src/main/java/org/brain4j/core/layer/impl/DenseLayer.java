@@ -63,7 +63,6 @@ public class DenseLayer extends Layer {
         Tensor input = context.input();
         StatesCache cache = context.cache();
         int index = context.index();
-        boolean training = context.training();
 
         if (weights == null) return input;
 

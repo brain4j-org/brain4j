@@ -31,13 +31,7 @@ public class Device {
     }
 
     public cl_command_queue newCommandQueue() {
-        cl_queue_properties properties = new cl_queue_properties();
-        cl_command_queue commandQueue = clCreateCommandQueue(
-                context,
-                device,
-                0,
-                null
-        );
+        cl_command_queue commandQueue = clCreateCommandQueue(context, device, 0, null);
 
         if (commandQueue == null) {
             throw new RuntimeException("Failed to create command queue");

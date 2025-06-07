@@ -1,6 +1,7 @@
 package org.brain4j.math.tensor.impl;
 
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.lang.DoubleToDoubleFunction;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
@@ -236,7 +237,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public float get(int... indices) {
-        return data[getLinearIndex(indices)];
+        return data()[getLinearIndex(indices)];
     }
 
     @Override
@@ -246,7 +247,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public int elements() {
-        return data.length;
+        return data().length;
     }
 
     @Override
@@ -476,6 +477,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             baseInverseLinearIndex += resultColsStride;
         }
 
+
         return result;
     }
 
@@ -599,13 +601,13 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     public Tensor reshape(int... newShape) {
         int newSize = computeSize(newShape);
 
-        if (newSize != data.length) {
+        if (newSize != data().length) {
             throw new IllegalArgumentException(
-                    "The total new dimension (" + newSize + ") does not match the current dimension (" + data.length + ")"
+                    "The total new dimension (" + newSize + ") does not match the current dimension (" + data().length + ")"
             );
         }
 
-        return Tensors.create(newShape, data);
+        return Tensors.create(newShape, data());
     }
 
     @Override

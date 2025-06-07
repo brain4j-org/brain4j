@@ -46,81 +46,64 @@ __kernel void matmul(
         C[row * P + col] = sum;
 }
 
-__kernel void matmul_unoptimized(
-    __global float* A,
-    __global float* B,
-    __global float* C,
-    const int m,
-    const int n,
-    const int p
+__kernel void add(
+    __global float* a,
+    __global const float* b,
+    int size,
+    int broadcast_dim,
+    int batch
 ) {
-    const int row = get_global_id(0);
-    const int col = get_global_id(1);
-    
-    const int local_row = get_local_id(0);
-    const int local_col = get_local_id(1);
-    
-    const int block_dim_x = get_local_size(0);
-    const int block_dim_y = get_local_size(1);
-    
-    if (row < m && col < p) {
-        float sum = 0.0f;
-        
-        int k = 0;
-        
-        for (; k + 3 < n; k += 4) {
-            sum += A[row * n + k] * B[k * p + col];
-            sum += A[row * n + k + 1] * B[(k + 1) * p + col];
-            sum += A[row * n + k + 2] * B[(k + 2) * p + col];
-            sum += A[row * n + k + 3] * B[(k + 3) * p + col];
+    int gid = get_global_id(0);
+
+    if (broadcast_dim == -1) {
+        if (gid < size) {
+            a[gid] += b[gid];
         }
-        
-        for (; k < n; k++) {
-            sum += A[row * n + k] * B[k * p + col];
+    } else {
+        if (gid < size) {
+            int j = gid % broadcast_dim;
+            a[gid] += b[j];
         }
-        
-        C[row * p + col] = sum;
     }
 }
 
-__kernel void element_wise_add(
-    __global float* A,
-    __global float* B,
-    __global float* C,
-    const int size
+__kernel void mul(
+    __global float* a,
+    __global const float* b,
+    int size,
+    int broadcast_dim,
+    int batch
 ) {
-    const int i = get_global_id(0);
-    
-    if (i + 3 < size && (i % 4) == 0) {
-        float4 a_vec = vload4(i/4, A);
-        float4 b_vec = vload4(i/4, B);
-        
-        float4 c_vec = a_vec + b_vec;
-        
-        vstore4(c_vec, i/4, C);
-    }
-    else if (i < size) {
-        C[i] = A[i] + B[i];
+    int gid = get_global_id(0);
+
+    if (broadcast_dim == -1) {
+        if (gid < size) {
+            a[gid] *= b[gid];
+        }
+    } else {
+        if (gid < size) {
+            int j = gid % broadcast_dim;
+            a[gid] *= b[j];
+        }
     }
 }
 
-__kernel void element_wise_mul(
-    __global float* A,
-    __global float* B,
-    __global float* C,
-    const int size
+__kernel void transpose(
+    __global const float* input,
+    __global float* output,
+    const int rows,
+    const int cols,
+    const int inRowStride,
+    const int inColStride,
+    const int outRowStride,
+    const int outColStride
 ) {
-    const int i = get_global_id(0);
-    
-    if (i + 3 < size && (i % 4) == 0) {
-        float4 a_vec = vload4(i/4, A);
-        float4 b_vec = vload4(i/4, B);
-        
-        float4 c_vec = a_vec * b_vec;
-        
-        vstore4(c_vec, i/4, C);
-    }
-    else if (i < size) {
-        C[i] = A[i] * B[i];
+    int row = get_global_id(0);
+    int col = get_global_id(1);
+
+    if (row < rows && col < cols) {
+        int inputIndex = row * inRowStride + col * inColStride;
+        int outputIndex = col * outRowStride + row * outColStride;
+        output[outputIndex] = input[inputIndex];
     }
 }
