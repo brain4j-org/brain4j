@@ -6,11 +6,10 @@ import org.brain4j.math.lang.DoubleToDoubleFunction;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.*;
-import org.brain4j.math.tensor.impl.TensorCPU;
-import org.brain4j.math.tensor.impl.TensorGPU;
+import org.brain4j.math.tensor.impl.CpuTensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.tensor.index.Range;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 public interface Tensor extends Iterable<Float> {
@@ -42,46 +41,63 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Gets the value at the specified indices in the tensor.
-     * @param indices The indices for which the value is requested.
-     * @return The value at the specified indices.
+     * @param indices the indices for which the value is requested
+     * @return the value at the specified indices
      */
     float get(int... indices);
 
     /**
      * Returns the number of dimensions of the tensor.
-     * @return The number of dimensions.
+     * @return the number of dimensions
      */
     int dimension();
 
     /**
      * Returns the number of elements in the tensor.
-     * @return The number of elements.
+     * @return the number of elements
      */
     int elements();
 
     /**
      * Finds the index of the maximum value in the tensor.
-     * @return The index of the maximum value.
+     * @return the index of the maximum value
      */
     int argmax();
 
+    /**
+     * Converts the tensor to the specified device type.
+     * @param deviceType the device type to convert to
+     * @return the converted tensor
+     */
     Tensor to(DeviceType deviceType);
 
-    default TensorGPU gpu() {
-        return (TensorGPU) to(DeviceType.GPU);
+    /**
+     * Moves this tensor to the GPU. This is analogous to calling to(DeviceType.GPU).
+     * @return the GPU tensor
+     */
+    default GpuTensor gpu() {
+        return (GpuTensor) to(DeviceType.GPU);
     }
 
-    default TensorCPU cpu() {
-        return (TensorCPU) to(DeviceType.CPU);
+    /**
+     * Moves this tensor to the CPU. This is analogous to calling to(DeviceType.CPU).
+     * @return the CPU tensor
+     */
+    default CpuTensor cpu() {
+        return (CpuTensor) to(DeviceType.CPU);
     }
 
+    /**
+     * Releases the resources associated with the tensor. This method
+     * is implemented only for the GPU counterpart.
+     */
     void release();
 
     /**
      * Sets the value at the specified indices in the tensor.
-     * @param value The value to set.
-     * @param indices The indices where the value should be set.
-     * @return The current tensor modified.
+     * @param value the value to set
+     * @param indices the indices where the value should be set
+     * @return the current tensor modified
      */
     Tensor set(double value, int... indices);
 
@@ -260,7 +276,7 @@ public interface Tensor extends Iterable<Float> {
     Tensor matmul(Tensor other);
     double norm();
     double normSquared();
-    Tensor normalize();
+    Tensor layerNorm(double epsilon);
     double distance(Tensor other);
     double distanceSquared(Tensor other);
     Tensor transpose();

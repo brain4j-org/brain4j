@@ -8,7 +8,7 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.TensorGPU;
+import org.brain4j.math.tensor.impl.GpuTensor;
 
 import java.util.List;
 
@@ -30,16 +30,14 @@ public class BackPropagation {
         Tensor labels = partition.second();
 
         StatesCache cache = new StatesCache(model);
-        Tensor output = model.predict(cache, inputs, true);
 
+        Tensor output = model.predict(cache, inputs, true);
         backpropagation(cache, labels, output);
 
         int elements = inputs.shape()[0];
 
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
-
-//        cache.clear();
     }
 
     public void iteration(ListDataSource dataSource) {

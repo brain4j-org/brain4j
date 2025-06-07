@@ -1,14 +1,12 @@
-package org.brain4j.math.tensor.impl;
+package org.brain4j.math.tensor;
 
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.lang.DoubleToDoubleFunction;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.*;
 import org.brain4j.math.tensor.broadcast.TensorBroadcast;
+import org.brain4j.math.tensor.impl.CpuTensor;
 import org.brain4j.math.tensor.index.Range;
 
 import java.util.ArrayList;
@@ -404,12 +402,41 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
-    public Tensor normalize() {
-        double norm = norm();
+    public Tensor layerNorm(double epsilon) {
+        int batchSize = 1;
+        int featuresSize = shape[0];
 
-        if (norm > 0) {
-            for (int i = 0; i < data.length; i++) {
-                data[i] /= (float) norm;
+        if (shape.length == 2) {
+            batchSize = shape[0];
+            featuresSize = shape[1];
+        }
+
+        float[] data = data();
+
+        for (int i = 0; i < batchSize; i++) {
+            float mean = 0.0f;
+            int offset = i * featuresSize;
+
+            for (int j = 0; j < featuresSize; j++) {
+                mean += data[offset + j];
+            }
+
+            mean /= featuresSize;
+
+            float variance = 0.0f;
+
+            for (int j = 0; j < featuresSize; j++) {
+                float diff = data[offset+ j] - mean;
+                variance += diff * diff;
+            }
+
+            variance /= featuresSize;
+
+            float denom = (float) Math.sqrt(variance + epsilon);
+
+            for (int j = 0; j < featuresSize; j++) {
+                int index = offset + j;
+                data[index] = (data[index] - mean) / denom;
             }
         }
 
@@ -667,7 +694,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             }
         }
 
-        Tensor result = new TensorCPU(newShape);
+        Tensor result = new CpuTensor(newShape);
 
         int[] srcIndices = new int[shape.length];
         int[] dstIndices = new int[shape.length];

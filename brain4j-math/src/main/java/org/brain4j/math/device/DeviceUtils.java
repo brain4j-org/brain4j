@@ -1,6 +1,6 @@
 package org.brain4j.math.device;
 
-import org.brain4j.math.tensor.impl.TensorGPU;
+import org.brain4j.math.tensor.impl.GpuTensor;
 import org.jocl.*;
 
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class DeviceUtils {
 
     public static void setCurrentDevice(Device value) {
         currentDevice = value;
-        TensorGPU.initKernels(value.context());
+        GpuTensor.initKernels(value.context());
     }
 
     public static String deviceName(cl_device_id device) {
@@ -106,7 +106,7 @@ public class DeviceUtils {
     }
 
     public static String readKernelSource(String resourcePath) {
-        try (InputStream input = TensorGPU.class.getResourceAsStream(resourcePath)) {
+        try (InputStream input = GpuTensor.class.getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IllegalArgumentException("Resource not found: " + resourcePath);
             }

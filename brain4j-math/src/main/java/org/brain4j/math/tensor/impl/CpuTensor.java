@@ -2,6 +2,7 @@ package org.brain4j.math.tensor.impl;
 
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.TensorImplBase;
 import org.brain4j.math.tensor.cpu.matmul.MatmulProvider;
 import org.brain4j.math.tensor.cpu.matmul.NormalMatmulProvider;
 import org.brain4j.math.tensor.cpu.matmul.SimdMatmulProvider;
@@ -11,9 +12,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 
-public class TensorCPU extends TensorImplBase {
+public class CpuTensor extends TensorImplBase {
 
-    private static final Logger logger = LoggerFactory.getLogger(TensorCPU.class);
+    private static final Logger logger = LoggerFactory.getLogger(CpuTensor.class);
 
     private static ForkJoinPool pool;
     private static MatmulProvider matmulProvider;
@@ -33,7 +34,7 @@ public class TensorCPU extends TensorImplBase {
         }
     }
 
-    public TensorCPU(int[] shape, float... data) {
+    public CpuTensor(int[] shape, float... data) {
         if (data.length == 0) {
             data = new float[computeSize(shape)];
         }
@@ -47,7 +48,7 @@ public class TensorCPU extends TensorImplBase {
     public Tensor to(DeviceType deviceType) {
         return switch (deviceType) {
             case CPU -> this;
-            case GPU -> new TensorGPU(shape, data);
+            case GPU -> new GpuTensor(shape, data);
             default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
         };
     }
@@ -101,7 +102,7 @@ public class TensorCPU extends TensorImplBase {
         resultShape[dims - 2] = m;
         resultShape[dims - 1] = p;
 
-        Tensor result = new TensorCPU(resultShape);
+        Tensor result = new CpuTensor(resultShape);
 
         float[] A = this.data();
         float[] B = other.data();

@@ -172,3 +172,39 @@ __kernel void sum_along_dim(
     int resultIndex = gid_outer * innerSize + gid_inner;
     output[resultIndex] = sum;
 }
+
+__kernel void layer_norm(
+    __global float* data,
+    const int batchSize,
+    const int featuresSize,
+    const float epsilon
+) {
+    int batch_idx = get_global_id(0);
+
+    if (batch_idx >= batchSize) return;
+
+    int offset = batch_idx * featuresSize;
+
+    float mean = 0.0f;
+
+    for (int j = 0; j < featuresSize; j++) {
+        mean += data[offset + j];
+    }
+
+    mean /= featuresSize;
+
+    float variance = 0.0f;
+
+    for (int j = 0; j < featuresSize; j++) {
+        float diff = data[offset + j] - mean;
+        variance += diff * diff;
+    }
+
+    variance /= featuresSize;
+
+    float denom = sqrt(variance + epsilon);
+
+    for (int j = 0; j < featuresSize; j++) {
+        data[offset + j] = (data[offset + j] - mean) / denom;
+    }
+}

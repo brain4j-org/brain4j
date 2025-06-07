@@ -10,7 +10,6 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.TensorGPU;
 import org.brain4j.math.weights.WeightInitialization;
 
 import java.util.Random;

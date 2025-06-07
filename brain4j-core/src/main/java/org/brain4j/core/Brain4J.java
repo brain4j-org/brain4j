@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Level;
 import org.brain4j.math.device.Device;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.device.DeviceUtils;
-import org.brain4j.math.tensor.impl.TensorCPU;
+import org.brain4j.math.tensor.impl.CpuTensor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class Brain4J {
     }
 
     public static void initialize() {
-        TensorCPU.initialize();
+        CpuTensor.initialize();
         logger.info("Brain4J v{} initialized.", version());
         logger.info("Available devices: {}", availableDevices());
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));

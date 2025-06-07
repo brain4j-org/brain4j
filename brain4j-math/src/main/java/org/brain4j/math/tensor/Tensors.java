@@ -1,6 +1,6 @@
 package org.brain4j.math.tensor;
 
-import org.brain4j.math.tensor.impl.TensorCPU;
+import org.brain4j.math.tensor.impl.CpuTensor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,11 +8,11 @@ import java.util.List;
 public class Tensors {
 
     public static Tensor scalar(double value) {
-        return new TensorCPU(new int[]{1}, (float) value);
+        return new CpuTensor(new int[]{1}, (float) value);
     }
 
     public static Tensor create(int[] shape, float... data) {
-        return new TensorCPU(shape, data);
+        return new CpuTensor(shape, data);
     }
     
     public static Tensor vector(float... data) {
@@ -24,11 +24,11 @@ public class Tensors {
     }
     
     public static Tensor zeros(int... shape) {
-        return new TensorCPU(shape);
+        return new CpuTensor(shape);
     }
     
     public static Tensor ones(int... shape) {
-        Tensor result = new TensorCPU(shape);
+        Tensor result = new CpuTensor(shape);
         Arrays.fill(result.data(), 1);
         return result;
     }

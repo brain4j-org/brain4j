@@ -4,6 +4,7 @@ import org.brain4j.datasets.core.dataset.Dataset;
 import org.brain4j.datasets.core.dataset.Dataset.DatasetFile;
 import org.brain4j.math.LineSplitting;
 import org.brain4j.math.Pair;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
@@ -46,6 +47,8 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     protected final List<Tensor> batchedLabels;
     protected final int batchSize;
     protected final int batches;
+
+    protected DeviceType deviceType = DeviceType.CPU;
     protected int cursor;
 
     /**
@@ -57,6 +60,21 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * @param batchSize the size of each batch for iteration
      */
     public ListDataSource(List<Sample> samples, boolean shuffle, int batchSize) {
+        this.samples = samples;
+        this.batchedInputs = new ArrayList<>();
+        this.batchedLabels = new ArrayList<>();
+        this.batches = (samples.size() + batchSize - 1) / batchSize;
+        this.batchSize = batchSize;
+
+        if (shuffle) {
+            Collections.shuffle(this.samples);
+        }
+
+        computeBatches();
+    }
+
+    public ListDataSource(DeviceType deviceType, List<Sample> samples, boolean shuffle, int batchSize) {
+        this.deviceType = deviceType;
         this.samples = samples;
         this.batchedInputs = new ArrayList<>();
         this.batchedLabels = new ArrayList<>();
@@ -246,6 +264,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         for (int i = 0; i < inputs.size(); i++) {
             Tensor input = inputs.get(i);
             Tensor label = labels.get(i);
+
             samples.add(new Sample(input, label));
         }
 
@@ -304,8 +323,8 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
                 labels.add(sample.label());
             }
 
-            Tensor mergedInput = Tensors.mergeTensors(inputs);
-            Tensor mergedLabels = Tensors.mergeTensors(labels);
+            Tensor mergedInput = Tensors.mergeTensors(inputs).to(deviceType);
+            Tensor mergedLabels = Tensors.mergeTensors(labels).to(deviceType);
 
             batchedInputs.add(mergedInput);
             batchedLabels.add(mergedLabels);
