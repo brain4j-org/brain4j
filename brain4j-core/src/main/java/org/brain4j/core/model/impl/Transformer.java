@@ -1,4 +1,4 @@
-package org.brain4j.core.model;
+package org.brain4j.core.model.impl;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
@@ -12,7 +12,7 @@ import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
  * @since 3.0
  * @author xEcho1337
  */
-public class Transformer extends Model {
+public class Transformer extends Sequential {
 
     public static Transformer decoderOnly(int vocabSize, int dimension, int layers, int heads, double temperature) {
         Transformer model = new Transformer(

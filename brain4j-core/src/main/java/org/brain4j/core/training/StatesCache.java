@@ -1,12 +1,8 @@
 package org.brain4j.core.training;
 
 import org.brain4j.core.model.Model;
-import org.brain4j.math.device.DeviceUtils;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.tensor.Tensor;
-import org.jocl.cl_command_queue;
-
-import static org.jocl.CL.clFinish;
-import static org.jocl.CL.clReleaseCommandQueue;
 
 public class StatesCache {
 

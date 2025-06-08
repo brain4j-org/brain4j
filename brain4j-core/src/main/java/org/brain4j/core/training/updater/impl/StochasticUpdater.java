@@ -1,6 +1,7 @@
 package org.brain4j.core.training.updater.impl;
 
 import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.updater.Updater;
 
 public class StochasticUpdater extends Updater {

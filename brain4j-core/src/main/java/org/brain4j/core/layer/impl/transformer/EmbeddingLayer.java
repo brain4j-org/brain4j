@@ -38,8 +38,9 @@ public class EmbeddingLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public Layer connect(Layer previous) {
         this.weights = Tensors.zeros(vocabSize, embeddingDim);
+        return this;
     }
 
     @Override

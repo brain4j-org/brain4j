@@ -15,8 +15,9 @@ public class ActivationLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public Layer connect(Layer previous) {
         this.dimension = previous.size();
+        return this;
     }
 
     @Override

@@ -29,9 +29,11 @@ public class LayerNorm extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public Layer connect(Layer previous) {
         this.weights = Tensors.ones(previous.size()).withGrad();
         this.bias = Tensors.zeros(previous.size()).withGrad();
+
+        return this;
     }
 
     @Override

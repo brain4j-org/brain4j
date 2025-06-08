@@ -2,6 +2,7 @@ package org.brain4j.core.training.updater;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.tensor.Tensor;
@@ -21,19 +22,32 @@ public abstract class Updater {
             return;
         }
 
-        for (int i = 0; i < weightsGradients.length; i++) {
-            Layer layer = model.layerAt(i);
+        int index = 0;
+        update(model, index, samples, learningRate);
+    }
 
-            Tensor gradW = weightsGradients[i];
-            Tensor biasW = biasesGradients[i];
-
-            if (gradW != null) {
-                layer.weights().sub(gradW.div(samples).mul(learningRate));
+    private void update(Model model, int index, int samples, double learningRate) {
+        for (Layer layer : model) {
+            if (layer instanceof Model subModel) {
+                update(subModel, index, samples, learningRate);
+                continue;
             }
 
-            if (biasW != null) {
-                layer.bias().sub(biasW.div(samples).mul(learningRate));
+            Tensor gradW = weightsGradients[index];
+            Tensor biasW = biasesGradients[index];
+
+            Tensor weights = layer.weights();
+            Tensor biases = layer.bias();
+
+            if (gradW != null && weights != null) {
+                weights.sub(gradW.div(samples).mul(learningRate));
             }
+
+            if (biasW != null && biases != null) {
+                biases.sub(biasW.div(samples).mul(learningRate));
+            }
+
+            index++;
         }
     }
 
@@ -59,17 +73,7 @@ public abstract class Updater {
         this.weightsGradients = new Tensor[model.size()];
         this.biasesGradients = new Tensor[model.size()];
 
-        for (int i = 0; i < model.size(); i++) {
-            Layer layer = model.layerAt(i);
-
-            if (layer.weights() != null) {
-                layer.weights().zerograd();
-            }
-
-            if (layer.bias() != null) {
-                layer.bias().zerograd();
-            }
-        }
+        model.zeroGrad();
     }
 
     public void postFit(Model model, double learningRate, int samples) {

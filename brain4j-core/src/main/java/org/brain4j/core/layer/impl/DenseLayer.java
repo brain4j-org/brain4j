@@ -42,12 +42,14 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
-        if (previous == null) return;
+    public Layer connect(Layer previous) {
+        if (previous == null) return this;
 
         // Shape: [output_size, input_size]
         this.weights = Tensors.zeros(dimension, previous.size()).withGrad();
         this.bias = Tensors.zeros(dimension).withGrad();
+
+        return this;
     }
 
     @Override

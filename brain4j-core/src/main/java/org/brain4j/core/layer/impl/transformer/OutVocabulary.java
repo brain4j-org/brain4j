@@ -26,8 +26,9 @@ public class OutVocabulary extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public Layer connect(Layer previous) {
         this.weights = Tensors.zeros(dimension, vocabSize);
+        return this;
     }
 
     @Override

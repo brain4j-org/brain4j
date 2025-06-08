@@ -25,7 +25,7 @@ public class ConvLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public Layer connect(Layer previous) {
         channels = 1;
 
         if (previous != null) {
@@ -34,6 +34,8 @@ public class ConvLayer extends Layer {
 
         this.bias = Tensors.zeros(filters);
         this.weights = Tensors.zeros(filters, channels, kernelWidth, kernelHeight);
+
+        return this;
     }
 
     @Override

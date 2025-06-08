@@ -44,10 +44,12 @@ public class TransformerEncoder extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public Layer connect(Layer previous) {
         this.normalizer.connect(this);
         this.upProjection.connect(this);
         this.downProjection.connect(upProjection);
+
+        return this;
     }
 
     @Override
@@ -58,10 +60,10 @@ public class TransformerEncoder extends Layer {
     }
 
     @Override
-    public void to(DeviceType deviceType) {
-        this.normalizer.to(deviceType);
-        this.upProjection.to(deviceType);
-        this.downProjection.to(deviceType);
+    public void toDevice(DeviceType deviceType) {
+        this.normalizer.toDevice(deviceType);
+        this.upProjection.toDevice(deviceType);
+        this.downProjection.toDevice(deviceType);
         this.attention.to(deviceType);
     }
 

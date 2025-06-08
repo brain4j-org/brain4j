@@ -11,6 +11,7 @@ public class TrainingParams {
 
     public TrainingParams(ListDataSource trainSource) {
         this.trainSource = trainSource;
+        this.validationSource = trainSource;
     }
 
     public TrainingParams(ListDataSource trainSource, ListDataSource validationSource) {

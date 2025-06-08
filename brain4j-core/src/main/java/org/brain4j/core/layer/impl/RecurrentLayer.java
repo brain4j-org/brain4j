@@ -38,14 +38,16 @@ public class RecurrentLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
-        if (previous == null) return;
+    public Layer connect(Layer previous) {
+        if (previous == null) return this;
 
         this.inputWeights = Tensors.zeros(hiddenDimension, previous.size()).withGrad();
         this.hiddenWeights = Tensors.zeros(hiddenDimension, hiddenDimension).withGrad();
         this.weights = Tensors.zeros(dimension, hiddenDimension).withGrad();
         this.bias = Tensors.zeros(dimension).withGrad();
         this.hiddenStateBias = Tensors.zeros(hiddenDimension).withGrad();
+
+        return this;
     }
 
     @Override

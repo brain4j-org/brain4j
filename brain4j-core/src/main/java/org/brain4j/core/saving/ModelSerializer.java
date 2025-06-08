@@ -2,10 +2,12 @@ package org.brain4j.core.saving;
 
 import com.github.luben.zstd.Zstd;
 import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Sequential;
 
 import java.io.File;
 
 public interface ModelSerializer {
+
     default void serialize(String path, Model model) throws Exception {
         serialize(new File(path), model);
     }

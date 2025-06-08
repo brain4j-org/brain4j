@@ -42,20 +42,22 @@ public abstract class Layer {
      */
     public abstract int size();
 
-    public void connect(Layer previous) {
-        // No-op
+    public Layer connect(Layer previous) {
+        return this;
     }
 
     public void initWeights(Random generator, int input, int output) {
         // No-op
     }
 
-    public void to(DeviceType deviceType) {
-        if (this.weights != null)
+    public void toDevice(DeviceType deviceType) {
+        if (this.weights != null) {
             this.weights = weights.to(deviceType).withGrad();
+        }
 
-        if (this.bias != null)
+        if (this.bias != null) {
             this.bias = bias.to(deviceType).withGrad();
+        }
     }
 
     public void computeLoss(
@@ -72,9 +74,6 @@ public abstract class Layer {
         Tensor delta = lossFunction.getDelta(error, derivatives);
         Tensor output = cache.preActivation(index);
 
-//        System.out.println(error);
-//        System.out.println(derivatives);
-//        System.out.println(delta);
         output.backward(delta);
 
         Tensor weightsGrad = weights.grad().transpose();
@@ -133,6 +132,16 @@ public abstract class Layer {
     public Layer weightInit(WeightInitialization weightInit) {
         this.weightInit = weightInit;
         return this;
+    }
+
+    public void resetGrad() {
+        if (weights != null) {
+            weights.zerograd();
+        }
+
+        if (bias != null) {
+            bias.zerograd();
+        }
     }
 
     /**

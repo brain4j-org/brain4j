@@ -1,7 +1,7 @@
 package org.brain4j.core.training.optimizer.impl;
 
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
@@ -34,7 +34,7 @@ public class Lion extends Optimizer {
     }
 
     @Override
-    public void initialize(Model model) {
+    public void initialize(Sequential model) {
         this.momentumHistory = new Tensor[model.size()];
     }
 
