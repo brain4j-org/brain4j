@@ -4,7 +4,7 @@ import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.DropoutLayer;
-import org.brain4j.core.layer.impl.LayerNorm;
+import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.transformer.attention.MultiHeadAttention;
 import org.brain4j.math.activation.Activations;
@@ -20,7 +20,7 @@ public class TransformerEncoder extends Layer {
 
     protected DenseLayer upProjection;
     protected DenseLayer downProjection;
-    protected LayerNorm normalizer;
+    protected NormLayer normalizer;
     protected DropoutLayer dropout;
     protected MultiHeadAttention attention;
 
@@ -32,7 +32,7 @@ public class TransformerEncoder extends Layer {
         this.embeddingDim = embeddingDim;
         this.dropout = new DropoutLayer(dropout);
 
-        this.normalizer = new LayerNorm(embeddingDim);
+        this.normalizer = new NormLayer(embeddingDim);
         this.upProjection = new DenseLayer(embeddingDim * 4, Activations.RELU);
         this.downProjection = new DenseLayer(embeddingDim, Activations.LINEAR);
 

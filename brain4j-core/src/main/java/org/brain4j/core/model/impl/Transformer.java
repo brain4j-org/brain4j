@@ -2,7 +2,7 @@ package org.brain4j.core.model.impl;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
-import org.brain4j.core.layer.impl.transformer.OutVocabulary;
+import org.brain4j.core.layer.impl.transformer.OutVocabLayer;
 import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
 import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
 
@@ -24,7 +24,7 @@ public class Transformer extends Sequential {
             model.add(new TransformerDecoder(heads, dimension, 0.1));
         }
 
-        model.add(new OutVocabulary(vocabSize, dimension, temperature));
+        model.add(new OutVocabLayer(vocabSize, dimension, temperature));
 
         return model;
     }

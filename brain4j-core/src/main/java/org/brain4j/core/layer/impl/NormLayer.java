@@ -9,14 +9,14 @@ import org.brain4j.math.tensor.Tensors;
  * Implementation of a layer normalization layer, it's used to normalize inputs and improve training.
  * @author xEcho1337
  */
-public class LayerNorm extends Layer {
+public class NormLayer extends Layer {
 
     private final double epsilon;
 
     /**
      * Constructs a layer normalization instance with a default epsilon.
      */
-    public LayerNorm() {
+    public NormLayer() {
         this(1e-5);
     }
 
@@ -24,7 +24,7 @@ public class LayerNorm extends Layer {
      * Constructs a layer normalization instance with an epsilon.
      * @param epsilon the epsilon used to avoid division by zero
      */
-    public LayerNorm(double epsilon) {
+    public NormLayer(double epsilon) {
         this.epsilon = epsilon;
     }
 

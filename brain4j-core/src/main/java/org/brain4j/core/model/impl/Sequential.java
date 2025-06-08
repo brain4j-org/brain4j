@@ -1,0 +1,560 @@
+package org.brain4j.core.model.impl;
+
+import org.brain4j.core.layer.ForwardContext;
+import org.brain4j.core.layer.Layer;
+import org.brain4j.core.loss.LossFunction;
+import org.brain4j.core.model.Model;
+import org.brain4j.core.training.BackPropagation;
+import org.brain4j.core.training.wrappers.EvaluationResult;
+import org.brain4j.core.training.StatesCache;
+import org.brain4j.core.training.optimizer.Optimizer;
+import org.brain4j.core.training.updater.Updater;
+import org.brain4j.math.Commons;
+import org.brain4j.math.Pair;
+import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.device.DeviceType;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.index.Range;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
+
+import static org.brain4j.math.constants.Constants.*;
+
+/**
+ * Represents a feedforward neural network model.
+ * <p>
+ * Supports multiple layer types, loss functions, optimizers, and training via backpropagation.
+ * Provides methods for training (fit), prediction, evaluation, and model summary.
+ * </p>
+ * @see Transformer
+ * @since 3.0
+ * @author xEcho1337
+ */
+public class Sequential extends Layer implements Model {
+
+    private static final Logger logger = LoggerFactory.getLogger(Sequential.class);
+    private static final Logger progressLogger = LoggerFactory.getLogger("dynamic");
+    protected final List<Layer> layers;
+
+    protected BackPropagation backPropagation;
+    protected Optimizer optimizer;
+    protected Updater updater;
+    protected LossFunction lossFunction;
+    protected DeviceType deviceType = DeviceType.CPU;
+
+    protected long seed;
+    protected int size;
+
+    /**
+     * Constructs a new neural network with the given layers.
+     * @param layers the sequence of layers forming the neural network
+     */
+    public static Sequential of(Layer... layers) {
+        return new Sequential(layers);
+    }
+
+    protected Sequential(Layer... layers) {
+        this.layers = new ArrayList<>(List.of(layers));
+        this.seed = System.currentTimeMillis();
+    }
+
+    private void connectLayers() {
+        if (layers.isEmpty()) return;
+
+        Layer previous = null;
+
+        for (int i = 0; i < size(); i++) {
+            Layer layer = layerAt(i);
+            previous = layer.connect(previous);
+        }
+
+        int[] inputSizes = new int[size()];
+
+        for (int i = 0; i < size(); i++) {
+            inputSizes[i] = (i == 0) ? 0 : layerAt(i - 1).size();
+        }
+
+        IntStream.range(0, size()).parallel().forEach(i -> {
+            Layer layer = layerAt(i);
+
+            int input = inputSizes[i];
+            int output = layer.size();
+
+            Random localRandom = Random.from(new SplittableRandom(seed + i));
+            layer.initWeights(localRandom, input, output);
+        });
+    }
+
+    protected Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+        return Thread.startVirtualThread(() -> {
+            Tensor inputs = batch.first(); // [batch_size, input_size]
+            Tensor expected = batch.second(); // [batch_size, output_size]
+
+            Tensor prediction = predict(inputs); // [batch_size, output_size]
+            int batchSize = inputs.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor output = prediction.slice(range).vector();
+                Tensor target = expected.slice(range).vector();
+
+                int predIndex = output.argmax();
+                int targetIndex = target.argmax();
+
+                if (output.elements() == 1) {
+                    predIndex = output.get(0) > 0.5 ? 1 : 0;
+                    targetIndex = (int) target.get(0);
+                }
+
+                double loss = lossFunction.calculate(target, output);
+                totalLoss.updateAndGet(v -> v + loss);
+
+                Tensor predictions = classifications.get(targetIndex);
+                int pred = (int) predictions.get(predIndex);
+
+                predictions.set(pred + 1, predIndex);
+            }
+        });
+    }
+
+    protected Thread predictPartition(Pair<Tensor, Tensor> partition, AtomicReference<Double> totalError) {
+        return Thread.startVirtualThread(() -> {
+            Tensor inputs = partition.first();
+            Tensor targets = partition.second();
+            Tensor outputs = predict(new StatesCache(this), inputs, true);
+
+            int batchSize = outputs.shape()[0];
+
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
+
+                Tensor output = outputs.slice(range).vector();
+                Tensor target = targets.slice(range).vector();
+
+                double loss = lossFunction.calculate(target, output);
+                totalError.updateAndGet(v -> v + loss);
+            }
+        });
+    }
+
+    protected void printEvaluation(int step, int epoches, ListDataSource testSource) {
+        EvaluationResult result = evaluate(testSource.clone());
+
+        String lossMsg = "Loss: " + MAGENTA + "%.4f" + RESET;
+        String accuracyMsg = "Accuracy: " + LIGHT_BLUE + "%.2f%%" + RESET;
+        String f1ScoreMsg = "F1-Score: " + LIGHT_GREEN + "%.2f%%" + RESET;
+
+        String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg + "\n";
+        String formatted = message.formatted(step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
+
+        progressLogger.info(formatted);
+    }
+
+    protected void printProgressBar(
+        double tookMs,
+        int currentEpoch,
+        int epoches,
+        int evaluateEvery
+    ) {
+        int progressBarLength = 20;
+        double percentage = (double) currentEpoch / epoches;
+
+        String barChar = Commons.getHeaderChar();
+        int remainingEpoches = epoches - currentEpoch;
+
+        double seconds = tookMs / 1000;
+        double remainingTime = seconds * remainingEpoches;
+
+        String remainingTimeStr = Commons.formatDuration(remainingTime);
+        String timeStr = Commons.formatDuration(seconds);
+
+        String progressMsg = WHITE + "[%s/%s] ";
+        String progressBar = LIGHT_GREEN + Commons.createProgressBar(
+            percentage,
+            progressBarLength,
+            barChar,
+            RESET + barChar
+        );
+
+        String percentual = LIGHT_YELLOW + " %.2f%%" + RESET;
+        String time = GRAY + " [%s/epoch | %s remaining]" + RESET;
+        String message = String.format(progressMsg + progressBar + percentual + time,
+            currentEpoch, epoches, percentage * 100, timeStr, remainingTimeStr);
+
+        progressLogger.info(message);
+
+        if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
+            System.out.println();
+        }
+    }
+
+    @Override
+    public Model add(Layer layer) {
+        layers.add(layer);
+        return this;
+    }
+
+    @Override
+    public Model add(int index, Layer layer) {
+        layers.add(index, layer);
+        return this;
+    }
+
+    @Override
+    public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {
+        for (int i = 1; i <= epoches; i++) {
+            long start = System.nanoTime();
+            backPropagation.iteration(train);
+            long tookNanos = System.nanoTime() - start;
+
+            printProgressBar(tookNanos / 1e6, i, epoches, evaluateEvery);
+
+            if (i % evaluateEvery == 0) {
+                printEvaluation(i, epoches, validation);
+            }
+        }
+    }
+
+    @Override
+    public Tensor predict(Tensor input) {
+        return predict(new StatesCache(this), input);
+    }
+
+    @Override
+    public Tensor predict(StatesCache cache, Tensor input) {
+        return predict(cache, input, false);
+    }
+
+    @Override
+    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
+        if (input == null || input.dimension() == 0) {
+            throw new IllegalArgumentException("Input is either null or has dimension of 0!");
+        }
+
+        input = input.to(deviceType);
+
+        if (input.dimension() < 2) {
+            // Shape: [batch_size, input_size]
+            input = input.reshape(1, input.elements());
+        }
+
+        int[] shape = input.shape();
+
+        Layer inputLayer = layers.getFirst();
+
+        if (!inputLayer.validateInput(input)) {
+            throw new IllegalArgumentException(
+                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
+            );
+        }
+
+        Tensor pass = input.withGrad();
+
+        cache.setInput(0, input);
+        cache.setOutput(0, pass.clone());
+
+        for (int i = 0; i < size(); i++) {
+            Layer layer = layerAt(i);
+
+            if (layer == null || layer.skipForward()) {
+                throw new IllegalStateException("Layer at index " + i + " is null!");
+            }
+
+            pass = layer.forward(new ForwardContext(cache, pass, i, training));
+        }
+
+        return pass;
+    }
+
+    @Override
+    public EvaluationResult evaluate(ListDataSource dataSource) {
+        int classes = Math.max(2, dataSource.samples().getFirst().label().elements());
+        Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
+
+        for (int i = 0; i < classes; i++) {
+            classifications.put(i, Tensors.zeros(classes));
+        }
+
+        List<Thread> threads = new ArrayList<>();
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Pair<Tensor, Tensor> partition = dataSource.nextBatch();
+            threads.add(makeEvaluation(partition, classifications, totalLoss));
+        }
+
+        Commons.waitAll(threads);
+
+        return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
+    }
+
+    @Override
+    public double loss(ListDataSource dataSource) {
+        AtomicReference<Double> totalError = new AtomicReference<>(0.0);
+        List<Thread> threads = new ArrayList<>();
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Pair<Tensor, Tensor> partition = dataSource.nextBatch();
+            threads.add(predictPartition(partition, totalError));
+        }
+
+        Commons.waitAll(threads);
+
+        return totalError.get() / dataSource.size();
+    }
+
+    @Override
+    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        this.optimizer = optimizer;
+        this.updater = updater;
+        this.lossFunction = lossFunction;
+        this.backPropagation = new BackPropagation(this, optimizer, updater);
+
+        this.updater.resetGradients(this);
+        this.optimizer.initialize(this);
+
+        connectLayers();
+        return this;
+    }
+
+    @Override
+    public Model to(DeviceType deviceType) {
+        if (deviceType != DeviceType.CPU && deviceType != DeviceType.GPU) {
+            throw new IllegalArgumentException("Unsupported device type: " + deviceType);
+        }
+
+        this.deviceType = deviceType;
+
+        for (Layer layer : layers) {
+            layer.toDevice(deviceType);
+        }
+
+        return this;
+    }
+
+    @Override
+    public void summary() {
+        if (updater == null || optimizer == null) {
+            throw new IllegalStateException("The network is not compiled! Make sure to call compile() before.");
+        }
+
+        StringBuilder stats = new StringBuilder();
+        DecimalFormat format = new DecimalFormat("#,###");
+
+        String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
+        String divider = Commons.getHeader(" Architecture ", Commons.getHeaderChar());
+
+        stats.append(divider);
+        stats.append(pattern.formatted("Index", "Layer Type", "Shape", "Parameters", "Activation")).append("\n");
+
+        AtomicLong totalWeights = new AtomicLong(0);
+        AtomicLong totalBiases = new AtomicLong(0);
+
+        append(this, pattern, stats, format, totalWeights, totalBiases);
+
+        long weightsCount = totalWeights.get();
+        long biasesCount = totalBiases.get();
+
+        long params = weightsCount + biasesCount;
+
+        String parameters = format.format(params);
+        String weights = format.format(totalWeights);
+        String biases = format.format(totalBiases);
+
+        byte floatSize = Float.BYTES; // 4 bytes
+        String sizeOfParams = Commons.formatNumber(params * floatSize);
+        String sizeOfWeights = Commons.formatNumber(weightsCount * floatSize);
+        String sizeOfBiases = Commons.formatNumber(biasesCount * floatSize);
+
+        stats.append(Commons.getHeader(" Recap ", Commons.getHeaderChar()));
+        stats.append("Total weights: %s (%s)\n".formatted(weights, sizeOfWeights));
+        stats.append("Total biases: %s (%s)\n".formatted(biases, sizeOfBiases));
+        stats.append("Total parameters: %s (%s)\n".formatted(parameters, sizeOfParams));
+        stats.append(Commons.getHeader("", Commons.getHeaderChar()));
+
+        Arrays.stream(stats.toString().split("\n")).forEach(logger::info);
+    }
+
+    private void append(
+            Model model,
+            String pattern,
+            StringBuilder builder,
+            DecimalFormat format,
+            AtomicLong totalWeights,
+            AtomicLong totalBiases
+    ) {
+        for (int i = 0; i < model.size(); i++) {
+            Layer layer = model.layers().get(i);
+
+            if (layer instanceof Model subModel) {
+                append(subModel, pattern, builder, format, totalWeights, totalBiases);
+                continue;
+            }
+
+            String layerType = layer.getClass().getSimpleName();
+
+            int neurons = layer.size();
+            int weights = layer.totalWeights() + layer.totalBiases();
+
+            Tensor weightsTensor = layer.weights();
+
+            String formatWeights = weights == 0 ? "-" : format.format(weights);
+            String shape = weightsTensor == null
+                    ? "[" + format.format(neurons) + "]"
+                    : Arrays.toString(weightsTensor.shape());
+
+            builder.append(pattern.formatted(i, layerType, shape, formatWeights, layer.activation().getName()));
+
+            totalWeights.addAndGet(weights);
+            totalBiases.addAndGet(neurons);
+        }
+    }
+
+    /**
+     * Retrieves the layer at the specified index.
+     *
+     * @param index the index of the layer
+     * @return the layer at the given index
+     */
+    public Layer layerAt(int index) {
+        return layers.get(index);
+    }
+
+    @Override
+    public Layer connect(Layer previous) {
+        for (int i = 0; i < size(); i++) {
+            Layer layer = layerAt(i);
+            previous = layer.connect(previous);
+        }
+
+        int[] inputSizes = new int[size()];
+
+        for (int i = 0; i < size(); i++) {
+            inputSizes[i] = (i == 0) ? 0 : layerAt(i - 1).size();
+        }
+
+        IntStream.range(0, size()).parallel().forEach(i -> {
+            Layer layer = layerAt(i);
+
+            int input = inputSizes[i];
+            int output = layer.size();
+
+            Random localRandom = Random.from(new SplittableRandom(seed + i));
+            layer.initWeights(localRandom, input, output);
+        });
+
+        return previous;
+    }
+
+    @Override
+    public Tensor forward(ForwardContext context) {
+        Tensor pass = context.input();
+        StatesCache cache = context.cache();
+        boolean training = context.training();
+
+        for (int i = 0; i < size(); i++) {
+            Layer layer = layerAt(i);
+
+            if (layer == null || layer.skipForward()) {
+                throw new IllegalStateException("Layer at index " + i + " is null!");
+            }
+
+            pass = layer.forward(new ForwardContext(cache, pass, i, training));
+        }
+
+        return pass;
+    }
+
+    @Override
+    public void backward(Updater updater, Optimizer optimizer, int index) {
+        for (int l = size() - 2; l >= 0; l--) {
+            Layer layer = layers.get(l);
+
+            if (layer.skipPropagate()) continue;
+
+            layer.backward(updater, optimizer, l);
+        }
+    }
+
+    @Override
+    public void zeroGrad() {
+        for (Layer layer : layers) {
+            layer.resetGrad();
+        }
+
+        resetGrad();
+    }
+
+    @Override
+    public int size() {
+        return layers.size();
+    }
+
+    @Override
+    public List<Layer> layers() {
+        return new ArrayList<>(layers);
+    }
+
+    @Override
+    public Optimizer optimizer() {
+        return optimizer;
+    }
+
+    @Override
+    public Updater updater() {
+        return updater;
+    }
+
+    @Override
+    public LossFunction lossFunction() {
+        return lossFunction;
+    }
+
+    /**
+     * Returns the seed value used to initialize the random number generator.
+     * @return the seed value
+     */
+    public long seed() {
+        return seed;
+    }
+
+    /**
+     * Updates the seed value used to initialize the random number generator.
+     * @param seed the new seed value
+     * @return the model instance
+     */
+    public Sequential setSeed(long seed) {
+        this.seed = seed;
+        return this;
+    }
+
+    @Override
+    public Iterator<Layer> iterator() {
+        return new Iterator<>() {
+            private int currentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                return currentIndex < layers.size();
+            }
+
+            @Override
+            public Layer next() {
+                return layers.get(currentIndex++);
+            }
+        };
+    }
+}

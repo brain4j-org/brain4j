@@ -12,13 +12,13 @@ import org.brain4j.math.tensor.Tensors;
 import java.util.Arrays;
 import java.util.Random;
 
-public class OutVocabulary extends Layer {
+public class OutVocabLayer extends Layer {
 
     private final int vocabSize;
     private final int dimension;
     private final double temperature;
 
-    public OutVocabulary(int vocabSize, int dimension, double temperature) {
+    public OutVocabLayer(int vocabSize, int dimension, double temperature) {
         this.vocabSize = vocabSize;
         this.dimension = dimension;
         this.temperature = Math.max(1e-15, temperature);

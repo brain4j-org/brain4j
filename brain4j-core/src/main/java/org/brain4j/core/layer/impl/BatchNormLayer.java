@@ -9,14 +9,14 @@ import org.brain4j.math.tensor.index.Range;
  * Implementation of a batch normalization layer, it's used to normalize inputs and improve training.
  * @author xEcho1337
  */
-public class BatchNorm extends Layer {
+public class BatchNormLayer extends Layer {
 
     private final double epsilon;
 
     /**
      * Constructs a layer normalization instance with a default epsilon of 1e-5.
      */
-    public BatchNorm() {
+    public BatchNormLayer() {
         this(1e-5);
     }
 
@@ -24,7 +24,7 @@ public class BatchNorm extends Layer {
      * Constructs a new instance of a batch normalization layer.
      * @param epsilon the epsilon used to avoid division by zero
      */
-    public BatchNorm(double epsilon) {
+    public BatchNormLayer(double epsilon) {
         this.epsilon = epsilon;
     }
 
