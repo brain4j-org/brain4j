@@ -73,6 +73,7 @@ public class Tensors {
         Tensor result = zeros(paddedShape);;
 
         int offset = 0;
+
         for (Tensor input : inputs) {
             int size = input.shape()[rank - 1];
 
@@ -80,7 +81,6 @@ public class Tensors {
 
             offset += size;
         }
-
 
         return result;
     }
