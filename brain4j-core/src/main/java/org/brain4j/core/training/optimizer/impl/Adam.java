@@ -1,7 +1,7 @@
 package org.brain4j.core.training.optimizer.impl;
 
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.model.impl.Sequential;
+import org.brain4j.core.model.impl.Model;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
@@ -33,12 +33,14 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void initialize(Sequential model) {
+    public void initialize(Model model) {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        this.firstMomentum = new Tensor[model.size()];
-        this.secondMomentum = new Tensor[model.size()];
+        int size = model.flattened().size();
+
+        this.firstMomentum = new Tensor[size];
+        this.secondMomentum = new Tensor[size];
     }
 
     @Override

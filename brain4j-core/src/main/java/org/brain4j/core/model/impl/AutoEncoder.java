@@ -19,10 +19,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.brain4j.math.constants.Constants.*;
 
 /**
- * Autoencoder neural network model implementation. This class is an extension of the {@link Sequential} class.
+ * Autoencoder neural network model implementation. This class is an extension of the {@link Model} class.
  * <p>Due to the nature of auto encoders, accuracy and confusion matrix are not implemented, expect NaN and zeros.</p>
  */
-public class AutoEncoder extends Sequential {
+public class AutoEncoder extends Model {
 
     private final int bottleNeckIndex;
 

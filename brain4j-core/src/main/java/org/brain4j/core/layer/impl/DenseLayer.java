@@ -90,8 +90,6 @@ public class DenseLayer extends Layer {
         Tensor activated = output.activateGrad(activation);
         cache.setOutput(index, activated);
 
-//        System.out.println(output.toString("%.2f"));
-
         return activated;
     }
 

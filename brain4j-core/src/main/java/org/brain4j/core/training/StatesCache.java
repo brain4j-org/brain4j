@@ -1,7 +1,6 @@
 package org.brain4j.core.training;
 
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.tensor.Tensor;
 
 public class StatesCache {
@@ -12,10 +11,11 @@ public class StatesCache {
     private final Tensor[] hiddenStates;
 
     public StatesCache(Model model) {
-        this.inputs = new Tensor[model.size()];
-        this.outputs = new Tensor[model.size()];
-        this.preActivations = new Tensor[model.size()];
-        this.hiddenStates = new Tensor[model.size()];
+        int size = model.flattened().size();
+        this.inputs = new Tensor[size];
+        this.outputs = new Tensor[size];
+        this.preActivations = new Tensor[size];
+        this.hiddenStates = new Tensor[size];
     }
 
     public Tensor input(int index) {

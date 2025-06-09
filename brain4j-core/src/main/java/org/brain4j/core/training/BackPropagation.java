@@ -3,7 +3,6 @@ package org.brain4j.core.training;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Pair;
@@ -46,16 +45,16 @@ public class BackPropagation {
     }
 
     public void backpropagation(StatesCache cache, Tensor targets, Tensor outputs) {
-        List<Layer> layers = model.layers();
+        List<Layer> flattened = model.flattened();
         LossFunction lossFunction = model.lossFunction();
 
-        int count = layers.size() - 1;
+        int count = flattened.size() - 1;
 
-        Layer last = layers.getLast();
+        Layer last = flattened.getLast();
         last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
 
         for (int l = count - 1; l >= 0; l--) {
-            Layer layer = layers.get(l);
+            Layer layer = flattened.get(l);
 
             if (layer.skipPropagate()) continue;
 

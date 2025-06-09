@@ -177,6 +177,26 @@ public interface Model extends Iterable<Layer> {
     List<Layer> layers();
 
     /**
+     * Returns an immutable list of all the layers in the model, including nested layers.
+     * @return the list of layers
+     */
+    List<Layer> flattened();
+
+    /**
+     * Returns the layer at the specified index.
+     * @param index the index
+     * @return the layer in that index
+     */
+    Layer layerAt(int index);
+
+    /**
+     * Returns the flattened layer at the specified index.
+     * @param index the index
+     * @return the layer in that index
+     */
+    Layer flattenedAt(int index);
+
+    /**
      * Returns the optimizer currently used by the model.
      * @return the optimizer instance
      */
