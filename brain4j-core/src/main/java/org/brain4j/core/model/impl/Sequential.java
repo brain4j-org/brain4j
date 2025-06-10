@@ -3,6 +3,7 @@ package org.brain4j.core.model.impl;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
+import org.brain4j.core.model.Model;
 import org.brain4j.core.training.BackPropagation;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.StatesCache;
@@ -37,9 +38,9 @@ import static org.brain4j.math.constants.Constants.*;
  * @since 3.0
  * @author xEcho1337
  */
-public class Model extends Layer implements org.brain4j.core.model.Model {
+public class Sequential extends Layer implements Model {
 
-    private static final Logger logger = LoggerFactory.getLogger(Model.class);
+    private static final Logger logger = LoggerFactory.getLogger(Sequential.class);
     private static final Logger progressLogger = LoggerFactory.getLogger("dynamic");
     protected final List<Layer> layers;
     protected final List<Layer> flattened;
@@ -57,11 +58,11 @@ public class Model extends Layer implements org.brain4j.core.model.Model {
      * Constructs a new neural network with the given layers.
      * @param layers the sequence of layers forming the neural network
      */
-    public static Model of(Layer... layers) {
-        return new Model(layers);
+    public static Sequential of(Layer... layers) {
+        return new Sequential(layers);
     }
 
-    protected Model(Layer... layers) {
+    protected Sequential(Layer... layers) {
         this.layers = new ArrayList<>(List.of(layers));
         this.flattened = new ArrayList<>();
         this.seed = System.currentTimeMillis();
@@ -546,7 +547,7 @@ public class Model extends Layer implements org.brain4j.core.model.Model {
      * @param seed the new seed value
      * @return the model instance
      */
-    public Model setSeed(long seed) {
+    public Sequential setSeed(long seed) {
         this.seed = seed;
         return this;
     }
