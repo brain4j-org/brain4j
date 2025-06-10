@@ -65,7 +65,7 @@ public class AutoEncoder extends Sequential {
             Tensor inputs = batch.first(); // [batch_size, input_size]
             Tensor expected = batch.second(); // [batch_size, output_size]
 
-            Tensor prediction = predict(new StatesCache(this), inputs, true); // [batch_size, output_size]
+            Tensor prediction = predict(new StatesCache(this), true, inputs); // [batch_size, output_size]
             int batchSize = inputs.shape()[0];
 
             for (int i = 0; i < batchSize; i++) {
@@ -81,7 +81,9 @@ public class AutoEncoder extends Sequential {
     }
 
     @Override
-    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
+    public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
+        Tensor input = inputs[0];
+
         if (input == null || input.dimension() == 0) {
             throw new IllegalArgumentException("Input is either null or has dimension of 0!");
         }
