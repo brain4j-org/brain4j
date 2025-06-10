@@ -5,10 +5,10 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.BackPropagation;
-import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
+import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
@@ -41,18 +41,19 @@ import static org.brain4j.math.constants.Constants.*;
 public class Sequential extends Layer implements Model {
 
     private static final Logger logger = LoggerFactory.getLogger(Sequential.class);
-    private static final Logger progressLogger = LoggerFactory.getLogger("dynamic");
+    private static final Logger training = LoggerFactory.getLogger("training");
+
+    /* Data structures in the model */
     protected final List<Layer> layers;
     protected final List<Layer> flattened;
 
+    /* General training parameters */
     protected BackPropagation backPropagation;
     protected Optimizer optimizer;
     protected Updater updater;
     protected LossFunction lossFunction;
-    protected DeviceType deviceType = DeviceType.CPU;
-
+    protected DeviceType deviceType;
     protected long seed;
-    protected int size;
 
     /**
      * Constructs a new neural network with the given layers.
@@ -63,12 +64,13 @@ public class Sequential extends Layer implements Model {
     }
 
     protected Sequential(Layer... layers) {
+        this.deviceType = DeviceType.CPU;
         this.layers = new ArrayList<>(List.of(layers));
         this.flattened = new ArrayList<>();
         this.seed = System.currentTimeMillis();
 
         for (Layer layer : layers) {
-            if (layer instanceof org.brain4j.core.model.Model subModel) {
+            if (layer instanceof Model subModel) {
                 flattened.addAll(subModel.flattened());
                 continue;
             }
@@ -90,11 +92,11 @@ public class Sequential extends Layer implements Model {
 
         int[] inputSizes = new int[size];
 
-        for (int i = 0; i < size; i++) {
-            inputSizes[i] = (i == 0) ? 0 : flattenedAt(i - 1).size();
+        for (int i = 1; i < inputSizes.length; i++) {
+            inputSizes[i] = flattenedAt(i - 1).size();
         }
 
-        IntStream.range(0, size).parallel().forEach(i -> {
+        IntStream.range(1, size).parallel().forEach(i -> {
             Layer layer = flattenedAt(i);
 
             int input = inputSizes[i];
@@ -142,7 +144,7 @@ public class Sequential extends Layer implements Model {
         return Thread.startVirtualThread(() -> {
             Tensor inputs = partition.first();
             Tensor targets = partition.second();
-            Tensor outputs = predict(new StatesCache(this), inputs, true);
+            Tensor outputs = predict(new StatesCache(this), true, inputs);
 
             int batchSize = outputs.shape()[0];
 
@@ -168,7 +170,7 @@ public class Sequential extends Layer implements Model {
         String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg + "\n";
         String formatted = message.formatted(step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
 
-        progressLogger.info(formatted);
+        training.info(formatted);
     }
 
     protected void printProgressBar(
@@ -202,7 +204,7 @@ public class Sequential extends Layer implements Model {
         String message = String.format(progressMsg + progressBar + percentual + time,
             currentEpoch, epoches, percentage * 100, timeStr, remainingTimeStr);
 
-        progressLogger.info(message);
+        training.info(message);
 
         if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
             System.out.println();
@@ -210,13 +212,13 @@ public class Sequential extends Layer implements Model {
     }
 
     @Override
-    public org.brain4j.core.model.Model add(Layer layer) {
+    public Model add(Layer layer) {
         layers.add(layer);
         return this;
     }
 
     @Override
-    public org.brain4j.core.model.Model add(int index, Layer layer) {
+    public Model add(int index, Layer layer) {
         layers.add(index, layer);
         return this;
     }
@@ -237,17 +239,19 @@ public class Sequential extends Layer implements Model {
     }
 
     @Override
-    public Tensor predict(Tensor input) {
-        return predict(new StatesCache(this), input);
+    public Tensor predict(Tensor... inputs) {
+        return predict(new StatesCache(this), inputs);
     }
 
     @Override
-    public Tensor predict(StatesCache cache, Tensor input) {
-        return predict(cache, input, false);
+    public Tensor predict(StatesCache cache, Tensor... inputs) {
+        return predict(cache, false, inputs);
     }
 
     @Override
-    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
+    public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
+        Tensor input = inputs[0];
+
         if (input == null || input.dimension() == 0) {
             throw new IllegalArgumentException("Input is either null or has dimension of 0!");
         }
@@ -329,7 +333,7 @@ public class Sequential extends Layer implements Model {
     }
 
     @Override
-    public org.brain4j.core.model.Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         this.optimizer = optimizer;
         this.updater = updater;
         this.lossFunction = lossFunction;
@@ -343,7 +347,7 @@ public class Sequential extends Layer implements Model {
     }
 
     @Override
-    public org.brain4j.core.model.Model to(DeviceType deviceType) {
+    public Model to(DeviceType deviceType) {
         if (deviceType != DeviceType.CPU && deviceType != DeviceType.GPU) {
             throw new IllegalArgumentException("Unsupported device type: " + deviceType);
         }
@@ -499,8 +503,6 @@ public class Sequential extends Layer implements Model {
         for (Layer layer : flattened) {
             layer.resetGrad();
         }
-
-        resetGrad();
     }
 
     @Override
@@ -517,7 +519,6 @@ public class Sequential extends Layer implements Model {
     public List<Layer> flattened() {
         return new ArrayList<>(flattened);
     }
-
 
     @Override
     public Optimizer optimizer() {
@@ -547,7 +548,7 @@ public class Sequential extends Layer implements Model {
      * @param seed the new seed value
      * @return the model instance
      */
-    public Sequential setSeed(long seed) {
+    public Model setSeed(long seed) {
         this.seed = seed;
         return this;
     }

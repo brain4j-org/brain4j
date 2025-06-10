@@ -2,6 +2,7 @@ package org.brain4j.core.model.impl;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
+import org.brain4j.core.merge.MergeStrategy;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
@@ -16,40 +17,44 @@ import java.util.List;
 
 public class MultiModel implements Model {
 
+    protected MergeStrategy mergeStrategy;
     protected List<Model> models;
     protected List<Layer> layers;
 
-    public static Model of(List<Model> models, Layer... layers) {
-        return new MultiModel(models, layers);
+    public static Model of(MergeStrategy mergeStrategy, List<Model> models, Layer... layers) {
+        return new MultiModel(mergeStrategy, models, layers);
     }
 
-    protected MultiModel(List<Model> models, Layer... layers) {
+    protected MultiModel(MergeStrategy mergeStrategy, List<Model> models, Layer... layers) {
+        this.mergeStrategy = mergeStrategy;
         this.models = models;
         this.layers = List.of(layers);
     }
 
     @Override
     public Model add(Layer layer) {
-        return null;
+        layers.add(layer);
+        return this;
     }
 
     @Override
     public Model add(int index, Layer layer) {
+        layers.add(index, layer);
+        return this;
+    }
+
+    @Override
+    public Tensor predict(Tensor... inputs) {
         return null;
     }
 
     @Override
-    public Tensor predict(Tensor input) {
+    public Tensor predict(StatesCache cache, Tensor... inputs) {
         return null;
     }
 
     @Override
-    public Tensor predict(StatesCache cache, Tensor input) {
-        return null;
-    }
-
-    @Override
-    public Tensor predict(StatesCache cache, Tensor input, boolean training) {
+    public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
         return null;
     }
 

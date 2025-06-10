@@ -32,6 +32,14 @@ public class DenseLayer extends Layer {
     private final int dimension;
 
     /**
+     * Constructs a new instance of a dense layer with a linear activation.
+     * @param dimension the dimension of the output
+     */
+    public DenseLayer(int dimension) {
+        this(dimension, Activations.LINEAR);
+    }
+
+    /**
      * Constructs a new instance of a dense layer.
      * @param dimension the dimension of the output
      * @param activation the activation function

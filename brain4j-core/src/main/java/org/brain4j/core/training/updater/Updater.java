@@ -46,10 +46,6 @@ public abstract class Updater {
         }
     }
 
-    private void update(Model model, int index, int samples, double learningRate) {
-
-    }
-
     public void change(Tensor weightChange, Tensor biasChange, int index) {
         Tensor gradW = weightsGradients[index];
         Tensor biasW = biasesGradients[index];

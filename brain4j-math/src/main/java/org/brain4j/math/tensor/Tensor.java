@@ -306,6 +306,14 @@ public interface Tensor extends Iterable<Float> {
     Tensor unsqueeze(int dim);
 
     /**
+     * Concatenates this tensor with another tensor along the last dimension.
+     * For this method to work, tensors must have shape <code>[..., a, b]</code> with the same <code>a</code>.
+     * @param other the tensor to concatenate
+     * @return a new concatenated tensor
+     */
+    Tensor concat(Tensor other);
+
+    /**
      * Activates all the elements of this tensor using the specified activation function.
      * @param activation the activation function
      * @return the resulting tensor
@@ -391,7 +399,7 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Gets the gradient for this tensor.
-     * @return The gradient
+     * @return the gradient of this tensor
      */
     Tensor grad();
 
@@ -402,65 +410,72 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Computes the backward pass for this tensor with the specified gradient.
-     * @param gradOutput The gradient.
+     * @param gradOutput the gradient
      */
     void backward(Tensor gradOutput);
 
     /**
      * Executes the specified operation on this tensor and the specified other tensor.
-     * @param operation the operation to execute.
-     * @param other the other tensor.
-     * @return the result of the operation.
+     * @param operation the operation to execute
+     * @param other the other tensor
+     * @return the resulting tensor from the operation
      */
     Tensor forward(Operation operation, Tensor other);
 
     /**
      * Executes the specified operation on this tensor and the specified other tensors.
-     * @param operation the operation to execute.
-     * @param others the other tensors.
-     * @return the result of the operation.
+     * @param operation the operation to execute
+     * @param others the other tensors
+     * @return the resulting tensor from the operation
      */
     Tensor forward(Operation operation, Tensor[] others);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link AddOperation}
-     * @return The result of the operation.
+     * @return the resulting tensor from the operation
      */
     Tensor addGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MulOperation}
-     * @return The result of the operation.
+     * @return the resulting tensor from the operation
      */
     Tensor mulGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link DivOperation}
-     * @param other The other tensor.
-     * @return The result of the operation.
+     * @param other the other tensor
+     * @return the resulting tensor from the operation
      */
     Tensor divGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link SubOperation}
-     * @param other The other tensor.
-     * @return The result of the operation.
+     * @param other the other tensor
+     * @return the resulting tensor from the operation
      */
     Tensor subGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MatMulOperation}
-     * @param other The other tensor.
-     * @return The result of the operation.
+     * @param other the other tensor
+     * @return the resulting tensor from the operation
      */
     Tensor matmulGrad(Tensor other);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link ActivationOperation}
-     * @param activation The activation to apply.
-     * @return The resulting tensor.
+     * @param activation the activation to apply
+     * @return the resulting tensor from the operation
      */
     Tensor activateGrad(Activation activation);
+
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link ConcatOperation}
+     * @param other the other tensor
+     * @return the resulting tensor from the operation
+     */
+    Tensor concatGrad(Tensor other);
 
     /**
      * Performs a convolution between this tensor and the specified kernel tensor.

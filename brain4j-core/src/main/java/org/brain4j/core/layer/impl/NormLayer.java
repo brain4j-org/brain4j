@@ -39,7 +39,7 @@ public class NormLayer extends Layer {
     @Override
     public Tensor forward(ForwardContext context) {
         Tensor input = context.input();
-        return input.layerNorm(epsilon);
+        return input.layerNorm(epsilon).mul(weights).add(bias);
     }
 
     @Override

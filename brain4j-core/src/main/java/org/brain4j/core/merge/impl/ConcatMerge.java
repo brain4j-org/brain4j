@@ -8,12 +8,21 @@ import org.brain4j.math.tensor.autograd.operations.ConcatOperation;
 public class ConcatMerge implements MergeStrategy {
     @Override
     public Tensor process(Tensor... inputs) {
-        Operation operation = new ConcatOperation();
-        Tensor result = operation.forward(inputs);
+        if (inputs.length < 2) {
+            throw new IllegalArgumentException("ConcatMerge supports at least two input tensors.");
+        }
 
-        result.withGrad();
-        result.autogradContext().setOperation(operation, inputs);
+        Tensor result = inputs[0];
+
+        for (int i = 1; i < inputs.length; i++) {
+            result = result.concatGrad(inputs[i]);
+        }
 
         return result;
+    }
+
+    @Override
+    public Tensor inverse(int[] dimensions, Tensor input) {
+        return null;
     }
 }

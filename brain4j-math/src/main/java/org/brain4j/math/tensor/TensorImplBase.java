@@ -669,6 +669,43 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
+    public Tensor concat(Tensor other) {
+        if (shape.length != other.shape().length) {
+            throw new IllegalArgumentException("Concatenation is only supported for tensors with the same number of dimensions.");
+        }
+
+        for (int i = 0; i < shape.length - 1; i++) {
+            if (shape[i] != other.shape()[i]) {
+                throw new IllegalArgumentException("Shapes must match on all dimensions except the last.");
+            }
+        }
+
+        int rank = shape.length;
+        int lastDim = shape[rank - 1];
+        int otherLastDim = other.shape()[rank - 1];
+        int concatLastDim = lastDim + otherLastDim;
+
+        int[] newShape = Arrays.copyOf(shape, rank);
+        newShape[rank - 1] = concatLastDim;
+
+        int outerSize = 1;
+        for (int i = 0; i < rank - 1; i++) {
+            outerSize *= shape[i];
+        }
+
+        float[] resultData = new float[outerSize * concatLastDim];
+        float[] thisData = this.data();
+        float[] otherData = other.data();
+
+        for (int i = 0; i < outerSize; i++) {
+            System.arraycopy(thisData, i * lastDim, resultData, i * concatLastDim, lastDim);
+            System.arraycopy(otherData, i * otherLastDim, resultData, i * concatLastDim + lastDim, otherLastDim);
+        }
+
+        return Tensors.create(newShape, resultData);
+    }
+
+    @Override
     public Tensor activate(Activation activation) {
         return activation.activate(this);
     }
@@ -873,6 +910,15 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
 
         return forward(new ActivationOperation(activation), ones(shape));
+    }
+
+    @Override
+    public Tensor concatGrad(Tensor other) {
+        if (!usesGrad() && !other.usesGrad()) {
+            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+        }
+
+        return forward(new ConcatOperation(), other);
     }
 
     @Override

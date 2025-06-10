@@ -43,27 +43,27 @@ public interface Model extends Iterable<Layer> {
 
     /**
      * Predicts the output from the input tensor.
-     * @param input the input tensor
+     * @param inputs the input tensors
      * @return the output tensor
      */
-    Tensor predict(Tensor input);
+    Tensor predict(Tensor... inputs);
 
     /**
      * Predicts output using a cache and input tensor.
      * @param cache the states cache
-     * @param input the input tensor
+     * @param inputs the input tensors
      * @return the output tensor
      */
-    Tensor predict(StatesCache cache, Tensor input);
+    Tensor predict(StatesCache cache, Tensor... inputs);
 
     /**
      * Predicts output with optional training mode.
      * @param cache the states cache
-     * @param input the input tensor
+     * @param inputs the input tensors
      * @param training whether in training mode
      * @return the output tensor
      */
-    Tensor predict(StatesCache cache, Tensor input, boolean training);
+    Tensor predict(StatesCache cache, boolean training, Tensor... inputs);
 
     /**
      * Trains the model using full training parameters.

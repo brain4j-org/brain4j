@@ -30,7 +30,7 @@ public class BackPropagation {
 
         StatesCache cache = new StatesCache(model);
 
-        Tensor output = model.predict(cache, inputs, true);
+        Tensor output = model.predict(cache, true, inputs);
         backpropagation(cache, labels, output);
 
         int elements = inputs.shape()[0];

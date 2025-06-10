@@ -4,7 +4,11 @@ public class Range {
     private final int start;
     private final int end;
     private final int step;
-    
+
+    public static Range all() {
+        return new Range(0, Integer.MAX_VALUE);
+    }
+
     public Range(int start, int end) {
         this(start, end, 1);
     }

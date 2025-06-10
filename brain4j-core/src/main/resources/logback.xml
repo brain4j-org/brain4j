@@ -21,7 +21,7 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="dynamic" level="INFO" additivity="false">
+    <logger name="training" level="INFO" additivity="false">
         <appender-ref ref="DYN"/>
     </logger>
 </configuration>
