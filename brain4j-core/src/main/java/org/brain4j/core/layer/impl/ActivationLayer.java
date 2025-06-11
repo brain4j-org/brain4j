@@ -23,14 +23,7 @@ public class ActivationLayer extends Layer {
     @Override
     public Tensor forward(ForwardContext context) {
         Tensor input = context.input();
-        StatesCache cache = context.cache();
-
-        Tensor output = input.activateGrad(activation );
-
-        cache.setInput(context.index(), input);
-        cache.setOutput(context.index(), output);
-
-        return output;
+        return input.activateGrad(activation);
     }
 
     @Override

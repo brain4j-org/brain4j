@@ -93,8 +93,6 @@ public class RecurrentLayer extends Layer {
         // [batch_size, output_size]
         Tensor output = hiddenState.matmulGrad(weights.transpose()).addGrad(bias);
 
-        cache.setInput(index, input);
-        cache.setOutput(index, output);
         cache.setHiddenState(index, hiddenState);
 
         return output;

@@ -87,8 +87,6 @@ public class TransformerEncoder extends Layer {
         int dimension = shape[2];
 
         StatesCache cache = context.cache();
-        cache.setInput(index, input);
-
         Tensor result = Tensors.zeros(batchSize, seqLength, dimension);
 
         for (int b = 0; b < batchSize; b++) {
@@ -120,7 +118,6 @@ public class TransformerEncoder extends Layer {
             System.arraycopy(normalizedData, 0, result.data(), offset, normalizedData.length);
         }
 
-        cache.setOutput(index, result);
         return result;
     }
 

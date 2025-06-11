@@ -160,6 +160,30 @@ public class Sequential extends Layer implements Model {
         });
     }
 
+    protected Tensor validateInputs(Tensor... inputs) {
+        Tensor input = inputs[0];
+
+        if (input == null || input.dimension() == 0) {
+            throw new IllegalArgumentException("Input is either null or has dimension of 0!");
+        }
+
+        if (input.dimension() < 2) {
+            // Shape: [batch_size, input_size]
+            input = input.reshape(1, input.elements());
+        }
+
+        int[] shape = input.shape();
+        Layer inputLayer = layers.getFirst();
+
+        if (!inputLayer.validateInput(input)) {
+            throw new IllegalArgumentException(
+                "Input shape mismatch! Expected " + inputLayer.size() + " but got " + shape[shape.length - 1]
+            );
+        }
+
+        return input;
+    }
+
     protected void printEvaluation(int step, int epoches, ListDataSource testSource) {
         EvaluationResult result = evaluate(testSource.clone());
 
@@ -250,45 +274,20 @@ public class Sequential extends Layer implements Model {
 
     @Override
     public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
-        Tensor input = inputs[0];
-
-        if (input == null || input.dimension() == 0) {
-            throw new IllegalArgumentException("Input is either null or has dimension of 0!");
-        }
-
-        input = input.to(deviceType);
-
-        if (input.dimension() < 2) {
-            // Shape: [batch_size, input_size]
-            input = input.reshape(1, input.elements());
-        }
-
-        int[] shape = input.shape();
-
-        Layer inputLayer = layers.getFirst();
-
-        if (!inputLayer.validateInput(input)) {
-            throw new IllegalArgumentException(
-                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
-            );
-        }
-
-        Tensor pass = input.withGrad();
-
-        cache.setInput(0, input);
-        cache.setOutput(0, pass.clone());
+        Tensor input = validateInputs(inputs);
+        Tensor result = input.to(deviceType).withGrad();
 
         for (int i = 0; i < flattened.size(); i++) {
             Layer layer = flattenedAt(i);
 
-            if (layer == null || layer.skipForward()) {
+            if (layer == null) {
                 throw new IllegalStateException("Layer at index " + i + " is null!");
             }
 
-            pass = layer.forward(new ForwardContext(cache, pass, i, training));
+            result = layer.forward(new ForwardContext(cache, result, i, training));
         }
 
-        return pass;
+        return result;
     }
 
     @Override
@@ -477,7 +476,7 @@ public class Sequential extends Layer implements Model {
         for (int i = 0; i < size(); i++) {
             Layer layer = layerAt(i);
 
-            if (layer == null || layer.skipForward()) {
+            if (layer == null) {
                 throw new IllegalStateException("Layer at index " + i + " is null!");
             }
 

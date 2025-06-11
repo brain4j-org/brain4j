@@ -67,7 +67,6 @@ public class OutVocabLayer extends Layer {
         Tensor activated = output.activateGrad(activation);
 
         cache.setPreActivation(index, output);
-        cache.setOutput(index, activated);
 
         return activated;
     }
@@ -90,11 +89,6 @@ public class OutVocabLayer extends Layer {
         output.backward(delta);
 
         Tensor weightsGrad = weights.grad();
-
-        System.out.println("-------- Gradient shapes --------");
-        System.out.println("Gradient: " + Arrays.toString(weightsGrad.shape()));
-        System.out.println("Weights : " + Arrays.toString(weights.shape()));
-
         updater.change(weightsGrad, null, index);
     }
 

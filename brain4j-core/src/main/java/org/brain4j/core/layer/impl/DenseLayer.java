@@ -92,13 +92,9 @@ public class DenseLayer extends Layer {
             .matmulGrad(transposed)
             .addGrad(bias);
 
-        cache.setInput(index, input);
         cache.setPreActivation(index, output);
 
-        Tensor activated = output.activateGrad(activation);
-        cache.setOutput(index, activated);
-
-        return activated;
+        return output.activateGrad(activation);
     }
 
     @Override
@@ -108,6 +104,7 @@ public class DenseLayer extends Layer {
 
     @Override
     public boolean validateInput(Tensor input) {
-        return input.shape()[1] == dimension;
+        int[] shape = input.shape();
+        return shape[shape.length - 1] == dimension;
     }
 }

@@ -5,33 +5,13 @@ import org.brain4j.math.tensor.Tensor;
 
 public class StatesCache {
 
-    private final Tensor[] inputs;
-    private final Tensor[] outputs;
     private final Tensor[] preActivations;
     private final Tensor[] hiddenStates;
 
     public StatesCache(Model model) {
         int size = model.flattened().size();
-        this.inputs = new Tensor[size];
-        this.outputs = new Tensor[size];
         this.preActivations = new Tensor[size];
         this.hiddenStates = new Tensor[size];
-    }
-
-    public Tensor input(int index) {
-        return inputs[index];
-    }
-
-    public void setInput(int index, Tensor input) {
-        inputs[index] = input;
-    }
-
-    public Tensor output(int index) {
-        return outputs[index];
-    }
-
-    public void setOutput(int index, Tensor output) {
-        outputs[index] = output;
     }
 
     public Tensor preActivation(int index) {

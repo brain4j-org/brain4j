@@ -58,12 +58,13 @@ public class MultiHeadAttention {
             outputs[i] = heads.get(i).attend(cache, input);
         }
 
-        Tensor first = outputs[0];
+        Tensor result = outputs[0];
 
-        int[] shape = first.shape().clone();
-        shape[shape.length - 1] = 0;
+        for (int i = 1; i < outputs.length; i++) {
+            result = result.concatGrad(outputs[i]);
+        }
 
-        return Tensors.zeros(shape).forward(new ConcatOperation(), outputs);
+        return result;
     }
 
     protected void initializeHeads() {

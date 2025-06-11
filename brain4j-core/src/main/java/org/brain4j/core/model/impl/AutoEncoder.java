@@ -82,47 +82,22 @@ public class AutoEncoder extends Sequential {
 
     @Override
     public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
-        Tensor input = inputs[0];
+        Tensor input = validateInputs(inputs);
+        Tensor result = input.to(deviceType).withGrad();
 
-        if (input == null || input.dimension() == 0) {
-            throw new IllegalArgumentException("Input is either null or has dimension of 0!");
-        }
-
-        if (input.dimension() < 2) {
-            // Shape: [batch_size, input_size]
-            input = input.reshape(1, input.elements());
-        }
-
-        int[] shape = input.shape();
-
-        Layer inputLayer = layers.getFirst();
-
-        if (inputLayer.size() != shape[1]) {
-            throw new IllegalArgumentException(
-                "Input shape does not match. Expected: " + inputLayer.size() + ", Received: " + shape[1]
-            );
-        }
-
-        Tensor pass = input;
-
-        cache.setInput(0, input);
-        cache.setOutput(0, pass);
-
-        int size = training ? size() : bottleNeckIndex;
+        int size = training ? flattened.size() : bottleNeckIndex;
 
         for (int i = 0; i < size; i++) {
-            Layer layer = layerAt(i);
+            Layer layer = flattenedAt(i);
 
             if (layer == null) {
                 throw new IllegalStateException("Layer at index " + i + " is null!");
             }
 
-            if (layer.skipPropagate()) continue;
-
-            pass = layer.forward(new ForwardContext(cache, pass, i, training));
+            result = layer.forward(new ForwardContext(cache, result, i, training));
         }
 
-        return pass;
+        return result;
     }
 
     @Override

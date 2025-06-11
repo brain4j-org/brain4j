@@ -1,5 +1,6 @@
 package org.brain4j.core.model.impl;
 
+import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.merge.MergeStrategy;
@@ -12,129 +13,57 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class MultiModel implements Model {
+public class MultiModel extends Sequential {
 
     protected MergeStrategy mergeStrategy;
     protected List<Model> models;
-    protected List<Layer> layers;
 
     public static Model of(MergeStrategy mergeStrategy, List<Model> models, Layer... layers) {
         return new MultiModel(mergeStrategy, models, layers);
     }
 
     protected MultiModel(MergeStrategy mergeStrategy, List<Model> models, Layer... layers) {
+        super(layers);
         this.mergeStrategy = mergeStrategy;
         this.models = models;
-        this.layers = List.of(layers);
-    }
-
-    @Override
-    public Model add(Layer layer) {
-        layers.add(layer);
-        return this;
-    }
-
-    @Override
-    public Model add(int index, Layer layer) {
-        layers.add(index, layer);
-        return this;
-    }
-
-    @Override
-    public Tensor predict(Tensor... inputs) {
-        return null;
-    }
-
-    @Override
-    public Tensor predict(StatesCache cache, Tensor... inputs) {
-        return null;
     }
 
     @Override
     public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
-        return null;
-    }
+        if (inputs.length != models.size()) {
+            throw new IllegalArgumentException("Expected " + models.size() + " inputs, but got " + inputs.length);
+        }
 
-    @Override
-    public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {
+        Tensor[] predictions = new Tensor[inputs.length];
 
-    }
+        for (int i = 0; i < models.size(); i++) {
+            Tensor input = inputs[i];
+            Model model = models.get(i);
+            predictions[i] = model.predict(cache, training, input);
+        }
 
-    @Override
-    public EvaluationResult evaluate(ListDataSource dataSource) {
-        return null;
-    }
+        Layer first = layers.getFirst();
+        Tensor result = mergeStrategy.process(predictions);
 
-    @Override
-    public double loss(ListDataSource dataSource) {
-        return 0;
-    }
+        if (!first.validateInput(result)) {
+            throw new IllegalArgumentException("Merge strategy output does not match input layer dimension!");
+        }
 
-    @Override
-    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        return null;
-    }
+        for (int i = 0; i < flattened.size(); i++) {
+            Layer layer = flattenedAt(i);
 
-    @Override
-    public Model to(DeviceType deviceType) {
-        return null;
-    }
+            if (layer == null) {
+                throw new IllegalStateException("Layer at index " + i + " is null!");
+            }
 
-    @Override
-    public List<Layer> layers() {
-        return List.of();
-    }
+            result = layer.forward(new ForwardContext(cache, result, i, training));
+        }
 
-    @Override
-    public List<Layer> flattened() {
-        return List.of();
-    }
-
-    @Override
-    public Layer layerAt(int index) {
-        return null;
-    }
-
-    @Override
-    public Layer flattenedAt(int index) {
-        return null;
-    }
-
-    @Override
-    public Optimizer optimizer() {
-        return null;
-    }
-
-    @Override
-    public Updater updater() {
-        return null;
-    }
-
-    @Override
-    public LossFunction lossFunction() {
-        return null;
-    }
-
-    @Override
-    public void summary() {
-
-    }
-
-    @Override
-    public void zeroGrad() {
-
-    }
-
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public Iterator<Layer> iterator() {
-        return null;
+        return result;
     }
 }
