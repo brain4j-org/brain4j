@@ -265,7 +265,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public void release() {
-
+        // No-op
     }
 
     @Override
@@ -298,8 +298,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor add(Tensor other) {
-        TensorBroadcast.add(this, other);
-        return this;
+        return TensorBroadcast.add(this, other);
     }
 
     @Override
@@ -313,8 +312,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor sub(Tensor other) {
-        TensorBroadcast.sub(this, other);
-        return this;
+        return TensorBroadcast.sub(this, other);
     }
 
     @Override
@@ -328,8 +326,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor mul(Tensor other) {
-        TensorBroadcast.mul(this, other);
-        return this;
+        return TensorBroadcast.mul(this, other);
     }
 
     @Override
@@ -343,8 +340,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor div(Tensor other) {
-        TensorBroadcast.div(this, other);
-        return this;
+        return TensorBroadcast.div(this, other);
     }
 
     @Override
@@ -357,17 +353,16 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
+    public Tensor pow(Tensor other) {
+        return TensorBroadcast.pow(this, other);
+    }
+
+    @Override
     public Tensor pow(double value) {
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) Math.pow(data[i], value);
         }
 
-        return this;
-    }
-
-    @Override
-    public Tensor pow(Tensor other) {
-        TensorBroadcast.pow(this, other);
         return this;
     }
 

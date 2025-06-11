@@ -18,12 +18,33 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Represents a composite neural network model that processes multiple independent inputs
+ * through separate submodels and merges their outputs using a specified {@link MergeStrategy}
+ * before applying a shared sequence of layers for final prediction.
+ * <p>
+ * This architecture is useful for multi-modal learning tasks where each input may represent
+ * different data types requiring distinct preprocessing pipelines.
+ * </p>
+ *
+ * @author xEcho1337
+ * @since 3.0
+ */
 public class MultiModel extends Sequential {
 
     protected MergeStrategy mergeStrategy;
     protected List<Model> models;
 
-    public static Model of(MergeStrategy mergeStrategy, List<Model> models, Layer... layers) {
+    /**
+     * Creates a new {@link MultiModel} instance by combining multiple submodels
+     * and a sequence of shared post-merge layers.
+     *
+     * @param mergeStrategy the strategy used to combine the outputs of submodels
+     * @param models the list of submodels, one per input tensor
+     * @param layers the layers applied after merging, forming the tail of the network
+     * @return a new {@link MultiModel} instance
+     */
+    public static Sequential of(MergeStrategy mergeStrategy, List<Model> models, Layer... layers) {
         return new MultiModel(mergeStrategy, models, layers);
     }
 

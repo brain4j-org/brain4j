@@ -32,3 +32,10 @@ __kernel void pow_scalar(__global float* data, const float value, const int leng
         data[i] = pow(data[i], value);
     }
 }
+
+__kernel void sqrt(__global float* data, const int length) {
+    int i = get_global_id(0);
+    if (i < length) {
+        data[i] = sqrt(data[i]);
+    }
+}

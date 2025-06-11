@@ -33,6 +33,7 @@ public class GpuTensor extends TensorImplBase {
     private static cl_kernel mulScalarKernel = null;
     private static cl_kernel divScalarKernel = null;
     private static cl_kernel powScalarKernel = null;
+    private static cl_kernel sqrtKernel = null;
 
     private final Cleaner.Cleanable cleanable;
     private final cl_mem shapeBuffer;
@@ -130,6 +131,7 @@ public class GpuTensor extends TensorImplBase {
         mulScalarKernel = clCreateKernel(elementaryOpsProgram, "mul_scalar", null);
         divScalarKernel = clCreateKernel(elementaryOpsProgram, "div_scalar", null);
         powScalarKernel = clCreateKernel(elementaryOpsProgram, "pow_scalar", null);
+        sqrtKernel = clCreateKernel(elementaryOpsProgram, "sqrt", null);
     }
 
     private long roundUp(int groupSize, int globalSize) {
@@ -324,6 +326,34 @@ public class GpuTensor extends TensorImplBase {
     @Override
     public Tensor pow(double value) {
         return launchScalarKernel(powScalarKernel, (float) value);
+    }
+
+    @Override
+    public Tensor sqrt() {
+        clSetKernelArg(sqrtKernel, 0, Sizeof.cl_mem, Pointer.to(dataBuffer));
+        clSetKernelArg(sqrtKernel, 1, Sizeof.cl_int, Pointer.to(new int[]{size}));
+
+        long[] globalWorkSize = new long[] { size };
+
+        Device device = DeviceUtils.currentDevice();
+
+        cl_command_queue queue = device.newCommandQueue();
+        clEnqueueNDRangeKernel(
+            queue,
+            sqrtKernel,
+            1,
+            null,
+            globalWorkSize,
+            null,
+            0,
+            null,
+            null
+        );
+
+        clFinish(queue);
+        clReleaseCommandQueue(queue);
+
+        return this;
     }
 
     @Override

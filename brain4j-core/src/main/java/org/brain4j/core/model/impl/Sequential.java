@@ -29,14 +29,17 @@ import java.util.stream.IntStream;
 import static org.brain4j.math.constants.Constants.*;
 
 /**
- * Represents a feedforward neural network model.
+ * Represents a simple feedforward neural network model.
  * <p>
  * Supports multiple layer types, loss functions, optimizers, and training via backpropagation.
  * Provides methods for training (fit), prediction, evaluation, and model summary.
  * </p>
- * @see Transformer
- * @since 3.0
+ *
  * @author xEcho1337
+ * @since 3.0
+ * @see Transformer
+ * @see AutoEncoder
+ * @see MultiModel
  */
 public class Sequential extends Layer implements Model {
 

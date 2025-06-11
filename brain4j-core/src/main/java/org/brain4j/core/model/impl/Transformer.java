@@ -9,8 +9,9 @@ import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
 /**
  * Represents the transformer architecture as described
  * in the "Attention is All You Need" paper.
- * @since 3.0
+ *
  * @author xEcho1337
+ * @since 3.0
  */
 public class Transformer extends Sequential {
 

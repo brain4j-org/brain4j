@@ -27,9 +27,11 @@ public abstract class Optimizer {
     public abstract Tensor step(int index, Layer layer, Tensor gradient);
 
     public void initialize(Model model) {
+        // No-op
     }
 
     public void postBatch() {
+        // No-op
     }
 
     public double learningRate() {

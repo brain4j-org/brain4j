@@ -4,8 +4,10 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.optimizer.Optimizer;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.impl.GpuTensor;
 
 public class Adam extends Optimizer {
 
@@ -86,7 +88,7 @@ public class Adam extends Optimizer {
         this.beta1 = (float) beta1;
     }
 
-    public double beata2() {
+    public double beta2() {
         return beta2;
     }
 

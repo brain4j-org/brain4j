@@ -50,7 +50,7 @@ public interface Activation {
         int[] shape = input.shape();
 
         DeviceType deviceType = input instanceof CpuTensor ? DeviceType.CPU : DeviceType.GPU;
-        Tensor result = Tensors.zeros(shape).to(deviceType);
+        Tensor result = Tensors.zeros(shape);
 
         float[] resultData = result.data();
         float[] inputData = input.data();
@@ -59,7 +59,7 @@ public interface Activation {
             resultData[i] = (float) getDerivative(inputData[i]);
         }
 
-        return result;
+        return result.to(deviceType);
     }
 
     /**

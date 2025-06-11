@@ -54,6 +54,46 @@ public class CpuTensor extends TensorImplBase {
     }
 
     @Override
+    public Tensor add(Tensor other) {
+        if (!(other instanceof CpuTensor)) {
+            return add(other.cpu());
+        }
+        return super.add(other);
+    }
+
+    @Override
+    public Tensor sub(Tensor other) {
+        if (!(other instanceof CpuTensor)) {
+            return sub(other.cpu());
+        }
+        return super.sub(other);
+    }
+
+    @Override
+    public Tensor mul(Tensor other) {
+        if (!(other instanceof CpuTensor)) {
+            return mul(other.cpu());
+        }
+        return super.mul(other);
+    }
+
+    @Override
+    public Tensor div(Tensor other) {
+        if (!(other instanceof CpuTensor)) {
+            return div(other.cpu());
+        }
+        return super.div(other);
+    }
+
+    @Override
+    public Tensor pow(Tensor other) {
+        if (!(other instanceof CpuTensor)) {
+            return pow(other.cpu());
+        }
+        return super.pow(other);
+    }
+
+    @Override
     public Tensor matmul(Tensor other) {
         if (matmulProvider == null) {
             throw new IllegalStateException(

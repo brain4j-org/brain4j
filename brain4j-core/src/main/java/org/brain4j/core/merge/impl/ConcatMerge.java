@@ -6,6 +6,7 @@ import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.ConcatOperation;
 
 public class ConcatMerge implements MergeStrategy {
+
     @Override
     public Tensor process(Tensor... inputs) {
         if (inputs.length < 2) {
