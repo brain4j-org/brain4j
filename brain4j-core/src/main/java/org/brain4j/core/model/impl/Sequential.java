@@ -350,14 +350,15 @@ public class Sequential extends Layer implements Model {
 
     @Override
     public Model to(DeviceType deviceType) {
-        if (deviceType != DeviceType.CPU && deviceType != DeviceType.GPU) {
-            throw new IllegalArgumentException("Unsupported device type: " + deviceType);
-        }
+        switch (deviceType) {
+            case CPU, GPU -> {
+                this.deviceType = deviceType;
 
-        this.deviceType = deviceType;
-
-        for (Layer layer : layers) {
-            layer.toDevice(deviceType);
+                for (Layer layer : layers) {
+                    layer.toDevice(deviceType);
+                }
+            }
+            default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
         }
 
         return this;
