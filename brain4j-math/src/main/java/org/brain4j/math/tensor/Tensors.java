@@ -70,7 +70,7 @@ public class Tensors {
         System.arraycopy(baseShape, 0, paddedShape, 0, paddedShape.length);
         paddedShape[paddedShape.length - 1] = totalColumns;
 
-        Tensor result = zeros(paddedShape);;
+        Tensor result = zeros(paddedShape);
 
         int offset = 0;
 
