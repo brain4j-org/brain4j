@@ -1,4 +1,4 @@
-typedef struct Complex {
+typedef struct cplx_t {
     float real;
     float imag;
 } Complex;
