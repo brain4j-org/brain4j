@@ -133,20 +133,21 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     protected void softmax1D(double temperature, Tensor tensor) {
         double max = Double.NEGATIVE_INFINITY;
+        float[] data = tensor.data();
 
-        for (int i = 0; i < tensor.elements(); i++) {
-            max = Math.max(max, tensor.get(i));
+        for (float value : data) {
+            max = Math.max(max, value);
         }
 
         double sum = 0.0;
 
-        for (int i = 0; i < tensor.elements(); i++) {
-            sum += Math.exp((tensor.get(i) - max) / temperature);
+        for (float value : data) {
+            sum += Math.exp((value - max) / temperature);
         }
 
-        for (int i = 0; i < tensor.elements(); i++) {
-            double value = Math.exp((tensor.get(i) - max) / temperature) / sum;
-            tensor.set(value, i);
+        for (int i = 0; i < data.length; i++) {
+            double value = Math.exp((data[i] - max) / temperature) / sum;
+            data[i] = (float) value;
         }
     }
 
