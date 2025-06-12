@@ -922,34 +922,53 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         // this.shape = [batchSize, channels, height, width]
         // kernel.shape = [filters, channels, kernelHeight, kernelWidth]
 
-        int batchSize = shape[0];
-        int inChannels = shape[1];
-        int inRows = shape[2];
-        int inCols = shape[3];
-
         int[] kShape = kernel.shape();
-        int filters = kShape[0];
-        int kChannels = kShape[1];
-        int kRows = kShape[2];
-        int kCols = kShape[3];
 
-        if (kChannels != inChannels) {
+        if (shape.length < 2 || kShape.length < 2) {
+            throw new IllegalArgumentException("Both input and kernel must be at least 2D!");
+        }
+
+        if (shape.length != kShape.length) {
+            throw new IllegalArgumentException("Input and kernel must have the same amount of dimensions!");
+        }
+
+        if (shape.length > 4) {
+            throw new IllegalArgumentException("Input and kernel must not have more than 4 dimensions!");
+        }
+
+        int[] thisShape = new int[] {1, 1, 1, 1};
+        System.arraycopy(shape, 0, thisShape, 4 - shape.length, shape.length);
+
+        int[] kernelShape = new int[] {1, 1, 1, 1};
+        System.arraycopy(kShape, 0, kernelShape, 4 - kShape.length, kShape.length);
+
+        int batchSize = thisShape[0];
+        int inputChannels = thisShape[1];
+        int inputHeight = thisShape[2];
+        int inputWidth = thisShape[3];
+
+        int filters = kernelShape[0];
+        int kernelChannels = kernelShape[1];
+        int kernelHeight = kernelShape[2];
+        int kernelWidth = kernelShape[3];
+
+        if (kernelChannels != inputChannels) {
             throw new IllegalArgumentException("Kernel channels must match input channels");
         }
 
-        int outRows = (inRows - kRows + 2 * padding) / stride + 1;
-        int outCols = (inCols - kCols + 2 * padding) / stride + 1;
+        int outRows = (inputHeight - kernelHeight + 2 * padding) / stride + 1;
+        int outCols = (inputWidth - kernelWidth + 2 * padding) / stride + 1;
 
         int[] outShape = new int[]{batchSize, filters, outRows, outCols};
         float[] outData = new float[batchSize * filters * outRows * outCols];
 
         float[] kData = kernel.data();
 
-        int inBatchStride = inChannels * inRows * inCols;
-        int inChannelStride = inRows * inCols;
+        int inBatchStride = inputChannels * inputHeight * inputWidth;
+        int inChannelStride = inputHeight * inputWidth;
 
-        int kFilterStride = kChannels * kRows * kCols;
-        int kChannelStride = kRows * kCols;
+        int kFilterStride = kernelChannels * kernelHeight * kernelWidth;
+        int kChannelStride = kernelHeight * kernelWidth;
 
         int outBatchStride = filters * outRows * outCols;
         int outFilterStride = outRows * outCols;
@@ -971,27 +990,28 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
                         int outIndex = outRowOffset + ocol;
                         int iColStart = ocol * stride - padding;
 
-                        for (int c = 0; c < inChannels; c++) {
+                        for (int c = 0; c < inputChannels; c++) {
                             int cInOffset = bInOffset + c * inChannelStride;
                             int cKOffset = fKOffset + c * kChannelStride;
 
-                            for (int kr = 0; kr < kRows; kr++) {
+                            for (int kr = 0; kr < kernelHeight; kr++) {
                                 int iRow = iRowStart + kr;
 
-                                if (iRow < 0 || iRow >= inRows) continue;
+                                if (iRow < 0 || iRow >= inputHeight) continue;
 
-                                int rowInOffset = cInOffset + iRow * inCols;
-                                int rowKOffset = cKOffset + kr * kCols;
+                                int rowInOffset = cInOffset + iRow * inputWidth;
+                                int rowKOffset = cKOffset + kr * kernelWidth;
 
-                                for (int kc = 0; kc < kCols; kc++) {
+                                for (int kc = 0; kc < kernelWidth; kc++) {
                                     int iCol = iColStart + kc;
 
-                                    if (iCol < 0 || iCol >= inCols) continue;
+                                    if (iCol < 0 || iCol >= inputWidth) continue;
 
                                     sum += data[rowInOffset + iCol] * kData[rowKOffset + kc];
                                 }
                             }
                         }
+
                         outData[outIndex] = sum;
                     }
                 }

@@ -398,24 +398,14 @@ public class GpuTensor extends TensorImplBase {
         float[] dummy = new float[0];
         GpuTensor result = new GpuTensor(newShape, dummy);
 
-        clSetKernelArg(sumAlongDimKernel, 0, Sizeof.cl_mem, Pointer.to(dataBuffer));
-        clSetKernelArg(sumAlongDimKernel, 1, Sizeof.cl_mem, Pointer.to(result.dataBuffer));
-        clSetKernelArg(sumAlongDimKernel, 2, Sizeof.cl_int, Pointer.to(new int[] {outerSize}));
-        clSetKernelArg(sumAlongDimKernel, 3, Sizeof.cl_int, Pointer.to(new int[] {reducedSize}));
-        clSetKernelArg(sumAlongDimKernel, 4, Sizeof.cl_int, Pointer.to(new int[] {innerSize}));
-
-        long[] globalWorkSize = new long[] {outerSize, innerSize};
-        clEnqueueNDRangeKernel(
-                queue,
-                sumAlongDimKernel,
-                2,
-                null,
-                globalWorkSize,
-                null,
-                0,
-                null,
-                null
-        );
+        KernelFactory
+            .create(sumAlongDimKernel)
+            .addMemParam(dataBuffer)
+            .addMemParam(result.dataBuffer)
+            .addIntParam(reducedSize)
+            .addIntParam(outerSize)
+            .addIntParam(innerSize)
+            .run(queue, 2, outerSize, innerSize);
 
         clFinish(queue);
         clReleaseCommandQueue(queue);
@@ -436,24 +426,13 @@ public class GpuTensor extends TensorImplBase {
         Device device = DeviceUtils.currentDevice();
         cl_command_queue queue = device.newCommandQueue();
 
-        clSetKernelArg(layerNormKernel, 0, Sizeof.cl_mem, Pointer.to(dataBuffer));
-        clSetKernelArg(layerNormKernel, 1, Sizeof.cl_int, Pointer.to(new int[]{batchSize}));
-        clSetKernelArg(layerNormKernel, 2, Sizeof.cl_int, Pointer.to(new int[]{featuresSize}));
-        clSetKernelArg(layerNormKernel, 3, Sizeof.cl_float, Pointer.to(new float[]{(float) epsilon}));
-
-        long[] globalWorkSize = new long[] { batchSize };
-
-        clEnqueueNDRangeKernel(
-                queue,
-                layerNormKernel,
-                1,
-                null,
-                globalWorkSize,
-                null,
-                0,
-                null,
-                null
-        );
+        KernelFactory
+            .create(layerNormKernel)
+            .addMemParam(dataBuffer)
+            .addIntParam(batchSize)
+            .addIntParam(featuresSize)
+            .addFloatParam((float) epsilon)
+            .run(queue, 1, batchSize);
 
         clFinish(queue);
         clReleaseCommandQueue(queue);
