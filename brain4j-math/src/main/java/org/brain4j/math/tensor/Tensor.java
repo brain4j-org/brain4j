@@ -491,22 +491,28 @@ public interface Tensor extends Iterable<Float> {
     Tensor convolve(Tensor kernel, int stride, int padding);
 
     /**
+     * Flips the tensor by 180 degrees.
+     * @return a new flipped tensor
+     */
+    Tensor flip();
+
+    /**
      * Applies softmax to the tensor with a default temperature of 1.
-     * @return The soft-maxed tensor.
+     * @return a new soft-maxed tensor
      */
     Tensor softmax();
 
     /**
      * Applies softmax to the tensor with the specified temperature.
-     * @param temperature A parameter indicating how much to smooth the distribution.
-     * @return The soft-maxed tensor.
+     * @param temperature a parameter indicating how much to smooth the distribution
+     * @return a new soft-maxed tensor
      */
     Tensor softmax(double temperature);
 
     /**
      * Gets a string containing all the values of this tensor in the specified format.
-     * @param format The string format.
-     * @return The tensor values on a string.
+     * @param format the string format
+     * @return the tensor values on a string
      */
     String toString(String format);
 }

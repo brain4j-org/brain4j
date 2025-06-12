@@ -195,6 +195,15 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
     }
 
+    protected int[] unravelIndex(int linearIndex, int[] shape) {
+        int[] indices = new int[shape.length];
+        for (int i = shape.length - 1; i >= 0; i--) {
+            indices[i] = linearIndex % shape[i];
+            linearIndex /= shape[i];
+        }
+        return indices;
+    }
+
     @Override
     public int[] shape() {
         return shape;
@@ -1019,6 +1028,29 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
 
         return Tensors.create(outShape, outData);
+    }
+
+    @Override
+    public Tensor flip() {
+        Tensor result = Tensors.zeros(shape);
+        int dims = shape.length;
+
+        int total = elements();
+
+        for (int linear = 0; linear < total; linear++) {
+            int[] indices = unravelIndex(linear, shape);
+            int[] flipped = indices.clone();
+
+            if (dims >= 2) {
+                flipped[dims - 1] = shape[dims - 1] - 1 - indices[dims - 1];
+                flipped[dims - 2] = shape[dims - 2] - 1 - indices[dims - 2];
+            }
+
+            float value = this.get(indices);
+            result.set(value, flipped);
+        }
+
+        return result;
     }
 
     @Override
