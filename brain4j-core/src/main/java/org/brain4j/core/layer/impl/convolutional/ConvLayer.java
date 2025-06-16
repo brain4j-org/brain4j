@@ -33,7 +33,7 @@ public class ConvLayer extends Layer {
         }
 
         this.bias = Tensors.zeros(filters);
-        this.weights = Tensors.zeros(filters, channels, kernelWidth, kernelHeight);
+        this.weights = Tensors.zeros(filters, channels, kernelHeight, kernelWidth);
 
         return this;
     }

@@ -377,7 +377,7 @@ public class Sequential extends Layer implements Model {
         String divider = Commons.getHeader(" Architecture ", Commons.getHeaderChar());
 
         stats.append(divider);
-        stats.append(pattern.formatted("Index", "Layer Type", "Shape", "Parameters", "Activation")).append("\n");
+        stats.append(pattern.formatted("Index", "Layer Type", "Parameters", "Shape", "Activation")).append("\n");
 
         AtomicLong totalWeights = new AtomicLong(0);
         AtomicLong totalBiases = new AtomicLong(0);
@@ -428,7 +428,7 @@ public class Sequential extends Layer implements Model {
                     ? "[" + neurons + "]"
                     : Arrays.toString(weightsTensor.shape());
 
-            builder.append(pattern.formatted(i, layerType, shape, formatWeights, layer.activation().getName()));
+            builder.append(pattern.formatted(i, layerType, formatWeights, shape, layer.activation().getName()));
 
             totalWeights.addAndGet(weights);
             totalBiases.addAndGet(neurons);

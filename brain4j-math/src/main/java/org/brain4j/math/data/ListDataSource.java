@@ -108,7 +108,6 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
             int batchSize,
             String fileFormat
     ) throws IOException {
-        
         List<Sample> samples = new ArrayList<>();
         List<DatasetFile> dataFiles = dataset.getFilesByFormat(fileFormat);
         
