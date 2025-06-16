@@ -131,9 +131,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
     }
 
-    protected void softmax1D(double temperature, Tensor tensor) {
+    protected void softmax1D(double temperature, float[] data) {
         double max = Double.NEGATIVE_INFINITY;
-        float[] data = tensor.data();
 
         for (float value : data) {
             max = Math.max(max, value);
@@ -1082,11 +1081,33 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     @Override
     public Tensor softmax(double temperature) {
         Tensor result = clone();
+        int[] dims = shape;
 
-        switch (dimension()) {
-            case 1 -> softmax1D(temperature, result);
-            case 2 -> softmaxRows(temperature, result);
-            default -> throw new UnsupportedOperationException("Softmax operation is only supported for 1D/2D tensors.");
+        int rank = dims.length;
+        int lastDim = dims[rank - 1];
+        int total = 1;
+
+        for (int i = 0; i < rank - 1; i++) {
+            total *= dims[i];
+        }
+
+        for (int i = 0; i < total; i++) {
+            int[] indices = unravelIndex(i, Arrays.copyOf(dims, rank - 1));
+            float[] vector = new float[lastDim];
+
+            for (int j = 0; j < lastDim; j++) {
+                int[] fullIndex = Arrays.copyOf(indices, rank);
+                fullIndex[rank - 1] = j;
+                vector[j] = get(fullIndex);
+            }
+
+            softmax1D(temperature, vector);
+
+            for (int j = 0; j < lastDim; j++) {
+                int[] fullIndex = Arrays.copyOf(indices, rank);
+                fullIndex[rank - 1] = j;
+                result.set(vector[j], fullIndex);
+            }
         }
 
         return result;

@@ -4,6 +4,8 @@ import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.Arrays;
+
 public class ReshapeLayer extends Layer {
 
     private final int[] shape;
@@ -14,7 +16,16 @@ public class ReshapeLayer extends Layer {
 
     @Override
     public Tensor forward(ForwardContext context) {
-        return context.input().reshapeGrad(shape);
+        Tensor input = context.input();
+
+        int[] inputShape = input.shape();
+        int[] newShape = new int[shape.length + 1];
+
+        newShape[0] = inputShape[0];
+
+        System.arraycopy(shape, 0, newShape, 1, shape.length);
+
+        return input.reshapeGrad(newShape);
     }
 
     @Override
