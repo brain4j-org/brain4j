@@ -834,6 +834,18 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
+    public Tensor forward(Operation operation) {
+        Tensor result = operation.forward(this);
+
+        if (result.autogradContext() == null) {
+            result.setAutogradContext(new AutogradContext(true));
+        }
+
+        result.autogradContext().setOperation(operation, this);
+        return result;
+    }
+
+    @Override
     public Tensor forward(Operation operation, Tensor other) {
         Tensor result = operation.forward(this, other);
 
@@ -846,7 +858,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
     }
 
     @Override
-    public Tensor forward(Operation operation, Tensor[] others) {
+    public Tensor forward(Operation operation, Tensor... others) {
         List<Tensor> allInputs = new ArrayList<>();
 
         allInputs.add(this);
@@ -924,6 +936,15 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
 
         return forward(new ConcatOperation(), other);
+    }
+
+    @Override
+    public Tensor reshapeGrad(int... newShape) {
+        if (!usesGrad()) {
+            throw new IllegalArgumentException("Tensor does not use backflow!");
+        }
+
+        return forward(new ReshapeOperation(newShape));
     }
 
     @Override

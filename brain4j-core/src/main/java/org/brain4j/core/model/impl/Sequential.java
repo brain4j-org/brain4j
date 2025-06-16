@@ -425,7 +425,7 @@ public class Sequential extends Layer implements Model {
 
             String formatWeights = weights == 0 ? "-" : format.format(weights);
             String shape = weightsTensor == null
-                    ? "[" + format.format(neurons) + "]"
+                    ? "[" + neurons + "]"
                     : Arrays.toString(weightsTensor.shape());
 
             builder.append(pattern.formatted(i, layerType, shape, formatWeights, layer.activation().getName()));

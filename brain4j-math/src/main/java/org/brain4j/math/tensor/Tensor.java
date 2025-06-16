@@ -415,6 +415,13 @@ public interface Tensor extends Iterable<Float> {
     void backward(Tensor gradOutput);
 
     /**
+     * Executes the specified operation on this tensor.
+     * @param operation the operation to execute
+     * @return the resulting tensor from the operation
+     */
+    Tensor forward(Operation operation);
+
+    /**
      * Executes the specified operation on this tensor and the specified other tensor.
      * @param operation the operation to execute
      * @param other the other tensor
@@ -428,7 +435,7 @@ public interface Tensor extends Iterable<Float> {
      * @param others the other tensors
      * @return the resulting tensor from the operation
      */
-    Tensor forward(Operation operation, Tensor[] others);
+    Tensor forward(Operation operation, Tensor... others);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link AddOperation}
@@ -476,6 +483,13 @@ public interface Tensor extends Iterable<Float> {
      * @return the resulting tensor from the operation
      */
     Tensor concatGrad(Tensor other);
+
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link ReshapeOperation}
+     * @param newShape the new shape of this tensor
+     * @return the resulting tensor with a new shape
+     */
+    Tensor reshapeGrad(int... newShape);
 
     /**
      * Performs a convolution between this tensor and the specified kernel tensor.
