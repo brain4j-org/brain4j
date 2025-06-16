@@ -21,7 +21,7 @@ import java.util.Random;
  * </p>
  * Weights are represented with the following shapes:
  * <ul>
- *   <li><code>weights</code> has shape <code>[output_size, input_size]</code></li>
+ *   <li><code>weights</code> has shape <code>[input_size, output_size]</code></li>
  *   <li><code>bias</code> has shape <code>[output_size]</code></li>
  * </ul>
  * @author xEcho1337
@@ -53,8 +53,8 @@ public class DenseLayer extends Layer {
     public Layer connect(Layer previous) {
         if (previous == null) return this;
 
-        // Shape: [output_size, input_size]
-        this.weights = Tensors.zeros(dimension, previous.size()).withGrad();
+        // Shape: [input_size, output_size]
+        this.weights = Tensors.zeros(previous.size(), dimension).withGrad();
         this.bias = Tensors.zeros(dimension).withGrad();
 
         return this;
@@ -78,7 +78,7 @@ public class DenseLayer extends Layer {
 
         // Input shape: [batch_size, input_size]
         int inputDim = input.shape()[1];
-        int expectedDim = weights.shape()[1];
+        int expectedDim = weights.shape()[0];
 
         if (inputDim != expectedDim) {
             throw new IllegalArgumentException(
@@ -87,13 +87,11 @@ public class DenseLayer extends Layer {
         }
 
         // Shape: [batch_size, output_size]
-        Tensor transposed = weights.transpose();
         Tensor output = input
-            .matmulGrad(transposed)
+            .matmulGrad(weights)
             .addGrad(bias);
 
         cache.setPreActivation(index, output);
-
         return output.activateGrad(activation);
     }
 

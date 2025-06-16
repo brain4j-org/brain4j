@@ -925,7 +925,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             throw new IllegalArgumentException("Tensor does not use backflow!");
         }
 
-        return forward(new ActivationOperation(activation), ones(shape));
+        return forward(new ActivationOperation(activation));
     }
 
     @Override

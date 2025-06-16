@@ -102,7 +102,7 @@ public abstract class Layer {
 
         output.backward(delta);
 
-        Tensor weightsGrad = weights.grad().transpose();
+        Tensor weightsGrad = weights.grad();
         Tensor biasGrad = bias.grad().sum(0, false);
 
         updater.change(weightsGrad, biasGrad, index);
@@ -117,7 +117,7 @@ public abstract class Layer {
     public void backward(Updater updater, Optimizer optimizer, int index) {
         if (weights == null) return;
 
-        Tensor weightsGrad = weights.grad().transpose();
+        Tensor weightsGrad = weights.grad();
         Tensor biasGrad = bias.grad().sum(0, false);
 
         weightsGrad = optimizer.step(index, this, weightsGrad);
