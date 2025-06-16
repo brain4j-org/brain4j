@@ -194,48 +194,39 @@ public class Sequential extends Layer implements Model {
         String accuracyMsg = "Accuracy: " + LIGHT_BLUE + "%.2f%%" + RESET;
         String f1ScoreMsg = "F1-Score: " + LIGHT_GREEN + "%.2f%%" + RESET;
 
-        String message = "[%s/%s] " + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg + "\n";
+        String prefix = "Epoch " + LIGHT_YELLOW + "%s" + WHITE + "/" + LIGHT_YELLOW + "%s " + WHITE;
+        String message = prefix + lossMsg + " | " + accuracyMsg + " | " + f1ScoreMsg + "\n";
         String formatted = message.formatted(step, epoches, result.loss(), result.accuracy() * 100, result.f1Score() * 100);
 
         training.info(formatted);
     }
 
-    protected void printProgressBar(
-        double tookMs,
-        int currentEpoch,
-        int epoches,
-        int evaluateEvery
-    ) {
-        int progressBarLength = 20;
-        double percentage = (double) currentEpoch / epoches;
-
+    private void printProgress(ListDataSource source, int epoch, int epoches, int batch, double tookMs) {
         String barChar = Commons.getHeaderChar();
-        int remainingEpoches = epoches - currentEpoch;
 
-        double seconds = tookMs / 1000;
-        double remainingTime = seconds * remainingEpoches;
+        int progressBarLength = 25;
+        int total = source.batches();
 
-        String remainingTimeStr = Commons.formatDuration(remainingTime);
-        String timeStr = Commons.formatDuration(seconds);
+        double percentage = (double) batch / total;
+        double tookInSeconds = tookMs / 1000;
 
-        String progressMsg = WHITE + "[%s/%s] ";
-        String progressBar = LIGHT_GREEN + Commons.createProgressBar(
+        String timeStr = Commons.formatDuration(tookInSeconds);
+
+        String intro = "Epoch " + LIGHT_YELLOW + "%s" + WHITE + "/" + LIGHT_YELLOW + "%s";
+        String batchesMsg = LIGHT_BLUE + "%s" + WHITE + "/" + LIGHT_BLUE + "%s " + WHITE + "batches";
+        String time = GRAY + " [%s/batch]" + RESET;
+
+        String progressBar = " " + LIGHT_GREEN + Commons.createProgressBar(
             percentage,
             progressBarLength,
             barChar,
             RESET + barChar
-        );
+        ) + " ";
 
-        String percentual = LIGHT_YELLOW + " %.2f%%" + RESET;
-        String time = GRAY + " [%s/epoch | %s remaining]" + RESET;
-        String message = String.format(progressMsg + progressBar + percentual + time,
-            currentEpoch, epoches, percentage * 100, timeStr, remainingTimeStr);
+        String message = String.format(intro + progressBar + batchesMsg + time,
+            epoch, epoches, batch, total, timeStr);
 
         training.info(message);
-
-        if (currentEpoch == epoches || currentEpoch % evaluateEvery == 0) {
-            System.out.println();
-        }
     }
 
     @Override
@@ -252,15 +243,14 @@ public class Sequential extends Layer implements Model {
 
     @Override
     public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {
-        for (int i = 1; i <= epoches; i++) {
-            long start = System.nanoTime();
-            backPropagation.iteration(train);
-            long tookNanos = System.nanoTime() - start;
+        for (int epoch = 1; epoch <= epoches; epoch++) {
+            int finalEpoch = epoch;
+            backPropagation.iteration(train, (batch, took) ->
+                printProgress(train, finalEpoch, epoches, batch, took));
 
-            printProgressBar(tookNanos / 1e6, i, epoches, evaluateEvery);
-
-            if (i % evaluateEvery == 0) {
-                printEvaluation(i, epoches, validation);
+            if (epoch % evaluateEvery == 0) {
+                System.out.println();
+                printEvaluation(epoch, epoches, validation);
             }
         }
     }

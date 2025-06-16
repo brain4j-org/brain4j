@@ -16,7 +16,6 @@ public class InputLayer extends Layer {
         this.channels = channels;
     }
 
-
     @Override
     public Tensor forward(ForwardContext context) {
         return context.input().reshapeGrad(1, channels, height, width);

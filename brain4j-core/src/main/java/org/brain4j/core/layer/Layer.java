@@ -101,11 +101,6 @@ public abstract class Layer {
         Tensor output = cache.preActivation(index);
 
         output.backward(delta);
-
-        Tensor weightsGrad = weights.grad();
-        Tensor biasGrad = bias.grad().sum(0, false);
-
-        updater.change(weightsGrad, biasGrad, index);
     }
 
     /**

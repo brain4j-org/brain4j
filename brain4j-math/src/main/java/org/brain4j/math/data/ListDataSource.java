@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -279,11 +280,11 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * Performs the specified task on every batch sequentially.
      * @param task a Consumer that accepts a pair of input and label tensors representing a batch
      */
-    public void accept(Consumer<Pair<Tensor, Tensor>> task) {
+    public void accept(BiConsumer<Pair<Tensor, Tensor>, Integer> task) {
         reset();
 
         while (hasNext()) {
-            task.accept(nextBatch());
+            task.accept(nextBatch(), cursor);
         }
     }
     /**

@@ -2,6 +2,7 @@ package org.brain4j.core.layer.impl;
 
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.impl.convolutional.ConvLayer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
@@ -23,6 +24,9 @@ public class ActivationLayer extends Layer {
     @Override
     public Tensor forward(ForwardContext context) {
         Tensor input = context.input();
+        StatesCache cache = context.cache();
+
+        cache.setPreActivation(context.index(), input);
         return input.activateGrad(activation);
     }
 

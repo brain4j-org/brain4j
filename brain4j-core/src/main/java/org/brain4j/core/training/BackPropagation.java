@@ -10,6 +10,7 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class BackPropagation {
 
@@ -24,11 +25,17 @@ public class BackPropagation {
         updater.resetGradients(model);
     }
 
-    public void propagatePartition(Pair<Tensor, Tensor> partition) {
+    public void propagatePartition(
+        Pair<Tensor, Tensor> partition,
+        BiConsumer<Integer, Double> postBatchCallback,
+        int index
+    ) {
         Tensor inputs = partition.first();
         Tensor labels = partition.second();
 
         StatesCache cache = new StatesCache(model);
+
+        long start = System.nanoTime();
 
         Tensor output = model.predict(cache, true, inputs);
         backpropagation(cache, labels, output);
@@ -37,10 +44,20 @@ public class BackPropagation {
 
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
+
+        double took = (System.nanoTime() - start) / 1e6;
+        postBatchCallback.accept(index, took);
+
     }
 
-    public void iteration(ListDataSource dataSource) {
-        dataSource.accept(this::propagatePartition);
+    public void iteration(ListDataSource dataSource, BiConsumer<Integer, Double> postBatchCallback) {
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Pair<Tensor, Tensor> batch = dataSource.nextBatch();
+            propagatePartition(batch, postBatchCallback, dataSource.cursor());
+        }
+
         updater.postFit(model, optimizer.learningRate(), dataSource.size());
     }
 
@@ -53,7 +70,7 @@ public class BackPropagation {
         Layer last = flattened.getLast();
         last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
 
-        for (int l = count - 1; l >= 0; l--) {
+        for (int l = count; l >= 0; l--) {
             Layer layer = flattened.get(l);
 
             if (layer.skipPropagate()) continue;
