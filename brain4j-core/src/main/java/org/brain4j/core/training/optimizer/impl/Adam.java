@@ -2,18 +2,18 @@ package org.brain4j.core.training.optimizer.impl;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.optimizer.Optimizer;
-import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.impl.GpuTensor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Adam extends Optimizer {
 
     // Momentum vectors
-    protected Tensor[] firstMomentum;
-    protected Tensor[] secondMomentum;
+    protected Map<Layer, Tensor> firstMomentum;
+    protected Map<Layer, Tensor> secondMomentum;
 
     protected double beta1Timestep;
     protected double beta2Timestep;
@@ -39,36 +39,33 @@ public class Adam extends Optimizer {
     public void initialize(Model model) {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
-
-        int size = model.flattened().size();
-
-        this.firstMomentum = new Tensor[size];
-        this.secondMomentum = new Tensor[size];
+        this.firstMomentum = new HashMap<>();
+        this.secondMomentum = new HashMap<>();
     }
 
     @Override
-    public Tensor step(int index, Layer layer, Tensor gradient) {
-        Tensor firstMomentum = this.firstMomentum[index];
-        Tensor secondMomentum = this.secondMomentum[index];
+    public Tensor step(Layer layer, Tensor gradient) {
+        Tensor first = firstMomentum.get(layer);
+        Tensor second = secondMomentum.get(layer);
 
-        if (firstMomentum == null || secondMomentum == null) {
-            firstMomentum = Tensors.zeros(gradient.shape());
-            secondMomentum = Tensors.zeros(gradient.shape());
+        if (first == null || second == null) {
+            first = Tensors.zeros(gradient.shape());
+            second = Tensors.zeros(gradient.shape());
         }
 
         Tensor gradSquared = gradient.times(gradient);
 
-        firstMomentum.mul(beta1).add(gradient.times(1 - beta1));
-        secondMomentum.mul(beta2).add(gradSquared.mul(1 - beta2));
+        first.mul(beta1).add(gradient.times(1 - beta1));
+        second.mul(beta2).add(gradSquared.mul(1 - beta2));
 
-        this.firstMomentum[index] = firstMomentum;
-        this.secondMomentum[index] = secondMomentum;
+        firstMomentum.put(layer, first);
+        secondMomentum.put(layer, second);
 
         double biasCorrection1 = 1 - beta1Timestep;
         double biasCorrection2 = 1 - beta2Timestep;
 
-        Tensor mHat = firstMomentum.divide(biasCorrection1);
-        Tensor vHat = secondMomentum.divide(biasCorrection2);
+        Tensor mHat = first.divide(biasCorrection1);
+        Tensor vHat = second.divide(biasCorrection2);
 
         return mHat.div(vHat.sqrt().add(epsilon));
     }

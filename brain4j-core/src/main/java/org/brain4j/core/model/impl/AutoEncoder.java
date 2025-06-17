@@ -65,7 +65,7 @@ public class AutoEncoder extends Sequential {
             Tensor inputs = batch.first(); // [batch_size, input_size]
             Tensor expected = batch.second(); // [batch_size, output_size]
 
-            Tensor prediction = predict(new StatesCache(this), true, inputs); // [batch_size, output_size]
+            Tensor prediction = predict(new StatesCache(), true, inputs); // [batch_size, output_size]
             int batchSize = inputs.shape()[0];
 
             for (int i = 0; i < batchSize; i++) {

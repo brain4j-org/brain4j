@@ -30,7 +30,7 @@ public class BackPropagation {
         Tensor inputs = partition.first();
         Tensor labels = partition.second();
 
-        StatesCache cache = new StatesCache(model);
+        StatesCache cache = new StatesCache();
 
         long start = System.nanoTime();
 

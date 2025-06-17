@@ -147,7 +147,7 @@ public class Sequential extends Layer implements Model {
         return Thread.startVirtualThread(() -> {
             Tensor inputs = partition.first();
             Tensor targets = partition.second();
-            Tensor outputs = predict(new StatesCache(this), true, inputs);
+            Tensor outputs = predict(new StatesCache(), true, inputs);
 
             int batchSize = outputs.shape()[0];
 
@@ -245,8 +245,15 @@ public class Sequential extends Layer implements Model {
     public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {
         for (int epoch = 1; epoch <= epoches; epoch++) {
             int finalEpoch = epoch;
-            backPropagation.iteration(train, (batch, took) ->
-                printProgress(train, finalEpoch, epoches, batch, took));
+
+            AtomicReference<Double> totalForBatch = new AtomicReference<>(0.0);
+
+            backPropagation.iteration(train, (batch, took) -> {
+                totalForBatch.set(totalForBatch.get() + took);
+                double average = totalForBatch.get() / batch;
+
+                printProgress(train, finalEpoch, epoches, batch, average);
+            });
 
             if (epoch % evaluateEvery == 0) {
                 System.out.println();
@@ -257,7 +264,7 @@ public class Sequential extends Layer implements Model {
 
     @Override
     public Tensor predict(Tensor... inputs) {
-        return predict(new StatesCache(this), inputs);
+        return predict(new StatesCache(), inputs);
     }
 
     @Override

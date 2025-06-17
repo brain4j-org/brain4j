@@ -11,7 +11,7 @@ public class GradientDescent extends Optimizer {
     }
 
     @Override
-    public Tensor step(int index, Layer layer, Tensor gradient) {
+    public Tensor step(Layer layer, Tensor gradient) {
         return gradient;
     }
 }

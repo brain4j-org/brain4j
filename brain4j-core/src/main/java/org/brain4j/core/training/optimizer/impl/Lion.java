@@ -2,14 +2,16 @@ package org.brain4j.core.training.optimizer.impl;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Lion extends Optimizer {
 
-    private Tensor[] momentumHistory;
+    private Map<Layer, Tensor> momentumHistory;
     private double beta;
 
     public Lion(double learningRate, double beta) {
@@ -18,26 +20,25 @@ public class Lion extends Optimizer {
     }
 
     @Override
-    public Tensor step(int index, Layer layer, Tensor gradient) {
+    public Tensor step(Layer layer, Tensor gradient) {
         float factor = (float) (1 - beta);
 
         Tensor signGrad = gradient.sign().mul(factor);
-        Tensor momentum = momentumHistory[index];
+        Tensor momentum = momentumHistory.get(layer);
 
         if (momentum == null) {
             momentum = Tensors.zeros(gradient.shape());
         }
 
-        momentum = momentum.mul(beta).add(signGrad);
-        momentumHistory[index] = momentum;
+        momentum.mul(beta).add(signGrad);
+        momentumHistory.put(layer, momentum);
 
         return momentum.sign();
     }
 
     @Override
     public void initialize(Model model) {
-        int size = model.flattened().size();
-        this.momentumHistory = new Tensor[size];
+        this.momentumHistory = new HashMap<>();
     }
 
     public double beta() {

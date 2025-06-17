@@ -98,7 +98,7 @@ public abstract class Layer {
         Tensor derivatives = activation.getDerivative(outputs);
 
         Tensor delta = lossFunction.getDelta(error, derivatives);
-        Tensor output = cache.preActivation(index);
+        Tensor output = cache.preActivation(this);
 
         output.backward(delta);
     }
@@ -115,12 +115,12 @@ public abstract class Layer {
         Tensor weightsGrad = weights.grad();
         Tensor biasGrad = bias.grad().sum(0, false);
 
-        weightsGrad = optimizer.step(index, this, weightsGrad);
+        weightsGrad = optimizer.step(this, weightsGrad);
 
         clipper.clip(weightsGrad);
         clipper.clip(biasGrad);
 
-        updater.change(weightsGrad, biasGrad, index);
+        updater.change(weightsGrad, biasGrad, this);
     }
 
     /**

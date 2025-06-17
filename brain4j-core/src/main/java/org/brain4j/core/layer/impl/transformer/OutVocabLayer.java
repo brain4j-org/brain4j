@@ -66,30 +66,9 @@ public class OutVocabLayer extends Layer {
         Tensor output = result.matmulGrad(weights);
         Tensor activated = output.activateGrad(activation);
 
-        cache.setPreActivation(index, output);
+        cache.setPreActivation(this, output);
 
         return activated;
-    }
-
-    @Override
-    public void computeLoss(
-            Updater updater,
-            StatesCache cache,
-            Tensor targets,
-            Tensor outputs,
-            LossFunction lossFunction,
-            int index
-    ) {
-        Tensor error = outputs.minus(targets);
-        Tensor derivatives = activation.getDerivative(outputs);
-
-        Tensor delta = lossFunction.getDelta(error, derivatives);
-        Tensor output = cache.preActivation(index);
-
-        output.backward(delta);
-
-        Tensor weightsGrad = weights.grad();
-        updater.change(weightsGrad, null, index);
     }
 
     @Override

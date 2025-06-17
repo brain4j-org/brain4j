@@ -6,7 +6,9 @@ import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract class to define a gradient updater.
@@ -15,23 +17,13 @@ import java.util.List;
  */
 public abstract class Updater {
 
-    protected Tensor[] weightsGradients;
-    protected Tensor[] biasesGradients;
+    protected Map<Layer, Tensor> weightsGradients;
+    protected Map<Layer, Tensor> biasesGradients;
 
     protected void updateWeights(Model model, double learningRate, int samples) {
-        int size = model.flattened().size();
-
-        if (size != weightsGradients.length) {
-            return;
-        }
-
-        List<Layer> flattened = model.flattened();
-
-        for (int i = 0; i < flattened.size(); i++) {
-            Layer layer = flattened.get(i);
-
-            Tensor gradW = weightsGradients[i];
-            Tensor biasW = biasesGradients[i];
+        for (Layer layer : model) {
+            Tensor gradW = weightsGradients.get(layer);
+            Tensor biasW = biasesGradients.get(layer);
 
             Tensor weights = layer.weights();
             Tensor biases = layer.bias();
@@ -46,9 +38,9 @@ public abstract class Updater {
         }
     }
 
-    public void change(Tensor weightChange, Tensor biasChange, int index) {
-        Tensor gradW = weightsGradients[index];
-        Tensor biasW = biasesGradients[index];
+    public void change(Tensor weightChange, Tensor biasChange, Layer layer) {
+        Tensor gradW = weightsGradients.get(layer);
+        Tensor biasW = biasesGradients.get(layer);
 
         if (weightChange != null) {
             if (gradW == null) gradW = weightChange;
@@ -60,15 +52,13 @@ public abstract class Updater {
             else biasW = biasW.add(biasChange);
         }
 
-        this.weightsGradients[index] = gradW;
-        this.biasesGradients[index] = biasW;
+        weightsGradients.put(layer, gradW);
+        biasesGradients.put(layer, biasW);
     }
 
     public void resetGradients(Model model) {
-        int size = model.flattened().size();
-
-        this.weightsGradients = new Tensor[size];
-        this.biasesGradients = new Tensor[size];
+        this.weightsGradients = new HashMap<>();
+        this.biasesGradients = new HashMap<>();
 
         model.zeroGrad();
     }

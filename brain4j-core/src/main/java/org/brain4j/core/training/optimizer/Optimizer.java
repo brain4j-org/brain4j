@@ -2,7 +2,6 @@ package org.brain4j.core.training.optimizer;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.optimizer.impl.Adam;
 import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.core.training.optimizer.impl.GradientDescent;
@@ -24,7 +23,7 @@ public abstract class Optimizer {
         this.learningRate = learningRate;
     }
 
-    public abstract Tensor step(int index, Layer layer, Tensor gradient);
+    public abstract Tensor step(Layer layer, Tensor gradient);
 
     public void initialize(Model model) {
         // No-op

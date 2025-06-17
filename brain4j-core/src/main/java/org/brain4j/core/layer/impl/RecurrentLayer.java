@@ -75,7 +75,7 @@ public class RecurrentLayer extends Layer {
             );
         }
 
-        Tensor previousState = cache.hiddenState(index);
+        Tensor previousState = cache.hiddenState(this);
 
         if (previousState == null) {
             previousState = Tensors.zeros(batchSize, hiddenDimension);
@@ -93,7 +93,7 @@ public class RecurrentLayer extends Layer {
         // [batch_size, output_size]
         Tensor output = hiddenState.matmulGrad(weights.transpose()).addGrad(bias);
 
-        cache.setHiddenState(index, hiddenState);
+        cache.setHiddenState(this, hiddenState);
 
         return output;
     }

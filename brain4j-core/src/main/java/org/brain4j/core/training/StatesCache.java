@@ -1,33 +1,35 @@
 package org.brain4j.core.training;
 
-import org.brain4j.core.model.Model;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.math.tensor.Tensor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class StatesCache {
 
-    private final Tensor[] preActivations;
-    private final Tensor[] hiddenStates;
+    private final Map<Layer, Tensor> preActivations;
+    private final Map<Layer, Tensor> hiddenStates;
 
-    public StatesCache(Model model) {
-        int size = model.flattened().size();
-        this.preActivations = new Tensor[size];
-        this.hiddenStates = new Tensor[size];
+    public StatesCache() {
+        this.preActivations = new HashMap<>();
+        this.hiddenStates = new HashMap<>();
     }
 
-    public Tensor preActivation(int index) {
-        return preActivations[index];
+    public Tensor preActivation(Layer layer) {
+        return preActivations.get(layer);
     }
 
-    public void setPreActivation(int index, Tensor preActivation) {
-        preActivations[index] = preActivation;
+    public void setPreActivation(Layer layer, Tensor preActivation) {
+        preActivations.put(layer, preActivation);
     }
 
-    public Tensor hiddenState(int index) {
-        return hiddenStates[index];
+    public Tensor hiddenState(Layer layer) {
+        return hiddenStates.get(layer);
     }
 
-    public void setHiddenState(int index, Tensor hidden) {
-        hiddenStates[index] = hidden;
+    public void setHiddenState(Layer layer, Tensor hidden) {
+        hiddenStates.put(layer, hidden);
     }
 }
 
