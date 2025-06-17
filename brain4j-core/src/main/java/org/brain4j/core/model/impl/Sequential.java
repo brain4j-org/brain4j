@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static org.brain4j.math.constants.Constants.*;
@@ -307,6 +308,13 @@ public class Sequential extends Layer implements Model {
     }
 
     @Override
+    public void updateWeights(Consumer<Layer> callback) {
+        for (Layer layer : flattened) {
+            callback.accept(layer);
+        }
+    }
+
+    @Override
     public EvaluationResult evaluate(ListDataSource dataSource) {
         int classes = Math.max(2, dataSource.samples().getFirst().label().elements());
         Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
@@ -460,18 +468,20 @@ public class Sequential extends Layer implements Model {
 
     @Override
     public Layer connect(Layer previous) {
-        for (int i = 0; i < size(); i++) {
+        int size = size();
+
+        for (int i = 0; i < size; i++) {
             Layer layer = layerAt(i);
             previous = layer.connect(previous);
         }
 
-        int[] inputSizes = new int[size()];
+        int[] inputSizes = new int[size];
 
-        for (int i = 0; i < size(); i++) {
+        for (int i = 0; i < size; i++) {
             inputSizes[i] = (i == 0) ? 0 : layerAt(i - 1).size();
         }
 
-        IntStream.range(0, size()).parallel().forEach(i -> {
+        IntStream.range(0, size).parallel().forEach(i -> {
             Layer layer = layerAt(i);
 
             int input = inputSizes[i];

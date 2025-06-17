@@ -21,7 +21,7 @@ public abstract class Updater {
     protected Map<Layer, Tensor> biasesGradients;
 
     protected void updateWeights(Model model, double learningRate, int samples) {
-        for (Layer layer : model) {
+        model.updateWeights(layer -> {
             Tensor gradW = weightsGradients.get(layer);
             Tensor biasW = biasesGradients.get(layer);
 
@@ -35,7 +35,7 @@ public abstract class Updater {
             if (biasW != null && biases != null) {
                 biases.sub(biasW.div(samples).mul(learningRate));
             }
-        }
+        });
     }
 
     public void change(Tensor weightChange, Tensor biasChange, Layer layer) {

@@ -13,6 +13,7 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.data.ListDataSource;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Represents a generic neural network.
@@ -72,6 +73,13 @@ public interface Model extends Iterable<Layer> {
      * @param targets the target outputs
      */
     void backpropagate(StatesCache cache, Tensor outputs, Tensor targets);
+
+    /**
+     * Called once when updating weights, by default this method operates
+     * by iterating through each layer and applying the callback.
+     * @param callback the callback used to update weights
+     */
+    void updateWeights(Consumer<Layer> callback);
 
     /**
      * Trains the model using full training parameters.
