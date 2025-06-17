@@ -1,13 +1,18 @@
 plugins {
     id 'java'
     id 'com.gradleup.shadow' version '9.0.0-beta10'
+    id 'maven-publish'
 }
 
 group = 'org.brain4j'
-version = '3.0'
+version = '3.0.0'
 
 subprojects {
+    version = rootProject.version
+    group = rootProject.group
+
     apply plugin: 'java'
+    apply plugin: 'maven-publish'
 
     repositories {
         mavenCentral()
@@ -16,6 +21,27 @@ subprojects {
     dependencies {
         implementation "org.slf4j:slf4j-api:2.0.12"
         implementation 'ch.qos.logback:logback-classic:1.5.15'
+    }
+
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/brain4j-org/brain4j")
+                credentials {
+                    username = System.getenv("GITHUB_USERNAME")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
+        publications {
+            gpr(MavenPublication) {
+                from components.java
+                groupId = project.group
+                artifactId = project.name
+                version = project.version
+            }
+        }
     }
 
     compileJava {
@@ -37,5 +63,13 @@ tasks.register('buildAll') {
 
     doLast {
         println 'Completed build for both math and core.'
+    }
+}
+
+tasks.register('publishAll') {
+    dependsOn ':brain4j-core:publish', ':brain4j-math:publish'
+
+    doLast {
+        println 'Published both core and math to GitHub Packages.'
     }
 }
