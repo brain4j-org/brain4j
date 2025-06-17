@@ -3,9 +3,7 @@ package org.brain4j.core.merge.impl;
 import org.brain4j.core.merge.MergeStrategy;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.Arrays;
-
-public class ConcatMerge implements MergeStrategy {
+public class AverageMerge implements MergeStrategy {
 
     @Override
     public Tensor process(Tensor... inputs) {
@@ -16,9 +14,9 @@ public class ConcatMerge implements MergeStrategy {
         Tensor result = inputs[0];
 
         for (int i = 1; i < inputs.length; i++) {
-            result = result.concatGrad(inputs[i]);
+            result = result.addGrad(inputs[i]);
         }
 
-        return result;
+        return result.div(inputs.length);
     }
 }

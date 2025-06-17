@@ -56,6 +56,17 @@ public class MultiModel extends Sequential {
     }
 
     @Override
+    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        super.compile(lossFunction, optimizer, updater);
+
+        for (Model subModel : models) {
+            subModel.compile(lossFunction, optimizer, updater);
+        }
+
+        return this;
+    }
+
+    @Override
     public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
         if (inputs.length != models.size()) {
             throw new IllegalArgumentException("Expected " + models.size() + " inputs, but got " + inputs.length);
