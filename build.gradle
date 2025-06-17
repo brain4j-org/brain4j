@@ -59,7 +59,7 @@ subprojects {
 }
 
 tasks.register('buildAll') {
-    dependsOn ':brain4j-math:shadowJar', ':brain4j-core:shadowJar'
+    dependsOn ':brain4j-math:shadowJar', ':brain4j-core:shadowJar', ':brain4j-datasets:shadowJar'
 
     doLast {
         println 'Completed build for both math and core.'
@@ -67,7 +67,7 @@ tasks.register('buildAll') {
 }
 
 tasks.register('publishAll') {
-    dependsOn ':brain4j-core:publish', ':brain4j-math:publish'
+    dependsOn ':brain4j-core:publish', ':brain4j-math:publish', ':brain4j-datasets:publish'
 
     doLast {
         println 'Published both core and math to GitHub Packages.'

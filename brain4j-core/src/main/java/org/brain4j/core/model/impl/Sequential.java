@@ -284,6 +284,22 @@ public class Sequential extends Layer implements Model {
     }
 
     @Override
+    public void backpropagate(StatesCache cache, Tensor outputs, Tensor targets) {
+        int count = flattened.size() - 1;
+
+        Layer last = flattened.getLast();
+        last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
+
+        for (int l = count; l >= 0; l--) {
+            Layer layer = flattened.get(l);
+
+            if (layer.skipPropagate()) continue;
+
+            layer.backward(updater, optimizer, l);
+        }
+    }
+
+    @Override
     public EvaluationResult evaluate(ListDataSource dataSource) {
         int classes = Math.max(2, dataSource.samples().getFirst().label().elements());
         Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();

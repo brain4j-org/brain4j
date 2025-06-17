@@ -66,6 +66,14 @@ public interface Model extends Iterable<Layer> {
     Tensor predict(StatesCache cache, boolean training, Tensor... inputs);
 
     /**
+     * Executes a backpropagation pass for this model
+     * @param cache the states cache
+     * @param outputs the outputs of the network
+     * @param targets the target outputs
+     */
+    void backpropagate(StatesCache cache, Tensor outputs, Tensor targets);
+
+    /**
      * Trains the model using full training parameters.
      * @param params the training parameters
      */

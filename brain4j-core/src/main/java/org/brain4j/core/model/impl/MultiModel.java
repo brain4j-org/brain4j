@@ -75,16 +75,23 @@ public class MultiModel extends Sequential {
             throw new IllegalArgumentException("Merge strategy output does not match input layer dimension!");
         }
 
-        for (int i = 0; i < flattened.size(); i++) {
-            Layer layer = flattenedAt(i);
+        return super.predict(cache, training, result);
+    }
 
-            if (layer == null) {
-                throw new IllegalStateException("Layer at index " + i + " is null!");
+    @Override
+    public void backpropagate(StatesCache cache, Tensor outputs, Tensor targets) {
+        super.backpropagate(cache, outputs, targets);
+
+        for (Model subModel : models) {
+            List<Layer> flattened = subModel.flattened();
+
+            for (int l = flattened.size() - 1; l >= 0; l--) {
+                Layer layer = flattened.get(l);
+
+                if (layer.skipPropagate()) continue;
+
+                layer.backward(updater, optimizer, l);
             }
-
-            result = layer.forward(new ForwardContext(cache, result, i, training));
         }
-
-        return result;
     }
 }
