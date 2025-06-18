@@ -12,10 +12,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -44,7 +41,7 @@ import java.util.stream.Collectors;
 public class ListDataSource implements Cloneable, Iterable<Sample> {
 
     protected final List<Sample> samples;
-    protected final List<Tensor> batchedInputs;
+    protected final List<Tensor[]> batchedInputs;
     protected final List<Tensor> batchedLabels;
     protected final int batchSize;
     protected final int batches;
@@ -102,28 +99,25 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * @throws IOException if an error occurs while reading the dataset files
      */
     public static ListDataSource fromDataset(
-            Dataset dataset,
-            Function<String, Tensor> inputFeatures,
-            Function<String, Tensor> outputLabels,
-            boolean shuffle,
-            int batchSize,
-            String fileFormat
+        Dataset dataset,
+        Function<String, Tensor[]> inputFeatures,
+        Function<String, Tensor> outputLabels,
+        boolean shuffle,
+        int batchSize,
+        String fileFormat
     ) throws IOException {
         List<Sample> samples = new ArrayList<>();
         List<DatasetFile> dataFiles = dataset.getFilesByFormat(fileFormat);
-        
         for (DatasetFile file : dataFiles) {
-            Path filePath = file.path();
-            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+            try (BufferedReader reader = Files.newBufferedReader(file.path())) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    Tensor input = inputFeatures.apply(line);
-                    Tensor label = outputLabels.apply(line);
-                    samples.add(new Sample(input, label));
+                    Tensor[] inputs = inputFeatures.apply(line);
+                    Tensor labels = outputLabels.apply(line);
+                    samples.add(new Sample(inputs, labels));
                 }
             }
         }
-        
         return new ListDataSource(samples, shuffle, batchSize);
     }
     
@@ -139,64 +133,26 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * @throws IOException if an error occurs while reading the dataset files
      */
     public static ListDataSource fromDataset(
-            Dataset dataset,
-            Function<String, Sample> parser,
-            boolean shuffle,
-            int batchSize,
-            String fileFormat
+        Dataset dataset,
+        LineSplitting splitter,
+        boolean shuffle,
+        int batchSize,
+        String fileFormat
     ) throws IOException {
-        
         List<Sample> samples = new ArrayList<>();
         List<DatasetFile> dataFiles = dataset.getFilesByFormat(fileFormat);
-        
+
         for (DatasetFile file : dataFiles) {
-            Path filePath = file.path();
-            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    Sample sample = parser.apply(line);
-                    samples.add(sample);
-                }
-            }
-        }
-        
-        return new ListDataSource(samples, shuffle, batchSize);
-    }
-    
-    /**
-     * Creates a ListDataSource from a {@link Dataset} object with a split function.
-     * 
-     * @param dataset the dataset to load data from
-     * @param lineSplitter a function that splits a line into input and label tensors
-     * @param shuffle whether to shuffle the data
-     * @param batchSize the size of each batch
-     * @param fileFormat the format of files to use (e.g., "csv", "json")
-     * @return a new ListDataSource containing the loaded data
-     * @throws IOException if an error occurs while reading the dataset files
-     */
-    public static ListDataSource fromDataset(
-            Dataset dataset,
-            LineSplitting lineSplitter,
-            boolean shuffle,
-            int batchSize,
-            String fileFormat
-    ) throws IOException {
-        
-        List<Sample> samples = new ArrayList<>();
-        List<DatasetFile> dataFiles = dataset.getFilesByFormat(fileFormat);
-        
-        for (DatasetFile file : dataFiles) {
-            Path filePath = file.path();
-            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+            try (BufferedReader reader = Files.newBufferedReader(file.path())) {
                 String line;
                 int lineNum = 0;
+
                 while ((line = reader.readLine()) != null) {
-                    Pair<Tensor, Tensor> pair = lineSplitter.apply(line, lineNum++);
+                    Pair<Tensor[], Tensor> pair = splitter.apply(line, lineNum++);
                     samples.add(new Sample(pair.first(), pair.second()));
                 }
             }
         }
-        
         return new ListDataSource(samples, shuffle, batchSize);
     }
 
@@ -222,50 +178,53 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * @return this ListDataSource instance after normalization
      */
     public ListDataSource normalize() {
-        List<Tensor> inputs = new ArrayList<>();
-        List<Tensor> labels = new ArrayList<>();
+        if (samples.isEmpty()) return this;
+
+        int numInputs = samples.getFirst().inputs().length;
+        List<List<Tensor>> inputStreams = new ArrayList<>(numInputs);
+        
+        for (int i = 0; i < numInputs; i++) {
+            inputStreams.add(new ArrayList<>());
+        }
 
         for (Sample sample : samples) {
-            inputs.add(sample.input());
-            labels.add(sample.label());
+            Tensor[] inputs = sample.inputs();
+            
+            for (int i = 0; i < inputs.length; i++) {
+                inputStreams.get(i).add(inputs[i]);
+            }
         }
 
-        Tensor first = inputs.getFirst();
-        int features = first.elements();
+        for (int i = 0; i < numInputs; i++) {
+            List<Tensor> tensors = inputStreams.get(i);
+            int features = tensors.getFirst().elements();
 
-        float[] means = new float[features];
-        float[] stds = new float[features];
+            float[] means = new float[features];
+            float[] stds = new float[features];
 
-        for (int i = 0; i < features; i++) {
-            double mean = 0;
-            double std = 0;
+            for (int f = 0; f < features; f++) {
+                double mean = 0;
+                double std = 0;
+                
+                for (Tensor tensor : tensors) {
+                    float value = tensor.get(f);
+                    mean += value;
+                    std += value * value;
+                }
 
-            for (Tensor input : inputs) {
-                mean += input.get(i);
-                std += input.get(i) * input.get(i);
+                mean /= tensors.size();
+                std = Math.sqrt(std / tensors.size() - mean * mean);
+
+                means[f] = (float) mean;
+                stds[f] = (float) Math.max(std, 1e-8);
             }
 
-            mean /= inputs.size();
-            std = Math.sqrt(std / inputs.size() - mean * mean);
+            Tensor meanTensor = Tensors.vector(means);
+            Tensor stdTensor = Tensors.vector(stds);
 
-            means[i] = (float) mean;
-            stds[i] = (float) Math.max(std, 1e-8);
-        }
-
-        Tensor mean = Tensors.vector(means);
-        Tensor std = Tensors.vector(stds);
-
-        for (Tensor input : inputs) {
-            input.sub(mean).div(std);
-        }
-
-        samples.clear();
-
-        for (int i = 0; i < inputs.size(); i++) {
-            Tensor input = inputs.get(i);
-            Tensor label = labels.get(i);
-
-            samples.add(new Sample(input, label));
+            for (Tensor tensor : tensors) {
+                tensor.sub(meanTensor).div(stdTensor);
+            }
         }
 
         batchedInputs.clear();
@@ -276,11 +235,12 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         return this;
     }
 
+
     /**
      * Performs the specified task on every batch sequentially.
      * @param task a Consumer that accepts a pair of input and label tensors representing a batch
      */
-    public void accept(BiConsumer<Pair<Tensor, Tensor>, Integer> task) {
+    public void accept(BiConsumer<Pair<Tensor[], Tensor>, Integer> task) {
         reset();
 
         while (hasNext()) {
@@ -292,13 +252,14 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * @return a Pair containing input tensor and label tensor for the next batch,
      *         or null if no more batches are available
      */
-    public Pair<Tensor, Tensor> nextBatch() {
+    public Pair<Tensor[], Tensor> nextBatch() {
         if (!hasNext()) return null;
 
-        Tensor input = batchedInputs.get(cursor);
+        Tensor[] input = batchedInputs.get(cursor);
         Tensor label = batchedLabels.get(cursor);
 
         cursor++;
+
         return new Pair<>(input, label);
     }
 
@@ -315,19 +276,35 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
             int end = Math.min(index + batchSize, size);
             List<Sample> subSet = samples.subList(index, end);
 
-            List<Tensor> inputs = new ArrayList<>();
-            List<Tensor> labels = new ArrayList<>();
+            int inputCount = subSet.getFirst().inputs().length;
+            List<List<Tensor>> mergedInputs = new ArrayList<>(inputCount);
 
-            for (Sample sample : subSet) {
-                inputs.add(sample.input());
-                labels.add(sample.label());
+            for (int i = 0; i < inputCount; i++) {
+                mergedInputs.add(new ArrayList<>());
             }
 
-            Tensor mergedInput = Tensors.mergeTensors(inputs).to(deviceType);
-            Tensor mergedLabels = Tensors.mergeTensors(labels).to(deviceType);
+            List<Tensor> mergedLabels = new ArrayList<>();
 
-            batchedInputs.add(mergedInput);
-            batchedLabels.add(mergedLabels);
+            for (Sample sample : subSet) {
+                Tensor[] inputs = sample.inputs();
+
+                for (int i = 0; i < inputs.length; i++) {
+                    mergedInputs.get(i).add(inputs[i]);
+                }
+
+                mergedLabels.add(sample.label());
+            }
+
+            Tensor[] batchedInputTensors = new Tensor[inputCount];
+
+            for (int i = 0; i < inputCount; i++) {
+                batchedInputTensors[i] = Tensors.mergeTensors(mergedInputs.get(i)).to(deviceType);
+            }
+
+            Tensor batchedLabelTensor = Tensors.mergeTensors(mergedLabels).to(deviceType);
+
+            batchedInputs.add(batchedInputTensors);
+            batchedLabels.add(batchedLabelTensor);
 
             index += batchSize;
         }
@@ -361,7 +338,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * Returns the list of batched input tensors.
      * @return list of input batches
      */
-    public List<Tensor> batchedInputs() {
+    public List<Tensor[]> batchedInputs() {
         return batchedInputs;
     }
 

@@ -23,11 +23,11 @@ public class BackPropagation {
     }
 
     public void propagatePartition(
-        Pair<Tensor, Tensor> partition,
+        Pair<Tensor[], Tensor> partition,
         BiConsumer<Integer, Double> postBatchCallback,
         int index
     ) {
-        Tensor inputs = partition.first();
+        Tensor[] inputs = partition.first();
         Tensor labels = partition.second();
 
         StatesCache cache = new StatesCache();
@@ -37,7 +37,11 @@ public class BackPropagation {
         Tensor output = model.predict(cache, true, inputs);
         model.backpropagate(cache, output, labels);
 
-        int elements = inputs.shape()[0];
+        int elements = 1;
+
+        for (Tensor input : inputs) {
+            elements *= input.shape()[0];
+        }
 
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
@@ -51,7 +55,7 @@ public class BackPropagation {
         dataSource.reset();
 
         while (dataSource.hasNext()) {
-            Pair<Tensor, Tensor> batch = dataSource.nextBatch();
+            Pair<Tensor[], Tensor> batch = dataSource.nextBatch();
             propagatePartition(batch, postBatchCallback, dataSource.cursor());
         }
 

@@ -50,7 +50,7 @@ public class AutoEncoder extends Sequential {
         dataSource.reset();
 
         while (dataSource.hasNext()) {
-            Pair<Tensor, Tensor> partition = dataSource.nextBatch();
+            Pair<Tensor[], Tensor> partition = dataSource.nextBatch();
             threads.add(makeEvaluation(partition, null, totalLoss));
         }
 
@@ -60,22 +60,25 @@ public class AutoEncoder extends Sequential {
     }
 
     @Override
-    public Thread makeEvaluation(Pair<Tensor, Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+    public Thread makeEvaluation(Pair<Tensor[], Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
         return Thread.startVirtualThread(() -> {
-            Tensor inputs = batch.first(); // [batch_size, input_size]
+            Tensor[] inputs = batch.first(); // [batch_size, input_size]
             Tensor expected = batch.second(); // [batch_size, output_size]
 
             Tensor prediction = predict(new StatesCache(), true, inputs); // [batch_size, output_size]
-            int batchSize = inputs.shape()[0];
 
-            for (int i = 0; i < batchSize; i++) {
-                Range range = new Range(i, i + 1);
+            for (Tensor input : inputs) {
+                int batchSize = input.shape()[0];
 
-                Tensor output = prediction.slice(range).vector();
-                Tensor target = expected.slice(range).vector();
+                for (int i = 0; i < batchSize; i++) {
+                    Range range = new Range(i, i + 1);
 
-                double loss = lossFunction().calculate(target, output);
-                totalLoss.updateAndGet(v -> v + loss);
+                    Tensor output = prediction.slice(range).vector();
+                    Tensor target = expected.slice(range).vector();
+
+                    double loss = lossFunction().calculate(target, output);
+                    totalLoss.updateAndGet(v -> v + loss);
+                }
             }
         });
     }
