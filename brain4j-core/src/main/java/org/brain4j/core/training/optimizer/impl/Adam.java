@@ -3,8 +3,10 @@ package org.brain4j.core.training.optimizer.impl;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.optimizer.Optimizer;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.impl.GpuTensor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,8 +51,9 @@ public class Adam extends Optimizer {
         Tensor second = secondMomentum.get(layer);
 
         if (first == null || second == null) {
-            first = Tensors.zeros(gradient.shape());
-            second = Tensors.zeros(gradient.shape());
+            DeviceType device = gradient instanceof GpuTensor ? DeviceType.GPU : DeviceType.CPU;
+            first = Tensors.zeros(gradient.shape()).to(device);
+            second = Tensors.zeros(gradient.shape()).to(device);
         }
 
         Tensor gradSquared = gradient.times(gradient);

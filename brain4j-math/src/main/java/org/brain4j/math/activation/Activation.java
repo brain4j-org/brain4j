@@ -6,6 +6,8 @@ import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.impl.CpuTensor;
 import org.brain4j.math.weights.WeightInitialization;
 
+import java.util.Arrays;
+
 public interface Activation {
 
     /**

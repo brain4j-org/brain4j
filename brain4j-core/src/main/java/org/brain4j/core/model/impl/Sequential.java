@@ -296,7 +296,7 @@ public class Sequential extends Layer implements Model {
             result = layer.forward(new ForwardContext(cache, result, i, training));
         }
 
-        if (!training) {
+        if (!training && deviceType == DeviceType.GPU) {
             OpenCLContext.closeQueue();
         }
 
@@ -395,6 +395,11 @@ public class Sequential extends Layer implements Model {
         }
 
         return this;
+    }
+
+    @Override
+    public DeviceType deviceType() {
+        return deviceType;
     }
 
     @Override

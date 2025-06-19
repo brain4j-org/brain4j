@@ -187,6 +187,12 @@ public interface Model extends Iterable<Layer> {
     Model to(DeviceType deviceType);
 
     /**
+     * Gets the device the model is stored on.
+     * @return the device type of this model
+     */
+    DeviceType deviceType();
+
+    /**
      * Returns an immutable list of layers composing the model.
      * @return the list of layers
      */

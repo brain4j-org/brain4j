@@ -16,12 +16,16 @@ public class StatesCache {
     private cl_command_queue commandQueue;
 
     public StatesCache() {
+        this(false);
+    }
+
+    public StatesCache(boolean isOnGpu) {
         this.preActivations = new HashMap<>();
         this.hiddenStates = new HashMap<>();
 
         Device device = Brain4J.currentDevice();
 
-        if (device != null) {
+        if (device != null && isOnGpu) {
             this.commandQueue = device.newCommandQueue();
         }
     }

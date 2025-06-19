@@ -5,6 +5,7 @@ import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.gpu.OpenCLContext;
 import org.brain4j.math.tensor.impl.GpuTensor;
@@ -32,7 +33,8 @@ public class BackPropagation {
         Tensor[] inputs = partition.first();
         Tensor labels = partition.second();
 
-        StatesCache cache = new StatesCache();
+        boolean isOnGpu = model.deviceType() == DeviceType.GPU;
+        StatesCache cache = new StatesCache(isOnGpu);
 
         long start = System.nanoTime();
 
@@ -48,7 +50,7 @@ public class BackPropagation {
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
 
-        if (output instanceof GpuTensor) {
+        if (isOnGpu) {
             OpenCLContext.closeQueue();
         }
 

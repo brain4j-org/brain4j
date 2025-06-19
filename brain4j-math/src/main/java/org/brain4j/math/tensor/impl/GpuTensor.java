@@ -147,7 +147,6 @@ public class GpuTensor extends TensorImplBase {
 
     private Tensor launchScalarKernel(cl_kernel kernel, float value) {
         Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
@@ -155,10 +154,7 @@ public class GpuTensor extends TensorImplBase {
             .addMemParam(dataBuffer)
             .addFloatParam(value)
             .addIntParam(size)
-            .run(queue, 1, size);
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+            .launch(queue, 1, size);
 
         return this;
     }
@@ -173,8 +169,6 @@ public class GpuTensor extends TensorImplBase {
         int broadcastDim = (Arrays.equals(shape, B.shape)) ? -1 : shape[1];
         int batch = (broadcastDim == -1) ? 0 : shape[0];
 
-        Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
@@ -184,10 +178,7 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(size)
             .addIntParam(broadcastDim)
             .addIntParam(batch)
-            .run(queue, 1, size);
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+            .launch(queue, 1, size);
 
         return this;
     }
@@ -226,44 +217,25 @@ public class GpuTensor extends TensorImplBase {
         if (usesGrad()) {
             result.setAutogradContext(autogradContext);
         }
-
-        Pointer aPtr = Pointer.to(this.dataBuffer);
-        Pointer bPtr = Pointer.to(result.dataBuffer);
-
+        
         int inRowStride = strides[0];
         int inColStride = strides[1];
         int outRowStride = result.strides[0];
         int outColStride = result.strides[1];
 
-        clSetKernelArg(transposeKernel, 0, Sizeof.cl_mem, aPtr);
-        clSetKernelArg(transposeKernel, 1, Sizeof.cl_mem, bPtr);
-        clSetKernelArg(transposeKernel, 2, Sizeof.cl_int, Pointer.to(new int[]{rows}));
-        clSetKernelArg(transposeKernel, 3, Sizeof.cl_int, Pointer.to(new int[]{cols}));
-        clSetKernelArg(transposeKernel, 4, Sizeof.cl_int, Pointer.to(new int[]{inRowStride}));
-        clSetKernelArg(transposeKernel, 5, Sizeof.cl_int, Pointer.to(new int[]{inColStride}));
-        clSetKernelArg(transposeKernel, 6, Sizeof.cl_int, Pointer.to(new int[]{outRowStride}));
-        clSetKernelArg(transposeKernel, 7, Sizeof.cl_int, Pointer.to(new int[]{outColStride}));
-
-        Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
 
-        long[] globalWorkSize = new long[]{ rows, cols };
-
-        clEnqueueNDRangeKernel(
-                queue,
-                transposeKernel,
-                2,
-                null,
-                globalWorkSize,
-                null,
-                0,
-                null,
-                null
-        );
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+        KernelFactory
+            .create(transposeKernel)
+            .addMemParam(dataBuffer)
+            .addMemParam(result.dataBuffer)
+            .addIntParam(rows)
+            .addIntParam(cols)
+            .addIntParam(inRowStride)
+            .addIntParam(inColStride)
+            .addIntParam(outRowStride)
+            .addIntParam(outColStride)
+            .launch(queue, 2, rows, cols);
 
         return result;
     }
@@ -315,18 +287,13 @@ public class GpuTensor extends TensorImplBase {
 
     @Override
     public Tensor sqrt() {
-        Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
             .create(sqrtKernel)
             .addMemParam(dataBuffer)
             .addIntParam(size)
-            .run(queue, 1, size);
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+            .launch(queue, 1, size);
 
         return this;
     }
@@ -357,8 +324,6 @@ public class GpuTensor extends TensorImplBase {
         int[] outShape = new int[]{ M, P };
         GpuTensor result = new GpuTensor(outShape);
 
-        Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
 
         int TILE_SIZE = 16;
@@ -374,10 +339,7 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(M)
             .addIntParam(K)
             .addIntParam(P)
-            .run(queue, 2, globalWorkSize, localWorkSize);
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+            .launch(queue, 2, globalWorkSize, localWorkSize);
 
         return result;
     }
@@ -397,10 +359,7 @@ public class GpuTensor extends TensorImplBase {
         int innerSize = 1;
         for (int i = dim + 1; i < shape.length; i++) innerSize *= shape[i];
 
-        Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
-
         GpuTensor result = new GpuTensor(newShape);
 
         KernelFactory
@@ -410,10 +369,7 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(reducedSize)
             .addIntParam(outerSize)
             .addIntParam(innerSize)
-            .run(queue, 2, outerSize, innerSize);
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+            .launch(queue, 2, outerSize, innerSize);
 
         return result;
     }
@@ -428,8 +384,6 @@ public class GpuTensor extends TensorImplBase {
             featuresSize = shape[1];
         }
 
-        Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
@@ -438,10 +392,7 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(batchSize)
             .addIntParam(featuresSize)
             .addFloatParam((float) epsilon)
-            .run(queue, 1, batchSize);
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+            .launch(queue, 1, batchSize);
 
         return this;
     }
@@ -483,8 +434,6 @@ public class GpuTensor extends TensorImplBase {
 
     @Override
     public Tensor softmax(double temperature) {
-        Device device = DeviceUtils.currentDevice();
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
 
         GpuTensor result = new GpuTensor(shape);
@@ -498,10 +447,7 @@ public class GpuTensor extends TensorImplBase {
             .addMemParam(result.dataBuffer)
             .addIntParam(lastDim)
             .addFloatParam((float) temperature)
-            .run(queue, 1, rows);
-
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
+            .launch(queue, 1, rows);
 
         return result;
     }

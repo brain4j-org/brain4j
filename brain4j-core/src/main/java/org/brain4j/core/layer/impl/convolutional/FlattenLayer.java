@@ -19,7 +19,6 @@ public class FlattenLayer extends Layer {
         Tensor input = context.input();
         int batchSize = input.shape()[0];
 
-        System.out.println(Arrays.toString(input.shape()));
         return context.input().reshape(batchSize, dimension);
     }
 

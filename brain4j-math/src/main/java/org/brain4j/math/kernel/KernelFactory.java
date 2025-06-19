@@ -4,7 +4,6 @@ import org.jocl.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.jocl.CL.clEnqueueNDRangeKernel;
 import static org.jocl.CL.clSetKernelArg;
@@ -40,7 +39,7 @@ public class KernelFactory {
         return this;
     }
 
-    public void run(cl_command_queue queue, int workDim, long... globalWorkSize) {
+    public void launch(cl_command_queue queue, int workDim, long... globalWorkSize) {
         for (Argument argument : arguments) {
             clSetKernelArg(kernel, argument.index, argument.size, argument.pointer);
         }
@@ -49,7 +48,7 @@ public class KernelFactory {
             0, null, null);
     }
 
-    public void run(cl_command_queue queue, int workDim, long[] globalWorkSize, long... localWorkSize) {
+    public void launch(cl_command_queue queue, int workDim, long[] globalWorkSize, long... localWorkSize) {
         for (Argument argument : arguments) {
             clSetKernelArg(kernel, argument.index, argument.size, argument.pointer);
         }

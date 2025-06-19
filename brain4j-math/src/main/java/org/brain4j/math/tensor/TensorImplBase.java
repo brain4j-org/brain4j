@@ -235,6 +235,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public int argmax() {
+        float[] data = data();
+
         double max = Double.NEGATIVE_INFINITY;
         int maxIndex = 0;
 
