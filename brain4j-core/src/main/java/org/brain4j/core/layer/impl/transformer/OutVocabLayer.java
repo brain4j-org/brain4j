@@ -27,7 +27,7 @@ public class OutVocabLayer extends Layer {
 
     @Override
     public Layer connect(Layer previous) {
-        this.weights = Tensors.zeros(dimension, vocabSize);
+        this.weights = Tensors.zeros(dimension, vocabSize).withGrad();
         return this;
     }
 
@@ -48,22 +48,8 @@ public class OutVocabLayer extends Layer {
         }
 
         StatesCache cache = context.cache();
-        int index = context.index();
 
-        int batchSize = shape[0];
-        int lastToken = shape[1] - 1;
-        int dimension = shape[2];
-
-        Tensor result = Tensors.zeros(batchSize, dimension).withGrad();
-
-        for (int b = 0; b < batchSize; b++) {
-            for (int d = 0; d < dimension; d++) {
-                double value = input.get(b, lastToken, d);
-                result.set(value, b, d);
-            }
-        }
-
-        Tensor output = result.matmulGrad(weights);
+        Tensor output = input.matmulGrad(weights);
         Tensor activated = output.activateGrad(activation);
 
         cache.setPreActivation(this, output);

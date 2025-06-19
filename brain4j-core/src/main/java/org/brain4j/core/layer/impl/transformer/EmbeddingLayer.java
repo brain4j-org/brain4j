@@ -85,6 +85,10 @@ public class EmbeddingLayer extends Layer {
             }
         }
 
+        if (input.usesGrad()) {
+            result = result.withGrad();
+        }
+
         return result;
     }
 

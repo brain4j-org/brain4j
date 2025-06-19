@@ -239,12 +239,14 @@ public class Sequential extends Layer implements Model {
     @Override
     public Model add(Layer layer) {
         layers.add(layer);
+        flattened.add(layer);
         return this;
     }
 
     @Override
     public Model add(int index, Layer layer) {
         layers.add(index, layer);
+        flattened.add(index, layer);
         return this;
     }
 

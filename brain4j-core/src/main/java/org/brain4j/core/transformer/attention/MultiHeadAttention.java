@@ -1,6 +1,8 @@
 package org.brain4j.core.transformer.attention;
 
 import org.brain4j.core.training.StatesCache;
+import org.brain4j.core.training.optimizer.Optimizer;
+import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.head.AttentionHead;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
@@ -79,5 +81,11 @@ public class MultiHeadAttention {
 
     public List<AttentionHead> heads() {
         return heads;
+    }
+
+    public void backward(Updater updater, Optimizer optimizer) {
+        for (AttentionHead head : heads) {
+            head.backward(updater, optimizer);
+        }
     }
 }

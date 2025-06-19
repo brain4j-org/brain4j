@@ -442,55 +442,59 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
         return sum;
     }
-
     @Override
     public Tensor transpose() {
-        if (dimension() == 1) {
+        int rank = shape.length;
+
+        if (rank == 1) {
             return reshape(1, elements());
         }
 
-        if (shape.length != 2) {
-            throw new UnsupportedOperationException(
-                    "transpose() is supported only for 2D tensors, not for tensors with " + shape.length + " dimensions"
-            );
-        }
+        int dimA = shape[rank - 2];
+        int dimB = shape[rank - 1];
 
-        int rows = shape[0];
-        int cols = shape[1];
+        int[] newShape = shape.clone();
+        newShape[rank - 2] = dimB;
+        newShape[rank - 1] = dimA;
 
-        Tensor result = Tensors.matrix(cols, rows);
+        Tensor result = Tensors.create(newShape);
 
         if (usesGrad()) {
             result.setAutogradContext(autogradContext);
         }
 
-        int rowsStride = strides[0];
-        int colsStride = strides[1];
-
         float[] resultData = result.data();
         int[] resultStrides = result.strides();
 
-        int resultRowsStride = resultStrides[0];
-        int resultColsStride = resultStrides[1];
+        int strideA = strides[rank - 2];
+        int strideB = strides[rank - 1];
 
-        int baseLinearIndex = 0;
-        int baseInverseLinearIndex = 0;
+        int resultStrideA = resultStrides[rank - 2];
+        int resultStrideB = resultStrides[rank - 1];
 
-        for (int i = 0; i < rows; i++) {
-            int linearIndex = baseLinearIndex;
-            int inverseLinearIndex = baseInverseLinearIndex;
-
-            for (int j = 0; j < cols; j++) {
-                resultData[inverseLinearIndex] = data[linearIndex];
-
-                linearIndex += colsStride;
-                inverseLinearIndex += resultRowsStride;
-            }
-
-            baseLinearIndex += rowsStride;
-            baseInverseLinearIndex += resultColsStride;
+        int batch = 1;
+        for (int i = 0; i < rank - 2; i++) {
+            batch *= shape[i];
         }
 
+        for (int b = 0; b < batch; b++) {
+            int baseOffset = 0;
+            int tmp = b;
+
+            for (int i = rank - 3; i >= 0; i--) {
+                int idx = tmp % shape[i];
+                tmp /= shape[i];
+                baseOffset += idx * strides[i];
+            }
+
+            for (int i = 0; i < dimA; i++) {
+                for (int j = 0; j < dimB; j++) {
+                    int srcIdx = baseOffset + i * strideA + j * strideB;
+                    int dstIdx = baseOffset + j * resultStrideA + i * resultStrideB;
+                    resultData[dstIdx] = data[srcIdx];
+                }
+            }
+        }
 
         return result;
     }
@@ -854,7 +858,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor addGrad(Tensor other) {
-        if (!usesGrad() && !other.usesGrad()) {
+        if (!usesGrad() || !other.usesGrad()) {
             throw new IllegalArgumentException("Both tensors should be used with backflow!");
         }
 
@@ -863,7 +867,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor mulGrad(Tensor other) {
-        if (!usesGrad() && !other.usesGrad()) {
+        if (!usesGrad() || !other.usesGrad()) {
             throw new IllegalArgumentException("Both tensors should be used with backflow!");
         }
 
@@ -872,7 +876,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor divGrad(Tensor other) {
-        if (!usesGrad() && !other.usesGrad()) {
+        if (!usesGrad() || !other.usesGrad()) {
             throw new IllegalArgumentException("Both tensors should be used with backflow!");
         }
 
@@ -881,7 +885,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor subGrad(Tensor other) {
-        if (!usesGrad() && !other.usesGrad()) {
+        if (!usesGrad() || !other.usesGrad()) {
             throw new IllegalArgumentException("Both tensors should be used with backflow!");
         }
 
@@ -890,7 +894,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor matmulGrad(Tensor other) {
-        if (!usesGrad() && !other.usesGrad()) {
+        if (!usesGrad() || !other.usesGrad()) {
             throw new IllegalArgumentException("Both tensors should be used with backflow!");
         }
 
@@ -908,7 +912,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor concatGrad(Tensor other) {
-        if (!usesGrad() && !other.usesGrad()) {
+        if (!usesGrad() || !other.usesGrad()) {
             throw new IllegalArgumentException("Both tensors should be used with backflow!");
         }
 

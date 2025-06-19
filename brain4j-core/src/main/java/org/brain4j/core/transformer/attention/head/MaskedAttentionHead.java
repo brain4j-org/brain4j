@@ -1,5 +1,6 @@
 package org.brain4j.core.transformer.attention.head;
 
+import org.brain4j.math.activation.impl.SoftmaxActivation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
@@ -11,18 +12,21 @@ public class MaskedAttentionHead extends AttentionHead {
 
     @Override
     public Tensor attend(Tensor input) {
-        Tensor Q = input.matmul(queryWeights);
-        Tensor K = input.matmul(keyWeights);
-        Tensor V = input.matmul(valueWeights);
+        // input = [seq_length, embedding_dim]
+        Tensor Q = input.matmulGrad(queryWeights); // [seq_length, head_dimension]
+        Tensor K = input.matmulGrad(keyWeights); // [seq_length, head_dimension]
+        Tensor V = input.matmulGrad(valueWeights); // [seq_length, head_dimension]
 
         double normalizer = Math.sqrt(headDimension);
 
-        Tensor scores = Q.matmul(K.transpose()).div(normalizer);
-        Tensor mask = Tensors.triangularMask(scores.shape()[0]);
+        // [seq_length, seq_length]
+        Tensor scores = Q.matmulGrad(K.transpose()).div(normalizer);
+        Tensor mask = Tensors.triangularMask(scores.shape()[scores.dimension() - 1]).withGrad();
 
-        Tensor maskedScores = scores.add(mask);
-        Tensor attentionWeights = maskedScores.softmax();
+        Tensor maskedScores = scores.addGrad(mask);
+        Tensor attentionWeights = maskedScores.activateGrad(new SoftmaxActivation());
 
-        return attentionWeights.matmul(V);
+        // [seq_length, head_dimension]
+        return attentionWeights.matmulGrad(V);
     }
 }

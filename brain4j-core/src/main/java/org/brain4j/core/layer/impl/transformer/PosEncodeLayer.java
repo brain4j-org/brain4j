@@ -25,8 +25,7 @@ public class PosEncodeLayer extends Layer {
         int seqLength = shape[1];
         int dimension = shape[2];
 
-        Tensor result = input.clone();
-        float[] resultData = result.data();
+        float[] resultData = input.data();
 
         for (int b = 0; b < batchSize; b++) {
             int batchOffset = b * seqLength * dimension;
@@ -43,7 +42,7 @@ public class PosEncodeLayer extends Layer {
             }
         }
 
-        return result;
+        return input;
     }
 
     @Override

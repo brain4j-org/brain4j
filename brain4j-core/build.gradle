@@ -20,5 +20,5 @@ shadowJar {
 }
 
 tasks.withType(JavaExec).configureEach {
-    jvmArgs(['--add-modules', 'jdk.incubator.vector', '-XX:+UseSerialGC'])
+    // jvmArgs(['--add-modules', 'jdk.incubator.vector', '-XX:+UseSerialGC'])
 }

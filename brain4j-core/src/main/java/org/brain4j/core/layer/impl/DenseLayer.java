@@ -72,12 +72,13 @@ public class DenseLayer extends Layer {
     public Tensor forward(ForwardContext context) {
         Tensor input = context.input();
         StatesCache cache = context.cache();
-        int index = context.index();
 
         if (weights == null) return input;
 
+        int dimension = input.dimension();
+
         // Input shape: [batch_size, input_size]
-        int inputDim = input.shape()[1];
+        int inputDim = input.shape()[dimension - 1];
         int expectedDim = weights.shape()[0];
 
         if (inputDim != expectedDim) {

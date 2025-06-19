@@ -6,6 +6,8 @@ import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.DropoutLayer;
 import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.training.StatesCache;
+import org.brain4j.core.training.optimizer.Optimizer;
+import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.MultiHeadAttention;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.device.DeviceType;
@@ -89,36 +91,34 @@ public class TransformerEncoder extends Layer {
         StatesCache cache = context.cache();
         Tensor result = Tensors.zeros(batchSize, seqLength, dimension);
 
-        for (int b = 0; b < batchSize; b++) {
-            Range range = new Range(b, b + 1);
+        Tensor attended = attention.attend(cache, input);
 
-            Tensor batch = input.slice(range).reshape(seqLength, dimension).withGrad();
-            Tensor attended = attention.attend(cache, batch);
-
-            if (training) {
-                attended = dropout.forward(new ForwardContext(cache, attended, index, true));
-            }
-
-            Tensor added1 = batch.addGrad(attended);
-            Tensor normalizedAttention = normalizer.forward(new ForwardContext(cache, added1, b, training));
-
-            Tensor upProjected = upProjection.forward(new ForwardContext(cache, normalizedAttention, b, training));
-            Tensor downProjected = downProjection.forward(new ForwardContext(cache, upProjected, b, training));
-
-            if (training) {
-                downProjected = dropout.forward(new ForwardContext(cache, downProjected, index, true));
-            }
-
-            Tensor added2 = normalizedAttention.addGrad(downProjected);
-            Tensor normalized = normalizer.forward(new ForwardContext(cache, added2, b, training));
-
-            float[] normalizedData = normalized.data();
-            int offset = b * seqLength * dimension;
-
-            System.arraycopy(normalizedData, 0, result.data(), offset, normalizedData.length);
+        if (training) {
+            attended = dropout.forward(new ForwardContext(cache, attended, index, true));
         }
 
-        return result;
+        Tensor added = input.addGrad(attended);
+        Tensor normalized = normalizer.forward(new ForwardContext(cache, added, index, true));
+
+        Tensor upProjected = upProjection.forward(new ForwardContext(cache, normalized, index, training));
+        Tensor downProjected = downProjection.forward(new ForwardContext(cache, upProjected, index, training));
+
+        if (training) {
+            downProjected = dropout.forward(new ForwardContext(cache, downProjected, index, true));
+        }
+
+        added = normalized.addGrad(downProjected);
+        normalized = normalizer.forward(new ForwardContext(cache, added, index, training));
+
+        System.out.println(Arrays.toString(normalized.shape()));
+        return normalized;
+    }
+
+    @Override
+    public void backward(Updater updater, Optimizer optimizer, int index) {
+        attention.backward(updater, optimizer);
+        upProjection.backward(updater, optimizer, index);
+        downProjection.backward(updater, optimizer, index);
     }
 
     @Override

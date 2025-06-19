@@ -1,6 +1,10 @@
 package org.brain4j.core.transformer.attention.head;
 
 import org.brain4j.core.training.StatesCache;
+import org.brain4j.core.training.optimizer.Optimizer;
+import org.brain4j.core.training.updater.Updater;
+import org.brain4j.math.activation.Activations;
+import org.brain4j.math.activation.impl.SoftmaxActivation;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
@@ -21,9 +25,9 @@ public class AttentionHead {
         this.embedDimension = embedDimension;
         this.headDimension = headDimension;
 
-        this.queryWeights = Tensors.zeros(embedDimension, headDimension);
-        this.keyWeights = Tensors.zeros(embedDimension, headDimension);
-        this.valueWeights = Tensors.zeros(embedDimension, headDimension);
+        this.queryWeights = Tensors.zeros(embedDimension, headDimension).withGrad();
+        this.keyWeights = Tensors.zeros(embedDimension, headDimension).withGrad();
+        this.valueWeights = Tensors.zeros(embedDimension, headDimension).withGrad();
     }
 
     public void initWeights(Random generator, WeightInitialization weightInit) {
@@ -48,7 +52,7 @@ public class AttentionHead {
 
         // [seq_length, seq_length]
         Tensor scores = Q.matmulGrad(K.transpose()).div(normalizer);
-        Tensor attentionWeights = scores.softmax();
+        Tensor attentionWeights = scores.activateGrad(new SoftmaxActivation());
 
         // [seq_length, head_dimension]
         return attentionWeights.matmulGrad(V);
@@ -80,5 +84,16 @@ public class AttentionHead {
 
     public int totalWeights() {
         return queryWeights.elements() + keyWeights.elements() + valueWeights.elements();
+    }
+
+    public void backward(Updater updater, Optimizer optimizer) {
+        Tensor queryGrad = queryWeights.grad();
+        Tensor keyGrad = keyWeights.grad();
+        Tensor valueGrad = valueWeights.grad();
+
+        // TODO: Gradient optimization & update scheduling
+        queryWeights.sub(queryGrad);
+        keyWeights.sub(keyGrad);
+        valueWeights.sub(valueGrad);
     }
 }
