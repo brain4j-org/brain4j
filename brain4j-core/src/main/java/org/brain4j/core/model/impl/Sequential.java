@@ -15,6 +15,7 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
+import org.brain4j.math.tensor.gpu.OpenCLContext;
 import org.brain4j.math.tensor.index.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,6 +282,10 @@ public class Sequential extends Layer implements Model {
         Tensor input = validateInputs(inputs);
         Tensor result = input.to(deviceType).withGrad();
 
+        if (deviceType == DeviceType.GPU) {
+            OpenCLContext.updateQueue(cache.commandQueue());
+        }
+
         for (int i = 0; i < flattened.size(); i++) {
             Layer layer = flattenedAt(i);
 
@@ -289,6 +294,10 @@ public class Sequential extends Layer implements Model {
             }
 
             result = layer.forward(new ForwardContext(cache, result, i, training));
+        }
+
+        if (!training) {
+            OpenCLContext.closeQueue();
         }
 
         return result;

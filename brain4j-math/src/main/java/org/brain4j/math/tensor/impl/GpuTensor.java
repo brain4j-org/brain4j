@@ -9,10 +9,10 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.TensorImplBase;
 import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.tensor.gpu.CollectableState;
+import org.brain4j.math.tensor.gpu.OpenCLContext;
 import org.jocl.*;
 
 import java.lang.ref.Cleaner;
-import java.time.chrono.ThaiBuddhistDate;
 import java.util.Arrays;
 
 import static org.jocl.CL.*;
@@ -29,7 +29,7 @@ public class GpuTensor extends TensorImplBase {
     private static cl_kernel transposeKernel = null;
     private static cl_kernel sumAlongDimKernel = null;
     private static cl_kernel layerNormKernel = null;
-    private static cl_kernel softmax2DKernel = null;
+    private static cl_kernel softmaxKernel = null;
 
     private static cl_kernel addScalarKernel = null;
     private static cl_kernel subScalarKernel = null;
@@ -90,7 +90,8 @@ public class GpuTensor extends TensorImplBase {
 
         this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, dataSize, null, null);
 
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
         clEnqueueCopyBuffer(
                 queue,
                 otherBuffer,
@@ -103,8 +104,8 @@ public class GpuTensor extends TensorImplBase {
                 null
         );
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         this.cleanable = CLEANER.register(this, new CollectableState(dataBuffer, shapeBuffer, stridesBuffer));
     }
@@ -128,7 +129,7 @@ public class GpuTensor extends TensorImplBase {
         transposeKernel = clCreateKernel(tensorOpsProgram, "transpose", null);
         sumAlongDimKernel = clCreateKernel(tensorOpsProgram, "sum_along_dim", null);
         layerNormKernel = clCreateKernel(tensorOpsProgram, "layer_norm", null);
-        softmax2DKernel = clCreateKernel(tensorOpsProgram, "softmax_2d", null);
+        softmaxKernel = clCreateKernel(tensorOpsProgram, "softmax_last_dim", null);
 
         addScalarKernel = clCreateKernel(elementaryOpsProgram, "add_scalar", null);
         subScalarKernel = clCreateKernel(elementaryOpsProgram, "sub_scalar", null);
@@ -146,7 +147,8 @@ public class GpuTensor extends TensorImplBase {
 
     private Tensor launchScalarKernel(cl_kernel kernel, float value) {
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
             .create(kernel)
@@ -155,8 +157,8 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(size)
             .run(queue, 1, size);
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         return this;
     }
@@ -172,7 +174,8 @@ public class GpuTensor extends TensorImplBase {
         int batch = (broadcastDim == -1) ? 0 : shape[0];
 
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
             .create(kernel)
@@ -183,8 +186,8 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(batch)
             .run(queue, 1, size);
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         return this;
     }
@@ -242,7 +245,8 @@ public class GpuTensor extends TensorImplBase {
         clSetKernelArg(transposeKernel, 7, Sizeof.cl_int, Pointer.to(new int[]{outColStride}));
 
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
 
         long[] globalWorkSize = new long[]{ rows, cols };
 
@@ -258,8 +262,8 @@ public class GpuTensor extends TensorImplBase {
                 null
         );
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         return result;
     }
@@ -312,7 +316,8 @@ public class GpuTensor extends TensorImplBase {
     @Override
     public Tensor sqrt() {
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
             .create(sqrtKernel)
@@ -320,8 +325,8 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(size)
             .run(queue, 1, size);
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         return this;
     }
@@ -350,11 +355,11 @@ public class GpuTensor extends TensorImplBase {
         int P = shapeB[1];
 
         int[] outShape = new int[]{ M, P };
-        float[] dummy = new float[0];
-        GpuTensor result = new GpuTensor(outShape, dummy);
+        GpuTensor result = new GpuTensor(outShape);
 
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
 
         int TILE_SIZE = 16;
 
@@ -371,8 +376,8 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(P)
             .run(queue, 2, globalWorkSize, localWorkSize);
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         return result;
     }
@@ -393,10 +398,10 @@ public class GpuTensor extends TensorImplBase {
         for (int i = dim + 1; i < shape.length; i++) innerSize *= shape[i];
 
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
 
-        float[] dummy = new float[0];
-        GpuTensor result = new GpuTensor(newShape, dummy);
+        GpuTensor result = new GpuTensor(newShape);
 
         KernelFactory
             .create(sumAlongDimKernel)
@@ -407,8 +412,8 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(innerSize)
             .run(queue, 2, outerSize, innerSize);
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         return result;
     }
@@ -424,7 +429,8 @@ public class GpuTensor extends TensorImplBase {
         }
 
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
 
         KernelFactory
             .create(layerNormKernel)
@@ -434,8 +440,8 @@ public class GpuTensor extends TensorImplBase {
             .addFloatParam((float) epsilon)
             .run(queue, 1, batchSize);
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
 
         return this;
     }
@@ -466,36 +472,38 @@ public class GpuTensor extends TensorImplBase {
     }
 
     @Override
+    public int elements() {
+        return size;
+    }
+
+    @Override
     public Tensor softmax() {
         return super.softmax();
     }
 
     @Override
-    protected void softmaxRows(double temperature, Tensor tensor) {
-        if (!(tensor instanceof GpuTensor)) {
-            tensor = tensor.gpu();
-        }
-
-        GpuTensor B = (GpuTensor) tensor;
-
-        if (shape.length != 2) {
-            throw new IllegalArgumentException("Tensor dimension must be 2");
-        }
-
+    public Tensor softmax(double temperature) {
         Device device = DeviceUtils.currentDevice();
-        cl_command_queue queue = device.newCommandQueue();
+        // cl_command_queue queue = device.newCommandQueue();
+        cl_command_queue queue = OpenCLContext.currentQueue();
+
+        GpuTensor result = new GpuTensor(shape);
+
+        int lastDim = shape[shape.length - 1];
+        int rows = size / lastDim;
 
         KernelFactory
-            .create(softmax2DKernel)
+            .create(softmaxKernel)
             .addMemParam(dataBuffer)
-            .addMemParam(B.dataBuffer)
-            .addIntParam(shape[0])
-            .addIntParam(shape[1])
+            .addMemParam(result.dataBuffer)
+            .addIntParam(lastDim)
             .addFloatParam((float) temperature)
-            .run(queue, 1, size);
+            .run(queue, 1, rows);
 
-        clFinish(queue);
-        clReleaseCommandQueue(queue);
+        // clFinish(queue);
+        // clReleaseCommandQueue(queue);
+
+        return result;
     }
 
     @Override

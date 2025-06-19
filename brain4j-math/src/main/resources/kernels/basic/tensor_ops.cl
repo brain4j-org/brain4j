@@ -209,31 +209,31 @@ __kernel void layer_norm(
     }
 }
 
-__kernel void softmax_2d(
+__kernel void softmax_last_dim(
     __global const float* input,
     __global float* output,
-    const int rows,
-    const int cols,
+    const int lastDim,
     const float temperature
 ) {
     int row = get_global_id(0);
-    if (row >= rows) return;
 
-    float max_val = -FLT_MAX;
+    int offset = row * lastDim;
 
-    for (int j = 0; j < cols; j++) {
-        float val = input[row * cols + j];
-        max_val = fmax(max_val, val);
+    float max_val = input[offset];
+    for (int i = 1; i < lastDim; i++) {
+        float val = input[offset + i];
+        if (val > max_val) max_val = val;
     }
 
     float sum = 0.0f;
-    for (int j = 0; j < cols; j++) {
-        float val = input[row * cols + j];
-        sum += exp((val - max_val) / temperature);
+    for (int i = 0; i < lastDim; i++) {
+        float val = (input[offset + i] - max_val) / temperature;
+        float exp_val = exp(val);
+        output[offset + i] = exp_val;
+        sum += exp_val;
     }
 
-    for (int j = 0; j < cols; j++) {
-        float val = input[row * cols + j];
-        output[row * cols + j] = exp((val - max_val) / temperature) / sum;
+    for (int i = 0; i < lastDim; i++) {
+        output[offset + i] /= sum;
     }
 }

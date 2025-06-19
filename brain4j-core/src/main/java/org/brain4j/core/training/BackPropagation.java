@@ -6,6 +6,8 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.gpu.OpenCLContext;
+import org.brain4j.math.tensor.impl.GpuTensor;
 
 import java.util.function.BiConsumer;
 
@@ -46,9 +48,12 @@ public class BackPropagation {
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
 
+        if (output instanceof GpuTensor) {
+            OpenCLContext.closeQueue();
+        }
+
         double took = (System.nanoTime() - start) / 1e6;
         postBatchCallback.accept(index, took);
-
     }
 
     public void iteration(ListDataSource dataSource, BiConsumer<Integer, Double> postBatchCallback) {

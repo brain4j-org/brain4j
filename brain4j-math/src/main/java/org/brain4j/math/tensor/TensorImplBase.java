@@ -150,30 +150,6 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
     }
 
-    protected void softmaxRows(double temperature, Tensor tensor) {
-        int rows = tensor.shape()[0];
-        int cols = tensor.shape()[1];
-
-        for (int i = 0; i < rows; i++) {
-            double max = Double.NEGATIVE_INFINITY;
-
-            for (int j = 0; j < cols; j++) {
-                max = Math.max(max, tensor.get(i, j));
-            }
-
-            double sum = 0.0;
-
-            for (int j = 0; j < cols; j++) {
-                sum += Math.exp((tensor.get(i, j) - max) / temperature);
-            }
-
-            for (int j = 0; j < cols; j++) {
-                double value = Math.exp((tensor.get(i, j) - max) / temperature) / sum;
-                tensor.set(value, i, j);
-            }
-        }
-    }
-
     protected void setSliceRecursive(int[] index, int dim, int offset, int sliceSize, Tensor input) {
         if (dim == index.length - 1) {
             for (int i = 0; i < sliceSize; i++) {
