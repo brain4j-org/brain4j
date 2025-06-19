@@ -9,7 +9,6 @@ public record MatmulParameters(
         float[] C,
         int np,
         int mn,
-        int mp
-) {
-
-}
+        int mp,
+        int batchA, int batchB
+) { }

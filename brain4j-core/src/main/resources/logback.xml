@@ -12,7 +12,7 @@
 
     <appender name="DYN" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>\r[%d{HH:mm:ss}] [%level] [Training] %msg</pattern>
+            <pattern>\r[%d{HH:mm:ss}] [%level] %msg</pattern>
         </encoder>
         <immediateFlush>true</immediateFlush>
     </appender>

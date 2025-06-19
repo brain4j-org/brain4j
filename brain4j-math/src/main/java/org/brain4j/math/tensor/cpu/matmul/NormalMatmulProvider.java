@@ -11,11 +11,15 @@ public class NormalMatmulProvider implements MatmulProvider {
     private static class ScalarAction extends RecursiveAction {
 
         private final MatmulParameters parameters;
+        private final int batchA;
+        private final int batchB;
         private final int start;
         private final int end;
 
-        public ScalarAction(MatmulParameters parameters, int start, int end) {
+        public ScalarAction(MatmulParameters parameters, int batchA, int batchB, int start, int end) {
             this.parameters = parameters;
+            this.batchA = batchA;
+            this.batchB = batchB;
             this.start = start;
             this.end = end;
         }
@@ -30,8 +34,8 @@ public class NormalMatmulProvider implements MatmulProvider {
             if (isOverThreshold(work, np)) {
                 int mid = (start + end) >>> 1;
                 invokeAll(
-                        new ScalarAction(parameters, start, mid),
-                        new ScalarAction(parameters, mid, end)
+                    new ScalarAction(parameters, batchA, batchB, start, mid),
+                    new ScalarAction(parameters, batchA, batchB, mid, end)
                 );
                 return;
             }
@@ -44,15 +48,16 @@ public class NormalMatmulProvider implements MatmulProvider {
             float[] B = parameters.B();
             float[] C = parameters.C();
 
-            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp, batchA, batchB);
         }
     }
 
     public void multiply(
-            int batch,
-            int m, int n, int p,
-            float[] A, float[] B, float[] C,
-            ForkJoinPool pool
+        ForkJoinPool pool,
+        int batch,
+        int m, int n, int p,
+        float[] A, float[] B, float[] C,
+        int batchA, int batchB
     ) {
         int start = 0;
         int end = batch * m;
@@ -63,27 +68,33 @@ public class NormalMatmulProvider implements MatmulProvider {
         int work = end - start;
 
         if (!isOverThreshold(work, np)) {
-            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp, batchA, batchB);
             return;
         }
 
-        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp);
-        ScalarAction action = new ScalarAction(parameters, start, end);
+        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp, batchA, batchB);
+        ScalarAction action = new ScalarAction(parameters, batchA, batchB, start, end);
         pool.invoke(action);
     }
 
     private static void multiplySection(
-            int start, int end,
-            int m, int n, int p,
-            float[] A, float[] B, float[] C,
-            int mn, int np, int mp
+        int start, int end,
+        int m, int n, int p,
+        float[] A, float[] B, float[] C,
+        int mn, int np, int mp,
+        int batchA, int batchB
     ) {
         for (int r = start; r < end; r++) {
-            int b = r / m;
+            int batchIndex = r / m;
             int i = r % m;
-            int offsetA = b * mn;
-            int offsetB = b * np;
-            int offsetC = b * mp;
+
+            int batchIndexA = batchA == 1 ? 0 : batchIndex;
+            int batchIndexB = batchB == 1 ? 0 : batchIndex;
+
+            int offsetA = batchIndexA * mn;
+            int offsetB = batchIndexB * np;
+            int offsetC = batchIndex * mp;
+
             int rowA = offsetA + i * n;
             int rowC = offsetC + i * p;
 

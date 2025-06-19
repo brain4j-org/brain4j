@@ -44,10 +44,13 @@ public class SimdMatmulProvider implements MatmulProvider {
             float[] B = parameters.B();
             float[] C = parameters.C();
 
+            int batchA = parameters.batchA();
+            int batchB = parameters.batchB();
+
             int work = end - start;
 
             if (!isOverSplitThreshold(work, np)) {
-                multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+                multiplySection(start, end, m, n, p, A, B, C, mn, np, mp, batchA, batchB);
                 return;
             }
 
@@ -60,8 +63,13 @@ public class SimdMatmulProvider implements MatmulProvider {
 
     }
 
+    @Override
     public void multiply(
-            int batch, int m, int n, int p, float[] A, float[] B, float[] C, ForkJoinPool pool
+        ForkJoinPool pool,
+        int batch,
+        int m, int n, int p,
+        float[] A, float[] B, float[] C,
+        int batchA, int batchB
     ) {
         int start = 0;
         int end = batch * m;
@@ -71,14 +79,14 @@ public class SimdMatmulProvider implements MatmulProvider {
 
         int work = end - start;
         if (!isOverParallelThreshold(work, np)) {
-            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp);
+            multiplySection(start, end, m, n, p, A, B, C, mn, np, mp, batchA, batchB);
             return;
         }
 
         int parallelism = PARALLELISM;
         int step = work / parallelism;
 
-        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp);
+        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp, batchA, batchB);
         VectorAction[] actions = new VectorAction[parallelism];
 
         int i;
@@ -93,16 +101,23 @@ public class SimdMatmulProvider implements MatmulProvider {
     }
 
     private static void multiplySection(
-            int start, int end,
-            int m, int n, int p, float[] A, float[] B, float[] C,
-            int mn, int np, int mp
+        int start, int end,
+        int m, int n, int p,
+        float[] A, float[] B, float[] C,
+        int mn, int np, int mp,
+        int batchA, int batchB
     ) {
         for (int r = start; r < end; r++) {
-            int b = r / m;
+            int batchIndex = r / m;
             int i = r % m;
-            int offsetA = b * mn;
-            int offsetB = b * np;
-            int offsetC = b * mp;
+
+            int batchIndexA = batchA == 1 ? 0 : batchIndex;
+            int batchIndexB = batchB == 1 ? 0 : batchIndex;
+
+            int offsetA = batchIndexA * mn;
+            int offsetB = batchIndexB * np;
+            int offsetC = batchIndex * mp;
+
             int rowA = offsetA + i * n;
             int rowC = offsetC + i * p;
 

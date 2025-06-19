@@ -97,50 +97,51 @@ public class CpuTensor extends TensorImplBase {
     public Tensor matmul(Tensor other) {
         if (matmulProvider == null) {
             throw new IllegalStateException(
-                    "Matmul provider is not initialized. Make sure to call Brain4J.initialize(DeviceType) first."
+                "Matmul provider is not initialized. Make sure to call Brain4J.initialize() first."
             );
         }
 
-        if (shape.length < 2 || other.shape().length < 2) {
+        int[] shapeA = this.shape;
+        int[] shapeB = other.shape();
+
+        if (shapeA.length < 2 || shapeB.length < 2) {
             throw new IllegalArgumentException("Matrix multiplication requires at least 2D tensors!");
         }
 
-        if (shape.length != other.shape().length) {
-            throw new IllegalArgumentException(
-                    "Dimensions do not match: " + shape.length + " != " + other.shape().length
-            );
-        }
+        int rankA = shapeA.length;
+        int rankB = shapeB.length;
 
-        for (int i = 0; i < shape.length - 2; i++) {
-            if (shape[i] != other.shape()[i]) {
-                throw new IllegalArgumentException(
-                        "Batch dimensions do not match at index " + i + ": " + shape[i] + " != " + other.shape()[i]
-                );
-            }
-        }
+        int m = shapeA[rankA - 2];
+        int n = shapeA[rankA - 1];
 
-        int dims = shape.length;
-
-        int m = shape[dims - 2];
-        int n = shape[dims - 1];
-
-        int k = other.shape()[dims - 2];
-        int p = other.shape()[dims - 1];
+        int k = shapeB[rankB - 2];
+        int p = shapeB[rankB - 1];
 
         if (n != k) {
             throw new IllegalArgumentException("Inner dimensions must match: " + n + " != " + k);
         }
 
-        int[] resultShape = new int[dims];
+        int maxBatchDims = Math.max(rankA, rankB) - 2;
+        int[] batchShape = new int[maxBatchDims];
 
-        int batch = 1;
-        for (int i = 0; i < dims - 2; i++) {
-            resultShape[i] = shape[i];
-            batch *= shape[i];
+        for (int i = 0; i < maxBatchDims; i++) {
+            int dimA = (i < rankA - 2) ? shapeA[i + rankA - 2 - maxBatchDims] : 1;
+            int dimB = (i < rankB - 2) ? shapeB[i + rankB - 2 - maxBatchDims] : 1;
+
+            if (dimA != dimB && dimA != 1 && dimB != 1) {
+                throw new IllegalArgumentException(
+                    "Cannot broadcast batch dimensions: " + dimA + " vs " + dimB + " at batch dim index " + i
+                );
+            }
+
+            batchShape[i] = Math.max(dimA, dimB);
         }
 
-        resultShape[dims - 2] = m;
-        resultShape[dims - 1] = p;
+        int[] resultShape = new int[batchShape.length + 2];
+
+        System.arraycopy(batchShape, 0, resultShape, 0, batchShape.length);
+        resultShape[resultShape.length - 2] = m;
+        resultShape[resultShape.length - 1] = p;
 
         Tensor result = new CpuTensor(resultShape);
 
@@ -148,7 +149,26 @@ public class CpuTensor extends TensorImplBase {
         float[] B = other.data();
         float[] C = result.data();
 
-        matmulProvider.multiply(batch, m, n, p, A, B, C, pool);
+        int batchA = 1;
+
+        for (int i = 0; i < rankA - 2; i++) {
+            batchA *= shapeA[i];
+        }
+
+        int batchB = 1;
+
+        for (int i = 0; i < rankB - 2; i++) {
+            batchB *= shapeB[i];
+        }
+
+        int batchCount = 1;
+
+        for (int d : batchShape) {
+            batchCount *= d;
+        }
+
+        matmulProvider.multiply(pool, batchCount, m, n, p, A, B, C, batchA, batchB);
+
         return result;
     }
 }

@@ -5,6 +5,10 @@ import java.util.concurrent.ForkJoinPool;
 public interface MatmulProvider {
 
     void multiply(
-            int batch, int m, int n, int p, float[] A, float[] B, float[] C, ForkJoinPool pool
+        ForkJoinPool pool,
+        int batch,
+        int m, int n, int p,
+        float[] A, float[] B, float[] C,
+        int batchA, int batchB
     );
 }
