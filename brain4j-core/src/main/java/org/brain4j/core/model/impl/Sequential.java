@@ -112,40 +112,42 @@ public class Sequential extends Layer implements Model {
         });
     }
 
-    protected Thread makeEvaluation(Pair<Tensor[], Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
-        return Thread.startVirtualThread(() -> {
-            Tensor[] inputs = batch.first(); // [batch_size, input_size]
-            Tensor expected = batch.second(); // [batch_size, output_size]
+    protected void makeEvaluation(
+        Pair<Tensor[], Tensor> batch,
+        Map<Integer, Tensor> classifications,
+        AtomicReference<Double> totalLoss
+    ) {
+        Tensor[] inputs = batch.first(); // [batch_size, input_size]
+        Tensor expected = batch.second(); // [batch_size, output_size]
 
-            Tensor prediction = predict(inputs); // [batch_size, output_size]
+        Tensor prediction = predict(inputs).cpu(); // [batch_size, output_size]
 
-            for (Tensor input : inputs) {
-                int batchSize = input.shape()[0];
+        for (Tensor input : inputs) {
+            int batchSize = input.shape()[0];
 
-                for (int i = 0; i < batchSize; i++) {
-                    Range range = new Range(i, i + 1);
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
 
-                    Tensor output = prediction.slice(range).vector();
-                    Tensor target = expected.slice(range).vector();
+                Tensor output = prediction.slice(range).vector();
+                Tensor target = expected.slice(range).vector();
 
-                    int predIndex = output.argmax();
-                    int targetIndex = target.argmax();
+                int predIndex = output.argmax();
+                int targetIndex = target.argmax();
 
-                    if (output.elements() == 1) {
-                        predIndex = output.get(0) > 0.5 ? 1 : 0;
-                        targetIndex = (int) target.get(0);
-                    }
-
-                    double loss = lossFunction.calculate(target, output);
-                    totalLoss.updateAndGet(v -> v + loss);
-
-                    Tensor predictions = classifications.get(targetIndex);
-                    int pred = (int) predictions.get(predIndex);
-
-                    predictions.set(pred + 1, predIndex);
+                if (output.elements() == 1) {
+                    predIndex = output.get(0) > 0.5 ? 1 : 0;
+                    targetIndex = (int) target.get(0);
                 }
+
+                double loss = lossFunction.calculate(target, output);
+                totalLoss.updateAndGet(v -> v + loss);
+
+                Tensor predictions = classifications.get(targetIndex);
+                int pred = (int) predictions.get(predIndex);
+
+                predictions.set(pred + 1, predIndex);
             }
-        });
+        }
     }
 
     protected Thread predictPartition(Pair<Tensor[], Tensor> partition, AtomicReference<Double> totalError) {
@@ -269,7 +271,8 @@ public class Sequential extends Layer implements Model {
 
     @Override
     public Tensor predict(Tensor... inputs) {
-        return predict(new StatesCache(), inputs);
+        boolean isOnGpu = deviceType == DeviceType.GPU;
+        return predict(new StatesCache(isOnGpu), inputs);
     }
 
     @Override
@@ -308,7 +311,7 @@ public class Sequential extends Layer implements Model {
         int count = flattened.size() - 1;
 
         Layer last = flattened.getLast();
-        last.computeLoss(updater, cache, targets, outputs, lossFunction, count);
+        last.computeLoss(cache, targets, outputs, lossFunction);
 
         for (int l = count; l >= 0; l--) {
             Layer layer = flattened.get(l);
@@ -335,17 +338,10 @@ public class Sequential extends Layer implements Model {
             classifications.put(i, Tensors.zeros(classes));
         }
 
-        List<Thread> threads = new ArrayList<>();
         AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
 
-        dataSource.reset();
-
-        while (dataSource.hasNext()) {
-            Pair<Tensor[], Tensor> partition = dataSource.nextBatch();
-            threads.add(makeEvaluation(partition, classifications, totalLoss));
-        }
-
-        Commons.waitAll(threads);
+        Pair<Tensor[], Tensor> all = dataSource.allData();
+        makeEvaluation(all, classifications, totalLoss);
 
         return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
     }
@@ -466,7 +462,7 @@ public class Sequential extends Layer implements Model {
                     ? "[" + neurons + "]"
                     : Arrays.toString(weightsTensor.shape());
 
-            builder.append(pattern.formatted(i, layerType, formatWeights, shape, layer.activation().getName()));
+            builder.append(pattern.formatted(i, layerType, formatWeights, shape, layer.activation().name()));
 
             totalWeights.addAndGet(weights);
             totalBiases.addAndGet(neurons);

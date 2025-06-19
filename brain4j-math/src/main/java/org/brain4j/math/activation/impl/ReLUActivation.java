@@ -4,7 +4,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weights.WeightInitialization;
 import org.brain4j.math.weights.impl.NormalHeInit;
 
-public class ReLUActivation implements Activation {
+public class ReLUActivation extends Activation {
 
     @Override
     public WeightInitialization defaultWeightInit() {
@@ -17,7 +17,12 @@ public class ReLUActivation implements Activation {
     }
 
     @Override
-    public double getDerivative(double input) {
+    public double derivative(double input) {
         return input > 0 ? 1 : 0;
+    }
+
+    @Override
+    public String kernelPrefix() {
+        return "relu";
     }
 }

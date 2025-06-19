@@ -11,10 +11,8 @@ import org.brain4j.math.tensor.Tensors;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -125,7 +123,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * Creates a ListDataSource from a {@link Dataset} object with a custom parser.
      * 
      * @param dataset the dataset to load data from
-     * @param parser a function that converts a line of data to a Sample
+     * @param splitter a function that converts a line of data to a Sample
      * @param shuffle whether to shuffle the data
      * @param batchSize the size of each batch
      * @param fileFormat the format of files to use (e.g., "csv", "json")
@@ -263,6 +261,10 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         return new Pair<>(input, label);
     }
 
+    public Pair<Tensor[], Tensor> allData() {
+        return createBatch(0, size());
+    }
+
     /**
      * Computes batched inputs and labels by partitioning the samples list according
      * to the batch size. Merges tensors within each batch for efficient processing.
@@ -274,40 +276,46 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
         while (index < size) {
             int end = Math.min(index + batchSize, size);
-            List<Sample> subSet = samples.subList(index, end);
+            Pair<Tensor[], Tensor> batch = createBatch(index, end);
 
-            int inputCount = subSet.getFirst().inputs().length;
-            List<List<Tensor>> mergedInputs = new ArrayList<>(inputCount);
-
-            for (int i = 0; i < inputCount; i++) {
-                mergedInputs.add(new ArrayList<>());
-            }
-
-            List<Tensor> mergedLabels = new ArrayList<>();
-
-            for (Sample sample : subSet) {
-                Tensor[] inputs = sample.inputs();
-
-                for (int i = 0; i < inputs.length; i++) {
-                    mergedInputs.get(i).add(inputs[i]);
-                }
-
-                mergedLabels.add(sample.label());
-            }
-
-            Tensor[] batchedInputTensors = new Tensor[inputCount];
-
-            for (int i = 0; i < inputCount; i++) {
-                batchedInputTensors[i] = Tensors.mergeTensors(mergedInputs.get(i)).to(deviceType);
-            }
-
-            Tensor batchedLabelTensor = Tensors.mergeTensors(mergedLabels).to(deviceType);
-
-            batchedInputs.add(batchedInputTensors);
-            batchedLabels.add(batchedLabelTensor);
+            batchedInputs.add(batch.first());
+            batchedLabels.add(batch.second());
 
             index += batchSize;
         }
+    }
+
+    private Pair<Tensor[], Tensor> createBatch(int start, int end) {
+        List<Sample> subSet = samples.subList(start, end);
+
+        int inputCount = subSet.getFirst().inputs().length;
+        List<List<Tensor>> mergedInputs = new ArrayList<>(inputCount);
+
+        for (int i = 0; i < inputCount; i++) {
+            mergedInputs.add(new ArrayList<>());
+        }
+
+        List<Tensor> mergedLabels = new ArrayList<>();
+
+        for (Sample sample : subSet) {
+            Tensor[] inputs = sample.inputs();
+
+            for (int i = 0; i < inputs.length; i++) {
+                mergedInputs.get(i).add(inputs[i]);
+            }
+
+            mergedLabels.add(sample.label());
+        }
+
+        Tensor[] batchedInputTensors = new Tensor[inputCount];
+
+        for (int i = 0; i < inputCount; i++) {
+            batchedInputTensors[i] = Tensors.mergeTensors(mergedInputs.get(i)).to(deviceType);
+        }
+
+        Tensor batchedLabelTensor = Tensors.mergeTensors(mergedLabels).to(deviceType);
+
+        return new Pair<>(batchedInputTensors, batchedLabelTensor);
     }
 
     @Override

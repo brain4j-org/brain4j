@@ -2,7 +2,6 @@ package org.brain4j.core.layer.impl;
 
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.impl.convolutional.ConvLayer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.tensor.Tensor;
@@ -12,7 +11,7 @@ public class ActivationLayer extends Layer {
     private int dimension;
 
     public ActivationLayer(Activations activation) {
-        this.activation = activation.getFunction();
+        this.activation = activation.function();
     }
 
     @Override

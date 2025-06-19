@@ -46,7 +46,7 @@ public class DenseLayer extends Layer {
      */
     public DenseLayer(int dimension, Activations activation) {
         this.dimension = dimension;
-        this.activation = activation.getFunction();
+        this.activation = activation.function();
     }
 
     @Override

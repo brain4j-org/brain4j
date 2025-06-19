@@ -4,9 +4,17 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weights.WeightInitialization;
 import org.brain4j.math.weights.impl.NormalHeInit;
 
-public class ELUActivation implements Activation {
+public class ELUActivation extends Activation {
 
-    private final double alpha = 1.0;
+    private final double alpha;
+
+    public ELUActivation() {
+        this(1.0);
+    }
+
+    public ELUActivation(double alpha) {
+        this.alpha = alpha;
+    }
 
     @Override
     public WeightInitialization defaultWeightInit() {
@@ -23,11 +31,16 @@ public class ELUActivation implements Activation {
     }
 
     @Override
-    public double getDerivative(double input) {
+    public double derivative(double input) {
         if (input > 0) {
             return 1;
         } else {
             return alpha * Math.exp(input);
         }
+    }
+
+    @Override
+    public String kernelPrefix() {
+        return "elu";
     }
 }

@@ -1,6 +1,7 @@
 package org.brain4j.math.tensor.impl;
 
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.Activations;
 import org.brain4j.math.device.Device;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.device.DeviceUtils;
@@ -90,7 +91,6 @@ public class GpuTensor extends TensorImplBase {
 
         this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, dataSize, null, null);
 
-        // cl_command_queue queue = device.newCommandQueue();
         cl_command_queue queue = OpenCLContext.currentQueue();
         clEnqueueCopyBuffer(
                 queue,
@@ -104,19 +104,35 @@ public class GpuTensor extends TensorImplBase {
                 null
         );
 
-        // clFinish(queue);
-        // clReleaseCommandQueue(queue);
-
         this.cleanable = CLEANER.register(this, new CollectableState(dataBuffer, shapeBuffer, stridesBuffer));
     }
 
+    public cl_mem dataBuffer() {
+        return dataBuffer;
+    }
+
+    public cl_mem stridesBuffer() {
+        return stridesBuffer;
+    }
+
+    public cl_mem shapeBuffer() {
+        return shapeBuffer;
+    }
+
+    public int size() {
+        return size;
+    }
+
     public static void initKernels(cl_context context) {
+        String activationsSource = DeviceUtils.readKernelSource("/kernels/basic/activations.cl");
         String tensorOpsSource = DeviceUtils.readKernelSource("/kernels/basic/tensor_ops.cl");
         String elementaryOpsSource = DeviceUtils.readKernelSource("/kernels/basic/elementary_ops.cl");
 
+        cl_program activationsProgram = clCreateProgramWithSource(context, 1, new String[]{activationsSource}, null, null);
         cl_program tensorOpsProgram = clCreateProgramWithSource(context, 1, new String[]{tensorOpsSource}, null, null);
         cl_program elementaryOpsProgram = clCreateProgramWithSource(context, 1, new String[]{elementaryOpsSource}, null, null);
 
+        clBuildProgram(activationsProgram, 0, null, null, null, null);
         clBuildProgram(tensorOpsProgram, 0, null, null, null, null);
         clBuildProgram(elementaryOpsProgram, 0, null, null, null, null);
 
@@ -137,6 +153,10 @@ public class GpuTensor extends TensorImplBase {
         divScalarKernel = clCreateKernel(elementaryOpsProgram, "div_scalar", null);
         powScalarKernel = clCreateKernel(elementaryOpsProgram, "pow_scalar", null);
         sqrtKernel = clCreateKernel(elementaryOpsProgram, "sqrt", null);
+
+        for (Activations activation : Activations.values()) {
+            activation.function().initKernels(activationsProgram);
+        }
     }
 
     private long roundUp(int groupSize, int globalSize) {
@@ -217,7 +237,7 @@ public class GpuTensor extends TensorImplBase {
         if (usesGrad()) {
             result.setAutogradContext(autogradContext);
         }
-        
+
         int inRowStride = strides[0];
         int inColStride = strides[1];
         int outRowStride = result.strides[0];

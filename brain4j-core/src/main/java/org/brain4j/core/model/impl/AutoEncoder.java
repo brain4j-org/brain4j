@@ -7,6 +7,7 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.index.Range;
 
@@ -39,48 +40,35 @@ public class AutoEncoder extends Sequential {
     public EvaluationResult evaluate(ListDataSource dataSource) {
         int classes = dataSource.samples().getFirst().label().elements();
 
-        // Binary classification
-        if (classes == 1) {
-            classes = 2;
-        }
-
-        List<Thread> threads = new ArrayList<>();
         AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
 
-        dataSource.reset();
-
-        while (dataSource.hasNext()) {
-            Pair<Tensor[], Tensor> partition = dataSource.nextBatch();
-            threads.add(makeEvaluation(partition, null, totalLoss));
-        }
-
-        Commons.waitAll(threads);
+        Pair<Tensor[], Tensor> data = dataSource.allData();
+        makeEvaluation(data, null, totalLoss);
 
         return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, new HashMap<>());
     }
 
     @Override
-    public Thread makeEvaluation(Pair<Tensor[], Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
-        return Thread.startVirtualThread(() -> {
-            Tensor[] inputs = batch.first(); // [batch_size, input_size]
-            Tensor expected = batch.second(); // [batch_size, output_size]
+    public void makeEvaluation(Pair<Tensor[], Tensor> batch, Map<Integer, Tensor> classifications, AtomicReference<Double> totalLoss) {
+        Tensor[] inputs = batch.first(); // [batch_size, input_size]
+        Tensor expected = batch.second(); // [batch_size, output_size]
 
-            Tensor prediction = predict(new StatesCache(), true, inputs); // [batch_size, output_size]
+        boolean isOnGpu = deviceType == DeviceType.GPU;
+        Tensor prediction = predict(new StatesCache(isOnGpu), true, inputs).cpu(); // [batch_size, output_size]
 
-            for (Tensor input : inputs) {
-                int batchSize = input.shape()[0];
+        for (Tensor input : inputs) {
+            int batchSize = input.shape()[0];
 
-                for (int i = 0; i < batchSize; i++) {
-                    Range range = new Range(i, i + 1);
+            for (int i = 0; i < batchSize; i++) {
+                Range range = new Range(i, i + 1);
 
-                    Tensor output = prediction.slice(range).vector();
-                    Tensor target = expected.slice(range).vector();
+                Tensor output = prediction.slice(range).vector();
+                Tensor target = expected.slice(range).vector();
 
-                    double loss = lossFunction().calculate(target, output);
-                    totalLoss.updateAndGet(v -> v + loss);
-                }
+                double loss = lossFunction().calculate(target, output);
+                totalLoss.updateAndGet(v -> v + loss);
             }
-        });
+        }
     }
 
     @Override

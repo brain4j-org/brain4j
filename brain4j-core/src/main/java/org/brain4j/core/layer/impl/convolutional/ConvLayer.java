@@ -18,7 +18,7 @@ public class ConvLayer extends Layer {
     private int padding = 0;
 
     public ConvLayer(Activations activation, int filters, int kernelWidth, int kernelHeight) {
-        this.activation = activation.getFunction();
+        this.activation = activation.function();
         this.filters = filters;
         this.kernelWidth = kernelWidth;
         this.kernelHeight = kernelHeight;

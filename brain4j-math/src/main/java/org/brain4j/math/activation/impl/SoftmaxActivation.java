@@ -5,7 +5,7 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.weights.WeightInitialization;
 import org.brain4j.math.weights.impl.UniformXavierInit;
 
-public class SoftmaxActivation implements Activation {
+public class SoftmaxActivation extends Activation {
 
     private final double temperature;
 
@@ -33,7 +33,12 @@ public class SoftmaxActivation implements Activation {
     }
 
     @Override
-    public double getDerivative(double input) {
+    public double derivative(double input) {
         return input * (1.0 - input);
+    }
+
+    @Override
+    public String kernelPrefix() {
+        return "softmax";
     }
 }

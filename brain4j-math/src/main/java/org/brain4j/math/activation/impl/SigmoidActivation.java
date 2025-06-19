@@ -4,7 +4,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weights.WeightInitialization;
 import org.brain4j.math.weights.impl.UniformXavierInit;
 
-public class SigmoidActivation implements Activation {
+public class SigmoidActivation extends Activation {
 
     @Override
     public WeightInitialization defaultWeightInit() {
@@ -17,7 +17,13 @@ public class SigmoidActivation implements Activation {
     }
 
     @Override
-    public double getDerivative(double input) {
-        return input * (1 - input);
+    public double derivative(double input) {
+        double activated = activate(input);
+        return activated * (1 - activated);
+    }
+
+    @Override
+    public String kernelPrefix() {
+        return "sigmoid";
     }
 }

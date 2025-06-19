@@ -3,10 +3,12 @@ package org.brain4j.math.activation.impl;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weights.WeightInitialization;
 import org.brain4j.math.weights.impl.NormalXavierInit;
+import org.jocl.cl_program;
 
 import static org.brain4j.math.constants.Constants.PI;
+import static org.jocl.CL.clCreateKernel;
 
-public class GELUActivation implements Activation {
+public class GELUActivation extends Activation {
 
     @Override
     public WeightInitialization defaultWeightInit() {
@@ -19,8 +21,13 @@ public class GELUActivation implements Activation {
     }
 
     @Override
-    public double getDerivative(double input) {
+    public double derivative(double input) {
         double tanhTerm = Math.tanh(Math.sqrt(2 / PI) * (input + 0.044715 * Math.pow(input, 3)));
         return 0.5 * (1 + tanhTerm) + 0.5 * input * (1 - Math.pow(tanhTerm, 2)) * Math.sqrt(2 / PI) * (1 + 3 * 0.044715 * Math.pow(input, 2));
+    }
+
+    @Override
+    public String kernelPrefix() {
+        return "gelu";
     }
 }

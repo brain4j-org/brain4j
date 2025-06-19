@@ -33,7 +33,7 @@ public class RecurrentLayer extends Layer {
     public RecurrentLayer(int dimension, int hiddenDimension, Activations activation) {
         this.dimension = dimension;
         this.hiddenDimension = hiddenDimension;
-        this.activation = activation.getFunction();
+        this.activation = activation.function();
         this.weightInit = this.activation.defaultWeightInit();
     }
 

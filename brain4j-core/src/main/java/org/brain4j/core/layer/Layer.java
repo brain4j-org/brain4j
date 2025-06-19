@@ -79,27 +79,23 @@ public abstract class Layer {
      * Computes the loss (the gradient) with respect to the loss function and launches the autograd.
      * This method should only be called for the last layer of the neural network.
      *
-     * @param updater the updater of this model
      * @param cache the state cache of this inference
      * @param targets the target tensor
      * @param outputs the output tensor
      * @param lossFunction the loss function of this model
-     * @param index the index of this layer
      */
     public void computeLoss(
-        Updater updater,
         StatesCache cache,
         Tensor targets,
         Tensor outputs,
-        LossFunction lossFunction,
-        int index
+        LossFunction lossFunction
     ) {
-        Tensor error = outputs.minus(targets);
-        Tensor derivatives = activation.getDerivative(outputs);
-
-        Tensor delta = lossFunction.getDelta(error, derivatives);
         Tensor output = cache.preActivation(this);
 
+        Tensor error = outputs.minus(targets);
+        Tensor derivatives = activation.derivative(output);
+
+        Tensor delta = lossFunction.getDelta(error, derivatives);
         output.backward(delta);
     }
 

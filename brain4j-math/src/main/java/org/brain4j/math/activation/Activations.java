@@ -109,7 +109,7 @@ public enum Activations {
      * Returns the activation function associated with the type.
      * @return The activation function.
      */
-    public Activation getFunction() {
+    public Activation function() {
         return function;
     }
 }
