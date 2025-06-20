@@ -75,22 +75,14 @@ public class TransformerEncoder extends Layer {
 
         if (input.dimension() != 3) {
             throw new IllegalArgumentException(
-                    "Input must have shape [batch_size, seq_len_dimension], got: " + Arrays.toString(input.shape())
+                    "Input must have shape [batch_size, seq_len, dimension], got: " + Arrays.toString(input.shape())
             );
         }
-
-        int[] shape = input.shape();
 
         int index = context.index();
         boolean training = context.training();
 
-        int batchSize = shape[0];
-        int seqLength = shape[1];
-        int dimension = shape[2];
-
         StatesCache cache = context.cache();
-        Tensor result = Tensors.zeros(batchSize, seqLength, dimension);
-
         Tensor attended = attention.attend(cache, input);
 
         if (training) {
@@ -110,7 +102,6 @@ public class TransformerEncoder extends Layer {
         added = normalized.addGrad(downProjected);
         normalized = normalizer.forward(new ForwardContext(cache, added, index, training));
 
-        System.out.println(Arrays.toString(normalized.shape()));
         return normalized;
     }
 

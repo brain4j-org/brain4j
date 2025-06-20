@@ -7,10 +7,15 @@ import java.util.List;
 import java.util.Map;
 
 public interface Tokenizer {
-    List<String> tokenize(String input);
+    
+    default Tensor encode(String input) {
+        return encodeTokens(splitTokens(input));
+    }
+    
+    List<String> splitTokens(String input);
 
-    Tensor encode(List<String> tokens);
-
+    Tensor encodeTokens(List<String> tokens);
+    
     String decode(int index);
 
     Map<String, Integer> vocab();

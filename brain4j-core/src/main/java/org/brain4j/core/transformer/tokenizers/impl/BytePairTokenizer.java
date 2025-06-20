@@ -35,7 +35,7 @@ public class BytePairTokenizer implements Tokenizer {
     }
 
     @Override
-    public List<String> tokenize(String input) {
+    public List<String> splitTokens(String input) {
         List<String> output = new ArrayList<>();
 
         for (String word : input.split("\\s+")) {
@@ -60,7 +60,7 @@ public class BytePairTokenizer implements Tokenizer {
     }
 
     @Override
-    public Tensor encode(List<String> tokens) {
+    public Tensor encodeTokens(List<String> tokens) {
         Tensor result = Tensors.zeros(tokens.size());
 
         for (int i = 0; i < tokens.size(); i++) {
