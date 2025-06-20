@@ -1,6 +1,6 @@
 package org.brain4j.math.tensor;
 
-import org.brain4j.math.tensor.impl.CpuTensor;
+import org.brain4j.math.tensor.impl.cpu.CpuTensor;
 
 import java.util.Arrays;
 import java.util.List;

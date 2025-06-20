@@ -1,10 +1,15 @@
 package org.brain4j.core;
 
 import ch.qos.logback.classic.Level;
+import org.brain4j.core.activation.Activations;
+import org.brain4j.math.activation.Activation;
 import org.brain4j.math.device.Device;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.device.DeviceUtils;
-import org.brain4j.math.tensor.impl.CpuTensor;
+import org.brain4j.math.kernel.GpuKernelCache;
+import org.brain4j.math.tensor.impl.cpu.CpuTensor;
+import org.jocl.cl_context;
+import org.jocl.cl_program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,11 +67,32 @@ public class Brain4J {
     }
 
     public static void useDevice(DeviceType deviceType, String deviceName) {
-        useDevice(DeviceUtils.findDevice(deviceType, deviceName));
+        Device device = DeviceUtils.findDevice(deviceType, deviceName);
+
+        if (device == null) {
+            throw new IllegalArgumentException("No such device: " + deviceName);
+        }
+
+        useDevice(device);
     }
 
     public static void useDevice(Device device) {
         DeviceUtils.setCurrentDevice(device);
+
+        cl_context context = device.context();
+        cl_program activationsProgram = DeviceUtils.createBuildProgram(context, "/kernels/basic/activations.cl");
+        cl_program gradientClipProgram = DeviceUtils.createBuildProgram(context, "/kernels/basic/gradient_clippers.cl");
+
+        for (Activations activation : Activations.values()) {
+            Activation function = activation.function();
+            String prefix = function.kernelPrefix();
+
+            GpuKernelCache.register(prefix + "_forward", activationsProgram);
+            GpuKernelCache.register(prefix + "_backward", activationsProgram);
+        }
+
+        GpuKernelCache.register("hard_clip", gradientClipProgram);
+        GpuKernelCache.register("l2_clip", gradientClipProgram);
     }
 
     public static Device currentDevice() {

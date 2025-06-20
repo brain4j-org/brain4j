@@ -1,6 +1,6 @@
 package org.brain4j.math.device;
 
-import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.tensor.impl.gpu.GpuTensor;
 import org.jocl.*;
 
 import java.io.IOException;
@@ -53,9 +53,9 @@ public class DeviceUtils {
         return null;
     }
 
-    public static void setCurrentDevice(Device value) {
-        currentDevice = value;
-        GpuTensor.initKernels(value.context());
+    public static void setCurrentDevice(Device device) {
+        currentDevice = device;
+        GpuTensor.initKernels(device.context());
     }
 
     public static String deviceName(cl_device_id device) {
@@ -114,5 +114,14 @@ public class DeviceUtils {
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read kernel source from: " + resourcePath, e);
         }
+    }
+
+    public static cl_program createBuildProgram(cl_context context, String path) {
+        String source = readKernelSource(path);
+
+        cl_program program = clCreateProgramWithSource(context, 1, new String[]{source}, null, null);
+        clBuildProgram(program, 0, null, null, null, null);
+
+        return program;
     }
 }

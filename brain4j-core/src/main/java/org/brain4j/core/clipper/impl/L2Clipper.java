@@ -2,6 +2,8 @@ package org.brain4j.core.clipper.impl;
 
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.cpu.CpuTensor;
+import org.brain4j.math.tensor.impl.gpu.GpuTensor;
 
 public class L2Clipper implements GradientClipper {
 
@@ -10,12 +12,27 @@ public class L2Clipper implements GradientClipper {
     public L2Clipper(double scale) { this.scale = scale; }
 
     @Override
-    public void clip(Tensor grad) {
+    public void clipCpu(CpuTensor grad) {
         double threshold = scale * Math.sqrt(grad.elements());
-        clipL2(grad, threshold);
+        double norm = sumOfSquares(grad);
+
+        if (norm > threshold) {
+            double scaleFactor = threshold / norm;
+            grad.mul(scaleFactor);
+        }
     }
 
-    public double l2Norm(Tensor input) {
+    @Override
+    public void clipGpu(GpuTensor grad) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String kernelName() {
+        return "l2_clip";
+    }
+
+    public double sumOfSquares(Tensor input) {
         double sumOfSquares = 0.0;
 
         for (int i = 0; i < input.elements(); i++) {
@@ -23,14 +40,5 @@ public class L2Clipper implements GradientClipper {
         }
 
         return Math.sqrt(sumOfSquares);
-    }
-
-    public void clipL2(Tensor input, double threshold) {
-        double norm = l2Norm(input);
-
-        if (norm > threshold) {
-            double scaleFactor = threshold / norm;
-            input.mul(scaleFactor);
-        }
     }
 }

@@ -9,11 +9,9 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.MultiHeadAttention;
-import org.brain4j.math.activation.Activations;
+import org.brain4j.core.activation.Activations;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.index.Range;
 
 import java.util.Arrays;
 import java.util.Random;

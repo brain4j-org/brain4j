@@ -15,7 +15,7 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.gpu.OpenCLContext;
+import org.brain4j.math.tensor.impl.gpu.OpenCLContext;
 import org.brain4j.math.tensor.index.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -6,12 +6,9 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.head.AttentionHead;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.autograd.operations.ConcatOperation;
-import org.brain4j.math.weights.WeightInitialization;
+import org.brain4j.math.weightsinit.WeightInitialization;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 

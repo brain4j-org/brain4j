@@ -7,8 +7,7 @@ import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.gpu.OpenCLContext;
-import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.tensor.impl.gpu.OpenCLContext;
 
 import java.util.function.BiConsumer;
 

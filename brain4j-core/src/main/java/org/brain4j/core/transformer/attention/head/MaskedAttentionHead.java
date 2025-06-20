@@ -1,6 +1,6 @@
 package org.brain4j.core.transformer.attention.head;
 
-import org.brain4j.math.activation.impl.SoftmaxActivation;
+import org.brain4j.core.activation.impl.SoftmaxActivation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 

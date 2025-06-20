@@ -6,8 +6,8 @@ import org.brain4j.math.lang.DoubleToDoubleFunction;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.operations.*;
-import org.brain4j.math.tensor.impl.CpuTensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.tensor.impl.cpu.CpuTensor;
+import org.brain4j.math.tensor.impl.gpu.GpuTensor;
 import org.brain4j.math.tensor.index.Range;
 
 import java.util.function.Supplier;
