@@ -86,7 +86,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
     /**
      * Creates a ListDataSource from a {@link Dataset} object.
-     * 
+     *
      * @param dataset the dataset to load data from
      * @param inputFeatures a function that converts a line of data to input features tensor
      * @param outputLabels a function that converts a line of data to output labels tensor
@@ -233,18 +233,6 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         return this;
     }
 
-
-    /**
-     * Performs the specified task on every batch sequentially.
-     * @param task a Consumer that accepts a pair of input and label tensors representing a batch
-     */
-    public void accept(BiConsumer<Pair<Tensor[], Tensor>, Integer> task) {
-        reset();
-
-        while (hasNext()) {
-            task.accept(nextBatch(), cursor);
-        }
-    }
     /**
      * Retrieves the next batch of data (input and label tensors) and advances the cursor.
      * @return a Pair containing input tensor and label tensor for the next batch,
@@ -261,6 +249,10 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         return new Pair<>(input, label);
     }
 
+    /**
+     * Compacts all input and label tensors into a single one for efficient processing.
+     * @return a pair containing all the inputs and the labels
+     */
     public Pair<Tensor[], Tensor> allData() {
         return createBatch(0, size());
     }
