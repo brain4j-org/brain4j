@@ -25,9 +25,9 @@ public class AdamW extends Adam {
     }
 
     @Override
-    public Tensor step(Layer layer, Tensor gradient) {
-        Tensor adamValue = super.step(layer, gradient);
-        Tensor weightDecayTerm = layer.weights().times(weightDecay);
+    public Tensor step(Tensor weights, Tensor gradient) {
+        Tensor adamValue = super.step(weights, gradient);
+        Tensor weightDecayTerm = weights.times(weightDecay);
 
         return adamValue.add(weightDecayTerm);
     }

@@ -7,7 +7,7 @@ public class NormalUpdater extends Updater {
 
     @Override
     public void postFit(Model model, double learningRate, int samples) {
-        updateWeights(model, learningRate, samples);
+        updateWeights(learningRate, samples);
         resetGradients(model);
     }
 }

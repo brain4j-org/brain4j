@@ -14,8 +14,8 @@ import java.util.Map;
 public class Adam extends Optimizer {
 
     // Momentum vectors
-    protected Map<Layer, Tensor> firstMomentum;
-    protected Map<Layer, Tensor> secondMomentum;
+    protected Map<Tensor, Tensor> firstMomentum;
+    protected Map<Tensor, Tensor> secondMomentum;
 
     protected double beta1Timestep;
     protected double beta2Timestep;
@@ -46,9 +46,9 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public Tensor step(Layer layer, Tensor gradient) {
-        Tensor first = firstMomentum.get(layer);
-        Tensor second = secondMomentum.get(layer);
+    public Tensor step(Tensor weights, Tensor gradient) {
+        Tensor first = firstMomentum.get(weights);
+        Tensor second = secondMomentum.get(weights);
 
         if (first == null || second == null) {
             DeviceType device = gradient instanceof GpuTensor ? DeviceType.GPU : DeviceType.CPU;
@@ -61,8 +61,8 @@ public class Adam extends Optimizer {
         first.mul(beta1).add(gradient.times(1 - beta1));
         second.mul(beta2).add(gradSquared.mul(1 - beta2));
 
-        firstMomentum.put(layer, first);
-        secondMomentum.put(layer, second);
+        firstMomentum.put(weights, first);
+        secondMomentum.put(weights, second);
 
         double biasCorrection1 = 1 - beta1Timestep;
         double biasCorrection2 = 1 - beta2Timestep;

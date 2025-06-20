@@ -7,7 +7,7 @@ public class StochasticUpdater extends Updater {
 
     @Override
     public void postBatch(Model model, double learningRate, int samples) {
-        updateWeights(model, learningRate, samples);
+        updateWeights(learningRate, samples);
         resetGradients(model);
     }
 }

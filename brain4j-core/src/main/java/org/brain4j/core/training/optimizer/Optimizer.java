@@ -23,7 +23,7 @@ public abstract class Optimizer {
         this.learningRate = learningRate;
     }
 
-    public abstract Tensor step(Layer layer, Tensor gradient);
+    public abstract Tensor step(Tensor weights, Tensor gradient);
 
     public void initialize(Model model) {
         // No-op

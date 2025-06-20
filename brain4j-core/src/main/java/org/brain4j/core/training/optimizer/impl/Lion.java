@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class Lion extends Optimizer {
 
-    private Map<Layer, Tensor> momentumHistory;
+    private Map<Tensor, Tensor> momentumHistory;
     private double beta;
 
     public Lion(double learningRate, double beta) {
@@ -20,18 +20,18 @@ public class Lion extends Optimizer {
     }
 
     @Override
-    public Tensor step(Layer layer, Tensor gradient) {
+    public Tensor step(Tensor weights, Tensor gradient) {
         float factor = (float) (1 - beta);
 
         Tensor signGrad = gradient.sign().mul(factor);
-        Tensor momentum = momentumHistory.get(layer);
+        Tensor momentum = momentumHistory.get(weights);
 
         if (momentum == null) {
             momentum = Tensors.zeros(gradient.shape());
         }
 
         momentum.mul(beta).add(signGrad);
-        momentumHistory.put(layer, momentum);
+        momentumHistory.put(weights, momentum);
 
         return momentum.sign();
     }

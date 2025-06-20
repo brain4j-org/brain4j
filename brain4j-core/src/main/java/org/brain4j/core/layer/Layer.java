@@ -111,12 +111,13 @@ public abstract class Layer {
         Tensor weightsGrad = weights.grad();
         Tensor biasGrad = bias.grad().sum(0, false);
 
-        weightsGrad = optimizer.step(this, weightsGrad);
+        weightsGrad = optimizer.step(weights, weightsGrad);
 
         clipper.clip(weightsGrad);
         clipper.clip(biasGrad);
 
-        updater.change(weightsGrad, biasGrad, this);
+        updater.change(weights, weightsGrad);
+        updater.change(bias, biasGrad);
     }
 
     /**

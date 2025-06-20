@@ -1,13 +1,12 @@
 package org.brain4j.core.training.updater;
 
-import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,49 +16,31 @@ import java.util.Map;
  */
 public abstract class Updater {
 
-    protected Map<Layer, Tensor> weightsGradients;
-    protected Map<Layer, Tensor> biasesGradients;
+    protected Map<Tensor, Tensor> weightsGradients = new HashMap<>();
 
-    protected void updateWeights(Model model, double learningRate, int samples) {
-        model.updateWeights(layer -> {
-            Tensor gradW = weightsGradients.get(layer);
-            Tensor biasW = biasesGradients.get(layer);
+    protected void updateWeights(double learningRate, int samples) {
+        for (Map.Entry<Tensor, Tensor> entry : weightsGradients.entrySet()) {
+            Tensor weights = entry.getKey();
+            Tensor gradient = entry.getValue();
 
-            Tensor weights = layer.weights();
-            Tensor biases = layer.bias();
+            if (gradient != null && weights != null) {
+                weights.sub(gradient.div(samples).mul(learningRate));
+            }
+        }
+    }
 
-            if (gradW != null && weights != null) {
-                weights.sub(gradW.div(samples).mul(learningRate));
+    public void change(Tensor weights, Tensor gradient) {
+        weightsGradients.compute(weights, (w, g) -> {
+            if (g == null) {
+                return gradient.clone();
             }
 
-            if (biasW != null && biases != null) {
-                biases.sub(biasW.div(samples).mul(learningRate));
-            }
+            return g.add(gradient);
         });
     }
 
-    public void change(Tensor weightChange, Tensor biasChange, Layer layer) {
-        Tensor gradW = weightsGradients.get(layer);
-        Tensor biasW = biasesGradients.get(layer);
-
-        if (weightChange != null) {
-            if (gradW == null) gradW = weightChange;
-            else gradW = gradW.add(weightChange);
-        }
-
-        if (biasChange != null) {
-            if (biasW == null) biasW = biasChange;
-            else biasW = biasW.add(biasChange);
-        }
-
-        weightsGradients.put(layer, gradW);
-        biasesGradients.put(layer, biasW);
-    }
-
     public void resetGradients(Model model) {
-        this.weightsGradients = new HashMap<>();
-        this.biasesGradients = new HashMap<>();
-
+        this.weightsGradients.clear();
         model.zeroGrad();
     }
 

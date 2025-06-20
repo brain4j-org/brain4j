@@ -91,9 +91,12 @@ public class AttentionHead {
         Tensor keyGrad = keyWeights.grad();
         Tensor valueGrad = valueWeights.grad();
 
-        // TODO: Gradient optimization & update scheduling
-        queryWeights.sub(queryGrad);
-        keyWeights.sub(keyGrad);
-        valueWeights.sub(valueGrad);
+        Tensor optimizedQuery = optimizer.step(queryWeights, queryGrad);
+        Tensor optimizedKey = optimizer.step(keyWeights, keyGrad);
+        Tensor optimizedValue = optimizer.step(valueWeights, valueGrad);
+
+        updater.change(queryWeights, optimizedQuery);
+        updater.change(keyWeights, optimizedKey);
+        updater.change(valueWeights, optimizedValue);
     }
 }
