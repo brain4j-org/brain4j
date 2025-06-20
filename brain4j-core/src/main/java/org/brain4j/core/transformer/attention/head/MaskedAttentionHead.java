@@ -21,7 +21,9 @@ public class MaskedAttentionHead extends AttentionHead {
 
         // [seq_length, seq_length]
         Tensor scores = Q.matmulGrad(K.transpose()).div(normalizer);
-        Tensor mask = Tensors.triangularMask(scores.shape()[scores.dimension() - 1]).withGrad();
+        int[] shape = scores.shape();
+
+        Tensor mask = Tensors.triangularMask(shape[shape.length - 1]);
 
         Tensor maskedScores = scores.addGrad(mask);
         Tensor attentionWeights = maskedScores.activateGrad(new SoftmaxActivation());

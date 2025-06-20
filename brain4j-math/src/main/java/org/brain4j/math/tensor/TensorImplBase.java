@@ -858,8 +858,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor addGrad(Tensor other) {
-        if (!usesGrad() || !other.usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+        if (!usesGrad() && !other.usesGrad()) {
+            throw new IllegalArgumentException("At least one of the two tensors should be used with backflow!");
         }
 
         return forward(new AddOperation(), other);
@@ -867,8 +867,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor mulGrad(Tensor other) {
-        if (!usesGrad() || !other.usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+        if (!usesGrad() && !other.usesGrad()) {
+            throw new IllegalArgumentException("At least one of the two tensors should be used with backflow!");
         }
 
         return forward(new MulOperation(), other);
@@ -876,8 +876,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor divGrad(Tensor other) {
-        if (!usesGrad() || !other.usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+        if (!usesGrad() && !other.usesGrad()) {
+            throw new IllegalArgumentException("At least one of the two tensors should be used with backflow!");
         }
 
         return forward(new DivOperation(), other);
@@ -885,8 +885,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor subGrad(Tensor other) {
-        if (!usesGrad() || !other.usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+        if (!usesGrad() && !other.usesGrad()) {
+            throw new IllegalArgumentException("At least one of the two tensors should be used with backflow!");
         }
 
         return forward(new SubOperation(), other);
@@ -894,8 +894,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor matmulGrad(Tensor other) {
-        if (!usesGrad() || !other.usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+        if (!usesGrad() && !other.usesGrad()) {
+            throw new IllegalArgumentException("At least one of the two tensors should be used with backflow!");
         }
 
         return forward(new MatMulOperation(), other);
@@ -912,8 +912,8 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor concatGrad(Tensor other) {
-        if (!usesGrad() || !other.usesGrad()) {
-            throw new IllegalArgumentException("Both tensors should be used with backflow!");
+        if (!usesGrad() && !other.usesGrad()) {
+            throw new IllegalArgumentException("At least one of the two tensors should be used with backflow!");
         }
 
         return forward(new ConcatOperation(), other);
