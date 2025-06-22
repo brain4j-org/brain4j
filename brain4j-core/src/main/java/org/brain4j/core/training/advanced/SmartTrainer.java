@@ -33,58 +33,63 @@ public class SmartTrainer {
     public void abort() {
         this.running = false;
     }
-
-    public void start(Model model, ListDataSource dataSource, double lossThreshold) {
-        this.start = System.nanoTime();
-        this.running = true;
-        this.epoches = 0;
-
-        this.listeners.forEach(listener -> listener.register(this, model));
-
-        while (running && evaluation.loss() > lossThreshold) {
-            iterate(model, dataSource, Integer.MAX_VALUE);
-        }
-
-        this.running = false;
-        this.end = System.nanoTime();
-    }
-
+    
     public void step(Model model, ListDataSource dataSource, int totalEpoches) {
         long start = System.nanoTime();
         this.listeners.forEach(listener -> listener.onEpochStarted(epoches, totalEpoches, start));
-
+        
         model.fit(dataSource);
-
+        
         long took = System.nanoTime() - start;
         this.listeners.forEach(listener -> listener.onEpochCompleted(epoches, totalEpoches, took));
     }
-
-    public void startFor(Model model, ListDataSource dataSource, int epochesAmount) {
+    
+    private void setupPreTraining(Model model, ListDataSource trainSource, ListDataSource evalSource) {
+        if (trainSource == null || evalSource == null) {
+            throw new IllegalArgumentException("Training source and evaluation source are required and cannot be null!");
+        }
+        
         this.start = System.nanoTime();
         this.running = true;
         this.epoches = 0;
-
+        
+        this.evaluation = model.evaluate(evalSource);
         this.listeners.forEach(listener -> listener.register(this, model));
+    }
+    
+    public void start(Model model, ListDataSource trainSource, ListDataSource evalSource, double lossThreshold) {
+        setupPreTraining(model, trainSource, evalSource);
+        
+        while (running && evaluation.loss() > lossThreshold) {
+            iterate(model, trainSource, evalSource, Integer.MAX_VALUE);
+        }
 
+        this.running = false;
+        this.end = System.nanoTime();
+    }
+    
+    public void startFor(Model model, ListDataSource trainSource, ListDataSource evalSource, int epochesAmount) {
+        setupPreTraining(model, trainSource, evalSource);
+        
         for (int i = 0; i < epochesAmount && running; i++) {
-            iterate(model, dataSource, epochesAmount);
+            iterate(model, trainSource, evalSource, epochesAmount);
         }
 
         this.running = false;
         this.end = System.nanoTime();
     }
 
-    private void iterate(Model model, ListDataSource dataSource, int totalEpoches) {
-        step(model, dataSource, totalEpoches);
+    private void iterate(Model model, ListDataSource trainSource, ListDataSource evalSource, int totalEpoches) {
+        step(model, trainSource, totalEpoches);
 
         this.epoches++;
 
         if (epoches % evaluateEvery == 0) {
             long start = System.nanoTime();
-            EvaluationResult result = model.evaluate(dataSource);
+            this.evaluation = model.evaluate(evalSource);
             long took = System.nanoTime() - start;
 
-            this.listeners.forEach(listener -> listener.onEvaluated(dataSource, result, epoches, took));
+            this.listeners.forEach(listener -> listener.onEvaluated(evalSource, evaluation, epoches, took));
         }
     }
 

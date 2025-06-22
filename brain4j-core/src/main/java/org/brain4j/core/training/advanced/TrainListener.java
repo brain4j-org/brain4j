@@ -27,10 +27,29 @@ public class TrainListener {
      */
     public void onEpochStarted(int epoch, int totalEpoches, long start) {
     }
-
+    
+    /**
+     * Called after an evaluation has completed.
+     * @param dataSource the data source where the evaluation has been done
+     * @param evaluation the evaluation result
+     * @param epoch the current epoch
+     * @param took how many nanoseconds it took to evaluate
+     */
     public void onEvaluated(ListDataSource dataSource, EvaluationResult evaluation, int epoch, long took) {
     }
-
+    
+    /**
+     * Called when the loss gets increased
+     * @param loss the current loss
+     * @param previousLoss the previous loss
+     */
     public void onLossIncreased(double loss, double previousLoss) {
+    }
+    
+    /**
+     * Aborts the training session, delegates to {@link SmartTrainer#abort()}
+     */
+    public void abort() {
+        trainer.abort();
     }
 }
