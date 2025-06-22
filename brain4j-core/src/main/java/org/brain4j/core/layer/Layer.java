@@ -90,13 +90,13 @@ public abstract class Layer {
         Tensor outputs,
         LossFunction lossFunction
     ) {
-        Tensor output = cache.preActivation(this);
+        Tensor preOutput = cache.preActivation(this);
 
         Tensor error = outputs.minus(targets);
-        Tensor derivatives = activation.derivative(output);
+        Tensor derivatives = activation.derivative(preOutput);
 
         Tensor delta = lossFunction.getDelta(error, derivatives);
-        output.backward(delta);
+        preOutput.backward(delta);
     }
 
     /**

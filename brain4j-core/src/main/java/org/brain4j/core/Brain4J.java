@@ -6,15 +6,12 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.device.Device;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.device.DeviceUtils;
-import org.brain4j.math.kernel.GpuKernelCache;
+import org.brain4j.math.kernel.GpuContextHandler;
 import org.brain4j.math.tensor.impl.cpu.CpuTensor;
 import org.jocl.cl_context;
 import org.jocl.cl_program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Entry point for the Brain4J machine learning framework.
@@ -40,26 +37,34 @@ import java.nio.charset.StandardCharsets;
 public class Brain4J {
 
     private static final Logger logger = LoggerFactory.getLogger(Brain4J.class);
+    private static boolean logging;
 
     public static String version() {
         return "3.0";
     }
 
+    public static boolean logging() {
+        return logging;
+    }
+
     public static void disableLogging() {
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.OFF);
+        logging = false;
     }
 
     public static void enableLogging() {
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.DEBUG);
+        logging = true;
     }
 
     public static void initialize() {
         CpuTensor.initialize();
+
+        logging = true;
+
         logger.info("Brain4J v{} initialized.", version());
-        logger.info("Available devices: {}", availableDevices());
-        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     }
 
     public static String availableDevices() {
@@ -87,15 +92,19 @@ public class Brain4J {
             Activation function = activation.function();
             String prefix = function.kernelPrefix();
 
-            GpuKernelCache.register(prefix + "_forward", activationsProgram);
-            GpuKernelCache.register(prefix + "_backward", activationsProgram);
+            GpuContextHandler.register(prefix + "_forward", activationsProgram);
+            GpuContextHandler.register(prefix + "_backward", activationsProgram);
         }
 
-        GpuKernelCache.register("hard_clip", gradientClipProgram);
-        GpuKernelCache.register("l2_clip", gradientClipProgram);
+        GpuContextHandler.register("hard_clip", gradientClipProgram);
+        GpuContextHandler.register("l2_clip", gradientClipProgram);
     }
 
     public static Device currentDevice() {
         return DeviceUtils.currentDevice();
+    }
+
+    public static Device findDevice(String deviceName) {
+        return DeviceUtils.findDevice(DeviceType.GPU, deviceName);
     }
 }

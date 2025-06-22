@@ -44,6 +44,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     protected final int batchSize;
     protected final int batches;
 
+    protected Pair<Tensor[], Tensor> cachedDataset;
     protected DeviceType deviceType = DeviceType.CPU;
     protected int cursor;
 
@@ -254,7 +255,11 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      * @return a pair containing all the inputs and the labels
      */
     public Pair<Tensor[], Tensor> allData() {
-        return createBatch(0, size());
+        if (cachedDataset == null) {
+            cachedDataset = createBatch(0, size());
+        }
+
+        return cachedDataset;
     }
 
     /**

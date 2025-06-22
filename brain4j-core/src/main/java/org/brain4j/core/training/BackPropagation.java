@@ -6,8 +6,8 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
+import org.brain4j.math.kernel.GpuContextHandler;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.gpu.OpenCLContext;
 
 import java.util.function.BiConsumer;
 
@@ -50,7 +50,7 @@ public class BackPropagation {
         updater.postBatch(model, optimizer.learningRate(), elements);
 
         if (isOnGpu) {
-            OpenCLContext.closeQueue();
+            GpuContextHandler.closeQueue();
         }
 
         double took = (System.nanoTime() - start) / 1e6;

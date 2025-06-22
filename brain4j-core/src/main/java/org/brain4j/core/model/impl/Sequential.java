@@ -1,5 +1,6 @@
 package org.brain4j.core.model.impl;
 
+import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
@@ -13,16 +14,15 @@ import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
+import org.brain4j.math.kernel.GpuContextHandler;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.impl.gpu.OpenCLContext;
 import org.brain4j.math.tensor.index.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -171,6 +171,10 @@ public class Sequential extends Layer implements Model {
     }
 
     protected Tensor validateInputs(Tensor... inputs) {
+        if (inputs.length > 1 || inputs.length == 0) {
+            throw new IllegalArgumentException("Input array must contain one element. Got: " + inputs.length);
+        }
+
         Tensor input = inputs[0];
 
         if (input == null || input.dimension() == 0) {
@@ -261,7 +265,9 @@ public class Sequential extends Layer implements Model {
                 totalForBatch.set(totalForBatch.get() + took);
                 double average = totalForBatch.get() / batch;
 
-                printProgress(train, finalEpoch, epoches, batch, average);
+                if (Brain4J.logging()) {
+                    printProgress(train, finalEpoch, epoches, batch, average);
+                }
             });
 
             if (epoch % evaluateEvery == 0) {
@@ -288,7 +294,7 @@ public class Sequential extends Layer implements Model {
         Tensor result = input.to(deviceType).withGrad();
 
         if (deviceType == DeviceType.GPU) {
-            OpenCLContext.updateQueue(cache.commandQueue());
+            GpuContextHandler.updateQueue(cache.commandQueue());
         }
 
         for (int i = 0; i < flattened.size(); i++) {
@@ -302,7 +308,7 @@ public class Sequential extends Layer implements Model {
         }
 
         if (!training && deviceType == DeviceType.GPU) {
-            OpenCLContext.closeQueue();
+            GpuContextHandler.closeQueue();
         }
 
         return result;
@@ -334,7 +340,7 @@ public class Sequential extends Layer implements Model {
     @Override
     public EvaluationResult evaluate(ListDataSource dataSource) {
         int classes = Math.max(2, dataSource.samples().getFirst().label().elements());
-        Map<Integer, Tensor> classifications = new ConcurrentHashMap<>();
+        Map<Integer, Tensor> classifications = new HashMap<>();
 
         for (int i = 0; i < classes; i++) {
             classifications.put(i, Tensors.zeros(classes));

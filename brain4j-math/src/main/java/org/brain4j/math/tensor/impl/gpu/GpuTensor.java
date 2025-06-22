@@ -4,6 +4,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.device.Device;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.device.DeviceUtils;
+import org.brain4j.math.kernel.GpuContextHandler;
 import org.brain4j.math.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.TensorImplBase;
@@ -89,7 +90,7 @@ public class GpuTensor extends TensorImplBase {
 
         this.dataBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, dataSize, null, null);
 
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
         clEnqueueCopyBuffer(
                 queue,
                 otherBuffer,
@@ -151,7 +152,7 @@ public class GpuTensor extends TensorImplBase {
     }
 
     private Tensor launchScalarKernel(cl_kernel kernel, float value) {
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
 
         KernelFactory
             .create(kernel)
@@ -173,7 +174,7 @@ public class GpuTensor extends TensorImplBase {
         int broadcastDim = (Arrays.equals(shape, B.shape)) ? -1 : shape[1];
         int batch = (broadcastDim == -1) ? 0 : shape[0];
 
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
 
         KernelFactory
             .create(kernel)
@@ -227,7 +228,7 @@ public class GpuTensor extends TensorImplBase {
         int outRowStride = result.strides[0];
         int outColStride = result.strides[1];
 
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
 
         KernelFactory
             .create(transposeKernel)
@@ -291,7 +292,7 @@ public class GpuTensor extends TensorImplBase {
 
     @Override
     public Tensor sqrt() {
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
 
         KernelFactory
             .create(sqrtKernel)
@@ -328,7 +329,7 @@ public class GpuTensor extends TensorImplBase {
         int[] outShape = new int[]{ M, P };
         GpuTensor result = new GpuTensor(outShape);
 
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
 
         int TILE_SIZE = 16;
 
@@ -363,7 +364,7 @@ public class GpuTensor extends TensorImplBase {
         int innerSize = 1;
         for (int i = dim + 1; i < shape.length; i++) innerSize *= shape[i];
 
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
         GpuTensor result = new GpuTensor(newShape);
 
         KernelFactory
@@ -388,7 +389,7 @@ public class GpuTensor extends TensorImplBase {
             featuresSize = shape[1];
         }
 
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
 
         KernelFactory
             .create(layerNormKernel)
@@ -438,7 +439,7 @@ public class GpuTensor extends TensorImplBase {
 
     @Override
     public Tensor softmax(double temperature) {
-        cl_command_queue queue = OpenCLContext.currentQueue();
+        cl_command_queue queue = GpuContextHandler.queue();
 
         GpuTensor result = new GpuTensor(shape);
 

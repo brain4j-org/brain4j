@@ -1,10 +1,9 @@
 package org.brain4j.math.activation;
 
-import org.brain4j.math.kernel.GpuKernelCache;
+import org.brain4j.math.kernel.GpuContextHandler;
 import org.brain4j.math.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.impl.gpu.OpenCLContext;
 import org.brain4j.math.tensor.impl.gpu.GpuTensor;
 import org.brain4j.math.weightsinit.WeightInitialization;
 import org.jocl.cl_command_queue;
@@ -69,8 +68,8 @@ public interface Activation {
         if (input instanceof GpuTensor gpuInput) {
             GpuTensor result = new GpuTensor(gpuInput.shape());
 
-            cl_command_queue queue = OpenCLContext.currentQueue();
-            cl_kernel kernel = GpuKernelCache.kernel(kernelPrefix() + "_forward");
+            cl_command_queue queue = GpuContextHandler.queue();
+            cl_kernel kernel = GpuContextHandler.kernel(kernelPrefix() + "_forward");
 
             KernelFactory factory = createKernel(kernel, gpuInput, result);
             factory.launch(queue, 1, gpuInput.size());
@@ -97,8 +96,8 @@ public interface Activation {
         if (input instanceof GpuTensor gpuInput) {
             GpuTensor result = new GpuTensor(gpuInput.shape());
 
-            cl_command_queue queue = OpenCLContext.currentQueue();
-            cl_kernel kernel = GpuKernelCache.kernel(kernelPrefix() + "_backward");
+            cl_command_queue queue = GpuContextHandler.queue();
+            cl_kernel kernel = GpuContextHandler.kernel(kernelPrefix() + "_backward");
 
             KernelFactory factory = createKernel(kernel, gpuInput, result);
             factory.launch(queue, 1, gpuInput.size());
