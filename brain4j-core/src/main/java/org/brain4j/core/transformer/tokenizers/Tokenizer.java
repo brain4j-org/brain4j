@@ -19,6 +19,8 @@ public interface Tokenizer {
     String decode(int index);
 
     Map<String, Integer> vocab();
+    
+    int vocabSize();
 
     void save(String path) throws IOException;
 

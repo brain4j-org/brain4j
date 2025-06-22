@@ -1,6 +1,5 @@
 package org.brain4j.core.training.optimizer;
 
-import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.optimizer.impl.Adam;
 import org.brain4j.core.training.optimizer.impl.AdamW;

@@ -1,6 +1,5 @@
 package org.brain4j.core.model.impl;
 
-import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.merge.MergeStrategy;
@@ -8,14 +7,8 @@ import org.brain4j.core.model.Model;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.core.training.wrappers.EvaluationResult;
-import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 

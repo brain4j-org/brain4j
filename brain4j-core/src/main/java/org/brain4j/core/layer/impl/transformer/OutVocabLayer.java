@@ -1,9 +1,9 @@
 package org.brain4j.core.layer.impl.transformer;
 
+import org.brain4j.core.activation.impl.SoftmaxActivation;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
-import org.brain4j.core.activation.impl.SoftmaxActivation;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 

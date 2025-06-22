@@ -1,9 +1,9 @@
 package org.brain4j.core.transformer.attention.head;
 
+import org.brain4j.core.activation.impl.SoftmaxActivation;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.core.activation.impl.SoftmaxActivation;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;

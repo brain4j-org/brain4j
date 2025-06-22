@@ -7,6 +7,7 @@ dependencies {
     implementation project(path: ':brain4j-math', configuration: 'shadow')
     implementation project(':brain4j-datasets')
 
+    implementation 'org.jocl:jocl:2.0.5'
     implementation 'com.github.luben:zstd-jni:1.5.7-2'
     implementation 'com.google.code.gson:gson:2.13.1'
 
@@ -20,5 +21,5 @@ shadowJar {
 }
 
 tasks.withType(JavaExec).configureEach {
-    // jvmArgs(['--add-modules', 'jdk.incubator.vector', '-XX:+UseSerialGC'])
+    jvmArgs(['--add-modules', 'jdk.incubator.vector', '-XX:+UseSerialGC'])
 }

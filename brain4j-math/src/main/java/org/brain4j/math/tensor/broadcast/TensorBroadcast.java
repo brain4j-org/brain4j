@@ -3,8 +3,6 @@ package org.brain4j.math.tensor.broadcast;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.broadcast.impl.*;
 
-import java.util.Arrays;
-
 public class TensorBroadcast {
 
     public static Tensor add(Tensor A, Tensor B) {

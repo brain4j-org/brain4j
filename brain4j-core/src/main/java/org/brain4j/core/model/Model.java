@@ -8,9 +8,9 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.wrappers.TrainingParams;
+import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.data.ListDataSource;
 
 import java.util.List;
 import java.util.function.Consumer;

@@ -57,7 +57,7 @@ public class BroadcastAdd implements BroadcastOperation {
 
         int total = A.elements();
 
-        int[] stridesB = computeStrides(shapeB);
+        int[] stridesB = B.strides();
         int[] index = new int[shapeA.length];
 
         for (int i = 0; i < total; i++) {
