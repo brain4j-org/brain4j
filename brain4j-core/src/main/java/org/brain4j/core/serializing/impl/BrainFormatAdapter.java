@@ -25,7 +25,7 @@ public class BrainFormatAdapter implements ModelAdapter {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DataOutputStream dataStream = new DataOutputStream(outputStream);
 
-        dataStream.writeUTF("2.9.0");
+        dataStream.writeUTF("2.9.1");
         dataStream.writeInt(model.getSeed()); // seed
         dataStream.writeUTF(model.getLossFunction().getClass().getName());
         dataStream.writeUTF(model.getWeightInit().getClass().getName());
