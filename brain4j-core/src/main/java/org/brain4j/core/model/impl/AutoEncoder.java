@@ -53,8 +53,7 @@ public class AutoEncoder extends Sequential {
         Tensor[] inputs = batch.first(); // [batch_size, input_size]
         Tensor expected = batch.second(); // [batch_size, output_size]
 
-        boolean isOnGpu = deviceType == DeviceType.GPU;
-        Tensor prediction = predict(new StatesCache(isOnGpu), true, inputs).cpu(); // [batch_size, output_size]
+        Tensor prediction = predict(new StatesCache(deviceType), true, inputs).cpu(); // [batch_size, output_size]
 
         for (Tensor input : inputs) {
             int batchSize = input.shape()[0];

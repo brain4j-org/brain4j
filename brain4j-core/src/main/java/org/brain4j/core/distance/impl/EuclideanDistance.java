@@ -7,9 +7,11 @@ public class EuclideanDistance implements DistanceOperator {
 
     @Override
     public Tensor distance(Tensor a, Tensor b) {
+        // shape = [batch_size, dimension]
         Tensor diff = a.minus(b);
         Tensor sqDiff = diff.pow(2);
 
+        // sums along dimension, result shape = [batch_size, 1]
         Tensor sumSq = sqDiff.sum(1, true);
         return sumSq.sqrt();
     }
