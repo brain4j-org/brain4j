@@ -1,5 +1,6 @@
 package org.brain4j.core.layer.impl.transformer;
 
+import org.brain4j.core.activation.Activations;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.DenseLayer;
@@ -9,7 +10,6 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.MultiHeadAttention;
-import org.brain4j.core.activation.Activations;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 

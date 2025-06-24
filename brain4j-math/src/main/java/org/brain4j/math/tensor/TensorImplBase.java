@@ -130,7 +130,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             sliceCopy(result, ranges, srcIndices, dstIndices, dim + 1);
         }
     }
-
+    
     protected void softmax1D(double temperature, float[] data) {
         double max = Double.NEGATIVE_INFINITY;
 

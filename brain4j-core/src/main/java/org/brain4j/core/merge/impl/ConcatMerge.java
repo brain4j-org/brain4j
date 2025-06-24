@@ -3,8 +3,6 @@ package org.brain4j.core.merge.impl;
 import org.brain4j.core.merge.MergeStrategy;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.Arrays;
-
 public class ConcatMerge implements MergeStrategy {
 
     @Override

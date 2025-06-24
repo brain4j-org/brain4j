@@ -1,7 +1,6 @@
 package org.brain4j.core.clipper.impl;
 
 import org.brain4j.core.clipper.GradientClipper;
-import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.cpu.CpuTensor;
 import org.brain4j.math.tensor.impl.gpu.GpuTensor;
 

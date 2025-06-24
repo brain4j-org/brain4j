@@ -4,8 +4,6 @@ import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.Arrays;
-
 public class FlattenLayer extends Layer {
 
     private int dimension;

@@ -1,8 +1,8 @@
 package org.brain4j.core.activation.impl;
 
+import org.brain4j.core.weightsinit.NormalXavierInit;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weightsinit.WeightInitialization;
-import org.brain4j.core.weightsinit.NormalXavierInit;
 
 public class TanhActivation implements Activation {
 

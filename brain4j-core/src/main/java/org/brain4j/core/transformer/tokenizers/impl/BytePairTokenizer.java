@@ -14,10 +14,11 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
 
 import static org.brain4j.math.constants.Constants.*;
-import static org.brain4j.math.constants.Constants.RESET;
 
 public class BytePairTokenizer implements Tokenizer {
 
@@ -334,7 +335,12 @@ public class BytePairTokenizer implements Tokenizer {
     public Map<String, Integer> vocab() {
         return Collections.unmodifiableMap(vocab);
     }
-
+    
+    @Override
+    public int vocabSize() {
+        return vocab.size();
+    }
+    
     public Map<String, String[]> merges() {
         return Collections.unmodifiableMap(merges);
     }

@@ -2,18 +2,15 @@ package org.brain4j.core.model.impl;
 
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.StatesCache;
-import org.brain4j.math.Commons;
+import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.Pair;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.index.Range;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 

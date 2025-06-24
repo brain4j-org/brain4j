@@ -32,18 +32,6 @@ public interface BroadcastOperation {
         }
     }
 
-    default int[] computeStrides(int[] shape) {
-        int[] strides = new int[shape.length];
-        int stride = 1;
-
-        for (int i = shape.length - 1; i >= 0; i--) {
-            strides[i] = stride;
-            stride *= shape[i];
-        }
-
-        return strides;
-    }
-
     default int[] broadcastShape(int[] a, int[] b) {
         int len = Math.max(a.length, b.length);
         int[] result = new int[len];

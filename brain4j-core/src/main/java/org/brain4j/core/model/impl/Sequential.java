@@ -271,7 +271,10 @@ public class Sequential extends Layer implements Model {
             });
 
             if (epoch % evaluateEvery == 0) {
-                System.out.println();
+                if (Brain4J.logging()) {
+                    System.out.println();
+                }
+                
                 printEvaluation(epoch, epoches, validation);
             }
         }

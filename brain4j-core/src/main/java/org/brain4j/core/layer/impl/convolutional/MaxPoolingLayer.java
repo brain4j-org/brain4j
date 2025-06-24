@@ -5,8 +5,6 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.Tensors;
 
-import java.util.Arrays;
-
 public class MaxPoolingLayer extends Layer {
 
     private int kernelWidth;
