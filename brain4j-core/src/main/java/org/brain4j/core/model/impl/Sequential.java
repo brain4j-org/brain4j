@@ -628,13 +628,13 @@ public class Sequential extends Layer implements Model {
     
     public static class Builder {
         
-        private final List<Layer> layers;
+        protected final List<Layer> layers;
         
-        private Updater updater;
-        private Optimizer optimizer;
-        private LossFunction lossFunction;
+        protected Updater updater;
+        protected Optimizer optimizer;
+        protected LossFunction lossFunction;
         
-        private Builder() {
+        protected Builder() {
             this.layers = new ArrayList<>();
             this.updater = new StochasticUpdater();
         }

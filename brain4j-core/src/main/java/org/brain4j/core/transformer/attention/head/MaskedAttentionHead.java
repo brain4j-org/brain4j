@@ -12,10 +12,10 @@ public class MaskedAttentionHead extends AttentionHead {
 
     @Override
     public Tensor attend(Tensor input) {
-        // input = [seq_length, embedding_dim]
-        Tensor Q = input.matmulGrad(queryWeights); // [seq_length, head_dimension]
-        Tensor K = input.matmulGrad(keyWeights); // [seq_length, head_dimension]
-        Tensor V = input.matmulGrad(valueWeights); // [seq_length, head_dimension]
+        // input = [batch_size, seq_length, embedding_dim]
+        Tensor Q = input.matmulGrad(queryWeights); // [batch_size, seq_length, head_dimension]
+        Tensor K = input.matmulGrad(keyWeights); // [batch_size, seq_length, head_dimension]
+        Tensor V = input.matmulGrad(valueWeights); // [batch_size, seq_length, head_dimension]
 
         double normalizer = Math.sqrt(headDimension);
 

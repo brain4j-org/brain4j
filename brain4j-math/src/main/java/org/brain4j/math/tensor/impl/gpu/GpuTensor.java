@@ -153,6 +153,12 @@ public class GpuTensor extends TensorImplBase {
 
     private Tensor launchScalarKernel(cl_kernel kernel, float value) {
         cl_command_queue queue = GpuContextHandler.queue();
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
 
         KernelFactory
             .create(kernel)
@@ -160,6 +166,10 @@ public class GpuTensor extends TensorImplBase {
             .addFloatParam(value)
             .addIntParam(size)
             .launch(queue, 1, size);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return this;
     }
@@ -175,6 +185,12 @@ public class GpuTensor extends TensorImplBase {
         int batch = (broadcastDim == -1) ? 0 : shape[0];
 
         cl_command_queue queue = GpuContextHandler.queue();
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
 
         KernelFactory
             .create(kernel)
@@ -184,6 +200,10 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(broadcastDim)
             .addIntParam(batch)
             .launch(queue, 1, size);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return this;
     }
@@ -229,6 +249,12 @@ public class GpuTensor extends TensorImplBase {
         int outColStride = result.strides[1];
 
         cl_command_queue queue = GpuContextHandler.queue();
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
 
         KernelFactory
             .create(transposeKernel)
@@ -241,6 +267,10 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(outRowStride)
             .addIntParam(outColStride)
             .launch(queue, 2, rows, cols);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return result;
     }
@@ -293,12 +323,22 @@ public class GpuTensor extends TensorImplBase {
     @Override
     public Tensor sqrt() {
         cl_command_queue queue = GpuContextHandler.queue();
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
 
         KernelFactory
             .create(sqrtKernel)
             .addMemParam(dataBuffer)
             .addIntParam(size)
             .launch(queue, 1, size);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return this;
     }
@@ -330,6 +370,12 @@ public class GpuTensor extends TensorImplBase {
         GpuTensor result = new GpuTensor(outShape);
 
         cl_command_queue queue = GpuContextHandler.queue();
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
 
         int TILE_SIZE = 16;
 
@@ -345,6 +391,10 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(K)
             .addIntParam(P)
             .launch(queue, 2, globalWorkSize, localWorkSize);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return result;
     }
@@ -367,6 +417,13 @@ public class GpuTensor extends TensorImplBase {
         cl_command_queue queue = GpuContextHandler.queue();
         GpuTensor result = new GpuTensor(newShape);
 
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
+
         KernelFactory
             .create(sumAlongDimKernel)
             .addMemParam(dataBuffer)
@@ -375,6 +432,10 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(outerSize)
             .addIntParam(innerSize)
             .launch(queue, 2, outerSize, innerSize);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return result;
     }
@@ -390,6 +451,12 @@ public class GpuTensor extends TensorImplBase {
         }
 
         cl_command_queue queue = GpuContextHandler.queue();
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
 
         KernelFactory
             .create(layerNormKernel)
@@ -398,6 +465,10 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(featuresSize)
             .addFloatParam((float) epsilon)
             .launch(queue, 1, batchSize);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return this;
     }
@@ -440,6 +511,12 @@ public class GpuTensor extends TensorImplBase {
     @Override
     public Tensor softmax(double temperature) {
         cl_command_queue queue = GpuContextHandler.queue();
+        boolean shouldClose = false;
+
+        if (queue == null) {
+            queue = DeviceUtils.currentDevice().newCommandQueue();
+            shouldClose = true;
+        }
 
         GpuTensor result = new GpuTensor(shape);
 
@@ -453,6 +530,10 @@ public class GpuTensor extends TensorImplBase {
             .addIntParam(lastDim)
             .addFloatParam((float) temperature)
             .launch(queue, 1, rows);
+
+        if (shouldClose) {
+            GpuContextHandler.closeQueue(queue);
+        }
 
         return result;
     }

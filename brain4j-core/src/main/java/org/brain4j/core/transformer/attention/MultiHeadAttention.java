@@ -6,6 +6,7 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.head.AttentionHead;
 import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.Tensors;
 import org.brain4j.math.weightsinit.WeightInitialization;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.Random;
 
 public class MultiHeadAttention {
 
+    protected final Tensor outProjWeights;
     protected final List<AttentionHead> heads;
     protected final int headCount;
     protected final int embeddingDim;
@@ -30,6 +32,7 @@ public class MultiHeadAttention {
 
         this.headDimension = embeddingDim / headCount;
         this.heads = new ArrayList<>();
+        this.outProjWeights = Tensors.matrix(embeddingDim, embeddingDim);
 
         initializeHeads();
     }
@@ -48,6 +51,8 @@ public class MultiHeadAttention {
         for (AttentionHead head : heads) {
             head.initWeights(generator, weightInit);
         }
+
+        this.outProjWeights.map(x -> weightInit.generate(generator, embeddingDim, embeddingDim));
     }
 
     public Tensor attend(StatesCache cache, Tensor input) {
@@ -63,7 +68,7 @@ public class MultiHeadAttention {
             result = result.concatGrad(outputs[i]);
         }
 
-        return result;
+        return result.matmulGrad(outProjWeights);
     }
 
     protected void initializeHeads() {

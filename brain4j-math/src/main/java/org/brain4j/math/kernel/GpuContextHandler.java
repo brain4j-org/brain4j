@@ -35,6 +35,11 @@ public class GpuContextHandler {
         return queue.get();
     }
 
+    public static void closeQueue(cl_command_queue queue) {
+        clFinish(queue);
+        clReleaseCommandQueue(queue);
+    }
+
     public static void closeQueue() {
         cl_command_queue queue = GpuContextHandler.queue.get();
         clFinish(queue);
