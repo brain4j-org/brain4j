@@ -9,6 +9,7 @@ import org.brain4j.core.training.BackPropagation;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
+import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.Commons;
 import org.brain4j.math.Pair;
@@ -361,33 +362,19 @@ public class Sequential extends Layer implements Model {
     public double loss(ListDataSource dataSource) {
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
         List<Thread> threads = new ArrayList<>();
-
+        
         dataSource.reset();
-
+        
         while (dataSource.hasNext()) {
             Pair<Tensor[], Tensor> partition = dataSource.nextBatch();
             threads.add(predictPartition(partition, totalError));
         }
-
+        
         Commons.waitAll(threads);
-
+        
         return totalError.get() / dataSource.size();
     }
-
-    @Override
-    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        this.optimizer = optimizer;
-        this.updater = updater;
-        this.lossFunction = lossFunction;
-        this.backPropagation = new BackPropagation(this, optimizer, updater);
-
-        this.updater.resetGradients(this);
-        this.optimizer.initialize(this);
-
-        connectLayers();
-        return this;
-    }
-
+    
     @Override
     public Model to(DeviceType deviceType) {
         switch (deviceType) {
@@ -401,6 +388,20 @@ public class Sequential extends Layer implements Model {
             default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
         }
 
+        return this;
+    }
+    
+    @Override
+    public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
+        this.optimizer = optimizer;
+        this.updater = updater;
+        this.lossFunction = lossFunction;
+        this.backPropagation = new BackPropagation(this, optimizer, updater);
+        
+        this.updater.resetGradients(this);
+        this.optimizer.initialize(this);
+        
+        connectLayers();
         return this;
     }
 
@@ -618,5 +619,69 @@ public class Sequential extends Layer implements Model {
                 return flattenedAt(currentIndex++);
             }
         };
+    }
+    
+    public static Sequential.Builder builder() {
+        return new Sequential.Builder();
+    }
+    
+    public static class Builder {
+        
+        private final List<Layer> layers;
+        
+        private Updater updater;
+        private Optimizer optimizer;
+        private LossFunction lossFunction;
+        
+        private Builder() {
+            this.layers = new ArrayList<>();
+            this.updater = new StochasticUpdater();
+        }
+        
+        public Builder add(Layer layer)  {
+            if (layer == null) {
+                throw new NullPointerException("Layer cannot be null!");
+            }
+            
+            this.layers.add(layer);
+            return this;
+        }
+        
+        public Builder optimizer(Optimizer optimizer) {
+            if (updater == null) {
+                throw new NullPointerException("Optimizer cannot be null!");
+            }
+            
+            this.optimizer = optimizer;
+            return this;
+        }
+        
+        public Builder updater(Updater updater) {
+            if (updater == null) {
+                throw new NullPointerException("Updater cannot be null!");
+            }
+            
+            this.updater = updater;
+            return this;
+        }
+        
+        public Builder lossFunction(LossFunction lossFunction) {
+            if (updater == null) {
+                throw new NullPointerException("Loss function cannot be null!");
+            }
+            
+            this.lossFunction = lossFunction;
+            return this;
+        }
+        
+        public Sequential compile() {
+            Sequential model = new Sequential(layers.toArray(new Layer[0]));
+            
+            if (optimizer == null || lossFunction == null) {
+                throw new IllegalStateException("Optimizer and loss function are both null! Initialize them first.");
+            }
+            
+            return (Sequential) model.compile(lossFunction, optimizer, updater);
+        }
     }
 }
