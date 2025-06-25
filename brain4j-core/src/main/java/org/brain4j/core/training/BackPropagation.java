@@ -25,17 +25,17 @@ public class BackPropagation {
     }
 
     public void propagatePartition(
-        Pair<Tensor[], Tensor> partition,
+        Pair<Tensor[], Tensor> batch,
         BiConsumer<Integer, Double> postBatchCallback,
         int index
     ) {
-        Tensor[] inputs = partition.first();
-        Tensor labels = partition.second();
-
-        boolean isOnGpu = model.deviceType() == DeviceType.GPU;
-        StatesCache cache = new StatesCache(isOnGpu);
+        DeviceType device = model.deviceType();
+        StatesCache cache = new StatesCache(device);
 
         long start = System.nanoTime();
+
+        Tensor[] inputs = batch.first();
+        Tensor labels = batch.second();
 
         Tensor output = model.predict(cache, true, inputs);
         model.backpropagate(cache, output, labels);
@@ -43,13 +43,13 @@ public class BackPropagation {
         int elements = 1;
 
         for (Tensor input : inputs) {
-            elements *= input.shape()[0];
+            elements *= input.shape()[0]; // first element is ALWAYS the batch size
         }
 
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
 
-        if (isOnGpu) {
+        if (device == DeviceType.GPU) {
             GpuContextHandler.closeQueue();
         }
 
@@ -61,10 +61,24 @@ public class BackPropagation {
         dataSource.reset();
 
         while (dataSource.hasNext()) {
-            Pair<Tensor[], Tensor> batch = dataSource.nextBatch();
+            Pair<Tensor[], Tensor> batch = hostTo(dataSource.nextBatch());
             propagatePartition(batch, postBatchCallback, dataSource.cursor());
         }
 
         updater.postFit(model, optimizer.learningRate(), dataSource.size());
+    }
+
+    private Pair<Tensor[], Tensor> hostTo(Pair<Tensor[], Tensor> partition) {
+        DeviceType device = model.deviceType();
+
+        Tensor[] inputs = partition.first();
+        Tensor labels = partition.second().to(device);
+
+        for (int i = 0; i < inputs.length; i++) {
+            Tensor input = inputs[i];
+            inputs[i] = input.to(device);
+        }
+
+        return new Pair<>(inputs, labels);
     }
 }

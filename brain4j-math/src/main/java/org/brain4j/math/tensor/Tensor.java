@@ -72,6 +72,14 @@ public interface Tensor extends Iterable<Float> {
     Tensor to(DeviceType deviceType);
 
     /**
+     * Gets the device type where this tensor is hosted on.
+     * @return {@link DeviceType#GPU} if this is a {@link GpuTensor}, {@link DeviceType#CPU} otherwise
+     */
+    default DeviceType deviceType() {
+        return this instanceof GpuTensor ? DeviceType.GPU : DeviceType.CPU;
+    }
+
+    /**
      * Moves this tensor to the GPU. This is analogous to calling to(DeviceType.GPU).
      * @return the GPU tensor
      */

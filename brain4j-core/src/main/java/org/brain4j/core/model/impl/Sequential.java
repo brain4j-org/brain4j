@@ -283,8 +283,7 @@ public class Sequential extends Layer implements Model {
 
     @Override
     public Tensor predict(Tensor... inputs) {
-        boolean isOnGpu = deviceType == DeviceType.GPU;
-        return predict(new StatesCache(isOnGpu), inputs);
+        return predict(new StatesCache(deviceType), inputs);
     }
 
     @Override

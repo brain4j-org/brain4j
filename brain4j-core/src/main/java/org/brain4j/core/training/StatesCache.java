@@ -3,6 +3,7 @@ package org.brain4j.core.training;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.device.Device;
+import org.brain4j.math.device.DeviceType;
 import org.brain4j.math.tensor.Tensor;
 import org.jocl.cl_command_queue;
 
@@ -16,16 +17,16 @@ public class StatesCache {
     private cl_command_queue commandQueue;
 
     public StatesCache() {
-        this(false);
+        this(DeviceType.CPU);
     }
 
-    public StatesCache(boolean isOnGpu) {
+    public StatesCache(DeviceType deviceType) {
         this.preActivations = new HashMap<>();
         this.hiddenStates = new HashMap<>();
 
         Device device = Brain4J.currentDevice();
 
-        if (device != null && isOnGpu) {
+        if (device != null && deviceType == DeviceType.GPU) {
             this.commandQueue = device.newCommandQueue();
         }
     }
