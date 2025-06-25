@@ -1,8 +1,10 @@
 package org.brain4j.core.model.impl;
 
 import org.brain4j.core.Brain4J;
+import org.brain4j.core.activation.Activations;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.BackPropagation;
@@ -620,7 +622,7 @@ public class Sequential extends Layer implements Model {
         };
     }
     
-    public static Sequential.Builder builder() {
+    public static Sequential.Builder newBuilder() {
         return new Sequential.Builder();
     }
     
@@ -637,6 +639,10 @@ public class Sequential extends Layer implements Model {
             this.updater = new StochasticUpdater();
         }
         
+        public Builder addDense(int dimension, Activations activation) {
+            return add(new DenseLayer(dimension, activation));
+        }
+        
         public Builder add(Layer layer)  {
             if (layer == null) {
                 throw new NullPointerException("Layer cannot be null!");
@@ -646,7 +652,7 @@ public class Sequential extends Layer implements Model {
             return this;
         }
         
-        public Builder optimizer(Optimizer optimizer) {
+        public Builder setOptimizer(Optimizer optimizer) {
             if (updater == null) {
                 throw new NullPointerException("Optimizer cannot be null!");
             }
@@ -655,7 +661,7 @@ public class Sequential extends Layer implements Model {
             return this;
         }
         
-        public Builder updater(Updater updater) {
+        public Builder setUpdater(Updater updater) {
             if (updater == null) {
                 throw new NullPointerException("Updater cannot be null!");
             }
@@ -664,7 +670,7 @@ public class Sequential extends Layer implements Model {
             return this;
         }
         
-        public Builder lossFunction(LossFunction lossFunction) {
+        public Builder setLossFunction(LossFunction lossFunction) {
             if (updater == null) {
                 throw new NullPointerException("Loss function cannot be null!");
             }
