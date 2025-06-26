@@ -3,8 +3,6 @@ package org.brain4j.math.tensor.impl.cpu.matmul;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
@@ -89,13 +87,18 @@ public class SimdMatmulProvider implements MatmulProvider {
         int step = work / parallelism;
 
         MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp, batchA, batchB);
-        int chunkSize = Math.max(32, (end - start + parallelism - 1) / parallelism);
-        List<RecursiveAction> actions = new ArrayList<>();
+        VectorAction[] actions = new VectorAction[parallelism];
 
-        for (int i = start; i < end; i += chunkSize) {
-            int to = Math.min(i + chunkSize, end);
-            actions.add(new VectorAction(parameters, i, to));
+        int i;
+
+        for (i = 0; i < parallelism - 1; i++) {
+            int startIndex = start + i * step;
+            int endIndex = start + step;
+            actions[i] = new VectorAction(parameters, startIndex, endIndex);
         }
+
+        actions[i] = new VectorAction(parameters, start + (i * step), end);
+
         ForkJoinTask.invokeAll(actions);
     }
 
