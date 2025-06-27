@@ -92,7 +92,9 @@ public class SimdMatmulProvider implements MatmulProvider {
         int i;
 
         for (i = 0; i < parallelism - 1; i++) {
-            actions[i] = new VectorAction(parameters, start + (i * step), start + ((i + 1) * step));
+            int startIndex = start + i * step;
+            int endIndex = start + step;
+            actions[i] = new VectorAction(parameters, startIndex, endIndex);
         }
 
         actions[i] = new VectorAction(parameters, start + (i * step), end);
