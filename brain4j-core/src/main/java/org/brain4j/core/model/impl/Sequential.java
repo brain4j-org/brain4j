@@ -282,17 +282,7 @@ public class Sequential extends Layer implements Model {
             }
         }
     }
-
-    @Override
-    public Tensor predict(Tensor... inputs) {
-        return predict(new StatesCache(deviceType), inputs);
-    }
-
-    @Override
-    public Tensor predict(StatesCache cache, Tensor... inputs) {
-        return predict(cache, false, inputs);
-    }
-
+    
     @Override
     public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
         Tensor input = validateInputs(inputs);

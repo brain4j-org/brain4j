@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'com.gradleup.shadow' version '9.0.0-beta10'
+    id 'com.google.protobuf' version '0.9.4'
 }
 
 dependencies {
@@ -10,6 +11,7 @@ dependencies {
     implementation 'org.jocl:jocl:2.0.5'
     implementation 'com.github.luben:zstd-jni:1.5.7-2'
     implementation 'com.google.code.gson:gson:2.13.1'
+    implementation 'com.google.protobuf:protobuf-java:4.31.1'
 
     testImplementation 'com.google.guava:guava:32.1.2-jre'
     testImplementation 'org.apache.commons:commons-csv:1.10.0'

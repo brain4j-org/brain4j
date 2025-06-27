@@ -47,7 +47,9 @@ public interface Model extends Iterable<Layer> {
      * @param inputs the input tensors
      * @return the output tensor
      */
-    Tensor predict(Tensor... inputs);
+    default Tensor predict(Tensor... inputs) {
+        return predict(new StatesCache(deviceType()), inputs);
+    }
 
     /**
      * Predicts output using a cache and input tensor.
@@ -55,7 +57,9 @@ public interface Model extends Iterable<Layer> {
      * @param inputs the input tensors
      * @return the output tensor
      */
-    Tensor predict(StatesCache cache, Tensor... inputs);
+    default Tensor predict(StatesCache cache, Tensor... inputs) {
+        return predict(cache, false, inputs);
+    }
 
     /**
      * Predicts output with optional training mode.
@@ -222,19 +226,25 @@ public interface Model extends Iterable<Layer> {
      * Returns the optimizer currently used by the model.
      * @return the optimizer instance
      */
-    Optimizer optimizer();
+    default Optimizer optimizer() {
+        return null;
+    }
 
     /**
      * Returns the updater currently used by the model.
      * @return the updater instance
      */
-    Updater updater();
+    default Updater updater() {
+        return null;
+    }
 
     /**
      * Returns the loss function currently set in the model.
      * @return the loss function instance
      */
-    LossFunction lossFunction();
+    default LossFunction lossFunction() {
+        return null;
+    }
 
     /**
      * Prints a formatted summary of the model architecture to the console,
