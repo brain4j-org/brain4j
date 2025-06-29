@@ -2,8 +2,8 @@ package org.brain4j.core.training.optimizer.impl;
 
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.optimizer.Optimizer;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
 
 import java.util.HashMap;
 import java.util.Map;

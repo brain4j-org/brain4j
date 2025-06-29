@@ -1,13 +1,14 @@
 package org.brain4j.core.training;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.math.Pair;
-import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.kernel.GpuContextHandler;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.Pair;
+import org.brain4j.common.data.ListDataSource;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.kernel.GpuContextHandler;
+import org.brain4j.common.tensor.Tensor;
 
 import java.util.function.BiConsumer;
 
@@ -29,7 +30,7 @@ public class BackPropagation {
         BiConsumer<Integer, Double> postBatchCallback,
         int index
     ) {
-        DeviceType device = model.deviceType();
+        Device device = model.device();
         StatesCache cache = new StatesCache(device);
 
         long start = System.nanoTime();
@@ -49,8 +50,8 @@ public class BackPropagation {
         optimizer.postBatch();
         updater.postBatch(model, optimizer.learningRate(), elements);
 
-        if (device == DeviceType.GPU) {
-            GpuContextHandler.closeQueue();
+        if (device != null) {
+            GpuContextHandler.closeQueue(device);
         }
 
         double took = (System.nanoTime() - start) / 1e6;
@@ -69,7 +70,7 @@ public class BackPropagation {
     }
 
     private Pair<Tensor[], Tensor> hostTo(Pair<Tensor[], Tensor> partition) {
-        DeviceType device = model.deviceType();
+        Device device = model.device();
 
         Tensor[] inputs = partition.first();
         Tensor labels = partition.second().to(device);

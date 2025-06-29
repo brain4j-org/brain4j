@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-    implementation project(path: ':brain4j-math', configuration: 'shadow')
+    implementation project(path: ':brain4j-common', configuration: 'shadow')
     implementation project(':brain4j-datasets')
 
     implementation 'org.jocl:jocl:2.0.5'

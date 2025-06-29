@@ -1,8 +1,8 @@
 package org.brain4j.core.clipper;
 
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.cpu.CpuTensor;
-import org.brain4j.math.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.impl.cpu.CpuTensor;
+import org.brain4j.common.tensor.impl.gpu.GpuTensor;
 
 /**
  * Gradient clipping is a technique used to prevent the gradients

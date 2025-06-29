@@ -1,10 +1,10 @@
 package org.brain4j.core.activation.impl;
 
 import org.brain4j.core.weightsinit.NormalXavierInit;
-import org.brain4j.math.activation.Activation;
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.common.activation.Activation;
+import org.brain4j.common.weightsinit.WeightInitialization;
 
-import static org.brain4j.math.constants.Constants.PI;
+import static org.brain4j.common.constants.Constants.PI;
 
 public class GELUActivation implements Activation {
 

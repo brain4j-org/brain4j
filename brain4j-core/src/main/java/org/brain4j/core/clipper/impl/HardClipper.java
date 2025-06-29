@@ -1,10 +1,11 @@
 package org.brain4j.core.clipper.impl;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.clipper.GradientClipper;
-import org.brain4j.math.kernel.GpuContextHandler;
-import org.brain4j.math.kernel.KernelFactory;
-import org.brain4j.math.tensor.impl.cpu.CpuTensor;
-import org.brain4j.math.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.kernel.GpuContextHandler;
+import org.brain4j.common.kernel.KernelFactory;
+import org.brain4j.common.tensor.impl.cpu.CpuTensor;
+import org.brain4j.common.tensor.impl.gpu.GpuTensor;
 import org.jocl.cl_command_queue;
 import org.jocl.cl_kernel;
 
@@ -26,8 +27,10 @@ public class HardClipper implements GradientClipper {
 
     @Override
     public void clipGpu(GpuTensor grad) {
-        cl_kernel kernel = GpuContextHandler.kernel(kernelName());
-        cl_command_queue queue = GpuContextHandler.queue();
+        Device device = grad.device();
+
+        cl_kernel kernel = GpuContextHandler.kernel(device, kernelName());
+        cl_command_queue queue = GpuContextHandler.queue(device);
 
         KernelFactory
             .create(kernel)

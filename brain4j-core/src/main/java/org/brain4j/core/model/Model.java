@@ -1,5 +1,6 @@
 package org.brain4j.core.model;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.StatesCache;
@@ -8,9 +9,9 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.wrappers.TrainingParams;
-import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.data.ListDataSource;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.tensor.Tensor;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -48,7 +49,7 @@ public interface Model extends Iterable<Layer> {
      * @return the output tensor
      */
     default Tensor predict(Tensor... inputs) {
-        return predict(new StatesCache(deviceType()), inputs);
+        return predict(new StatesCache(device()), inputs);
     }
 
     /**
@@ -185,16 +186,16 @@ public interface Model extends Iterable<Layer> {
 
     /**
      * Moves the model weights to the specified device.
-     * @param deviceType the device type
+     * @param device the device
      * @return the current model instance
      */
-    Model to(DeviceType deviceType);
+    Model to(Device device);
 
     /**
      * Gets the device the model is stored on.
      * @return the device type of this model
      */
-    DeviceType deviceType();
+    Device device();
 
     /**
      * Returns an immutable list of layers composing the model.

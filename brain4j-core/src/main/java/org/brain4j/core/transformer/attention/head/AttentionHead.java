@@ -1,13 +1,14 @@
 package org.brain4j.core.transformer.attention.head;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.activation.impl.SoftmaxActivation;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
+import org.brain4j.common.weightsinit.WeightInitialization;
 
 import java.util.Random;
 
@@ -35,10 +36,10 @@ public class AttentionHead {
         this.valueWeights.map(x -> weightInit.generate(generator, embedDimension, headDimension));
     }
 
-    public void to(DeviceType deviceType) {
-        this.queryWeights.to(deviceType);
-        this.keyWeights.to(deviceType);
-        this.valueWeights.to(deviceType);
+    public void to(Device device) {
+        this.queryWeights.to(device);
+        this.keyWeights.to(device);
+        this.valueWeights.to(device);
     }
 
     public Tensor attend(Tensor input) {

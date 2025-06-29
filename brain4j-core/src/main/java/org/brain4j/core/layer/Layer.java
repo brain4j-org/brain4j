@@ -1,5 +1,6 @@
 package org.brain4j.core.layer;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.activation.impl.LinearActivation;
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.clipper.impl.HardClipper;
@@ -7,10 +8,10 @@ import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.math.activation.Activation;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.common.activation.Activation;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.weightsinit.WeightInitialization;
 
 import java.util.Random;
 
@@ -63,15 +64,15 @@ public abstract class Layer {
 
     /**
      * Ports the weights of this layer to the specified device memory.
-     * @param deviceType the device to port the weights on
+     * @param device the device to port the weights on
      */
-    public void toDevice(DeviceType deviceType) {
+    public void toDevice(Device device) {
         if (weights != null) {
-            weights = weights.to(deviceType).withGrad();
+            weights = weights.to(device).withGrad();
         }
 
         if (bias != null) {
-            bias = bias.to(deviceType).withGrad();
+            bias = bias.to(device).withGrad();
         }
     }
 

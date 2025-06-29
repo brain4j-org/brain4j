@@ -1,8 +1,8 @@
 package org.brain4j.core.transformer.attention.head;
 
 import org.brain4j.core.activation.impl.SoftmaxActivation;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
 
 public class MaskedAttentionHead extends AttentionHead {
 

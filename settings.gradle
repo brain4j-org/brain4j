@@ -1,5 +1,5 @@
 rootProject.name = 'brain4j'
 
 include 'brain4j-core'
-include 'brain4j-math'
+include 'brain4j-common'
 include 'brain4j-datasets'

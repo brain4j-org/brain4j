@@ -1,5 +1,6 @@
 package org.brain4j.core.model.impl;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.model.Model;
@@ -7,9 +8,9 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.wrappers.EvaluationResult;
-import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.data.ListDataSource;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.tensor.Tensor;
 
 import java.util.Iterator;
 import java.util.List;
@@ -60,14 +61,14 @@ public class ComputationalGraph implements Model {
     public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         return null;
     }
-    
+
     @Override
-    public Model to(DeviceType deviceType) {
+    public Model to(Device device) {
         return null;
     }
-    
+
     @Override
-    public DeviceType deviceType() {
+    public Device device() {
         return null;
     }
     

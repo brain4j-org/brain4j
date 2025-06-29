@@ -2,9 +2,9 @@ package org.brain4j.core.training;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.math.device.Device;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.device.Device;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.tensor.Tensor;
 import org.jocl.cl_command_queue;
 
 import java.util.HashMap;
@@ -17,16 +17,14 @@ public class StatesCache {
     private cl_command_queue commandQueue;
 
     public StatesCache() {
-        this(DeviceType.CPU);
+        this(null);
     }
 
-    public StatesCache(DeviceType deviceType) {
+    public StatesCache(Device device) {
         this.preActivations = new HashMap<>();
         this.hiddenStates = new HashMap<>();
 
-        Device device = Brain4J.currentDevice();
-
-        if (device != null && deviceType == DeviceType.GPU) {
+        if (device != null) {
             this.commandQueue = device.newCommandQueue();
         }
     }

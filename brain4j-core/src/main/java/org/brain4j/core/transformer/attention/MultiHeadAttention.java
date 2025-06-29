@@ -1,13 +1,14 @@
 package org.brain4j.core.transformer.attention;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.head.AttentionHead;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
+import org.brain4j.common.weightsinit.WeightInitialization;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +38,9 @@ public class MultiHeadAttention {
         initializeHeads();
     }
 
-    public void to(DeviceType deviceType) {
+    public void to(Device device) {
         for (AttentionHead head : heads) {
-            head.to(deviceType);
+            head.to(device);
         }
     }
 

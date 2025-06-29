@@ -1,10 +1,10 @@
 package org.brain4j.core.importing.impl;
 
-import onnx.Onnx;
 import org.brain4j.core.importing.ModelLoader;
+import org.brain4j.core.importing.onnx.Onnx;
 import org.brain4j.core.model.Model;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -1,6 +1,6 @@
 package org.brain4j.core.loss;
 
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.tensor.Tensor;
 
 /**
  * Loss functions (also called cost functions) are used during training and to measure the performance of a network.

@@ -1,6 +1,6 @@
 package org.brain4j.core.merge;
 
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.tensor.Tensor;
 
 public interface MergeStrategy {
 

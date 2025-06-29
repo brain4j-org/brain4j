@@ -1,5 +1,6 @@
 package org.brain4j.core.layer.impl.transformer;
 
+import org.brain4j.common.device.Device;
 import org.brain4j.core.activation.Activations;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
@@ -10,8 +11,8 @@ import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.transformer.attention.MultiHeadAttention;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.tensor.Tensor;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -60,11 +61,11 @@ public class TransformerEncoder extends Layer {
     }
 
     @Override
-    public void toDevice(DeviceType deviceType) {
-        this.normalizer.toDevice(deviceType);
-        this.upProjection.toDevice(deviceType);
-        this.downProjection.toDevice(deviceType);
-        this.attention.to(deviceType);
+    public void toDevice(Device device) {
+        this.normalizer.toDevice(device);
+        this.upProjection.toDevice(device);
+        this.downProjection.toDevice(device);
+        this.attention.to(device);
     }
 
     @Override
@@ -73,7 +74,7 @@ public class TransformerEncoder extends Layer {
 
         if (input.dimension() != 3) {
             throw new IllegalArgumentException(
-                    "Input must have shape [batch_size, seq_len, dimension], got: " + Arrays.toString(input.shape())
+                "Input must have shape [batch_size, seq_len, dimension], got: " + Arrays.toString(input.shape())
             );
         }
 
@@ -105,9 +106,9 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public void backward(Updater updater, Optimizer optimizer, int index) {
-        attention.backward(updater, optimizer);
-        upProjection.backward(updater, optimizer, index);
-        downProjection.backward(updater, optimizer, index);
+        this.attention.backward(updater, optimizer);
+        this.upProjection.backward(updater, optimizer, index);
+        this.downProjection.backward(updater, optimizer, index);
     }
 
     @Override
@@ -117,6 +118,9 @@ public class TransformerEncoder extends Layer {
 
     @Override
     public int totalWeights() {
-        return upProjection.totalWeights() + downProjection.totalWeights() + normalizer.totalWeights() + attention.totalWeights();
+        return this.upProjection.totalWeights()
+            + this.downProjection.totalWeights()
+            + this.normalizer.totalWeights()
+            + this.attention.totalWeights();
     }
 }

@@ -5,7 +5,7 @@ import org.brain4j.core.training.optimizer.impl.Adam;
 import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.core.training.optimizer.impl.GradientDescent;
 import org.brain4j.core.training.optimizer.impl.Lion;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.tensor.Tensor;
 
 /**
  * Abstract class to define a gradient optimizer.

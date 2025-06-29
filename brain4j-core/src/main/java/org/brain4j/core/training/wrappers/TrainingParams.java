@@ -1,6 +1,6 @@
 package org.brain4j.core.training.wrappers;
 
-import org.brain4j.math.data.ListDataSource;
+import org.brain4j.common.data.ListDataSource;
 
 public class TrainingParams {
 

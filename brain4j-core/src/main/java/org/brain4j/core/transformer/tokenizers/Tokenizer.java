@@ -1,6 +1,6 @@
 package org.brain4j.core.transformer.tokenizers;
 
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.tensor.Tensor;
 
 import java.io.IOException;
 import java.util.List;

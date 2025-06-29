@@ -1,7 +1,7 @@
 package org.brain4j.core.activation;
 
 import org.brain4j.core.activation.impl.*;
-import org.brain4j.math.activation.Activation;
+import org.brain4j.common.activation.Activation;
 
 /**
  * Enum that defines the different types of activation functions used for neural networks.

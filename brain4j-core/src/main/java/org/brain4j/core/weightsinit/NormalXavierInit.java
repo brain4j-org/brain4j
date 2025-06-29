@@ -1,6 +1,6 @@
 package org.brain4j.core.weightsinit;
 
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.common.weightsinit.WeightInitialization;
 
 import java.util.Random;
 

@@ -4,8 +4,8 @@ import org.brain4j.core.activation.Activations;
 import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
 
 import java.util.Random;
 

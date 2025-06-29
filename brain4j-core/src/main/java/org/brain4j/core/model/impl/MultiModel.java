@@ -7,7 +7,7 @@ import org.brain4j.core.model.Model;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.tensor.Tensor;
 
 import java.util.List;
 import java.util.function.Consumer;

@@ -2,12 +2,12 @@ package org.brain4j.core;
 
 import ch.qos.logback.classic.Level;
 import org.brain4j.core.activation.Activations;
-import org.brain4j.math.activation.Activation;
-import org.brain4j.math.device.Device;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.device.DeviceUtils;
-import org.brain4j.math.kernel.GpuContextHandler;
-import org.brain4j.math.tensor.impl.cpu.CpuTensor;
+import org.brain4j.common.activation.Activation;
+import org.brain4j.common.device.Device;
+import org.brain4j.common.device.DeviceType;
+import org.brain4j.common.device.DeviceUtils;
+import org.brain4j.common.kernel.GpuContextHandler;
+import org.brain4j.common.tensor.impl.cpu.CpuTensor;
 import org.jocl.cl_context;
 import org.jocl.cl_program;
 import org.slf4j.Logger;
@@ -36,8 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Brain4J {
 
-    private static final Logger logger = LoggerFactory.getLogger(Brain4J.class);
-    private static boolean logging;
+    private static boolean logging = true;
 
     public static String version() {
         return "3.0";
@@ -59,32 +58,13 @@ public class Brain4J {
         logging = true;
     }
 
-    public static void initialize() {
-        CpuTensor.initialize();
-
-        logging = true;
-
-        logger.info("Brain4J v{} initialized.", version());
-    }
-
     public static String availableDevices() {
         return String.join(", ", DeviceUtils.allDeviceNames());
     }
 
-    public static void useDevice(DeviceType deviceType, String deviceName) {
-        Device device = DeviceUtils.findDevice(deviceType, deviceName);
-
-        if (device == null) {
-            throw new IllegalArgumentException("No such device: " + deviceName);
-        }
-
-        useDevice(device);
-    }
-
-    public static void useDevice(Device device) {
-        DeviceUtils.setCurrentDevice(device);
-
+    public static void initKernels(Device device) {
         cl_context context = device.context();
+
         cl_program activationsProgram = DeviceUtils.createBuildProgram(context, "/kernels/basic/activations.cl");
         cl_program gradientClipProgram = DeviceUtils.createBuildProgram(context, "/kernels/basic/gradient_clippers.cl");
 
@@ -92,12 +72,12 @@ public class Brain4J {
             Activation function = activation.function();
             String prefix = function.kernelPrefix();
 
-            GpuContextHandler.register(prefix + "_forward", activationsProgram);
-            GpuContextHandler.register(prefix + "_backward", activationsProgram);
+            GpuContextHandler.register(device, prefix + "_forward", activationsProgram);
+            GpuContextHandler.register(device, prefix + "_backward", activationsProgram);
         }
 
-        GpuContextHandler.register("hard_clip", gradientClipProgram);
-        GpuContextHandler.register("l2_clip", gradientClipProgram);
+        GpuContextHandler.register(device, "hard_clip", gradientClipProgram);
+        GpuContextHandler.register(device, "l2_clip", gradientClipProgram);
     }
 
     public static Device currentDevice() {
@@ -105,6 +85,6 @@ public class Brain4J {
     }
 
     public static Device findDevice(String deviceName) {
-        return DeviceUtils.findDevice(DeviceType.GPU, deviceName);
+        return DeviceUtils.findDevice(deviceName);
     }
 }

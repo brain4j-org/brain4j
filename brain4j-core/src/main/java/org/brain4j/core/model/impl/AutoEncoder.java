@@ -4,16 +4,16 @@ import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.wrappers.EvaluationResult;
-import org.brain4j.math.Pair;
-import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.common.Pair;
+import org.brain4j.common.data.ListDataSource;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.index.Range;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.brain4j.math.constants.Constants.*;
+import static org.brain4j.common.constants.Constants.*;
 
 /**
  * Autoencoder neural network model implementation. This class is an extension of the {@link Sequential} class.
@@ -49,7 +49,7 @@ public class AutoEncoder extends Sequential {
         Tensor[] inputs = batch.first(); // [batch_size, input_size]
         Tensor expected = batch.second(); // [batch_size, output_size]
 
-        Tensor prediction = predict(new StatesCache(deviceType), true, inputs).cpu(); // [batch_size, output_size]
+        Tensor prediction = predict(new StatesCache(device), true, inputs).cpu(); // [batch_size, output_size]
 
         for (Tensor input : inputs) {
             int batchSize = input.shape()[0];
@@ -69,7 +69,7 @@ public class AutoEncoder extends Sequential {
     @Override
     public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
         Tensor input = validateInputs(inputs);
-        Tensor result = input.to(deviceType).withGrad();
+        Tensor result = input.to(device).withGrad();
 
         int size = training ? flattened.size() : bottleNeckIndex;
 

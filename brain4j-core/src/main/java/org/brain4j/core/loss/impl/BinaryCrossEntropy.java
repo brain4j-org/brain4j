@@ -1,8 +1,8 @@
 package org.brain4j.core.loss.impl;
 
 import org.brain4j.core.loss.LossFunction;
-import org.brain4j.math.Commons;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.common.Commons;
+import org.brain4j.common.tensor.Tensor;
 
 public class BinaryCrossEntropy implements LossFunction {
 

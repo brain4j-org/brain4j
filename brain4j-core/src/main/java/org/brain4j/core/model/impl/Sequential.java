@@ -1,5 +1,10 @@
 package org.brain4j.core.model.impl;
 
+import org.brain4j.common.activation.Activation;
+import org.brain4j.common.device.Device;
+import org.brain4j.common.device.DeviceUtils;
+import org.brain4j.common.tensor.impl.cpu.CpuTensor;
+import org.brain4j.common.tensor.impl.gpu.GpuTensor;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.activation.Activations;
 import org.brain4j.core.layer.ForwardContext;
@@ -13,14 +18,14 @@ import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.training.wrappers.EvaluationResult;
-import org.brain4j.math.Commons;
-import org.brain4j.math.Pair;
-import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.device.DeviceType;
-import org.brain4j.math.kernel.GpuContextHandler;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.Tensors;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.common.Commons;
+import org.brain4j.common.Pair;
+import org.brain4j.common.data.ListDataSource;
+import org.brain4j.common.kernel.GpuContextHandler;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
+import org.brain4j.common.tensor.index.Range;
+import org.jocl.cl_program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static org.brain4j.math.constants.Constants.*;
+import static org.brain4j.common.constants.Constants.*;
 
 /**
  * Represents a simple feedforward neural network model.
@@ -55,12 +60,14 @@ public class Sequential extends Layer implements Model {
     protected final List<Layer> layers;
     protected final List<Layer> flattened;
 
+    /* The device the model is hosted on */
+    protected Device device;
+
     /* General training parameters */
     protected BackPropagation backPropagation;
     protected Optimizer optimizer;
     protected Updater updater;
     protected LossFunction lossFunction;
-    protected DeviceType deviceType;
     protected long seed;
 
     /**
@@ -72,7 +79,6 @@ public class Sequential extends Layer implements Model {
     }
 
     protected Sequential(Layer... layers) {
-        this.deviceType = DeviceType.CPU;
         this.layers = new ArrayList<>(List.of(layers));
         this.flattened = new ArrayList<>();
         this.seed = System.currentTimeMillis();
@@ -153,24 +159,22 @@ public class Sequential extends Layer implements Model {
         }
     }
 
-    protected Thread predictPartition(Pair<Tensor[], Tensor> partition, AtomicReference<Double> totalError) {
-        return Thread.startVirtualThread(() -> {
-            Tensor[] inputs = partition.first();
-            Tensor targets = partition.second();
-            Tensor outputs = predict(new StatesCache(), true, inputs);
+    protected void predictBatch(Pair<Tensor[], Tensor> batch, AtomicReference<Double> totalError) {
+        Tensor[] inputs = batch.first();
+        Tensor targets = batch.second();
 
-            int batchSize = outputs.shape()[0];
+        Tensor outputs = predict(inputs).cpu();
+        int batchSize = outputs.shape()[0];
 
-            for (int i = 0; i < batchSize; i++) {
-                Range range = new Range(i, i + 1);
+        for (int i = 0; i < batchSize; i++) {
+            Range range = new Range(i, i + 1);
 
-                Tensor output = outputs.slice(range).vector();
-                Tensor target = targets.slice(range).vector();
+            Tensor output = outputs.slice(range).vector();
+            Tensor target = targets.slice(range).vector();
 
-                double loss = lossFunction.calculate(target, output);
-                totalError.updateAndGet(v -> v + loss);
-            }
-        });
+            double loss = lossFunction.calculate(target, output);
+            totalError.updateAndGet(v -> v + loss);
+        }
     }
 
     protected Tensor validateInputs(Tensor... inputs) {
@@ -286,10 +290,10 @@ public class Sequential extends Layer implements Model {
     @Override
     public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
         Tensor input = validateInputs(inputs);
-        Tensor result = input.to(deviceType).withGrad();
+        Tensor result = input.to(device).withGrad();
 
-        if (deviceType == DeviceType.GPU) {
-            GpuContextHandler.updateQueue(cache.commandQueue());
+        if (device != null) {
+            GpuContextHandler.updateQueue(device, cache.commandQueue());
         }
 
         for (int i = 0; i < flattened.size(); i++) {
@@ -302,8 +306,8 @@ public class Sequential extends Layer implements Model {
             result = layer.forward(new ForwardContext(cache, result, i, training));
         }
 
-        if (!training && deviceType == DeviceType.GPU) {
-            GpuContextHandler.closeQueue();
+        if (!training && device != null) {
+            GpuContextHandler.closeQueue(device);
         }
 
         return result;
@@ -352,36 +356,32 @@ public class Sequential extends Layer implements Model {
     @Override
     public double loss(ListDataSource dataSource) {
         AtomicReference<Double> totalError = new AtomicReference<>(0.0);
-        List<Thread> threads = new ArrayList<>();
-        
-        dataSource.reset();
-        
-        while (dataSource.hasNext()) {
-            Pair<Tensor[], Tensor> partition = dataSource.nextBatch();
-            threads.add(predictPartition(partition, totalError));
-        }
-        
-        Commons.waitAll(threads);
+
+        Pair<Tensor[], Tensor> all = dataSource.allData();
+        predictBatch(all, totalError);
         
         return totalError.get() / dataSource.size();
     }
     
     @Override
-    public Model to(DeviceType deviceType) {
-        switch (deviceType) {
-            case CPU, GPU -> {
-                this.deviceType = deviceType;
+    public Model to(Device device) {
+        this.device = device;
 
-                for (Layer layer : layers) {
-                    layer.toDevice(deviceType);
-                }
-            }
-            default -> throw new IllegalArgumentException("Unsupported device type: " + deviceType);
+        GpuTensor.initKernels(device);
+        Brain4J.initKernels(device);
+
+        for (Layer layer : flattened) {
+            layer.toDevice(device);
         }
 
         return this;
     }
-    
+
+    @Override
+    public Device device() {
+        return device;
+    }
+
     @Override
     public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
         this.optimizer = optimizer;
@@ -394,11 +394,6 @@ public class Sequential extends Layer implements Model {
         
         connectLayers();
         return this;
-    }
-
-    @Override
-    public DeviceType deviceType() {
-        return deviceType;
     }
 
     @Override
@@ -445,11 +440,11 @@ public class Sequential extends Layer implements Model {
     }
 
     private void append(
-            String pattern,
-            StringBuilder builder,
-            DecimalFormat format,
-            AtomicLong totalWeights,
-            AtomicLong totalBiases
+        String pattern,
+        StringBuilder builder,
+        DecimalFormat format,
+        AtomicLong totalWeights,
+        AtomicLong totalBiases
     ) {
         for (int i = 0; i < flattened.size(); i++) {
             Layer layer = flattenedAt(i);
