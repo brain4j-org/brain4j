@@ -3,7 +3,6 @@ package org.brain4j.common.tensor;
 import org.brain4j.common.activation.Activation;
 import org.brain4j.common.device.Device;
 import org.brain4j.common.device.DeviceType;
-import org.brain4j.common.device.DeviceUtils;
 import org.brain4j.common.lang.DoubleToDoubleFunction;
 import org.brain4j.common.tensor.autograd.AutogradContext;
 import org.brain4j.common.tensor.autograd.Operation;

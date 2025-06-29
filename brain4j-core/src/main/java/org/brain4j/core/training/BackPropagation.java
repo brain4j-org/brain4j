@@ -1,14 +1,13 @@
 package org.brain4j.core.training;
 
+import org.brain4j.common.Pair;
+import org.brain4j.common.data.ListDataSource;
 import org.brain4j.common.device.Device;
+import org.brain4j.common.kernel.GpuContextHandler;
+import org.brain4j.common.tensor.Tensor;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.common.Pair;
-import org.brain4j.common.data.ListDataSource;
-import org.brain4j.common.device.DeviceType;
-import org.brain4j.common.kernel.GpuContextHandler;
-import org.brain4j.common.tensor.Tensor;
 
 import java.util.function.BiConsumer;
 

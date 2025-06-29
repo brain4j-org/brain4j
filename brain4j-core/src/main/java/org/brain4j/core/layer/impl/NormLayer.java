@@ -1,9 +1,9 @@
 package org.brain4j.core.layer.impl;
 
-import org.brain4j.core.layer.ForwardContext;
-import org.brain4j.core.layer.Layer;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
+import org.brain4j.core.layer.ForwardContext;
+import org.brain4j.core.layer.Layer;
 
 /**
  * Implementation of a layer normalization layer, it's used to normalize inputs and improve training.

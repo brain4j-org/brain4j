@@ -1,6 +1,9 @@
 package org.brain4j.core.layer;
 
+import org.brain4j.common.activation.Activation;
 import org.brain4j.common.device.Device;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.weightsinit.WeightInitialization;
 import org.brain4j.core.activation.impl.LinearActivation;
 import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.core.clipper.impl.HardClipper;
@@ -8,10 +11,6 @@ import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.StatesCache;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
-import org.brain4j.common.activation.Activation;
-import org.brain4j.common.device.DeviceType;
-import org.brain4j.common.tensor.Tensor;
-import org.brain4j.common.weightsinit.WeightInitialization;
 
 import java.util.Random;
 

@@ -1,24 +1,17 @@
 package org.brain4j.common.tensor.impl.cpu;
 
-import org.brain4j.common.activation.Activation;
 import org.brain4j.common.device.Device;
-import org.brain4j.common.device.DeviceType;
-import org.brain4j.common.device.DeviceUtils;
-import org.brain4j.common.kernel.GpuContextHandler;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.TensorImplBase;
 import org.brain4j.common.tensor.impl.cpu.matmul.MatmulProvider;
 import org.brain4j.common.tensor.impl.cpu.matmul.NormalMatmulProvider;
 import org.brain4j.common.tensor.impl.cpu.matmul.SimdMatmulProvider;
 import org.brain4j.common.tensor.impl.gpu.GpuTensor;
-import org.jocl.cl_context;
-import org.jocl.cl_program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
-import java.util.function.Consumer;
 
 public class CpuTensor extends TensorImplBase {
 

@@ -1,10 +1,14 @@
 package org.brain4j.core.model.impl;
 
-import org.brain4j.common.activation.Activation;
+import org.brain4j.common.Commons;
+import org.brain4j.common.Pair;
+import org.brain4j.common.data.ListDataSource;
 import org.brain4j.common.device.Device;
-import org.brain4j.common.device.DeviceUtils;
-import org.brain4j.common.tensor.impl.cpu.CpuTensor;
+import org.brain4j.common.kernel.GpuContextHandler;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.Tensors;
 import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.index.Range;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.activation.Activations;
 import org.brain4j.core.layer.ForwardContext;
@@ -18,14 +22,6 @@ import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.training.wrappers.EvaluationResult;
-import org.brain4j.common.Commons;
-import org.brain4j.common.Pair;
-import org.brain4j.common.data.ListDataSource;
-import org.brain4j.common.kernel.GpuContextHandler;
-import org.brain4j.common.tensor.Tensor;
-import org.brain4j.common.tensor.Tensors;
-import org.brain4j.common.tensor.index.Range;
-import org.jocl.cl_program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

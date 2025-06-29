@@ -1,11 +1,11 @@
 package org.brain4j.core.clipper.impl;
 
 import org.brain4j.common.device.Device;
-import org.brain4j.core.clipper.GradientClipper;
 import org.brain4j.common.kernel.GpuContextHandler;
 import org.brain4j.common.kernel.KernelFactory;
 import org.brain4j.common.tensor.impl.cpu.CpuTensor;
 import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.core.clipper.GradientClipper;
 import org.jocl.cl_command_queue;
 import org.jocl.cl_kernel;
 

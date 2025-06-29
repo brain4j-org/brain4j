@@ -1,13 +1,11 @@
 package org.brain4j.core;
 
 import ch.qos.logback.classic.Level;
-import org.brain4j.core.activation.Activations;
 import org.brain4j.common.activation.Activation;
 import org.brain4j.common.device.Device;
-import org.brain4j.common.device.DeviceType;
 import org.brain4j.common.device.DeviceUtils;
 import org.brain4j.common.kernel.GpuContextHandler;
-import org.brain4j.common.tensor.impl.cpu.CpuTensor;
+import org.brain4j.core.activation.Activations;
 import org.jocl.cl_context;
 import org.jocl.cl_program;
 import org.slf4j.Logger;

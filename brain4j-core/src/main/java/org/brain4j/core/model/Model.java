@@ -1,6 +1,8 @@
 package org.brain4j.core.model;
 
+import org.brain4j.common.data.ListDataSource;
 import org.brain4j.common.device.Device;
+import org.brain4j.common.tensor.Tensor;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.loss.LossFunction;
 import org.brain4j.core.training.StatesCache;
@@ -9,9 +11,6 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.training.wrappers.TrainingParams;
-import org.brain4j.common.data.ListDataSource;
-import org.brain4j.common.device.DeviceType;
-import org.brain4j.common.tensor.Tensor;
 
 import java.util.List;
 import java.util.function.Consumer;

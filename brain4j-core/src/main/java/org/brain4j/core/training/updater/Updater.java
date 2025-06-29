@@ -1,9 +1,9 @@
 package org.brain4j.core.training.updater;
 
+import org.brain4j.common.tensor.Tensor;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
-import org.brain4j.common.tensor.Tensor;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,10 +1,10 @@
 package org.brain4j.core.activation.impl;
 
-import org.brain4j.core.weightsinit.NormalHeInit;
 import org.brain4j.common.activation.Activation;
 import org.brain4j.common.kernel.KernelFactory;
 import org.brain4j.common.tensor.impl.gpu.GpuTensor;
 import org.brain4j.common.weightsinit.WeightInitialization;
+import org.brain4j.core.weightsinit.NormalHeInit;
 import org.jocl.cl_kernel;
 
 public class ELUActivation implements Activation {

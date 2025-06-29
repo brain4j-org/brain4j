@@ -1,8 +1,8 @@
 package org.brain4j.core.activation.impl;
 
-import org.brain4j.core.weightsinit.UniformXavierInit;
 import org.brain4j.common.activation.Activation;
 import org.brain4j.common.weightsinit.WeightInitialization;
+import org.brain4j.core.weightsinit.UniformXavierInit;
 
 public class SigmoidActivation implements Activation {
 

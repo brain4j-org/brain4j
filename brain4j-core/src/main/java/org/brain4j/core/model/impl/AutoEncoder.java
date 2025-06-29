@@ -1,13 +1,13 @@
 package org.brain4j.core.model.impl;
 
-import org.brain4j.core.layer.ForwardContext;
-import org.brain4j.core.layer.Layer;
-import org.brain4j.core.training.StatesCache;
-import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.common.Pair;
 import org.brain4j.common.data.ListDataSource;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.index.Range;
+import org.brain4j.core.layer.ForwardContext;
+import org.brain4j.core.layer.Layer;
+import org.brain4j.core.training.StatesCache;
+import org.brain4j.core.training.wrappers.EvaluationResult;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -4,11 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.brain4j.core.model.Model;
-import org.brain4j.core.saving.ModelSerializer;
 import org.brain4j.common.Commons;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
+import org.brain4j.core.model.Model;
+import org.brain4j.core.saving.ModelSerializer;
 
 import java.io.DataInputStream;
 import java.io.File;

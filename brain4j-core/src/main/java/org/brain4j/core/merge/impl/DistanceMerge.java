@@ -1,8 +1,8 @@
 package org.brain4j.core.merge.impl;
 
+import org.brain4j.common.tensor.Tensor;
 import org.brain4j.core.distance.DistanceOperator;
 import org.brain4j.core.merge.MergeStrategy;
-import org.brain4j.common.tensor.Tensor;
 
 public class DistanceMerge implements MergeStrategy {
 
