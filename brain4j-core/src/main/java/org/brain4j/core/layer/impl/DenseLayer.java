@@ -7,6 +7,7 @@ import org.brain4j.core.layer.ForwardContext;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.training.StatesCache;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -75,15 +76,9 @@ public class DenseLayer extends Layer {
 
         if (weights == null) return input;
 
-        int dimension = input.dimension();
-
-        // Input shape: [batch_size, input_size]
-        int inputDim = input.shape()[dimension - 1];
-        int expectedDim = weights.shape()[0];
-
-        if (inputDim != expectedDim) {
+        if (!validateInput(input)) {
             throw new IllegalArgumentException(
-                "Input dimension mismatch: " + inputDim + " != " + expectedDim
+                "Input dimension mismatch. Got: " + Arrays.toString(input.shape()) + " Expected: " + weights.shape()[0]
             );
         }
 
@@ -104,6 +99,7 @@ public class DenseLayer extends Layer {
     @Override
     public boolean validateInput(Tensor input) {
         int[] shape = input.shape();
-        return shape[shape.length - 1] == dimension;
+        int[] weightsShape = weights.shape();
+        return shape[shape.length - 1] == weightsShape[0];
     }
 }

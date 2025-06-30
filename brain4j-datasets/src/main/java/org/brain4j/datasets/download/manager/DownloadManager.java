@@ -24,18 +24,15 @@ public class DownloadManager {
     private final Executor executor;
     private final ProgressCallback progressCallback;
 
-    public DownloadManager(
-            HuggingFaceClient client,
-            CacheManager cacheManager
-    ) {
+    public DownloadManager(HuggingFaceClient client, CacheManager cacheManager) {
         this(client, cacheManager, ForkJoinPool.commonPool(), ProgressCallback.NOOP);
     }
 
     public DownloadManager(
-            HuggingFaceClient client,
-            CacheManager cacheManager,
-            Executor executor,
-            ProgressCallback progressCallback
+        HuggingFaceClient client,
+        CacheManager cacheManager,
+        Executor executor,
+        ProgressCallback progressCallback
     ) {
         this.client = client;
         this.cacheManager = cacheManager;
@@ -43,19 +40,15 @@ public class DownloadManager {
         this.progressCallback = progressCallback;
     }
 
-    public Path downloadFile(
-            String datasetId,
-            String filename
-    ) throws DatasetException {
+    public Path downloadFile(String datasetId, String filename) throws DatasetException {
         return downloadFile(datasetId, filename, false);
     }
 
     public Path downloadFile(
-            String datasetId,
-            String filename,
-            boolean force
+        String datasetId,
+        String filename,
+        boolean force
     ) throws DatasetException {
-
         Path cachedPath = cacheManager.getCachedFilePath(datasetId, filename);
 
         if (!force && cacheManager.isCached(datasetId, filename)) {
@@ -95,16 +88,16 @@ public class DownloadManager {
     }
 
     public CompletableFuture<Path> downloadFileAsync(
-            String datasetId,
-            String filename
+        String datasetId,
+        String filename
     ) {
         return downloadFileAsync(datasetId, filename, false);
     }
 
     public CompletableFuture<Path> downloadFileAsync(
-            String datasetId,
-            String filename,
-            boolean force
+        String datasetId,
+        String filename,
+        boolean force
     ) {
         return CompletableFuture.supplyAsync(() -> {
             try {

@@ -174,7 +174,7 @@ public class Sequential extends Layer implements Model {
     }
 
     protected Tensor validateInputs(Tensor... inputs) {
-        if (inputs.length > 1 || inputs.length == 0) {
+        if (inputs.length != 1) {
             throw new IllegalArgumentException("Input array must contain one element. Got: " + inputs.length);
         }
 
