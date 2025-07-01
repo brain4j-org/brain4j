@@ -10,7 +10,6 @@ import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Represents a composite neural network model that processes multiple independent inputs
@@ -96,21 +95,6 @@ public class MultiModel extends Sequential {
                 if (layer.skipPropagate()) continue;
 
                 layer.backward(updater, optimizer, l);
-            }
-        }
-    }
-
-    @Override
-    public void updateWeights(Consumer<Layer> callback) {
-        for (Layer layer : flattened) {
-            callback.accept(layer);
-        }
-
-        for (Model subModel : models) {
-            List<Layer> flattened = subModel.flattened();
-
-            for (Layer layer : flattened) {
-                callback.accept(layer);
             }
         }
     }

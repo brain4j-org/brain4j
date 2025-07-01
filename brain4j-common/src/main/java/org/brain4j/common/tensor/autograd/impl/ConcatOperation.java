@@ -1,4 +1,4 @@
-package org.brain4j.common.tensor.autograd.operations;
+package org.brain4j.common.tensor.autograd.impl;
 
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.autograd.Operation;

@@ -4,7 +4,7 @@ import org.brain4j.common.activation.Activation;
 import org.brain4j.common.lang.DoubleToDoubleFunction;
 import org.brain4j.common.tensor.autograd.AutogradContext;
 import org.brain4j.common.tensor.autograd.Operation;
-import org.brain4j.common.tensor.autograd.operations.*;
+import org.brain4j.common.tensor.autograd.impl.*;
 import org.brain4j.common.tensor.broadcast.TensorBroadcast;
 import org.brain4j.common.tensor.impl.cpu.CpuTensor;
 import org.brain4j.common.tensor.index.Range;
@@ -811,6 +811,12 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor forward(Operation operation) {
+        if (operation.requiredInputs() != 1) {
+            throw new IllegalArgumentException(
+                "This operation requires " + operation.requiredInputs() + " inputs! Received 1 instead."
+            );
+        }
+
         Tensor result = operation.forward(this);
 
         if (result.autogradContext() == null) {
@@ -823,6 +829,12 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
     @Override
     public Tensor forward(Operation operation, Tensor other) {
+        if (operation.requiredInputs() != 2) {
+            throw new IllegalArgumentException(
+                "This operation requires " + operation.requiredInputs() + " inputs! Received 2 instead."
+            );
+        }
+
         Tensor result = operation.forward(this, other);
 
         if (result.autogradContext() == null) {
@@ -839,6 +851,13 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
 
         allInputs.add(this);
         allInputs.addAll(Arrays.asList(others));
+
+        if (allInputs.size() != operation.requiredInputs()) {
+            throw new IllegalArgumentException(
+                "This operation requires " + operation.requiredInputs() + " inputs! Received " + allInputs.size()
+                    + " instead."
+            );
+        }
 
         Tensor[] allInputsArray = allInputs.toArray(new Tensor[0]);
         Tensor result = operation.forward(allInputsArray);

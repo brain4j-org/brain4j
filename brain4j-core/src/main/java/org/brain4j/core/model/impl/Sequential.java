@@ -29,7 +29,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static org.brain4j.common.constants.Constants.*;
@@ -74,6 +73,10 @@ public class Sequential extends Layer implements Model {
         return new Sequential(layers);
     }
 
+    public static Sequential.Builder newModel() {
+        return new Sequential.Builder();
+    }
+
     protected Sequential(Layer... layers) {
         this.layers = new ArrayList<>(List.of(layers));
         this.flattened = new ArrayList<>();
@@ -89,7 +92,7 @@ public class Sequential extends Layer implements Model {
         }
     }
 
-    private void connectLayers() {
+    protected void connectLayers() {
         if (layers.isEmpty()) return;
 
         Layer previous = null;
@@ -215,7 +218,7 @@ public class Sequential extends Layer implements Model {
         training.info(formatted);
     }
 
-    private void printProgress(ListDataSource source, int epoch, int epoches, int batch, double tookMs) {
+    protected void printProgress(ListDataSource source, int epoch, int epoches, int batch, double tookMs) {
         String barChar = Commons.getHeaderChar();
 
         int progressBarLength = 25;
@@ -322,13 +325,6 @@ public class Sequential extends Layer implements Model {
             if (layer.skipPropagate()) continue;
 
             layer.backward(updater, optimizer, l);
-        }
-    }
-
-    @Override
-    public void updateWeights(Consumer<Layer> callback) {
-        for (Layer layer : flattened) {
-            callback.accept(layer);
         }
     }
 
@@ -474,73 +470,10 @@ public class Sequential extends Layer implements Model {
     }
 
     @Override
-    public Layer connect(Layer previous) {
-        int size = size();
-
-        for (int i = 0; i < size; i++) {
-            Layer layer = layerAt(i);
-            previous = layer.connect(previous);
-        }
-
-        int[] inputSizes = new int[size];
-
-        for (int i = 0; i < size; i++) {
-            inputSizes[i] = (i == 0) ? 0 : layerAt(i - 1).size();
-        }
-
-        IntStream.range(0, size).parallel().forEach(i -> {
-            Layer layer = layerAt(i);
-
-            int input = inputSizes[i];
-            int output = layer.size();
-
-            Random localRandom = Random.from(new SplittableRandom(seed + i));
-            layer.initWeights(localRandom, input, output);
-        });
-
-        return previous;
-    }
-
-    @Override
-    public Tensor forward(ForwardContext context) {
-        Tensor pass = context.input();
-        StatesCache cache = context.cache();
-        boolean training = context.training();
-
-        for (int i = 0; i < size(); i++) {
-            Layer layer = layerAt(i);
-
-            if (layer == null) {
-                throw new IllegalStateException("Layer at index " + i + " is null!");
-            }
-
-            pass = layer.forward(new ForwardContext(cache, pass, i, training));
-        }
-
-        return pass;
-    }
-
-    @Override
-    public void backward(Updater updater, Optimizer optimizer, int index) {
-        for (int l = size() - 2; l >= 0; l--) {
-            Layer layer = layerAt(l);
-
-            if (layer.skipPropagate()) continue;
-
-            layer.backward(updater, optimizer, index - l);
-        }
-    }
-
-    @Override
     public void zeroGrad() {
         for (Layer layer : flattened) {
             layer.resetGrad();
         }
-    }
-
-    @Override
-    public int size() {
-        return layers.size();
     }
 
     @Override
@@ -581,7 +514,7 @@ public class Sequential extends Layer implements Model {
      * @param seed the new seed value
      * @return the model instance
      */
-    public Model setSeed(long seed) {
+    public Sequential seed(long seed) {
         this.seed = seed;
         return this;
     }
@@ -602,11 +535,71 @@ public class Sequential extends Layer implements Model {
             }
         };
     }
-    
-    public static Sequential.Builder newBuilder() {
-        return new Sequential.Builder();
+
+
+    @Override
+    public Layer connect(Layer previous) {
+        int size = layers.size();
+
+        for (int i = 0; i < size; i++) {
+            Layer layer = layerAt(i);
+            previous = layer.connect(previous);
+        }
+
+        int[] inputSizes = new int[size];
+
+        for (int i = 0; i < size; i++) {
+            inputSizes[i] = (i == 0) ? 0 : layerAt(i - 1).size();
+        }
+
+        IntStream.range(0, size).parallel().forEach(i -> {
+            Layer layer = layerAt(i);
+
+            int input = inputSizes[i];
+            int output = layer.size();
+
+            Random localRandom = Random.from(new SplittableRandom(seed + i));
+            layer.initWeights(localRandom, input, output);
+        });
+
+        return previous;
     }
-    
+
+    @Override
+    public Tensor forward(ForwardContext context) {
+        Tensor pass = context.input();
+        StatesCache cache = context.cache();
+        boolean training = context.training();
+
+        for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layerAt(i);
+
+            if (layer == null) {
+                throw new IllegalStateException("Layer at index " + i + " is null!");
+            }
+
+            pass = layer.forward(new ForwardContext(cache, pass, i, training));
+        }
+
+        return pass;
+    }
+
+    @Override
+    public void backward(Updater updater, Optimizer optimizer, int index) {
+        for (int l = layers.size() - 2; l >= 0; l--) {
+            Layer layer = layerAt(l);
+
+            if (layer.skipPropagate()) continue;
+
+            layer.backward(updater, optimizer, index - l);
+        }
+    }
+
+    @Override
+    public int size() {
+        return layers.getLast().size();
+    }
+
     public static class Builder {
         
         protected final List<Layer> layers;
@@ -633,7 +626,7 @@ public class Sequential extends Layer implements Model {
             return this;
         }
         
-        public Builder setOptimizer(Optimizer optimizer) {
+        public Builder optimizer(Optimizer optimizer) {
             if (updater == null) {
                 throw new NullPointerException("Optimizer cannot be null!");
             }
@@ -642,7 +635,7 @@ public class Sequential extends Layer implements Model {
             return this;
         }
         
-        public Builder setUpdater(Updater updater) {
+        public Builder updater(Updater updater) {
             if (updater == null) {
                 throw new NullPointerException("Updater cannot be null!");
             }
@@ -651,7 +644,7 @@ public class Sequential extends Layer implements Model {
             return this;
         }
         
-        public Builder setLossFunction(LossFunction lossFunction) {
+        public Builder lossFunction(LossFunction lossFunction) {
             if (updater == null) {
                 throw new NullPointerException("Loss function cannot be null!");
             }

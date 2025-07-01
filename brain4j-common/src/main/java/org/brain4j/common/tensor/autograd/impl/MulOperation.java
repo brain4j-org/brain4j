@@ -1,9 +1,14 @@
-package org.brain4j.common.tensor.autograd.operations;
+package org.brain4j.common.tensor.autograd.impl;
 
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.autograd.Operation;
 
 public class MulOperation implements Operation {
+
+    @Override
+    public int requiredInputs() {
+        return 2;
+    }
 
     @Override
     public Tensor forward(Tensor... inputs) {

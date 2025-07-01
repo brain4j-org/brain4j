@@ -1,4 +1,4 @@
-package org.brain4j.common.tensor.autograd.operations;
+package org.brain4j.common.tensor.autograd.impl;
 
 import org.brain4j.common.activation.Activation;
 import org.brain4j.common.tensor.Tensor;
@@ -10,6 +10,11 @@ public class ActivationOperation implements Operation {
 
     public ActivationOperation(Activation activation) {
         this.activation = activation;
+    }
+
+    @Override
+    public int requiredInputs() {
+        return 1;
     }
 
     @Override

@@ -6,7 +6,7 @@ import org.brain4j.common.device.DeviceType;
 import org.brain4j.common.lang.DoubleToDoubleFunction;
 import org.brain4j.common.tensor.autograd.AutogradContext;
 import org.brain4j.common.tensor.autograd.Operation;
-import org.brain4j.common.tensor.autograd.operations.*;
+import org.brain4j.common.tensor.autograd.impl.*;
 import org.brain4j.common.tensor.impl.cpu.CpuTensor;
 import org.brain4j.common.tensor.impl.gpu.GpuTensor;
 import org.brain4j.common.tensor.index.Range;
