@@ -56,9 +56,6 @@ public class GraphModel implements Model {
             List<String> inputNames = node.inputs();
             Tensor[] inputTensors = new Tensor[inputNames.size()];
 
-            System.out.println("Node " + node.operation().getClass().getSimpleName());
-            System.out.println("Inputs: " + inputNames);
-
             for (int j = 0; j < inputTensors.length; j++) {
                 Tensor input = computed.get(inputNames.get(j));
 

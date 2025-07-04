@@ -37,7 +37,7 @@ public class OnnxLoader implements ModelLoader {
             if (node.getInputCount() != operation.requiredInputs()) {
                 throw new IllegalArgumentException(
                     "Node " + node.getOpType() + " requires " + node.getInputCount()
-                        + " inputs but opereation requires " + operation.requiredInputs()
+                        + " inputs but operation requires " + operation.requiredInputs()
                 );
             }
 
