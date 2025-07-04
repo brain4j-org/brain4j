@@ -3,16 +3,15 @@ package org.brain4j.core.importing.impl;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
 import org.brain4j.common.tensor.autograd.Operation;
+import org.brain4j.core.graphs.GraphModel;
 import org.brain4j.core.importing.ModelLoader;
 import org.brain4j.core.importing.onnx.Onnx;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OnnxLoader implements ModelLoader {
     
@@ -27,6 +26,8 @@ public class OnnxLoader implements ModelLoader {
             System.out.println("Adding tensor " + tensor.getName());
             weights.put(tensor.getName(), convertTensor(tensor));
         }
+        
+        GraphModel.Builder model = GraphModel.newGraph();
 
         for (Onnx.NodeProto node : graph.getNodeList()) {
             Operation operation = OPERATION_MAP.get(node.getOpType());
@@ -41,11 +42,14 @@ public class OnnxLoader implements ModelLoader {
                         + " inputs but opereation requires " + operation.requiredInputs()
                 );
             }
-
+            
             List<String> inputList = node.getInputList();
-
-            System.out.println(inputList);
-
+            List<String> outputList = node.getOutputList();
+            
+            System.out.println("=========== " + node.getOpType() + " ============");
+            System.out.println("Input list: " + inputList);
+            System.out.println("Output list: " + outputList);
+            
             for (int i = 0; i < inputList.size(); i++) {
                 String input = inputList.get(i);
                 if (i > 0) {

@@ -137,13 +137,13 @@ public class GraphModel implements Model {
             return this;
         }
 
-        public Builder add(String name, Layer layer, String output) {
-            this.hidden.add(new NodeInfo(name, layer, output));
+        public Builder add(String name, Layer layer, String... outputs) {
+            this.hidden.add(new NodeInfo(name, layer, outputs));
             return this;
         }
 
         public Builder output(String name, Layer layer) {
-            this.hidden.add(new NodeInfo(name, layer, null));
+            this.hidden.add(new NodeInfo(name, layer));
             return this;
         }
 
@@ -164,35 +164,10 @@ public class GraphModel implements Model {
                 throw new IllegalStateException("You must specify at least one input!");
             }
 
-            Map<String, List<String>> inputsMap = new HashMap<>();
 
-            for (NodeInfo info : hidden) {
-                String target = info.output();
-
-                if (target != null) {
-                    inputsMap.computeIfAbsent(target, k -> new ArrayList<>()).add(info.name());
-                }
-            }
-
-            Map<String, GraphNode> graphNodes = new HashMap<>();
-
-            for (NodeInfo info : hidden) {
-                List<String> inputNames = inputsMap.getOrDefault(info.name(), List.of());
-                List<GraphNode> inputNodes = new ArrayList<>();
-
-                for (String inputName : inputNames) {
-                    inputNodes.add(graphNodes.get(inputName));
-                }
-
-                GraphNode node = new GraphNode(info.name(), info.layer(), inputNodes);
-                graphNodes.put(info.name(), node);
-
-                System.out.println(info.name() + " -> " + node);
-            }
-
-            return new GraphModel(inputs, new ArrayList<>(graphNodes.values()));
+            return new GraphModel(inputs, new ArrayList<>());
         }
     }
 
-    public record NodeInfo(String name, Layer layer, String output) { }
+    public record NodeInfo(String name, Layer layer, String... outputs) { }
 }
