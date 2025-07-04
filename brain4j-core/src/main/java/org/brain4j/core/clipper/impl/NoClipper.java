@@ -1,7 +1,7 @@
 package org.brain4j.core.clipper.impl;
 
-import org.brain4j.common.tensor.impl.cpu.CpuTensor;
-import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.impl.CpuTensor;
+import org.brain4j.common.tensor.impl.GpuTensor;
 import org.brain4j.core.clipper.GradientClipper;
 
 public class NoClipper implements GradientClipper {

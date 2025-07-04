@@ -71,7 +71,7 @@ public class TransformerEncoder extends Layer {
     public Tensor forward(ForwardContext context) {
         Tensor input = context.input();
 
-        if (input.dimension() != 3) {
+        if (input.rank() != 3) {
             throw new IllegalArgumentException(
                 "Input must have shape [batch_size, seq_len, dimension], got: " + Arrays.toString(input.shape())
             );

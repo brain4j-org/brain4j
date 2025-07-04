@@ -1,4 +1,4 @@
-package org.brain4j.common.tensor.impl.gpu;
+package org.brain4j.common.tensor.impl;
 
 import org.brain4j.common.activation.Activation;
 import org.brain4j.common.device.Device;
@@ -6,9 +6,8 @@ import org.brain4j.common.device.DeviceUtils;
 import org.brain4j.common.kernel.GpuContextHandler;
 import org.brain4j.common.kernel.KernelFactory;
 import org.brain4j.common.tensor.Tensor;
-import org.brain4j.common.tensor.TensorImplBase;
 import org.brain4j.common.tensor.Tensors;
-import org.brain4j.common.tensor.impl.cpu.CpuTensor;
+import org.brain4j.common.device.CollectableState;
 import org.jocl.*;
 
 import java.lang.ref.Cleaner;
@@ -16,7 +15,7 @@ import java.util.Arrays;
 
 import static org.jocl.CL.*;
 
-public class GpuTensor extends TensorImplBase {
+public class GpuTensor extends BaseTensor {
 
     /* Garbage collector stuff */
     private static final Cleaner CLEANER = Cleaner.create();
@@ -196,7 +195,7 @@ public class GpuTensor extends TensorImplBase {
 
     @Override
     public Tensor transpose() {
-        if (dimension() == 1) {
+        if (rank() == 1) {
             return reshape(1, elements());
         }
 
@@ -466,6 +465,11 @@ public class GpuTensor extends TensorImplBase {
         clReleaseCommandQueue(queue);
 
         return buffer;
+    }
+
+    @Override
+    public Tensor set(float value, int... indices) {
+        return null;
     }
 
     @Override

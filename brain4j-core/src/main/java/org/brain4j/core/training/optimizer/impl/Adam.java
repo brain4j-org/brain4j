@@ -3,7 +3,7 @@ package org.brain4j.core.training.optimizer.impl;
 import org.brain4j.common.device.Device;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
-import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.impl.GpuTensor;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.training.optimizer.Optimizer;
 

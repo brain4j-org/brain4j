@@ -17,7 +17,7 @@ public class GemmOperation implements Operation {
         Tensor add = inputs[2];
 
         if (!checkShape(input, weight)) {
-            weight = weight.transpose();
+            return compute(input, weight.transpose(), add);
         }
 
         return input.matmul(weight).plus(add);

@@ -54,6 +54,8 @@ public class GraphModel implements Model {
             List<String> inputNames = node.inputs();
             Tensor[] inputTensors = new Tensor[inputNames.size()];
 
+            long start = System.nanoTime();
+
             for (int j = 0; j < inputTensors.length; j++) {
                 Tensor input = computed.get(inputNames.get(j));
 
@@ -64,6 +66,9 @@ public class GraphModel implements Model {
                 inputTensors[j] = input;
             }
 
+            double took = (System.nanoTime() - start) / 1e6;
+
+            System.out.println("Start ms: " + took );
             Tensor output = node.operation().compute(inputTensors);
 
             for (String outputName : node.outputs()) {

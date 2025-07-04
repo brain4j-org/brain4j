@@ -117,7 +117,7 @@ public class Commons {
     }
 
     public static <T extends Enum<T>> T parse(Tensor outputs, Class<T> clazz) {
-        if (outputs.dimension() != 1) {
+        if (outputs.rank() != 1) {
             throw new IllegalArgumentException("Output tensor must be 1-dimensional!");
         }
 

@@ -1,6 +1,6 @@
 package org.brain4j.common.device;
 
-import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.impl.GpuTensor;
 import org.jocl.*;
 
 import java.io.IOException;

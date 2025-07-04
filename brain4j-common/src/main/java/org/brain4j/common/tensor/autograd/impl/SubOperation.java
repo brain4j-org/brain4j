@@ -19,7 +19,7 @@ public class SubOperation implements Operation {
     public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
         return new Tensor[] {
             gradOutput.clone(), 
-            gradOutput.times(-1.0) 
+            gradOutput.times(-1.0f)
         };
     }
 } 

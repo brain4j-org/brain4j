@@ -7,8 +7,8 @@ import org.brain4j.common.lang.DoubleToDoubleFunction;
 import org.brain4j.common.tensor.autograd.AutogradContext;
 import org.brain4j.common.tensor.autograd.Operation;
 import org.brain4j.common.tensor.autograd.impl.*;
-import org.brain4j.common.tensor.impl.cpu.CpuTensor;
-import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.impl.CpuTensor;
+import org.brain4j.common.tensor.impl.GpuTensor;
 import org.brain4j.common.tensor.index.Range;
 
 import java.util.function.Supplier;
@@ -48,10 +48,22 @@ public interface Tensor extends Iterable<Float> {
     float get(int... indices);
 
     /**
+     * Sets the value at the specified indices in the tensor.
+     * @param value the value to set
+     * @param indices the indices where the value should be set
+     * @return the current tensor modified
+     */
+    Tensor set(float value, int... indices);
+
+    default Tensor set(double value, int... indices) {
+        return set((float) value, indices);
+    }
+
+    /**
      * Returns the number of dimensions of the tensor.
      * @return the number of dimensions
      */
-    int dimension();
+    int rank();
 
     /**
      * Returns the number of elements in the tensor.
@@ -97,45 +109,29 @@ public interface Tensor extends Iterable<Float> {
     }
 
     /**
-     * Sets the value at the specified indices in the tensor.
-     * @param value the value to set
-     * @param indices the indices where the value should be set
-     * @return the current tensor modified
-     */
-    Tensor set(double value, int... indices);
-
-    /**
-     * Adds a value to the tensor at the specified indices.
-     * @param value The value to add.
-     * @param indices The indices where the value should be added.
-     * @return The current tensor modified.
-     */
-    Tensor add(double value, int... indices);
-
-    /**
      * Creates a clone of the tensor.
-     * @return A new tensor that is a clone of this tensor.
+     * @return a new tensor that is a clone of this tensor
      */
     Tensor clone();
 
     /**
      * Adds this tensor with another tensor element-wise.
-     * @param other The tensor to add.
-     * @return The current tensor modified.
+     * @param other the tensor to add
+     * @return the current tensor modified
      */
     Tensor add(Tensor other);
 
     /**
      * Adds this tensor with a constant value element-wise.
-     * @param value The constant value to add.
-     * @return The current tensor modified.
+     * @param value the constant value to add
+     * @return the current tensor modified
      */
     Tensor add(double value);
 
     /**
      * Performs element-wise addition of two tensors (alias for `add`).
-     * @param other The tensor to add.
-     * @return A new tensor with the result.
+     * @param other the tensor to add
+     * @return a new tensor with the result
      */
     default Tensor plus(Tensor other) {
         return clone().add(other);
@@ -143,8 +139,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Adds a constant value to this tensor element-wise (alias for `add`).
-     * @param value The constant value to add.
-     * @return A new tensor with the result.
+     * @param value the constant value to add
+     * @return a new tensor with the result
      */
     default Tensor plus(double value) {
         return clone().add(value);
@@ -152,22 +148,22 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Subtracts another tensor from this tensor element-wise.
-     * @param other The tensor to subtract.
-     * @return The current tensor modified.
+     * @param other the tensor to subtract
+     * @return the current tensor modified
      */
     Tensor sub(Tensor other);
 
     /**
      * Subtracts a constant value from this tensor element-wise.
-     * @param value The constant value to subtract.
-     * @return The current tensor modified.
+     * @param value the constant value to subtract
+     * @return the current tensor modified
      */
     Tensor sub(double value);
 
     /**
      * Performs element-wise subtraction of two tensors (alias for `sub`).
-     * @param other The tensor to subtract.
-     * @return A new tensor with the result.
+     * @param other the tensor to subtract
+     * @return a new tensor with the result
      */
     default Tensor minus(Tensor other) {
         return clone().sub(other);
@@ -175,8 +171,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Subtracts a constant value from this tensor element-wise (alias for `sub`).
-     * @param value The constant value to subtract.
-     * @return A new tensor with the result.
+     * @param value the constant value to subtract
+     * @return a new tensor with the result
      */
     default Tensor minus(double value) {
         return clone().sub(value);
@@ -184,22 +180,22 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Multiplies this tensor with another tensor element-wise.
-     * @param other The tensor to multiply.
-     * @return The current tensor modified.
+     * @param other the tensor to multiply
+     * @return the current tensor modified
      */
     Tensor mul(Tensor other);
 
     /**
      * Multiplies this tensor with a constant value element-wise.
-     * @param value The constant value to multiply.
-     * @return A new tensor with the result.
+     * @param value the constant value to multiply
+     * @return a new tensor with the result
      */
     Tensor mul(double value);
 
     /**
      * Performs element-wise multiplication of two tensors (alias for `mul`).
-     * @param other The tensor to multiply.
-     * @return A new tensor with the result.
+     * @param other the tensor to multiply
+     * @return a new tensor with the result
      */
     default Tensor times(Tensor other) {
         return clone().mul(other);
@@ -207,8 +203,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Multiplies a constant value with this tensor element-wise (alias for `mul`).
-     * @param value The constant value to multiply.
-     * @return A new tensor with the result.
+     * @param value the constant value to multiply
+     * @return a new tensor with the result
      */
     default Tensor times(double value) {
         return clone().mul(value);
@@ -216,22 +212,22 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Divides this tensor by another tensor element-wise.
-     * @param other The tensor to divide by.
-     * @return The current tensor modified.
+     * @param other the tensor to divide by
+     * @return the current tensor modified
      */
     Tensor div(Tensor other);
 
     /**
      * Divides this tensor by a constant value element-wise.
-     * @param value The constant value to divide by.
-     * @return The current tensor modified.
+     * @param value the constant value to divide by
+     * @return the current tensor modified
      */
     Tensor div(double value);
 
     /**
      * Performs element-wise division of two tensors (alias for `div`).
-     * @param other The tensor to divide by.
-     * @return A new tensor with the result.
+     * @param other the tensor to divide by
+     * @return a new tensor with the result
      */
     default Tensor divide(Tensor other) {
         return clone().div(other);
@@ -239,8 +235,8 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Divides this tensor by a constant value element-wise (alias for `div`).
-     * @param value The constant value to divide by.
-     * @return A new tensor with the result.
+     * @param value the constant value to divide by
+     * @return a new tensor with the result
      */
     default Tensor divide(double value) {
         return clone().div(value);
@@ -248,41 +244,100 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Raises each element of the tensor to the power of the given value.
-     * @param value The exponent.
-     * @return A new tensor with the result.
+     * @param value the exponent
+     * @return a new tensor with the result
      */
     Tensor pow(double value);
 
     /**
      * Raises each element of the tensor to the power of the corresponding element in another tensor.
-     * @param other The tensor containing the exponents.
-     * @return A new tensor with the result.
+     * @param other the tensor containing the exponents
+     * @return a new tensor with the result
      */
     Tensor pow(Tensor other);
 
     /**
      * Takes the square root of each element of the tensor.
-     * @return A new tensor with the result.
+     * @return a new tensor with the result
      */
     Tensor sqrt();
 
     /**
      * Reshapes the tensor to a 1D vector.
-     * @return A new tensor.
+     * @return a new tensor
      */
     Tensor vector();
 
-    //=============================================================
-    // Linear algebra operations
-    //=============================================================
-
+    /**
+     * Computes the (batched) matrix product of this tensor by another.
+     * <p>
+     * Treats the last two dimensions of each tensor as matrices of shape
+     * {@code [m × n]} and {@code [n × p]}. Any preceding dimensions are
+     * treated as batch dimensions and must be broadcastable between the two
+     * tensors according to broadcasting rules.
+     * <p>
+     * Formally, if this tensor has shape
+     * {@code [..., m, n]} and {@code other} has shape {@code [..., n, p]}, then
+     * the result will have shape {@code [..., m, p]}.
+     * <p>
+     * <strong>Example:</strong>
+     * <pre>
+     * // A has shape [2, 3], B has shape [3, 4]
+     * A.matmul(B)      // returns shape [2, 4]
+     *
+     * // A has shape [5, 2, 3], B has shape [5, 3, 4]
+     * A.matmul(B)      // returns shape [5, 2, 4]
+     *
+     * // A has shape [5, 1, 2, 3], B has shape [1, 6, 3, 4]
+     * A.matmul(B)      // returns shape [5, 6, 2, 4] (batch dims broadcasted)
+     * </pre>
+     *
+     * @param other the right-hand operand
+     * @return a new tensor containing the matrix product, with shape {@code [..., m, p]}
+     * @throws IllegalArgumentException if the two tensors’ shapes are not compatible for matrix multiplication
+     * @see #transpose()
+     */
     Tensor matmul(Tensor other);
-    double norm();
-    double normSquared();
+
+    /**
+     * Performs a layer normalization along this tensor.
+     * @param epsilon the epsilon to avoid division by zero
+     * @return a new normalized tensor
+     */
     Tensor layerNorm(double epsilon);
+
+    /**
+     * Computes the Euclidean distance between this tensor and the given one.
+     * Both tensors must have the same shape.
+     *
+     * @param other the tensor to compare against
+     * @return the Euclidean distance as a double
+     * @throws IllegalArgumentException if shapes do not match
+     */
     double distance(Tensor other);
+
+    /**
+     * Computes the squared Euclidean distance between this tensor and the given one.
+     * Both tensors must have the same shape.
+     *
+     * @param other the tensor to compare against
+     * @return the Euclidean distance as a double
+     * @throws IllegalArgumentException if shapes do not match
+     */
     double distanceSquared(Tensor other);
+
+    /**
+     * Computes a lazy-transposition of this tensor.
+     * This operation has complexity O(1).
+     * @return a new transposed tensor.
+     */
     Tensor transpose();
+
+    /**
+     * Gets whether the current tensor is transposed.
+     * @return true if the tensor is transposed, false otherwise
+     */
+    boolean transposed();
 
     //=============================================================
     // Statistical operations
@@ -297,16 +352,12 @@ public interface Tensor extends Iterable<Float> {
     Tensor mean(int dim, boolean keepDim);
     Tensor sign();
 
-    //=============================================================
-    // Shape manipulation
-    //=============================================================
-    
+    /**
+     * Reshapes the current tensor to a new shape.
+     * @param newShape the new shape of the tensor
+     * @return a copy of the tensor with a new shape
+     */
     Tensor reshape(int... newShape);
-    Tensor view(int... newShape);
-    Tensor permute(int... dims);
-    Tensor squeeze();
-    Tensor squeeze(int dim);
-    Tensor unsqueeze(int dim);
 
     /**
      * Concatenates this tensor with another tensor along the last dimension.
@@ -328,8 +379,8 @@ public interface Tensor extends Iterable<Float> {
      * and index.
      *
      * @param dim The dimension to select from.
-     * @param index The index in the specified dimension to select.
-     * @return A new tensor with the selected values.
+     * @param index the index in the specified dimension to select
+     * @return a new tensor with the selected values
      */
     Tensor select(int dim, int index);
 
@@ -337,8 +388,8 @@ public interface Tensor extends Iterable<Float> {
      * Slices the tensor according to the specified ranges for each dimension.
      *
      * @param ranges The ranges specifying the slice for each dimension.
-     * @return A new tensor containing the sliced data.
-     * @throws IllegalArgumentException if more ranges are specified than the number of dimensions.
+     * @return a new tensor containing the sliced data
+     * @throws IllegalArgumentException if more ranges are specified than the number of dimensions
      */
     Tensor slice(Range... ranges);
 
@@ -352,7 +403,7 @@ public interface Tensor extends Iterable<Float> {
 
     /**
      * Applies a given function to each element of the tensor and returns a new tensor with the results.
-     * @param function The function to apply.
+     * @param function the function to apply
      * @return the current tensor
      */
     Tensor map(DoubleToDoubleFunction function);

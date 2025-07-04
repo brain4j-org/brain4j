@@ -1,8 +1,8 @@
 package org.brain4j.core.clipper.impl;
 
 import org.brain4j.common.tensor.Tensor;
-import org.brain4j.common.tensor.impl.cpu.CpuTensor;
-import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.impl.CpuTensor;
+import org.brain4j.common.tensor.impl.GpuTensor;
 import org.brain4j.core.clipper.GradientClipper;
 
 public class L2Clipper implements GradientClipper {
@@ -17,7 +17,7 @@ public class L2Clipper implements GradientClipper {
         double norm = sumOfSquares(grad);
 
         if (norm > threshold) {
-            double scaleFactor = threshold / norm;
+            float scaleFactor = (float) (threshold / norm);
             grad.mul(scaleFactor);
         }
     }

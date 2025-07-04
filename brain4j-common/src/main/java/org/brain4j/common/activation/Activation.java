@@ -5,7 +5,7 @@ import org.brain4j.common.kernel.GpuContextHandler;
 import org.brain4j.common.kernel.KernelFactory;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
-import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.impl.GpuTensor;
 import org.brain4j.common.weightsinit.WeightInitialization;
 import org.jocl.cl_command_queue;
 import org.jocl.cl_kernel;

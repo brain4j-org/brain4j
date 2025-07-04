@@ -1,6 +1,6 @@
 package org.brain4j.common.tensor;
 
-import org.brain4j.common.tensor.impl.cpu.CpuTensor;
+import org.brain4j.common.tensor.impl.CpuTensor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -100,7 +100,7 @@ public class Tensors {
         int elements = 0;
 
         for (Tensor tensor : tensors) {
-            if (tensor.dimension() != 2) {
+            if (tensor.rank() != 2) {
                 throw new IllegalArgumentException("All tensors must be 2 dimensional!");
             }
 
@@ -139,7 +139,7 @@ public class Tensors {
         }
 
         Tensor first = tensors.getFirst();
-        int dimension = first.dimension();
+        int dimension = first.rank();
 
         int[] shape = first.shape();
         int[] newShape = new int[dimension + 1];
@@ -151,7 +151,7 @@ public class Tensors {
 
         for (int i = 0; i < tensors.size(); i++) {
             Tensor current = tensors.get(i);
-            if (current.dimension() != dimension) {
+            if (current.rank() != dimension) {
                 throw new IllegalArgumentException(
                         "All input tensors must have the same dimension!"
                 );
@@ -166,7 +166,7 @@ public class Tensors {
 
     private static void copyRecursive(Tensor src, Tensor dest, int[] idx, int dim, int batchIndex) {
         if (dim == idx.length) {
-            double value = src.get(idx);
+            float value = src.get(idx);
 
             int[] destIdx = new int[idx.length + 1];
             destIdx[0] = batchIndex;
@@ -189,7 +189,7 @@ public class Tensors {
 
         for (int i = 0; i < dimension; i++) {
             for (int j = i + 1; j < dimension; j++) {
-                mask.set(Double.NEGATIVE_INFINITY, i, j);
+                mask.set(Float.NEGATIVE_INFINITY, i, j);
             }
         }
 

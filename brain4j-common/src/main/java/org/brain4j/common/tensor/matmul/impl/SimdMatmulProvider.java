@@ -1,7 +1,10 @@
-package org.brain4j.common.tensor.impl.cpu.matmul;
+package org.brain4j.common.tensor.matmul.impl;
 
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
+import org.brain4j.common.tensor.Tensor;
+import org.brain4j.common.tensor.matmul.MatmulParameters;
+import org.brain4j.common.tensor.matmul.MatmulProvider;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
@@ -17,6 +20,11 @@ public class SimdMatmulProvider implements MatmulProvider {
 
     private static final int SPLIT_COMPLEXITY_THRESHOLD = 65536 * 4;
     private static final int SPLIT_WORK_THRESHOLD = 2;
+
+    @Override
+    public void multiply(ForkJoinPool pool, Tensor a, Tensor b, Tensor c) {
+
+    }
 
     private static class VectorAction extends RecursiveAction {
 
@@ -44,13 +52,13 @@ public class SimdMatmulProvider implements MatmulProvider {
             float[] B = parameters.B();
             float[] C = parameters.C();
 
-            int batchA = parameters.batchA();
-            int batchB = parameters.batchB();
+            // int batchA = parameters.batchA();
+            // int batchB = parameters.batchB();
 
             int work = end - start;
 
             if (!isOverSplitThreshold(work, np)) {
-                multiplySection(start, end, m, n, p, A, B, C, mn, np, mp, batchA, batchB);
+                multiplySection(start, end, m, n, p, A, B, C, mn, np, mp, 0, 0);
                 return;
             }
 
@@ -63,7 +71,6 @@ public class SimdMatmulProvider implements MatmulProvider {
 
     }
 
-    @Override
     public void multiply(
         ForkJoinPool pool,
         int batch,
@@ -86,20 +93,20 @@ public class SimdMatmulProvider implements MatmulProvider {
         int parallelism = PARALLELISM;
         int step = work / parallelism;
 
-        MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp, batchA, batchB);
-        VectorAction[] actions = new VectorAction[parallelism];
-
-        int i;
-
-        for (i = 0; i < parallelism - 1; i++) {
-            int startIndex = start + i * step;
-            int endIndex = start + step;
-            actions[i] = new VectorAction(parameters, startIndex, endIndex);
-        }
-
-        actions[i] = new VectorAction(parameters, start + (i * step), end);
-
-        ForkJoinTask.invokeAll(actions);
+        // MatmulParameters parameters = new MatmulParameters(m, n, p, A, B, C, np, mn, mp, batchA, batchB);
+//        VectorAction[] actions = new VectorAction[parallelism];
+//
+//        int i;
+//
+//        for (i = 0; i < parallelism - 1; i++) {
+//            int startIndex = start + i * step;
+//            int endIndex = start + step;
+//            actions[i] = new VectorAction(parameters, startIndex, endIndex);
+//        }
+//
+//        actions[i] = new VectorAction(parameters, start + (i * step), end);
+//
+//        ForkJoinTask.invokeAll(actions);
     }
 
     private static void multiplySection(

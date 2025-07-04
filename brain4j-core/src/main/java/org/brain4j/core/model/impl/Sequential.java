@@ -7,7 +7,7 @@ import org.brain4j.common.device.Device;
 import org.brain4j.common.kernel.GpuContextHandler;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
-import org.brain4j.common.tensor.impl.gpu.GpuTensor;
+import org.brain4j.common.tensor.impl.GpuTensor;
 import org.brain4j.common.tensor.index.Range;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.activation.Activations;
@@ -183,11 +183,11 @@ public class Sequential extends Layer implements Model {
 
         Tensor input = inputs[0];
 
-        if (input == null || input.dimension() == 0) {
+        if (input == null || input.rank() == 0) {
             throw new IllegalArgumentException("Input is either null or has dimension of 0!");
         }
 
-        if (input.dimension() < 2) {
+        if (input.rank() < 2) {
             // Shape: [batch_size, input_size]
             input = input.reshape(1, input.elements());
         }

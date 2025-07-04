@@ -1,4 +1,4 @@
-package org.brain4j.common.tensor.impl.gpu;
+package org.brain4j.common.device;
 
 import org.jocl.cl_mem;
 
