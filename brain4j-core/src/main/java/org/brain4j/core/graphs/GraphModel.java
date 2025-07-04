@@ -44,13 +44,11 @@ public class GraphModel implements Model {
             throw new IllegalArgumentException("Expected " + inputNames.size() + " inputs, but got " + inputs.length);
         }
 
-        Map<String, Tensor> computed = new HashMap<>();
+        Map<String, Tensor> computed = new HashMap<>(initializers);
 
         for (int i = 0; i < inputs.length; i++) {
             computed.put(inputNames.get(i), inputs[i]);
         }
-
-        computed.putAll(initializers);
 
         for (GraphNode node : nodes) {
             List<String> inputNames = node.inputs();

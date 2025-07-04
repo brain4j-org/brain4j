@@ -1,5 +1,6 @@
 package org.brain4j.core.layer.impl;
 
+import org.brain4j.common.activation.Activation;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
 import org.brain4j.core.activation.Activations;
@@ -50,6 +51,16 @@ public class DenseLayer extends Layer {
         this.activation = activation.function();
     }
 
+    /**
+     * Constructs a new instance of a dense layer.
+     * @param dimension the dimension of the output
+     * @param activation the activation function
+     */
+    public DenseLayer(int dimension, Activation activation) {
+        this.dimension = dimension;
+        this.activation = activation;
+    }
+
     @Override
     public Layer connect(Layer previous) {
         if (previous == null) return this;
@@ -98,8 +109,11 @@ public class DenseLayer extends Layer {
 
     @Override
     public boolean validateInput(Tensor input) {
+        if (weights == null) return true;
+
         int[] shape = input.shape();
         int[] weightsShape = weights.shape();
+
         return shape[shape.length - 1] == weightsShape[0];
     }
 }

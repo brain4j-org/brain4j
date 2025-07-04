@@ -1,5 +1,6 @@
 package org.brain4j.core.layer.impl;
 
+import org.brain4j.common.activation.Activation;
 import org.brain4j.common.tensor.Tensor;
 import org.brain4j.core.activation.Activations;
 import org.brain4j.core.layer.ForwardContext;
@@ -12,6 +13,10 @@ public class ActivationLayer extends Layer {
 
     public ActivationLayer(Activations activation) {
         this.activation = activation.function();
+    }
+
+    public ActivationLayer(Activation activation) {
+        this.activation = activation;
     }
 
     @Override
