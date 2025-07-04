@@ -17,7 +17,7 @@ public class ReshapeOperation implements Operation {
     }
 
     @Override
-    public Tensor forward(Tensor... inputs) {
+    public Tensor compute(Tensor... inputs) {
         return inputs[0].reshape(newShape);
     }
 

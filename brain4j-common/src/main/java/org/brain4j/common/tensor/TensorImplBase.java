@@ -817,7 +817,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             );
         }
 
-        Tensor result = operation.forward(this);
+        Tensor result = operation.compute(this);
 
         if (result.autogradContext() == null) {
             result.setAutogradContext(new AutogradContext(true));
@@ -835,7 +835,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
             );
         }
 
-        Tensor result = operation.forward(this, other);
+        Tensor result = operation.compute(this, other);
 
         if (result.autogradContext() == null) {
             result.setAutogradContext(new AutogradContext(true));
@@ -860,7 +860,7 @@ public abstract class TensorImplBase implements Tensor, Cloneable {
         }
 
         Tensor[] allInputsArray = allInputs.toArray(new Tensor[0]);
-        Tensor result = operation.forward(allInputsArray);
+        Tensor result = operation.compute(allInputsArray);
 
         if (result.autogradContext() == null) {
             result.setAutogradContext(new AutogradContext(true));

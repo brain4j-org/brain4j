@@ -11,8 +11,26 @@ public class GemmOperation implements Operation {
     }
 
     @Override
-    public Tensor forward(Tensor... inputs) {
-        return inputs[0].matmul(inputs[1]).plus(inputs[2]);
+    public Tensor compute(Tensor... inputs) {
+        Tensor input = inputs[0];
+        Tensor weight = inputs[1];
+        Tensor add = inputs[2];
+
+        if (!checkShape(input, weight)) {
+            weight = weight.transpose();
+        }
+
+        return input.matmul(weight).plus(add);
+    }
+
+    private boolean checkShape(Tensor a, Tensor b) {
+        int[] inShape = a.shape();
+        int[] weightShape = b.shape();
+
+        int n = inShape[inShape.length - 1];
+        int k = weightShape[weightShape.length - 2];
+
+        return n == k;
     }
 
     @Override

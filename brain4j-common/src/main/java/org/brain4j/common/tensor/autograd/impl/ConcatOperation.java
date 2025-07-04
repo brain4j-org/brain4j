@@ -7,7 +7,7 @@ import org.brain4j.common.tensor.index.Range;
 public class ConcatOperation implements Operation {
 
     @Override
-    public Tensor forward(Tensor... inputs) {
+    public Tensor compute(Tensor... inputs) {
         return inputs[0].concat(inputs[1]);
     }
 

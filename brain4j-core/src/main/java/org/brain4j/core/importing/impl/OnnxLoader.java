@@ -4,9 +4,9 @@ import org.brain4j.common.tensor.Tensor;
 import org.brain4j.common.tensor.Tensors;
 import org.brain4j.common.tensor.autograd.Operation;
 import org.brain4j.core.graphs.GraphModel;
+import org.brain4j.core.graphs.GraphNode;
 import org.brain4j.core.importing.ModelLoader;
 import org.brain4j.core.importing.onnx.Onnx;
-import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
 
 import java.nio.ByteBuffer;
@@ -20,14 +20,12 @@ public class OnnxLoader implements ModelLoader {
         Onnx.ModelProto proto = Onnx.ModelProto.parseFrom(bytes);
         Onnx.GraphProto graph = proto.getGraph();
         
-        Map<String, Tensor> weights = new HashMap<>();
-        
-        for (Onnx.TensorProto tensor : graph.getInitializerList()) {
-            System.out.println("Adding tensor " + tensor.getName());
-            weights.put(tensor.getName(), convertTensor(tensor));
-        }
-        
         GraphModel.Builder model = GraphModel.newGraph();
+
+        for (Onnx.TensorProto tensor : graph.getInitializerList()) {
+            Tensor weight = convertTensor(tensor);
+            model.addInitializer(tensor.getName(), weight);
+        }
 
         for (Onnx.NodeProto node : graph.getNodeList()) {
             Operation operation = OPERATION_MAP.get(node.getOpType());
@@ -42,25 +40,28 @@ public class OnnxLoader implements ModelLoader {
                         + " inputs but opereation requires " + operation.requiredInputs()
                 );
             }
-            
-            List<String> inputList = node.getInputList();
-            List<String> outputList = node.getOutputList();
-            
-            System.out.println("=========== " + node.getOpType() + " ============");
-            System.out.println("Input list: " + inputList);
-            System.out.println("Output list: " + outputList);
-            
-            for (int i = 0; i < inputList.size(); i++) {
-                String input = inputList.get(i);
-                if (i > 0) {
-                    Tensor weightTensor = weights.get(input);
 
-                    System.out.printf("Node %s has input %s with tensor shape %s %n", node.getOpType(), input, Arrays.toString(weightTensor.shape()));
-                }
-            }
+            model.addNode(new GraphNode(
+                node.getName(),
+                operation,
+                node.getInputList(),
+                node.getOutputList()
+            ));
         }
 
-        return null;
+
+        List<String> inputs = graph.getInputList().stream()
+            .map(Onnx.ValueInfoProto::getName)
+            .toList();
+
+        List<String> outputs = graph.getOutputList().stream()
+            .map(Onnx.ValueInfoProto::getName)
+            .toList();
+
+        model.inputs(inputs);
+        model.outputs(outputs);
+
+        return model.compile();
     }
     
     private Tensor convertTensor(Onnx.TensorProto tensor) {

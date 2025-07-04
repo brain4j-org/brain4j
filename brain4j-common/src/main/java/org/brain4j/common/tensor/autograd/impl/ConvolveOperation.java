@@ -6,7 +6,7 @@ import org.brain4j.common.tensor.autograd.Operation;
 public class ConvolveOperation implements Operation {
 
     @Override
-    public Tensor forward(Tensor... inputs) {
+    public Tensor compute(Tensor... inputs) {
         return inputs[0].convolve(inputs[1], 1, 0);
     }
 

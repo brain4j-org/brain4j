@@ -8,7 +8,7 @@ public interface Operation {
         return 2;
     }
 
-    Tensor forward(Tensor... inputs);
+    Tensor compute(Tensor... inputs);
 
     Tensor[] backward(Tensor gradOutput, Tensor... inputs);
 } 

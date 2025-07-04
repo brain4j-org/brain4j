@@ -18,7 +18,7 @@ public class ActivationOperation implements Operation {
     }
 
     @Override
-    public Tensor forward(Tensor... inputs) {
+    public Tensor compute(Tensor... inputs) {
         return activation.activate(inputs[0]);
     }
 

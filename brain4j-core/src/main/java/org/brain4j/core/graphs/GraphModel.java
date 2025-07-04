@@ -16,15 +16,71 @@ import java.util.*;
 public class GraphModel implements Model {
 
     private final List<GraphNode> nodes;
-    private final int inputsAmount;
+    private final List<String> inputNames;
+    private final List<String> outputNames;
+    private final Map<String, Tensor> initializers;
 
-    public GraphModel(int inputsAmount, List<GraphNode> nodes) {
+    private Device device;
+
+    public GraphModel(
+        List<GraphNode> nodes,
+        List<String> inputNames,
+        List<String> outputNames,
+        Map<String, Tensor> initializers
+    ) {
         this.nodes = nodes;
-        this.inputsAmount = inputsAmount;
+        this.inputNames = inputNames;
+        this.outputNames = outputNames;
+        this.initializers = initializers;
     }
 
-    public static GraphModel.Builder newGraph() {
-        return new GraphModel.Builder();
+    public static Builder newGraph() {
+        return new Builder();
+    }
+
+    @Override
+    public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
+        if (inputs.length != inputNames.size()) {
+            throw new IllegalArgumentException("Expected " + inputNames.size() + " inputs, but got " + inputs.length);
+        }
+
+        Map<String, Tensor> computed = new HashMap<>();
+
+        for (int i = 0; i < inputs.length; i++) {
+            computed.put(inputNames.get(i), inputs[i]);
+        }
+
+        computed.putAll(initializers);
+
+        for (GraphNode node : nodes) {
+            List<String> inputNames = node.inputs();
+            Tensor[] inputTensors = new Tensor[inputNames.size()];
+
+            System.out.println("Node " + node.operation().getClass().getSimpleName());
+            System.out.println("Inputs: " + inputNames);
+
+            for (int j = 0; j < inputTensors.length; j++) {
+                Tensor input = computed.get(inputNames.get(j));
+
+                if (input == null) {
+                    throw new IllegalStateException("Missing tensor for input: " + inputNames.get(j));
+                }
+
+                inputTensors[j] = input;
+            }
+
+            Tensor output = node.operation().compute(inputTensors);
+
+            for (String outputName : node.outputs()) {
+                computed.put(outputName, output);
+            }
+        }
+
+        if (outputNames.size() != 1) {
+            throw new UnsupportedOperationException("Only single-output graphs are supported in predict()");
+        }
+
+        return computed.get(outputNames.getFirst());
     }
 
     @Override
@@ -38,28 +94,13 @@ public class GraphModel implements Model {
     }
 
     @Override
-    public Tensor predict(StatesCache cache, boolean training, Tensor... inputs) {
-        if (inputs.length != this.inputsAmount) {
-            throw new IllegalArgumentException(
-                "Input array length does not match model's input amount! Got " + inputs.length + " instead of " + this.inputsAmount
-            );
-        }
-
-        for (GraphNode node : nodes) {
-
-        }
-
-        return null;
-    }
-
-    @Override
     public void backpropagate(StatesCache cache, Tensor outputs, Tensor targets) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void fit(ListDataSource train, ListDataSource validation, int epoches, int evaluateEvery) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -74,17 +115,28 @@ public class GraphModel implements Model {
 
     @Override
     public Model compile(LossFunction lossFunction, Optimizer optimizer, Updater updater) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Model to(Device device) {
-        return null;
+        this.device = device;
+
+        Map<String, Tensor> copy = new HashMap<>(initializers);
+
+        initializers.clear();
+
+        for (Map.Entry<String, Tensor> entry : copy.entrySet()) {
+            Tensor weight = entry.getValue().to(device);
+            initializers.put(entry.getKey(), weight);
+        }
+
+        return this;
     }
 
     @Override
     public Device device() {
-        return null;
+        return device;
     }
 
     @Override
@@ -99,22 +151,22 @@ public class GraphModel implements Model {
 
     @Override
     public Layer layerAt(int index) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Layer flattenedAt(int index) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void summary() {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void zeroGrad() {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -124,50 +176,33 @@ public class GraphModel implements Model {
 
     public static class Builder {
 
-        private final List<NodeInfo> hidden;
-        private int inputs;
+        private final List<GraphNode> nodes = new ArrayList<>();
+        private final Map<String, Tensor> initializers = new HashMap<>();
+        private List<String> inputs = new ArrayList<>();
+        private List<String> outputs = new ArrayList<>();
 
-        public Builder() {
-            this.hidden = new ArrayList<>();
-        }
-
-        public Builder input(String name, Layer layer, String output) {
-            add(name, layer, output);
-            inputs++;
+        public Builder addNode(GraphNode node) {
+            this.nodes.add(node);
             return this;
         }
 
-        public Builder add(String name, Layer layer, String... outputs) {
-            this.hidden.add(new NodeInfo(name, layer, outputs));
+        public Builder addInitializer(String name, Tensor tensor) {
+            this.initializers.put(name, tensor);
             return this;
         }
 
-        public Builder output(String name, Layer layer) {
-            this.hidden.add(new NodeInfo(name, layer));
+        public Builder inputs(List<String> inputs) {
+            this.inputs = inputs;
             return this;
         }
 
-        public Builder lossFunction(LossFunction lossFunction) {
-            return this;
-        }
-
-        public Builder optimizer(Optimizer optimizer) {
-            return this;
-        }
-
-        public Builder updater(Updater updater) {
+        public Builder outputs(List<String> outputs) {
+            this.outputs = outputs;
             return this;
         }
 
         public GraphModel compile() {
-            if (inputs == 0) {
-                throw new IllegalStateException("You must specify at least one input!");
-            }
-
-
-            return new GraphModel(inputs, new ArrayList<>());
+            return new GraphModel(nodes, inputs, outputs, initializers);
         }
     }
-
-    public record NodeInfo(String name, Layer layer, String... outputs) { }
 }

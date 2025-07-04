@@ -17,7 +17,7 @@ public class LayerNormOperation implements Operation {
     }
 
     @Override
-    public Tensor forward(Tensor... inputs) {
+    public Tensor compute(Tensor... inputs) {
         return inputs[0].layerNorm(epsilon).mul(inputs[1]).add(inputs[2]);
     }
 
