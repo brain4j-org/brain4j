@@ -568,11 +568,12 @@ public class TensorCPU implements Cloneable, Tensor {
 
         int baseLinearIndex = 0;
         int baseInverseLinearIndex = 0;
+        
         for (int i = 0; i < rows; i++) {
             int linearIndex = baseLinearIndex;
             int inverseLinearIndex = baseInverseLinearIndex;
 
-            for (int j = 0; j < cols - 1; j++) {
+            for (int j = 0; j < cols; j++) {
                 resultData[inverseLinearIndex] = data[linearIndex];
 
                 linearIndex += colsStride;
