@@ -221,16 +221,9 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
         int linearIndex = 0;
 
-        // if (!transposed) {
-            for (int i = 0; i < indices.length; i++) {
-                linearIndex += indices[i] * strides[i];
-            }
-//        } else {
-//            for (int i = 0; i < indices.length; i++) {
-//                int dim = indices.length - 1 - i;
-//                linearIndex += indices[dim] * strides[i];
-//            }
-//        }
+        for (int i = 0; i < indices.length; i++) {
+            linearIndex += indices[i] * strides[i];
+        }
 
         return linearIndex;
     }
