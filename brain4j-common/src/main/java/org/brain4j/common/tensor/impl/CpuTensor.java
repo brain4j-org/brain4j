@@ -44,6 +44,17 @@ public class CpuTensor extends BaseTensor {
         this.strides = computeStrides(shape);
     }
 
+    public CpuTensor(int[] shape, int[] strides, float... data) {
+
+        if (data.length == 0) {
+            data = new float[computeSize(shape)];
+        }
+
+        this.data = data;
+        this.shape = shape;
+        this.strides = strides;
+    }
+
     @Override
     public Tensor to(Device device) {
         if (device == null) {

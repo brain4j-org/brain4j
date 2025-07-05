@@ -94,9 +94,18 @@ public class DenseLayer extends Layer {
         }
 
         // Shape: [batch_size, output_size]
-        Tensor output = input
-            .matmulGrad(weights)
-            .addGrad(bias);
+//        System.out.println("==== Input ==== " + Arrays.toString(input.shape()));
+//        System.out.println(input.toString("%.3f"));
+//
+//        System.out.println("==== Weights ==== " + Arrays.toString(weights.shape()));
+//        System.out.println(weights.toString("%.3f"));
+
+        Tensor output = input.matmulGrad(weights);
+
+//        System.out.println("==== Output ==== " + Arrays.toString(output.shape()));
+//        System.out.println(output.toString("%.3f"));
+
+        output = output.addGrad(bias);
 
         cache.setPreActivation(this, output);
         return output.activateGrad(activation);

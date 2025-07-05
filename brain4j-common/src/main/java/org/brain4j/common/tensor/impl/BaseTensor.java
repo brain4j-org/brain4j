@@ -221,16 +221,16 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
         int linearIndex = 0;
 
-        if (!transposed) {
+        // if (!transposed) {
             for (int i = 0; i < indices.length; i++) {
                 linearIndex += indices[i] * strides[i];
             }
-        } else {
-            for (int i = 0; i < indices.length; i++) {
-                int dim = indices.length - 1 - i;
-                linearIndex += indices[dim] * strides[i];
-            }
-        }
+//        } else {
+//            for (int i = 0; i < indices.length; i++) {
+//                int dim = indices.length - 1 - i;
+//                linearIndex += indices[dim] * strides[i];
+//            }
+//        }
 
         return linearIndex;
     }
@@ -442,16 +442,20 @@ public abstract class BaseTensor implements Tensor, Cloneable {
         }
 
         int[] newShape = shape.clone();
-        int tmpDim = newShape[rank - 2];
-        newShape[rank - 2] = newShape[rank - 1];
-        newShape[rank - 1] = tmpDim;
+        newShape[rank - 2] = shape[rank - 1];
+        newShape[rank - 1] = shape[rank - 2];
 
-        BaseTensor view = (BaseTensor) Tensors.create(newShape, data);
+        int[] newStrides = strides.clone();
+        newStrides[rank - 1] = strides[rank - 2];
+        newStrides[rank - 2] = strides[rank - 1];
+
+        BaseTensor view = (BaseTensor) Tensors.create(newShape, newStrides, data);
+        // BaseTensor view = (BaseTensor) Tensors.create(newShape, data);
         view.transposed = !transposed;
 
-        if (usesGrad()) {
-            view.setAutogradContext(autogradContext);
-        }
+//        if (usesGrad()) {
+//            view.setAutogradContext(autogradContext);
+//        }
 
         return view;
     }

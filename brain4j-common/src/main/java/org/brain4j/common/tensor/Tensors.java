@@ -14,7 +14,11 @@ public class Tensors {
     public static Tensor create(int[] shape, float... data) {
         return new CpuTensor(shape, data);
     }
-    
+
+    public static Tensor create(int[] shape, int[] strides, float[] data) {
+        return new CpuTensor(shape, strides, data);
+    }
+
     public static Tensor vector(float... data) {
         return create(new int[]{data.length}, data);
     }

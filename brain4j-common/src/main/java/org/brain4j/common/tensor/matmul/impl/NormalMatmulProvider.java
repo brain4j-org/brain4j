@@ -16,31 +16,6 @@ public class NormalMatmulProvider implements MatmulProvider {
         return work > WORK_THRESHOLD && work * np > COMPLEXITY_THRESHOLD;
     }
 
-    public void multiply(
-        int batch, int m, int n, int p,
-        boolean transpose,
-        float[] A, float[] B, float[] C,
-        ForkJoinPool pool
-    ) {
-        int start = 0;
-        int end = batch * m;
-        int mn = m * n;
-        int np = n * p;
-        int mp = m * p;
-
-        int work = end - start;
-
-        if (!isOverThreshold(work, np)) {
-            matmulBlock(A, B, C, start, end, transpose, m, n, p, mn, np, mp);
-            return;
-        }
-
-        MatmulParameters parameters = new MatmulParameters(A, B, C, m, n, p, transpose);
-        ScalarAction action = new ScalarAction(start, end, parameters);
-
-        pool.invoke(action);
-    }
-
     @Override
     public void multiply(ForkJoinPool pool, Tensor a, Tensor b, Tensor c) {
         float[] A = a.data();
@@ -54,14 +29,34 @@ public class NormalMatmulProvider implements MatmulProvider {
         int[] shapeB = b.shape();
         int[] shapeC = c.shape();
 
+        int batchA = 1;
+        int batchB = 1;
         int batch = 1;
-        for (int d : shapeC) batch *= d;
+
+        for (int i = 0; i < rankA - 2; i++) batchA *= shapeA[i];
+        for (int i = 0; i < rankB - 2; i++) batchB *= shapeB[i];
+        for (int i = 0; i < shapeC.length - 2; i++) batch *= shapeC[i];
+        boolean transposed = b.transposed();
 
         int m = shapeA[rankA - 2];
         int n = shapeA[rankA - 1];
         int p = shapeB[rankB - 1];
 
-        multiply(batch, m, n, p, b.transposed(), A, B, C, pool);
+        MatmulParameters parameters = new MatmulParameters(A, B, C, m, n, p, transposed, batchA, batchB);
+
+        int work = batch * m;
+
+        int mn = m * n;
+        int np = n * p;
+        int mp = m * p;
+
+        if (!isOverThreshold(work, np)) {
+            matmulBlock(A, B, C, 0, work, transposed, m, n, p, mn, np, mp, batchA, batchB);
+            return;
+        }
+
+        ScalarAction action = new ScalarAction(0, work, parameters);
+        pool.invoke(action);
     }
 
     private void matmulBlock(
@@ -69,14 +64,20 @@ public class NormalMatmulProvider implements MatmulProvider {
         int start, int end,
         boolean transpose,
         int m, int n, int p,
-        int mn, int np, int mp
+        int mn, int np, int mp,
+        int batchA, int batchB
     ) {
         for (int r = start; r < end; r++) {
-            int b = r / m;
+            int batchIndex = r / m;
             int i = r % m;
-            int offsetA = b * mn;
-            int offsetB = b * np;
-            int offsetC = b * mp;
+
+            int batchIndexA = batchA == 1 ? 0 : batchIndex;
+            int batchIndexB = batchB == 1 ? 0 : batchIndex;
+
+            int offsetA = batchIndexA * mn;
+            int offsetB = batchIndexB * np;
+            int offsetC = batchIndex * mp;
+
             int rowA = offsetA + i * n;
             int rowC = offsetC + i * p;
 
@@ -84,9 +85,10 @@ public class NormalMatmulProvider implements MatmulProvider {
                 float aVal = A[rowA + t];
 
                 if (!transpose) {
-                    int baseB = offsetB + t * p;
+                    int colB = offsetB + t * p;
+
                     for (int j = 0; j < p; j++) {
-                        C[rowC + j] += aVal * B[baseB + j];
+                        C[rowC + j] += aVal * B[colB + j];
                     }
                 } else {
                     for (int j = 0; j < p; j++) {
@@ -123,7 +125,8 @@ public class NormalMatmulProvider implements MatmulProvider {
                     start, end,
                     parameters.transpose(),
                     parameters.m(), parameters.n(), parameters.p(),
-                    parameters.mn(), parameters.np(), parameters.mp()
+                    parameters.mn(), parameters.np(), parameters.mp(),
+                    parameters.batchA(), parameters.batchB()
                 );
             }
         }
