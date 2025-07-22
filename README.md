@@ -28,6 +28,7 @@ to implement machine learning solutions in pure Java.
 
 Brain4J is available on [JitPack](https://jitpack.io) and [GitHub Packages](https://github.com/brain4j-org/brain4j/packages).
 
+### Gradle
 ```groovy
 repositories {
     mavenCentral()
@@ -35,9 +36,38 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.brain4j-org.brain4j:brain4j-core:2.9.1'
-    implementation 'com.github.brain4j-org.brain4j:brain4j-math:2.9.1'
+    implementation 'com.github.brain4j-org:brain4j-core:2.9.1'
+    implementation 'com.github.brain4j-org:brain4j-math:2.9.1'
 }
+
+## Maven
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>com.github.brain4j-org</groupId>
+        <artifactId>brain4j-core</artifactId>
+        <version>2.9.1</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.brain4j-org</groupId>
+        <artifactId>brain4j-math</artifactId>
+        <version>2.9.1</version>
+    </dependency>
+</dependencies>
+
+
+## Troubleshooting
+Error: "Could not resolve dependencies"
+Solution: Ensure you have JitPack in your repositories configuration
+
+Error: "Class not found"
+Solution: Verify all required modules (core, math) are included
 ```
 
 See the [installation guide](https://github.com/brain4j-org/brain4j/wiki/Installation) for more information.
