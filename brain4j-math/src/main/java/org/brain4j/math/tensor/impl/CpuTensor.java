@@ -3,6 +3,7 @@ package org.brain4j.math.tensor.impl;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.broadcast.TensorBroadcast;
@@ -132,14 +133,26 @@ public class CpuTensor extends BaseTensor {
     }
 
     @Override
-    public Tensor to(Device device) {
-        if (device == null) {
-            return this;
+    public Tensor to(Object device) {
+        switch (device) {
+            case null -> {
+                return this;
+            }
+            case Device legacyDevice -> {
+                GpuTensor result = new GpuTensor(legacyDevice, shape, data);
+                result.setAutogradContext(autogradContext);
+                return result;
+            }
+            case SiliconDevice siliconDevice -> {
+                SiliconGpuTensor result = new SiliconGpuTensor(siliconDevice, shape, data);
+                result.setAutogradContext(autogradContext);
+                return result;
+            }
+            default -> {
+            }
         }
 
-        GpuTensor result = new GpuTensor(device, shape, data);
-        result.setAutogradContext(autogradContext);
-        return result;
+        return this;
     }
 
     @Override

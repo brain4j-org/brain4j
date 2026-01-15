@@ -163,10 +163,10 @@ public interface Tensor extends Iterable<Float> {
      * If the tensor is already on the target device, returns this tensor.
      * Otherwise creates a new tensor on the target device with a copy of the data.
      *
-     * @param device target device, or null for CPU
+     * @param device target device (Device, SiliconDevice, or null for CPU)
      * @return tensor on the target device
      */
-    Tensor to(Device device);
+    Tensor to(Object device);
 
     /**
      * Creates a deep copy of this tensor.

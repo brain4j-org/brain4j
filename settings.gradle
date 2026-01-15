@@ -5,3 +5,13 @@ include 'brain4j-datasets'
 include 'brain4j-llm'
 include 'brain4j-math'
 include 'brain4j-examples'
+
+include 'silicon-api'
+include 'silicon-opencl'
+// include 'silicon-cuda'
+// include 'silicon-metal'
+
+project(':silicon-api').projectDir = file('../silicon/silicon-api')
+project(':silicon-opencl').projectDir = file('../silicon/silicon-opencl')
+// project(':silicon-cuda').projectDir = file('../silicon/silicon-cuda')
+// project(':silicon-metal').projectDir = file('../silicon/silicon-metal')
