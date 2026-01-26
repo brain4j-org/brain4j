@@ -27,12 +27,19 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
 
-public class Sequential implements Model, ModelBlock, Cloneable {
+public class Sequential implements Model, ModelBlock {
     
     private final long seed;
-    private ModelSpecs specs;
-    private List<Layer> layers;
-    private SiliconDevice device;
+    private final ModelSpecs specs;
+    private final List<Layer> layers;
+    private final SiliconDevice device;
+    
+    private Sequential(ModelSpecs specs, SiliconDevice device, List<Layer> layers, long seed) {
+        this.specs = specs;
+        this.device = device;
+        this.layers = layers;
+        this.seed = seed;
+    }
     
     public Sequential(ModelSpecs specs, SiliconDevice device, long seed) {
         this.specs = specs;
@@ -104,10 +111,9 @@ public class Sequential implements Model, ModelBlock, Cloneable {
     
     @Override
     public Model fork(SiliconDevice device) {
-        Sequential copy = clone();
-        copy.device = device;
-        copy.layers.forEach(x -> x.toDevice(device));
-        return copy;
+        List<Layer> copiedLayers = layers.stream().map(Layer::clone).toList();
+        copiedLayers.forEach(x -> x.toDevice(device));
+        return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
     }
     
     @Override
@@ -261,19 +267,10 @@ public class Sequential implements Model, ModelBlock, Cloneable {
             totalBiases.addAndGet(biases);
         }
     }
-
-    @Override
-    public Sequential clone() {
-        try {
-            Sequential clone = (Sequential) super.clone();
-            List<Layer> copiedLayers = layers.stream().map(Layer::clone).toList();
-            
-            clone.specs = specs.clone();
-            clone.layers = new ArrayList<>(copiedLayers);
-            
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+    
+    public Sequential copy() {
+        List<Layer> copiedLayers = layers.stream().map(Layer::clone).toList();
+        
+        return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
     }
 }
