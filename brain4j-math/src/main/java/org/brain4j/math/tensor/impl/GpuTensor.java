@@ -11,8 +11,7 @@ import org.brain4j.math.gpu.memory.GpuQueue;
 import org.brain4j.math.gpu.memory.TempBuffer;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
-import org.lwjgl.opencl.CL10;
+import org.brain4j.math.commons.Range;
 
 import java.util.Arrays;
 

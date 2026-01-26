@@ -3,6 +3,7 @@ package org.brain4j.math.data;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Batch;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.ArrayList;
@@ -257,7 +258,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         }
     }
 
-    public ListDataSource to(Device device) {
+    public ListDataSource to(SiliconDevice device) {
         List<Sample> newSamples = new ArrayList<>(samples.size());
 
         for (Sample sample : samples) {

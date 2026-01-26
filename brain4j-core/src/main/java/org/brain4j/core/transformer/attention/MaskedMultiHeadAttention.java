@@ -8,7 +8,7 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.ops.FlashAttention;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 /**
  * A variant of multi-head attention that uses causal (triangular) masking.

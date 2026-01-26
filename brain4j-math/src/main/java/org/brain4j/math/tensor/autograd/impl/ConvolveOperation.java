@@ -3,7 +3,7 @@ package org.brain4j.math.tensor.autograd.impl;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 import java.util.stream.IntStream;
 

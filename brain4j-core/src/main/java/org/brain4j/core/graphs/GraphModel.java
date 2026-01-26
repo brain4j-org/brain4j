@@ -10,6 +10,8 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconContext;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.*;
@@ -37,7 +39,7 @@ public class GraphModel implements Model {
     private final List<String> outputNames;
     private final Map<String, Tensor> initializers;
 
-    private Device device;
+    private SiliconDevice device;
 
     public GraphModel(
         List<GraphNode> nodes,
@@ -99,7 +101,7 @@ public class GraphModel implements Model {
         }
 
         if (device != null && !cache.isTraining()) {
-            GpuContext.finishAndRelease(device);
+            SiliconContext.finishAndRelease(device.getQueue());
         }
 
         return outputs;
@@ -111,7 +113,7 @@ public class GraphModel implements Model {
     }
     
     @Override
-    public Model fork(Device device) {
+    public Model fork(SiliconDevice device) {
         this.device = device;
 
         Map<String, Tensor> copy = new HashMap<>(initializers);
@@ -127,7 +129,7 @@ public class GraphModel implements Model {
     }
 
     @Override
-    public Device getDevice() {
+    public SiliconDevice getDevice() {
         return device;
     }
     

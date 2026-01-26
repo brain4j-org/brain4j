@@ -2,14 +2,14 @@ package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weightsinit.impl.NormalXavierInit;
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.math.weightsinit.WeightInit;
 
 import static org.brain4j.math.Constants.PI;
 
 public class GELUActivation implements Activation {
 
     @Override
-    public WeightInitialization defaultWeightInit() {
+    public WeightInit defaultWeightInit() {
         return new NormalXavierInit();
     }
 

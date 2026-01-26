@@ -1,7 +1,9 @@
 package org.brain4j.math.gpu.silicon;
 
 import org.silicon.Silicon;
+import org.silicon.computing.ComputeArgs;
 import org.silicon.computing.ComputeQueue;
+import org.silicon.device.ComputeArena;
 import org.silicon.device.ComputeBuffer;
 import org.silicon.device.ComputeContext;
 import org.silicon.device.ComputeDevice;
@@ -10,9 +12,11 @@ public class SiliconDevice {
 
     private final ComputeDevice device;
     private final ComputeContext context;
-    private ComputeQueue queue;
     private final int deviceIndex;
     private final String name;
+    
+    private ComputeQueue queue;
+    private ComputeArena arena;
 
     public SiliconDevice(int deviceIndex) {
         try {
@@ -32,67 +36,68 @@ public class SiliconDevice {
     public void createQueue() {
         if (queue == null) {
             try {
-                queue = context.createQueue();
+                this.queue = context.createQueue();
+                this.arena = context.createArena();
             } catch (Throwable e) {
                 throw new RuntimeException("Failed to create compute queue", e);
             }
         }
     }
 
-    public ComputeQueue newQueue() {
+    public ComputeQueue newTempQueue() {
         try {
             return context.createQueue();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create compute queue", e);
         }
     }
-
-    public SiliconBuffer createBuffer(float[] data) {
+    
+    public ComputeArena newTempArena() {
         try {
-            ComputeBuffer buffer = context.allocateArray(data);
-            return new SiliconBuffer(buffer);
+            return context.createArena();
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create compute arena", e);
+        }
+    }
+
+    public ComputeBuffer createBuffer(float[] data) {
+        try {
+            if (arena != null) return arena.allocateArray(data);
+            return context.allocateArray(data);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer from float array", e);
         }
     }
 
-    public SiliconBuffer createBuffer(int[] data) {
+    public ComputeBuffer createBuffer(int[] data) {
         try {
-            ComputeBuffer buffer = context.allocateArray(data);
-            return new SiliconBuffer(buffer);
+            if (arena != null) return arena.allocateArray(data);
+            return context.allocateArray(data);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer from int array", e);
         }
     }
 
-    public SiliconBuffer createBuffer(long byteSize) {
+    public ComputeBuffer createBuffer(long byteSize) {
         try {
-            ComputeBuffer buffer = context.allocateBytes(byteSize);
-            return new SiliconBuffer(buffer);
+            if (arena != null) return arena.allocateBytes(byteSize);
+            return context.allocateBytes(byteSize);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer of size " + byteSize, e);
         }
     }
 
-    public SiliconBuffer createBufferAsync(
-            float[] data,
-            ComputeQueue queue
-    ) {
+    public ComputeBuffer createBufferAsync(float[] data, ComputeQueue queue) {
         try {
-            ComputeBuffer buffer = context.allocateArray(data, queue);
-            return new SiliconBuffer(buffer);
+            return context.allocateArray(data, queue);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer from float array (async)", e);
         }
     }
 
-    public SiliconBuffer createBufferAsync(
-            int[] data,
-            ComputeQueue queue
-    ) {
+    public ComputeBuffer createBufferAsync(int[] data, ComputeQueue queue) {
         try {
-            ComputeBuffer buffer = context.allocateArray(data, queue);
-            return new SiliconBuffer(buffer);
+            return context.allocateArray(data, queue);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer from int array (async)", e);
         }
@@ -115,12 +120,13 @@ public class SiliconDevice {
     }
 
     public ComputeQueue getQueue() {
-        if (queue == null) {
-            createQueue();
-        }
         return queue;
     }
-
+    
+    public ComputeArena getArena() {
+        return arena;
+    }
+    
     public void setQueue(ComputeQueue queue) {
         this.queue = queue;
     }
@@ -133,27 +139,6 @@ public class SiliconDevice {
             } catch (Throwable ignored) {}
             queue = null;
         }
-    }
-
-    @Override
-    public String toString() {
-        return "SiliconDevice{" +
-            "name='" + name + '\'' +
-            ", deviceIndex=" + deviceIndex +
-            '}';
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        SiliconDevice other = (SiliconDevice) obj;
-        return deviceIndex == other.deviceIndex;
-    }
-
-    @Override
-    public int hashCode() {
-        return Integer.hashCode(deviceIndex);
     }
 }
 

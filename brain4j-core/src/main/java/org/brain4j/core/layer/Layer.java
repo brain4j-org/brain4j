@@ -12,8 +12,9 @@ import org.brain4j.math.clipper.impl.HardClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.math.weightsinit.WeightInit;
 
 import java.util.*;
 import java.util.random.RandomGenerator;
@@ -39,7 +40,7 @@ public abstract class Layer implements ModelBlock, Cloneable {
 
     protected Activation activation = new LinearActivation();
     protected GradientClipper clipper = new HardClipper(5);
-    protected WeightInitialization weightInit = activation.defaultWeightInit();
+    protected WeightInit weightInit = activation.defaultWeightInit();
 
     protected Tensor weights;
     protected Tensor bias;
@@ -206,7 +207,7 @@ public abstract class Layer implements ModelBlock, Cloneable {
      * Ports the weights of this layer to the specified device memory.
      * @param device the device to port the weights on
      */
-    public void toDevice(Device device) {
+    public void toDevice(SiliconDevice device) {
         if (weights != null) this.weights = weights.to(device);
         if (bias != null) this.bias = bias.to(device);
     }
@@ -284,11 +285,11 @@ public abstract class Layer implements ModelBlock, Cloneable {
         return this;
     }
 
-    public WeightInitialization getWeightInit() {
+    public WeightInit getWeightInit() {
         return weightInit;
     }
 
-    public Layer setWeightInit(WeightInitialization weightInit) {
+    public Layer setWeightInit(WeightInit weightInit) {
         this.weightInit = weightInit;
         return this;
     }

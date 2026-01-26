@@ -1,10 +1,10 @@
 package org.brain4j.math.weightsinit.impl;
 
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.math.weightsinit.WeightInit;
 
 import java.util.random.RandomGenerator;
 
-public class NormalXavierInit implements WeightInitialization {
+public class NormalXavierInit implements WeightInit {
 
     @Override
     public double getBound(int input, int output) {

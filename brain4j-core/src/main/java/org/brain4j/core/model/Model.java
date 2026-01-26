@@ -6,6 +6,7 @@ import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.List;
@@ -68,7 +69,7 @@ public interface Model extends ModelBlock {
      * @param device the target device
      * @return a copy of this model instance
      */
-    Model fork(Device device);
+    Model fork(SiliconDevice device);
     
     /**
      * Prints a formatted summary of the model architecture to the console.
@@ -101,7 +102,7 @@ public interface Model extends ModelBlock {
      * Returns the device on which the model parameters are currently stored.
      * @return the device associated with this model
      */
-    Device getDevice();
+    SiliconDevice getDevice();
 
     /**
      * Returns an immutable view of the layers composing this model, in execution order.

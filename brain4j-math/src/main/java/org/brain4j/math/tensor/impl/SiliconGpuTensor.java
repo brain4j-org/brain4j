@@ -3,16 +3,17 @@ package org.brain4j.math.tensor.impl;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
-import org.brain4j.math.gpu.silicon.SiliconBuffer;
 import org.brain4j.math.gpu.silicon.SiliconContext;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.gpu.silicon.SiliconKernel;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
-import org.silicon.computing.ComputeQueue;
+import org.brain4j.math.commons.Range;
+import org.silicon.Silicon;
 import org.silicon.computing.ComputeSize;
+import org.silicon.device.ComputeBuffer;
 import org.silicon.kernel.ComputeModule;
+import org.silicon.slang.SlangCompiler;
 
 import java.util.Arrays;
 
@@ -23,10 +24,10 @@ public class SiliconGpuTensor extends BaseTensor {
     private static final int TILE_SIZE = 16;
 
     private final SiliconDevice device;
-    private final SiliconBuffer shapeBuffer;
-    private final SiliconBuffer stridesBuffer;
+    private final ComputeBuffer shapeBuffer;
+    private final ComputeBuffer stridesBuffer;
     private final int size;
-    private SiliconBuffer dataBuffer;
+    private ComputeBuffer dataBuffer;
 
     public SiliconGpuTensor(SiliconDevice device, int[] shape, float... data) {
         this.device = device;
@@ -43,7 +44,7 @@ public class SiliconGpuTensor extends BaseTensor {
         this.dataBuffer = device.createBuffer(data);
     }
 
-    public SiliconGpuTensor(SiliconDevice device, int[] shape, SiliconBuffer otherBuffer) {
+    public SiliconGpuTensor(SiliconDevice device, int[] shape, ComputeBuffer otherBuffer) {
         this.device = device;
         this.size = Tensors.computeSize(shape);
         this.shape = shape;
@@ -77,9 +78,6 @@ public class SiliconGpuTensor extends BaseTensor {
         this.shape = newShape;
         this.strides = Tensors.computeStrides(newShape);
 
-        // let's share the data buffer (to retain the reference)
-        reference.dataBuffer.retain();
-
         this.shapeBuffer = device.createBuffer(shape);
         this.stridesBuffer = device.createBuffer(strides);
         this.dataBuffer = reference.dataBuffer;
@@ -89,15 +87,15 @@ public class SiliconGpuTensor extends BaseTensor {
         return device;
     }
 
-    public SiliconBuffer dataBuffer() {
+    public ComputeBuffer getDataBuffer() {
         return dataBuffer;
     }
 
-    public SiliconBuffer shapeBuffer() {
+    public ComputeBuffer getShapeBuffer() {
         return shapeBuffer;
     }
 
-    public SiliconBuffer stridesBuffer() {
+    public ComputeBuffer getStridesBuffer() {
         return stridesBuffer;
     }
 
@@ -107,23 +105,26 @@ public class SiliconGpuTensor extends BaseTensor {
 
     public static void initKernels(SiliconDevice device) {
         try {
-            ComputeModule tensorOpsModule = device.getContext().loadModuleFromResources("/shaders/tensor_ops.slang");
-            ComputeModule elementaryOpsModule = device.getContext().loadModuleFromResources("/shaders/elementary_ops.slang");
-            ComputeModule activationsModule = device.getContext().loadModuleFromResources("/shaders/activations.slang");
-            ComputeModule gradientClipModule = device.getContext().loadModuleFromResources("/shaders/gradient_clippers.slang");
-            ComputeModule flashAttentionModule = device.getContext().loadModuleFromResources("/shaders/flash_attention.slang");
-            ComputeModule fftModule = device.getContext().loadModuleFromResources("/shaders/fft.slang");
-            ComputeModule convolutionModule = device.getContext().loadModuleFromResources("/shaders/convolution.slang");
-            ComputeModule complexOpsModule = device.getContext().loadModuleFromResources("/shaders/complex_ops.slang");
+            // JIT compiles the kernels
+            SlangCompiler compiler = new SlangCompiler(device.getContext(), Silicon.getBackend().getType());
+            
+            ComputeModule tensorOpsModule = compiler.compileFromResource("slang/tensor_ops.slang");
+            ComputeModule elementaryOpsModule = compiler.compileFromResource("slang/elementary_ops.slang");
+            ComputeModule activationsModule = compiler.compileFromResource("slang/activations.slang");
+            ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
+            ComputeModule flashAttentionModule = compiler.compileFromResource("slang/flash_attention.slang");
+//            ComputeModule fftModule = compiler.compileFromResource("slang/fft.slang");
+//            ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
+//            ComputeModule complexOpsModule = compiler.compileFromResource("slang/complex_ops.slang");
 
             SiliconContext.storeModule(device, "tensor_ops", tensorOpsModule);
             SiliconContext.storeModule(device, "elementary_ops", elementaryOpsModule);
             SiliconContext.storeModule(device, "activations", activationsModule);
             SiliconContext.storeModule(device, "gradient_clippers", gradientClipModule);
             SiliconContext.storeModule(device, "flash_attention", flashAttentionModule);
-            SiliconContext.storeModule(device, "fft", fftModule);
-            SiliconContext.storeModule(device, "convolution", convolutionModule);
-            SiliconContext.storeModule(device, "complex_ops", complexOpsModule);
+//            SiliconContext.storeModule(device, "fft", fftModule);
+//            SiliconContext.storeModule(device, "convolution", convolutionModule);
+//            SiliconContext.storeModule(device, "complex_ops", complexOpsModule);
 
             String[] tensorOpsKernels = {
                 "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b",
@@ -164,19 +165,19 @@ public class SiliconGpuTensor extends BaseTensor {
                 "fft1d", "bit_reverse_permute", "fft_butterfly_stage", "fft_normalize",
                 "fft2d_rows", "fft2d_transpose", "fft2d_copy"
             };
-            SiliconContext.registerAll(device, fftModule, fftKernels);
+//            SiliconContext.registerAll(device, fftModule, fftKernels);
 
             String[] convolutionKernels = {
                 "convolve1d_direct", "convolve2d_direct", "convolve2d_fft_extract",
                 "convolve1d_fft_prepare", "convolve1d_fft_multiply", "convolve1d_fft_extract",
                 "convolve2d_fft_prepare_input", "convolve2d_fft_prepare_kernel", "convolve2d_fft_multiply"
             };
-            SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
+//            SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
 
             String[] complexKernels = {
                 "complex_pointwise_mul", "complex_pointwise_add"
             };
-            SiliconContext.registerAll(device, complexOpsModule, complexKernels);
+//            SiliconContext.registerAll(device, complexOpsModule, complexKernels);
 
         } catch (Throwable e) {
             throw new RuntimeException("Failed to initialize GPU kernels", e);
@@ -194,12 +195,10 @@ public class SiliconGpuTensor extends BaseTensor {
             int workSize = Math.max(1, size);
 
             SiliconKernel.create(device, kernelName)
-                .addBuffer(dataBuffer)
-                .addFloat(value)
-                .addInt(size)
+                .buffer(dataBuffer)
+                .floatVal(value)
+                .intVal(size)
                 .launch(qh.queue(), workSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch scalar kernel: " + kernelName, e);
         }
@@ -220,14 +219,12 @@ public class SiliconGpuTensor extends BaseTensor {
             int workSize = Math.max(1, size);
 
             SiliconKernel.create(device, kernelName)
-                .addBuffer(dataBuffer)
-                .addBuffer(B.dataBuffer)
-                .addInt(size)
-                .addInt(broadcastDim)
-                .addInt(batch)
+                .buffer(dataBuffer)
+                .buffer(B.dataBuffer)
+                .intVal(size)
+                .intVal(broadcastDim)
+                .intVal(batch)
                 .launch(qh.queue(), workSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch elementary kernel: " + kernelName, e);
         }
@@ -277,8 +274,6 @@ public class SiliconGpuTensor extends BaseTensor {
         SiliconGpuTensor view = new SiliconGpuTensor(device, newShape, newStrides);
 
         // we share the data buffer
-        dataBuffer.retain();
-        view.dataBuffer.release();
         view.dataBuffer = dataBuffer;
         view.transposed = !transposed;
 
@@ -342,11 +337,9 @@ public class SiliconGpuTensor extends BaseTensor {
             int workSize = Math.max(1, size);
 
             SiliconKernel.create(device, "sqrt_op")
-                .addBuffer(dataBuffer)
-                .addInt(size)
+                .buffer(dataBuffer)
+                .intVal(size)
                 .launch(qh.queue(), workSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch sqrt kernel", e);
         }
@@ -464,39 +457,33 @@ public class SiliconGpuTensor extends BaseTensor {
             offsetsB[b] = linearB * matrixSizeB;
             offsetsC[b] = b * matrixSizeC;
         }
-
-        SiliconBuffer memoryA = device.createBuffer(offsetsA);
-        SiliconBuffer memoryB = device.createBuffer(offsetsB);
-        SiliconBuffer memoryC = device.createBuffer(offsetsC);
+        
+        ComputeBuffer memoryA = device.createBuffer(offsetsA);
+        ComputeBuffer memoryB = device.createBuffer(offsetsB);
+        ComputeBuffer memoryC = device.createBuffer(offsetsC);
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             ComputeSize globalSize = new ComputeSize(roundUp(M), roundUp(P), Math.max(1, batchCount));
             ComputeSize localSize = new ComputeSize(TILE_SIZE, TILE_SIZE, 1);
 
             SiliconKernel.create(device, "matmul_batched")
-                .addBuffer(dataBuffer)
-                .addBuffer(B.dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addBuffer(memoryA)
-                .addBuffer(memoryB)
-                .addBuffer(memoryC)
-                .addInt(M)
-                .addInt(K)
-                .addInt(P)
-                .addInt(batchCount)
-                .addInt(transposed ? 1 : 0)
-                .addInt(other.transposed() ? 1 : 0)
+                .buffer(dataBuffer)
+                .buffer(B.dataBuffer)
+                .buffer(result.dataBuffer)
+                .buffer(memoryA)
+                .buffer(memoryB)
+                .buffer(memoryC)
+                .intVal(M)
+                .intVal(K)
+                .intVal(P)
+                .intVal(batchCount)
+                .intVal(transposed ? 1 : 0)
+                .intVal(other.transposed() ? 1 : 0)
                 .launch(qh.queue(), globalSize, localSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch matmul kernel", e);
         }
-
-        memoryA.release();
-        memoryB.release();
-        memoryC.release();
-
+        
         return result;
     }
 
@@ -523,14 +510,12 @@ public class SiliconGpuTensor extends BaseTensor {
             int gy = Math.max(1, innerSize);
 
             SiliconKernel.create(device, "sum_along_dim")
-                .addBuffer(dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addInt(outerSize)
-                .addInt(reducedSize)
-                .addInt(innerSize)
+                .buffer(dataBuffer)
+                .buffer(result.dataBuffer)
+                .intVal(outerSize)
+                .intVal(reducedSize)
+                .intVal(innerSize)
                 .launch(qh.queue(), gx, gy);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch sum_along_dim kernel", e);
         }
@@ -586,16 +571,14 @@ public class SiliconGpuTensor extends BaseTensor {
             int workSize = Math.max(1, outerSize * concatLast);
 
             SiliconKernel.create(device, "concat_last_dim")
-                .addBuffer(this.dataBuffer)
-                .addBuffer(B.dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addInt(outerSize)
-                .addInt(lastA)
-                .addInt(lastB)
-                .addInt(concatLast)
+                .buffer(this.dataBuffer)
+                .buffer(B.dataBuffer)
+                .buffer(result.dataBuffer)
+                .intVal(outerSize)
+                .intVal(lastA)
+                .intVal(lastB)
+                .intVal(concatLast)
                 .launch(qh.queue(), workSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch concat kernel", e);
         }
@@ -647,24 +630,22 @@ public class SiliconGpuTensor extends BaseTensor {
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             SiliconKernel.create(device, "concat_copy_a")
-                .addBuffer(this.dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addInt(numBlocks)
-                .addInt(thisDim)
-                .addInt(otherDim)
-                .addInt(blockSize)
+                .buffer(this.dataBuffer)
+                .buffer(result.dataBuffer)
+                .intVal(numBlocks)
+                .intVal(thisDim)
+                .intVal(otherDim)
+                .intVal(blockSize)
                 .launch(qh.queue(), Math.max(1, totalA));
 
             SiliconKernel.create(device, "concat_copy_b")
-                .addBuffer(B.dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addInt(numBlocks)
-                .addInt(thisDim)
-                .addInt(otherDim)
-                .addInt(blockSize)
+                .buffer(B.dataBuffer)
+                .buffer(result.dataBuffer)
+                .intVal(numBlocks)
+                .intVal(thisDim)
+                .intVal(otherDim)
+                .intVal(blockSize)
                 .launch(qh.queue(), Math.max(1, totalB));
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch concat kernel", e);
         }
@@ -698,33 +679,27 @@ public class SiliconGpuTensor extends BaseTensor {
             starts[i] = range == null ? 0 : range.start();
             steps[i] = range == null ? 1 : range.step();
         }
-
-        SiliconBuffer memoryShape = device.createBuffer(newShape);
-        SiliconBuffer memoryStart = device.createBuffer(starts);
-        SiliconBuffer memoryStep = device.createBuffer(steps);
+        
+        ComputeBuffer memoryShape = device.createBuffer(newShape);
+        ComputeBuffer memoryStart = device.createBuffer(starts);
+        ComputeBuffer memoryStep = device.createBuffer(steps);
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, result.elements());
 
             SiliconKernel.create(device, "slice")
-                .addBuffer(this.dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addBuffer(this.stridesBuffer)
-                .addBuffer(result.stridesBuffer)
-                .addBuffer(memoryShape)
-                .addBuffer(memoryStart)
-                .addBuffer(memoryStep)
-                .addInt(rank())
+                .buffer(this.dataBuffer)
+                .buffer(result.dataBuffer)
+                .buffer(this.stridesBuffer)
+                .buffer(result.stridesBuffer)
+                .buffer(memoryShape)
+                .buffer(memoryStart)
+                .buffer(memoryStep)
+                .intVal(rank())
                 .launch(qh.queue(), workSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch slice kernel", e);
         }
-
-        memoryShape.release();
-        memoryStart.release();
-        memoryStep.release();
 
         return result;
     }
@@ -744,14 +719,12 @@ public class SiliconGpuTensor extends BaseTensor {
             int workSize = Math.max(1, batchSize);
 
             SiliconKernel.create(device, "layer_norm")
-                .addBuffer(this.dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addInt(featuresSize)
-                .addInt(batchSize)
-                .addFloat((float) epsilon)
+                .buffer(this.dataBuffer)
+                .buffer(result.dataBuffer)
+                .intVal(featuresSize)
+                .intVal(batchSize)
+                .floatVal((float) epsilon)
                 .launch(qh.queue(), workSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch layer_norm kernel", e);
         }
@@ -787,13 +760,11 @@ public class SiliconGpuTensor extends BaseTensor {
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, rows);
             SiliconKernel.create(device, "softmax_last_dim")
-                .addBuffer(dataBuffer)
-                .addBuffer(result.dataBuffer)
-                .addInt(lastDim)
-                .addFloat((float) temperature)
+                .buffer(dataBuffer)
+                .buffer(result.dataBuffer)
+                .intVal(lastDim)
+                .floatVal((float) temperature)
                 .launch(qh.queue(), workSize);
-
-            qh.queue().awaitCompletion();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch softmax kernel", e);
         }

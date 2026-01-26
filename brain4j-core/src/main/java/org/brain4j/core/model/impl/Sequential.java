@@ -15,8 +15,10 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconContext;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -30,9 +32,9 @@ public class Sequential implements Model, ModelBlock, Cloneable {
     private final long seed;
     private ModelSpecs specs;
     private List<Layer> layers;
-    private Device device;
+    private SiliconDevice device;
     
-    public Sequential(ModelSpecs specs, Device device, long seed) {
+    public Sequential(ModelSpecs specs, SiliconDevice device, long seed) {
         this.specs = specs;
         this.layers = specs.buildLayerList();
         this.device = device;
@@ -73,7 +75,7 @@ public class Sequential implements Model, ModelBlock, Cloneable {
         }
         
         if (device != null && !cache.isTraining()) {
-            GpuContext.finishAndRelease(device);
+            SiliconContext.finishAndRelease(device.getQueue());
         }
         
         return buffer;
@@ -101,7 +103,7 @@ public class Sequential implements Model, ModelBlock, Cloneable {
     }
     
     @Override
-    public Model fork(Device device) {
+    public Model fork(SiliconDevice device) {
         Sequential copy = clone();
         copy.device = device;
         copy.layers.forEach(x -> x.toDevice(device));
@@ -109,7 +111,7 @@ public class Sequential implements Model, ModelBlock, Cloneable {
     }
     
     @Override
-    public Device getDevice() {
+    public SiliconDevice getDevice() {
         return device;
     }
     

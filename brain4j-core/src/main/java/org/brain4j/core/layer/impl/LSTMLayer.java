@@ -10,7 +10,7 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 import java.util.ArrayList;
 import java.util.Arrays;

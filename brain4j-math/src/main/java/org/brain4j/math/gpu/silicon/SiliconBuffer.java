@@ -24,11 +24,6 @@ public class SiliconBuffer {
         return buffer;
     }
 
-    public ComputeBuffer setBuffer(ComputeBuffer buffer) {
-        this.buffer = buffer;
-        return buffer;
-    }
-
     public void retain() {
         refCount.incrementAndGet();
     }
@@ -53,30 +48,11 @@ public class SiliconBuffer {
         return refCount.get();
     }
 
-    public SiliconBuffer copy() {
+    public ComputeBuffer copy() {
         try {
-            ComputeBuffer copyBuffer = buffer.copy();
-            return new SiliconBuffer(copyBuffer);
+            return buffer.copy();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to copy buffer", e);
-        }
-    }
-
-    public SiliconBuffer copyInto(SiliconBuffer other) {
-        try {
-            buffer.copyInto(other.buffer);
-            return this;
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to copy buffer into another", e);
-        }
-    }
-
-    public SiliconBuffer copyAsync(ComputeQueue queue) {
-        try {
-            ComputeBuffer copyBuffer = buffer.copyAsync(queue);
-            return new SiliconBuffer(copyBuffer);
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to copy buffer async", e);
         }
     }
 

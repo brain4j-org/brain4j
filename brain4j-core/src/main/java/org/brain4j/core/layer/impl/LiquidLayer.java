@@ -9,11 +9,12 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.solver.NumericalSolver;
 import org.brain4j.math.solver.impl.EulerSolver;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -236,7 +237,7 @@ public class LiquidLayer extends Layer {
     }
     
     @Override
-    public void toDevice(Device device) {
+    public void toDevice(SiliconDevice device) {
         super.toDevice(device);
         hiddenParams.toDevice(device);
         tauParams.toDevice(device);

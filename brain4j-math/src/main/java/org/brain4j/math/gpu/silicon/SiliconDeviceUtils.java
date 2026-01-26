@@ -1,8 +1,8 @@
 package org.brain4j.math.gpu.silicon;
 
 import org.silicon.Silicon;
-import org.silicon.BackendType;
-import org.silicon.ComputeBackend;
+import org.silicon.backend.BackendType;
+import org.silicon.backend.ComputeBackend;
 import org.silicon.device.ComputeDevice;
 
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ public class SiliconDeviceUtils {
         for (int i = 0; i < 8; i++) {
             try {
                 SiliconDevice device = new SiliconDevice(i);
+                
                 if (device.getName().toLowerCase().contains(name.toLowerCase())) {
                     return device;
                 }
@@ -45,9 +46,17 @@ public class SiliconDeviceUtils {
     }
 
     public static List<String> allDeviceNames() {
+        ComputeBackend backend = Silicon.getBackend();
+        
+        if (backend == null) {
+            throw new IllegalStateException("Backend is null! Make sure to import at least one backend!");
+        }
+        
         List<String> names = new ArrayList<>();
 
-        for (int i = 0; i < 8; i++) { // the same here
+        int count = backend.getDeviceCount();
+        
+        for (int i = 0; i < count; i++) { // the same here
             try {
                 ComputeDevice device = Silicon.createSystemDevice(i);
                 names.add(device.getName());

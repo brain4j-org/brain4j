@@ -1,6 +1,7 @@
 package org.brain4j.math.gpu.silicon;
 
 import org.silicon.computing.ComputeQueue;
+import org.silicon.device.ComputeArena;
 import org.silicon.kernel.ComputeFunction;
 import org.silicon.kernel.ComputeModule;
 
@@ -9,13 +10,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SiliconContext {
 
-    private static final Map<SiliconDevice, Map<String, ComputeFunction>> kernelCache = new ConcurrentHashMap<>();
-    private static final Map<SiliconDevice, Map<String, ComputeModule>> moduleCache = new ConcurrentHashMap<>();
+    private static final Map<SiliconDevice, Map<String, ComputeFunction>> KERNEL_CACHE = new ConcurrentHashMap<>();
+    private static final Map<SiliconDevice, Map<String, ComputeModule>> MODULE_CACHE = new ConcurrentHashMap<>();
 
     private SiliconContext() {}
 
     public static void register(SiliconDevice device, String kernelName, ComputeFunction function) {
-        kernelCache.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
+        KERNEL_CACHE.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
             .put(kernelName, function);
     }
 
@@ -35,17 +36,17 @@ public class SiliconContext {
     }
 
     public static void storeModule(SiliconDevice device, String moduleName, ComputeModule module) {
-        moduleCache.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
+        MODULE_CACHE.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
             .put(moduleName, module);
     }
 
     public static ComputeModule getModule(SiliconDevice device, String moduleName) {
-        Map<String, ComputeModule> deviceModules = moduleCache.get(device);
+        Map<String, ComputeModule> deviceModules = MODULE_CACHE.get(device);
         return deviceModules != null ? deviceModules.get(moduleName) : null;
     }
 
     public static ComputeFunction findFunction(SiliconDevice device, String kernelName) {
-        Map<String, ComputeFunction> deviceKernels = kernelCache.get(device);
+        Map<String, ComputeFunction> deviceKernels = KERNEL_CACHE.get(device);
 
         if (deviceKernels == null) {
             throw new IllegalStateException("No kernels registered for device: " + device);
@@ -64,38 +65,35 @@ public class SiliconContext {
         ComputeQueue queue = device.getQueue();
 
         if (queue != null) {
-            return new QueueHandle(queue, false);
+            return new QueueHandle(queue, device.getArena(), false);
         }
 
-        return new QueueHandle(device.newQueue(), true);
+        return new QueueHandle(device.newTempQueue(), device.newTempArena(), true);
     }
 
     public static void finishAndRelease(ComputeQueue queue) {
         try {
             queue.awaitCompletion();
-            queue.release();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to finish and release queue", e);
         }
     }
 
     public static void clearCache(SiliconDevice device) {
-        kernelCache.remove(device);
-        moduleCache.remove(device);
+        KERNEL_CACHE.remove(device);
+        MODULE_CACHE.remove(device);
     }
 
     public static void clearAllCaches() {
-        kernelCache.clear();
-        moduleCache.clear();
+        KERNEL_CACHE.clear();
+        MODULE_CACHE.clear();
     }
 
-    public record QueueHandle(
-            ComputeQueue queue,
-            boolean temporary
-    ) implements AutoCloseable {
+    public record QueueHandle(ComputeQueue queue, ComputeArena arena, boolean temporary) implements AutoCloseable {
         @Override
         public void close() {
             if (temporary) {
+                arena.close();
                 finishAndRelease(queue);
             }
         }

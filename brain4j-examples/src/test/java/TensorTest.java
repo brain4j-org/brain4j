@@ -1,9 +1,10 @@
 import org.brain4j.core.Brain4J;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -12,7 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TensorTest {
-    private final Device device;
+    
+    private final SiliconDevice device;
 
     public TensorTest() {
         this.device = Brain4J.firstDevice();
@@ -84,9 +86,6 @@ public class TensorTest {
 
     @Test
     public void sliceTest() {
-        Device device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Range[] ranges = { Range.all(), Range.interval(10, 20) };
 
         Tensor A = Tensors.random(64, 32);
@@ -101,9 +100,6 @@ public class TensorTest {
 
     @Test
     public void addTest() {
-        Device device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Tensor A = Tensors.random(32, 32);
         Tensor B = Tensors.random(32, 32);
         Tensor C = A.plus(B);
@@ -117,7 +113,7 @@ public class TensorTest {
 
     @Test
     public void subTest() {
-        Device device = Brain4J.firstDevice();
+        SiliconDevice device = Brain4J.firstDevice();
         Brain4J.initKernels(device);
 
         Tensor A = Tensors.random(32, 32);
@@ -133,7 +129,7 @@ public class TensorTest {
 
     @Test
     public void mulTest() {
-        Device device = Brain4J.firstDevice();
+        SiliconDevice device = Brain4J.firstDevice();
         Brain4J.initKernels(device);
 
         Tensor A = Tensors.random(32, 32);

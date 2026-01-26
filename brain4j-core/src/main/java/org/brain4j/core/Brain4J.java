@@ -2,7 +2,10 @@ package org.brain4j.core;
 
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.silicon.SiliconDeviceUtils;
 import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,10 +123,25 @@ public class Brain4J {
      *
      * @param device the target GPU device to initialize
      */
+    public static void initKernels(SiliconDevice device) {
+        SiliconGpuTensor.initKernels(device);
+    }
+    
+    /**
+     * Initializes GPU kernels on the specified device.
+     * <p>
+     * This method compiles and loads all GPU-side kernels used
+     * by {@link GpuTensor} operations. It should be called before
+     * performing any GPU computation if not done automatically.
+     *
+     * @param device the target GPU device to initialize
+     * @deprecated use {@link SiliconDevice} for GPU support
+     */
+    @Deprecated
     public static void initKernels(Device device) {
         GpuTensor.initKernels(device);
     }
-
+    
     /**
      * Returns the first available GPU device detected on the system.
      * <p>
@@ -133,13 +151,37 @@ public class Brain4J {
      * @return the first detected {@link Device}
      * @throws IllegalStateException if no GPU devices are found
      */
-    public static Device firstDevice() {
-        List<String> devices = DeviceUtils.allDeviceNames();
-
+    public static SiliconDevice firstDevice() {
+        List<String> devices = SiliconDeviceUtils.allDeviceNames();
+        
         if (devices.isEmpty()) {
             throw new IllegalStateException("No GPU-acceleration device has been found!");
         }
-
+        
+        SiliconDevice device = SiliconDeviceUtils.findDevice(devices.getFirst());
+        
+        if (device != null) Brain4J.initKernels(device);
+        
+        return device;
+    }
+    
+    /**
+     * Returns the first available GPU device detected on the system.
+     * <p>
+     * This method is useful when the system contains a single GPU
+     * or when the default device is sufficient for computation.
+     *
+     * @return the first detected {@link Device}
+     * @throws IllegalStateException if no GPU devices are found
+     */
+    @Deprecated
+    public static Device firstLegacyDevice() {
+        List<String> devices = DeviceUtils.allDeviceNames();
+        
+        if (devices.isEmpty()) {
+            throw new IllegalStateException("No GPU-acceleration device has been found!");
+        }
+        
         Device device = DeviceUtils.findDevice(devices.getFirst());
         
         if (device != null) Brain4J.initKernels(device);

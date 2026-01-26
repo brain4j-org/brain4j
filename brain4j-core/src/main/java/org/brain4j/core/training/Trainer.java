@@ -12,14 +12,16 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconContext;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.List;
 
-public record Trainer(Model model, List<Monitor> monitors, TrainingConfig config) {
+public record Trainer(Model model, TrainingConfig config, List<Monitor> monitors) {
 
-    public static Trainer compile(Model model, List<Monitor> monitors, LossFunction loss, Optimizer optimizer, Updater updater) {
-        return new Trainer(model, monitors, new TrainingConfig(loss, optimizer, updater));
+    public static Trainer of(Model model, TrainingConfig config) {
+        return new Trainer(model, config, List.of());
     }
 
     public Trainer {
@@ -73,7 +75,7 @@ public record Trainer(Model model, List<Monitor> monitors, TrainingConfig config
         BatchStart start = new BatchStart(this, current, total);
         monitors.forEach(x -> x.onEvent(start));
         
-        Device device = model.getDevice();
+        SiliconDevice device = model.getDevice();
         StatesCache cache = new StatesCache(true);
         
         if (device != null) {
@@ -103,7 +105,7 @@ public record Trainer(Model model, List<Monitor> monitors, TrainingConfig config
         layers.forEach(Layer::resetGrad);
         
         if (device != null) {
-            GpuContext.finishAndRelease(device);
+            SiliconContext.finishAndRelease(device.getQueue());
         }
         
         BatchEnd end = new BatchEnd(this, current, total);

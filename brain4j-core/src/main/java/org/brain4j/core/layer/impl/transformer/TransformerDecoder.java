@@ -7,7 +7,7 @@ import org.brain4j.core.transformer.attention.MaskedMultiHeadAttention;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 import java.util.Arrays;
 

@@ -7,43 +7,41 @@ import org.silicon.device.ComputeBuffer;
 import org.silicon.kernel.ComputeFunction;
 
 public class SiliconKernel {
-
-    private final SiliconDevice device;
+    
     private final ComputeFunction function;
     private final ComputeArgs args;
 
-    private SiliconKernel(SiliconDevice device, ComputeFunction function) {
-        this.device = device;
+    private SiliconKernel(ComputeFunction function) {
         this.function = function;
-        this.args = new ComputeArgs();
+        this.args = ComputeArgs.of();
     }
 
     public static SiliconKernel create(SiliconDevice device, String kernelName) {
         ComputeFunction function = SiliconContext.findFunction(device, kernelName);
-        return new SiliconKernel(device, function);
+        return new SiliconKernel(function);
     }
 
     public static SiliconKernel create(SiliconDevice device, ComputeFunction function) {
-        return new SiliconKernel(device, function);
+        return new SiliconKernel(function);
     }
 
-    public SiliconKernel addBuffer(SiliconBuffer buffer) {
+    public SiliconKernel buffer(SiliconBuffer buffer) {
         args.buffer(buffer.getBuffer());
         return this;
     }
 
-    public SiliconKernel addBuffer(ComputeBuffer buffer) {
+    public SiliconKernel buffer(ComputeBuffer buffer) {
         args.buffer(buffer);
         return this;
     }
 
-    public SiliconKernel addInt(int value) {
+    public SiliconKernel intVal(int value) {
         args.intVal(value);
         return this;
     }
 
-    public SiliconKernel addFloat(float value) {
-        args.floatVal(Float.floatToIntBits(value));
+    public SiliconKernel floatVal(float value) {
+        args.floatVal(value);
         return this;
     }
 

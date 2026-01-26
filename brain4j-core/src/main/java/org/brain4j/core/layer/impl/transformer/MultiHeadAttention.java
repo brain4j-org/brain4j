@@ -10,9 +10,10 @@ import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.ops.FlashAttention;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 import java.util.random.RandomGenerator;
 
@@ -231,7 +232,7 @@ public class MultiHeadAttention extends Layer {
     }
 
     @Override
-    public void toDevice(Device device) {
+    public void toDevice(SiliconDevice device) {
         this.weights = weights.to(device);
         this.outProj = outProj.to(device);
         if (attnQkvHasBias) this.bias = bias.to(device);

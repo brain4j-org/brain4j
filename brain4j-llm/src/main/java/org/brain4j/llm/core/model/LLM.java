@@ -15,6 +15,7 @@ import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.impl.SoftmaxActivation;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
 import javax.swing.plaf.nimbus.State;
@@ -70,11 +71,6 @@ public class LLM implements InferenceProvider {
     }
     
     @Override
-    public void move(Device device) {
-        this.model = model.fork(device);
-    }
-    
-    @Override
     public String chat(String prompt) {
         return chat(prompt, SamplingConfig.defaultConfig());
     }
@@ -126,7 +122,7 @@ public class LLM implements InferenceProvider {
     }
 
     @Override
-    public LLM to(Device device) {
+    public LLM fork(SiliconDevice device) {
         if (model == null) throw new NullPointerException("Model has not been compiled!");
         if (device == null) throw new NullPointerException("Device cannot be null!");
 

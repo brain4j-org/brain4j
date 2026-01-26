@@ -2,12 +2,12 @@ package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.math.weightsinit.WeightInit;
 
 public class SILUActivation implements Activation {
 
     @Override
-    public WeightInitialization defaultWeightInit() {
+    public WeightInit defaultWeightInit() {
         return new UniformXavierInit();
     }
 

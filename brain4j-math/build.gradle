@@ -4,29 +4,19 @@ plugins {
 }
 
 dependencies {
-    implementation project(':silicon-api')
-
-    runtimeOnly project(':silicon-opencl')
-    // runtimeOnly project(':silicon-cuda')
-    // runtimeOnly project(':silicon-metal')
-
     implementation platform(libs.lwjglBom)
     implementation libs.lwjgl
     implementation libs.lwjglOpenCL
 
+    implementation libs.siliconApi
     implementation libs.gson
 
     testRuntimeOnly(libs.junitPlatform)
     testImplementation(platform(libs.junitBom))
     testImplementation(libs.junitJupiter)
-    testRuntimeOnly project(':silicon-opencl')
 }
 
 compileJava {
-    options.compilerArgs.addAll(["--add-modules", "jdk.incubator.vector"])
-}
-
-compileTestJava {
     options.compilerArgs.addAll(["--add-modules", "jdk.incubator.vector"])
 }
 
