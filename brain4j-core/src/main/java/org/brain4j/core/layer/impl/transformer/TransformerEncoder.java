@@ -12,7 +12,6 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;

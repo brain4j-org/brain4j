@@ -5,6 +5,7 @@ import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.loss.impl.MeanSquaredError;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.training.DefaultTrainer;
 import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.core.training.optimizer.impl.Adam;

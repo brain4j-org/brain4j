@@ -114,9 +114,4 @@ public class DenseLayer extends Layer {
     public int getDimension() {
         return dimension;
     }
-
-    public DenseLayer setDimension(int dimension) {
-        this.dimension = dimension;
-        return this;
-    }
 }

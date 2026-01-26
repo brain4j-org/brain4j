@@ -1,6 +1,5 @@
 package org.brain4j.examples.xor;
 
-import com.google.gson.internal.bind.util.ISO8601Utils;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
@@ -10,6 +9,7 @@ import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
 import org.brain4j.core.monitor.impl.ProgressMonitor;
+import org.brain4j.core.training.DefaultTrainer;
 import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.core.training.optimizer.impl.AdamW;
@@ -26,9 +26,6 @@ import java.util.List;
 public class XorRegression {
     public static void main(String[] args) {
         List<Sample> samples = new ArrayList<>();
-        SiliconDevice device = Brain4J.firstDevice();
-        
-        System.out.println("Using " + device.getName());
         
         for (int x = 0; x <= 1; x++) {
             for (int y = 0; y <= 1; y++) {
@@ -39,7 +36,7 @@ public class XorRegression {
             }
         }
         
-        ListDataSource dataSource = new ListDataSource(samples, true, 1).to(device);
+        ListDataSource dataSource = new ListDataSource(samples, true, 1);
         
         ModelSpecs specs = ModelSpecs.of(
             new InputLayer(2),
@@ -48,20 +45,16 @@ public class XorRegression {
             new DenseLayer(1, Activations.SIGMOID)
         );
         Model model = specs.compile(42);
-        Model gpuModel = model.fork(device);
         
-        Tensor x1 = Tensors.random(2);
-        
-        Tensor y1 = model.predict(x1);
-        Tensor y2 = gpuModel.predict(x1);
-        
-        System.out.println(y1);
-        System.out.println(y2);
-        
-        TrainingConfig config = TrainingConfig.of(new BinaryCrossEntropy(), new AdamW(0.1));
-        List<Monitor> monitors = List.of(new ProgressMonitor(), new EvalMonitor(dataSource, 10));
-        
-        Trainer trainer = new Trainer(gpuModel, config, monitors);
+        TrainingConfig config = TrainingConfig.of(
+            new BinaryCrossEntropy(),
+            new AdamW(0.1)
+        );
+        List<Monitor> monitors = List.of(
+            new ProgressMonitor(),
+            new EvalMonitor(dataSource, 10)
+        );
+        Trainer trainer = Trainer.of(model, config, monitors);
         trainer.fit(dataSource, 50);
     }
 }

@@ -9,7 +9,6 @@ import org.brain4j.core.training.events.EpochEnd;
 import org.brain4j.core.training.events.TrainingEvent;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.core.utils.Colored;
-import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.ListDataSource;
 
 public class EvalMonitor implements Monitor {

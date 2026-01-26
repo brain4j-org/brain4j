@@ -53,7 +53,6 @@ public class TensorTest {
         Tensor B = Tensors.random(3, 7, 7);
 
         Tensor C = A.convolve(B);
-        System.out.println("conv shape = " + Arrays.toString(C.shape()));
     }
 
     @Test
