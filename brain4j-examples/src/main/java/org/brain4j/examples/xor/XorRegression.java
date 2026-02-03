@@ -1,5 +1,6 @@
 package org.brain4j.examples.xor;
 
+import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.loss.impl.BinaryCrossEntropy;
@@ -15,6 +16,7 @@ import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.ArrayList;
@@ -32,6 +34,8 @@ public class XorRegression {
                 samples.add(new Sample(input, label));
             }
         }
+
+        SiliconDevice device = Brain4J.firstDevice();
         
         ListDataSource dataSource = new ListDataSource(samples, true, 1);
         ModelSpecs specs = ModelSpecs.of(
