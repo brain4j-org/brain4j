@@ -4,6 +4,7 @@ import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.CpuTensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 public class L2Clipper implements GradientClipper {
 
@@ -23,7 +24,7 @@ public class L2Clipper implements GradientClipper {
     }
 
     @Override
-    public void clipGpu(GpuTensor grad) {
+    public void clipGpu(SiliconGpuTensor grad) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

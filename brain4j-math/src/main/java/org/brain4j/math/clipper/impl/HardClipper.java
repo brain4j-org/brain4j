@@ -2,12 +2,12 @@ package org.brain4j.math.clipper.impl;
 
 import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.commons.Commons;
-import org.brain4j.math.gpu.GpuContext;
-import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.kernel.KernelFactory;
-import org.brain4j.math.gpu.memory.GpuQueue;
+import org.brain4j.math.gpu.silicon.SiliconContext;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.silicon.SiliconKernel;
 import org.brain4j.math.tensor.impl.CpuTensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.silicon.api.kernel.ComputeSize;
 
 public class HardClipper implements GradientClipper {
 
@@ -24,16 +24,16 @@ public class HardClipper implements GradientClipper {
     }
 
     @Override
-    public void clipGpu(GpuTensor grad) {
-        Device device = grad.device();
-        long kernel = GpuContext.findKernel(device, kernelName());
-        
-        try (GpuQueue queue = GpuContext.getOrCreate(device)) {
-            KernelFactory.create(kernel)
-                .addMemParam(grad.dataBuffer())
-                .addFloatParam((float) bound)
-                .addIntParam(grad.size())
-                .launch(queue, 1, grad.size());
+    public void clipGpu(SiliconGpuTensor grad) {
+        SiliconDevice device = grad.device();
+
+        try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
+            ComputeSize size = new ComputeSize(grad.size(), 1, 1);
+            SiliconKernel.create(device, kernelName())
+                .buffer(grad.getDataBuffer())
+                .floatVal((float) bound)
+                .intVal(grad.size())
+                .launch(queue.queue(), size);
         }
     }
 

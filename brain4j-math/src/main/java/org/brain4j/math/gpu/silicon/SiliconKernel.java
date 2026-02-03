@@ -1,10 +1,10 @@
 package org.brain4j.math.gpu.silicon;
 
-import org.silicon.computing.ComputeArgs;
-import org.silicon.computing.ComputeQueue;
-import org.silicon.computing.ComputeSize;
-import org.silicon.device.ComputeBuffer;
-import org.silicon.kernel.ComputeFunction;
+import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.function.ComputeFunction;
+import org.silicon.api.kernel.ComputeArgs;
+import org.silicon.api.kernel.ComputeQueue;
+import org.silicon.api.kernel.ComputeSize;
 
 public class SiliconKernel {
     
@@ -91,7 +91,7 @@ public class SiliconKernel {
     public void launchAndWait(ComputeQueue queue, ComputeSize globalSize, ComputeSize localSize) {
         try {
             queue.dispatch(function, globalSize, localSize, args);
-            queue.awaitCompletion();
+            queue.await();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch kernel and wait", e);
         }

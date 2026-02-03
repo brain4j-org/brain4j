@@ -7,8 +7,8 @@ import org.brain4j.math.gpu.device.DeviceUtils;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.gpu.silicon.SiliconDeviceUtils;
 import org.brain4j.math.tensor.Tensor;
-import org.silicon.Silicon;
-import org.silicon.backend.BackendType;
+import org.silicon.api.Silicon;
+import org.silicon.api.backend.BackendType;
 
 import java.util.List;
 

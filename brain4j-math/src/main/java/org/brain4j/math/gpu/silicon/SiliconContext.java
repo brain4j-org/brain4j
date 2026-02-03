@@ -1,9 +1,9 @@
 package org.brain4j.math.gpu.silicon;
 
-import org.silicon.computing.ComputeQueue;
-import org.silicon.device.ComputeArena;
-import org.silicon.kernel.ComputeFunction;
-import org.silicon.kernel.ComputeModule;
+import org.silicon.api.device.ComputeArena;
+import org.silicon.api.function.ComputeFunction;
+import org.silicon.api.function.ComputeModule;
+import org.silicon.api.kernel.ComputeQueue;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,7 +73,7 @@ public class SiliconContext {
 
     public static void finishAndRelease(ComputeQueue queue) {
         try {
-            queue.awaitCompletion();
+            queue.await();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to finish and release queue", e);
         }

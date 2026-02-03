@@ -9,11 +9,11 @@ import org.brain4j.math.gpu.silicon.SiliconKernel;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
-import org.silicon.Silicon;
-import org.silicon.computing.ComputeSize;
-import org.silicon.device.ComputeBuffer;
-import org.silicon.kernel.ComputeModule;
-import org.silicon.slang.SlangCompiler;
+import org.silicon.api.Silicon;
+import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.function.ComputeModule;
+import org.silicon.api.kernel.ComputeSize;
+import org.silicon.api.slang.SlangCompiler;
 
 import java.util.Arrays;
 
@@ -106,13 +106,19 @@ public class SiliconGpuTensor extends BaseTensor {
     public static void initKernels(SiliconDevice device) {
         try {
             // JIT compiles the kernels
-            SlangCompiler compiler = new SlangCompiler(device.getContext(), Silicon.getBackend().getType());
+            SlangCompiler compiler = new SlangCompiler(device.getContext());
             
             ComputeModule tensorOpsModule = compiler.compileFromResource("slang/tensor_ops.slang");
             ComputeModule elementaryOpsModule = compiler.compileFromResource("slang/elementary_ops.slang");
             ComputeModule activationsModule = compiler.compileFromResource("slang/activations.slang");
             ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
             ComputeModule flashAttentionModule = compiler.compileFromResource("slang/flash_attention.slang");
+
+            System.out.println(tensorOpsModule);
+            System.out.println(elementaryOpsModule);
+            System.out.println(activationsModule);
+            System.out.println(gradientClipModule);
+            System.out.println(flashAttentionModule);
 //            ComputeModule fftModule = compiler.compileFromResource("slang/fft.slang");
 //            ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
 //            ComputeModule complexOpsModule = compiler.compileFromResource("slang/complex_ops.slang");
@@ -131,6 +137,7 @@ public class SiliconGpuTensor extends BaseTensor {
                 "matmul_batched", "matmul_legacy", "matmul", "add", "sub", "mul", "div_op",
                 "sum_along_dim", "softmax_last_dim", "layer_norm"
             };
+            System.out.println("fritt");
             SiliconContext.registerAll(device, tensorOpsModule, tensorOpsKernels);
 
             String[] scalarKernels = {

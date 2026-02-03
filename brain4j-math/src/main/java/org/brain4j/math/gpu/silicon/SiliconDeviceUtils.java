@@ -1,9 +1,9 @@
 package org.brain4j.math.gpu.silicon;
 
-import org.silicon.Silicon;
-import org.silicon.backend.BackendType;
-import org.silicon.backend.ComputeBackend;
-import org.silicon.device.ComputeDevice;
+import org.silicon.api.Silicon;
+import org.silicon.api.backend.BackendType;
+import org.silicon.api.backend.ComputeBackend;
+import org.silicon.api.device.ComputeDevice;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ public class SiliconDeviceUtils {
     }
 
     public static List<String> allDeviceNames() {
-        ComputeBackend backend = Silicon.getBackend();
+        ComputeBackend backend = Silicon.backend();
         
         if (backend == null) {
             throw new IllegalStateException("Backend is null! Make sure to import at least one backend!");
@@ -54,12 +54,12 @@ public class SiliconDeviceUtils {
         
         List<String> names = new ArrayList<>();
 
-        int count = backend.getDeviceCount();
+        int count = backend.deviceCount();
         
         for (int i = 0; i < count; i++) { // the same here
             try {
-                ComputeDevice device = Silicon.createSystemDevice(i);
-                names.add(device.getName());
+                ComputeDevice device = Silicon.createDevice(i);
+                names.add(device.name());
             } catch (Throwable e) {
                 break; // there are no more devices
             }
@@ -69,11 +69,11 @@ public class SiliconDeviceUtils {
     }
 
     public static BackendType getBackendType() {
-        return Silicon.getBackend().getType();
+        return Silicon.backend().type();
     }
 
     public static ComputeBackend getBackend() {
-        return Silicon.getBackend();
+        return Silicon.backend();
     }
 
     public static void chooseBackend(BackendType backendType) {

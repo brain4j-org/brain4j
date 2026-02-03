@@ -1,12 +1,11 @@
 package org.brain4j.math.gpu.silicon;
 
-import org.silicon.Silicon;
-import org.silicon.computing.ComputeArgs;
-import org.silicon.computing.ComputeQueue;
-import org.silicon.device.ComputeArena;
-import org.silicon.device.ComputeBuffer;
-import org.silicon.device.ComputeContext;
-import org.silicon.device.ComputeDevice;
+import org.silicon.api.Silicon;
+import org.silicon.api.device.ComputeArena;
+import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.device.ComputeContext;
+import org.silicon.api.device.ComputeDevice;
+import org.silicon.api.kernel.ComputeQueue;
 
 public class SiliconDevice {
 
@@ -21,9 +20,9 @@ public class SiliconDevice {
     public SiliconDevice(int deviceIndex) {
         try {
             this.deviceIndex = deviceIndex;
-            this.device = Silicon.createSystemDevice(deviceIndex);
+            this.device = Silicon.createDevice(deviceIndex);
             this.context = device.createContext();
-            this.name = device.getName();
+            this.name = device.name();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create Silicon device at index " + deviceIndex, e);
         }
@@ -87,22 +86,6 @@ public class SiliconDevice {
         }
     }
 
-    public ComputeBuffer createBufferAsync(float[] data, ComputeQueue queue) {
-        try {
-            return context.allocateArray(data, queue);
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to create buffer from float array (async)", e);
-        }
-    }
-
-    public ComputeBuffer createBufferAsync(int[] data, ComputeQueue queue) {
-        try {
-            return context.allocateArray(data, queue);
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to create buffer from int array (async)", e);
-        }
-    }
-
     public String getName() {
         return name;
     }
@@ -134,8 +117,7 @@ public class SiliconDevice {
     public void releaseQueue() {
         if (queue != null) {
             try {
-                queue.awaitCompletion();
-                queue.release();
+                queue.await();
             } catch (Throwable ignored) {}
             queue = null;
         }

@@ -85,15 +85,13 @@ public class PosEncodeLayer extends Layer {
     }
     
     @Override
-    public Layer setWeights(Tensor weights) {
+    public void setWeights(Tensor weights) {
         this.length = weights.shapeAt(0);
         
         for (int i = 0; i < length; i++) {
             Tensor slice = weights.slice(Range.point(i), Range.all());
             preGenerated.put(i, slice.squeeze());
         }
-
-        return this;
     }
     
     public Tensor generate(int position, int embeddingDim) {

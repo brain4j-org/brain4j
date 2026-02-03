@@ -5,7 +5,7 @@ import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.gpu.silicon.SiliconKernel;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
-import org.silicon.computing.ComputeSize;
+import org.silicon.api.kernel.ComputeSize;
 
 public class SiliconFlashAttention {
 
@@ -53,7 +53,7 @@ public class SiliconFlashAttention {
                 .floatVal((float) scale)
                 .intVal(causal ? 1 : 0)
                 .launch(qh.queue(), globalSize);
-            qh.queue().awaitCompletion();
+            qh.queue().await();
         } catch (Throwable e) {
             throw new RuntimeException("FlashAttention forward failed", e);
         }
@@ -104,7 +104,7 @@ public class SiliconFlashAttention {
                 .floatVal((float) scale)
                 .intVal(causal ? 1 : 0)
                 .launch(qh.queue(), globalSize);
-            qh.queue().awaitCompletion();
+            qh.queue().await();
         } catch (Throwable e) {
             throw new RuntimeException("FlashAttention forward with LSE failed", e);
         }
@@ -192,7 +192,7 @@ public class SiliconFlashAttention {
                 .intVal(causal ? 1 : 0)
                 .launch(qh.queue(), globalSize);
 
-            qh.queue().awaitCompletion();
+            qh.queue().await();
         } catch (Throwable e) {
             throw new RuntimeException("FlashAttention backward failed", e);
         }
@@ -242,7 +242,7 @@ public class SiliconFlashAttention {
                 .floatVal((float) scale)
                 .intVal(causal ? 1 : 0)
                 .launch(qh.queue(), globalSize, localSize);
-            qh.queue().awaitCompletion();
+            qh.queue().await();
         } catch (Throwable e) {
             throw new RuntimeException("FlashAttention forward tiled failed", e);
         }
@@ -331,7 +331,7 @@ public class SiliconFlashAttention {
                 .intVal(causal ? 1 : 0)
                 .launch(qh.queue(), globalSize);
 
-            qh.queue().awaitCompletion();
+            qh.queue().await();
         } catch (Throwable e) {
             throw new RuntimeException("FlashAttention backward tiled failed", e);
         }

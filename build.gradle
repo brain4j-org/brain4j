@@ -20,6 +20,10 @@ subprojects {
             name "brain4jReleases"
             url "https://repo.brain4j.org/releases"
         }
+        maven {
+            name "brain4jSnapshots"
+            url "https://repo.brain4j.org/snapshots"
+        }
     }
 
     publishing {

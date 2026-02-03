@@ -1,7 +1,6 @@
 package org.brain4j.math.gpu.silicon;
 
-import org.silicon.device.ComputeBuffer;
-import org.silicon.computing.ComputeQueue;
+import org.silicon.api.device.ComputeBuffer;
 
 import java.lang.ref.Cleaner;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,12 +11,11 @@ public class SiliconBuffer {
     private static final Cleaner CLEANER = Cleaner.create();
 
     private final AtomicInteger refCount = new AtomicInteger(1);
-    private ComputeBuffer buffer;
-    private final Cleaner.Cleanable cleanable;
+    private final ComputeBuffer buffer;
 
     public SiliconBuffer(ComputeBuffer buffer) {
         this.buffer = buffer;
-        this.cleanable = CLEANER.register(this, new CleanerTask(buffer, refCount));
+        CLEANER.register(this, new CleanerTask(buffer, refCount));
     }
 
     public ComputeBuffer getBuffer() {

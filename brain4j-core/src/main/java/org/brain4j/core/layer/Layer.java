@@ -138,7 +138,7 @@ public abstract class Layer implements ModelBlock, Cloneable {
             
             if (!Arrays.equals(output.shape(), target.shape())) {
                 throw Commons.illegalState("Output and target shapes don't match! Output %s, Target: %s",
-                    Arrays.toString(output.shape()),  Arrays.toString(target.shape()));
+                    Arrays.toString(output.shape()), Arrays.toString(target.shape()));
             }
 
             Tensor derivatives = activation.derivative(preOutput);
@@ -298,27 +298,24 @@ public abstract class Layer implements ModelBlock, Cloneable {
         return weights;
     }
 
-    public Layer setWeights(Tensor weights) {
+    public void setWeights(Tensor weights) {
         this.weights = weights;
-        return this;
     }
 
     public Tensor getBias() {
         return bias;
     }
 
-    public Layer setBias(Tensor bias) {
+    public void setBias(Tensor bias) {
         this.bias = bias;
-        return this;
     }
 
     public boolean isFrozen() {
         return frozen;
     }
 
-    public Layer setFrozen(boolean frozen) {
+    public void setFrozen(boolean frozen) {
         this.frozen = frozen;
-        return this;
     }
     
     @Override

@@ -20,7 +20,7 @@ pngj = "2.1.0"
 parquetAvro = "1.15.2"
 hadoop = "3.4.2"
 lwjgl = "3.3.6"
-silicon = "1.1.3"
+silicon = "1.0.0-SNAPSHOT"
 
 [plugins]
 shadowJar = { id = "com.gradleup.shadow", version.ref = "shadowJar" }
