@@ -57,7 +57,7 @@ public class Sequential implements Model, ModelBlock {
         Tensor[] buffer = new Tensor[inputs.length];
         
         if (device != null && !cache.isTraining()) {
-            device.createQueue();
+            device.createResources();
         }
         
         for (int i = 0; i < buffer.length; i++) {
@@ -80,7 +80,7 @@ public class Sequential implements Model, ModelBlock {
         }
         
         if (device != null && !cache.isTraining()) {
-            SiliconContext.finishAndRelease(device.getQueue());
+            device.closeResources();
         }
         
         return buffer;
@@ -176,7 +176,10 @@ public class Sequential implements Model, ModelBlock {
         Tensor[] inputs = batch.getFirst();
         Tensor[] labels = batch.getSecond();
         
-        Tensor[] outputs = predict(new StatesCache(false), inputs);
+        if (device != null) device.createResources();
+        
+        StatesCache cache = new StatesCache(true);
+        Tensor[] outputs = predict(cache, inputs);
         
         for (Tensor input : inputs) {
             int batchSize = input.shapeAt(0);
@@ -209,6 +212,8 @@ public class Sequential implements Model, ModelBlock {
                 }
             }
         }
+        
+        if (device != null) device.closeResources();
     }
     
     private void initLayers() {

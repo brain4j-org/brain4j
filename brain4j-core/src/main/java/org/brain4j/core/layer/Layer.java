@@ -143,7 +143,7 @@ public abstract class Layer implements ModelBlock, Cloneable {
 
             Tensor derivatives = activation.derivative(preOutput);
             Tensor delta = lossFunction.delta(output, target, derivatives);
-
+            
             preOutput.backward(delta);
         }
     }

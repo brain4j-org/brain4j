@@ -15,13 +15,13 @@ public class SiliconKernel {
         this.function = function;
         this.args = ComputeArgs.of();
     }
-
+    
     public static SiliconKernel create(SiliconDevice device, String kernelName) {
         ComputeFunction function = SiliconContext.findFunction(device, kernelName);
         return new SiliconKernel(function);
     }
 
-    public static SiliconKernel create(SiliconDevice device, ComputeFunction function) {
+    public static SiliconKernel create(ComputeFunction function) {
         return new SiliconKernel(function);
     }
 
@@ -61,6 +61,10 @@ public class SiliconKernel {
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch kernel", e);
         }
+    }
+    
+    public void launch(SiliconContext.QueueHandle queue, ComputeSize globalSize) {
+        launch(queue.queue(), globalSize);
     }
 
     public void launch(ComputeQueue queue, ComputeSize globalSize) {

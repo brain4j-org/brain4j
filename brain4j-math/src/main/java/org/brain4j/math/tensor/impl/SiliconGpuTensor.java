@@ -28,20 +28,24 @@ public class SiliconGpuTensor extends BaseTensor {
     private final ComputeBuffer stridesBuffer;
     private final int size;
     private ComputeBuffer dataBuffer;
-
+    
     public SiliconGpuTensor(SiliconDevice device, int[] shape, float... data) {
+        this(device, false, shape, data);
+    }
+    
+    public SiliconGpuTensor(SiliconDevice device, boolean persistent, int[] shape, float... data) {
         this.device = device;
         this.size = Tensors.computeSize(shape);
         this.shape = shape;
         this.strides = Tensors.computeStrides(shape);
-
+        
         if (data.length == 0) {
             data = new float[size];
         }
-
-        this.shapeBuffer = device.createBuffer(shape);
-        this.stridesBuffer = device.createBuffer(strides);
-        this.dataBuffer = device.createBuffer(data);
+        
+        this.shapeBuffer = device.createBuffer(shape, persistent);
+        this.stridesBuffer = device.createBuffer(strides, persistent);
+        this.dataBuffer = device.createBuffer(data, persistent);
     }
 
     public SiliconGpuTensor(SiliconDevice device, int[] shape, ComputeBuffer otherBuffer) {
@@ -82,7 +86,11 @@ public class SiliconGpuTensor extends BaseTensor {
         this.stridesBuffer = device.createBuffer(strides);
         this.dataBuffer = reference.dataBuffer;
     }
-
+    
+    public static SiliconGpuTensor persistent(Tensor first, SiliconDevice device) {
+        return new SiliconGpuTensor(device, true, first.shape(), first.data());
+    }
+    
     public SiliconDevice device() {
         return device;
     }
@@ -114,11 +122,6 @@ public class SiliconGpuTensor extends BaseTensor {
             ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
             ComputeModule flashAttentionModule = compiler.compileFromResource("slang/flash_attention.slang");
 
-            System.out.println(tensorOpsModule);
-            System.out.println(elementaryOpsModule);
-            System.out.println(activationsModule);
-            System.out.println(gradientClipModule);
-            System.out.println(flashAttentionModule);
 //            ComputeModule fftModule = compiler.compileFromResource("slang/fft.slang");
 //            ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
 //            ComputeModule complexOpsModule = compiler.compileFromResource("slang/complex_ops.slang");
@@ -137,7 +140,6 @@ public class SiliconGpuTensor extends BaseTensor {
                 "matmul_batched", "matmul_legacy", "matmul", "add", "sub", "mul", "div_op",
                 "sum_along_dim", "softmax_last_dim", "layer_norm"
             };
-            System.out.println("fritt");
             SiliconContext.registerAll(device, tensorOpsModule, tensorOpsKernels);
 
             String[] scalarKernels = {

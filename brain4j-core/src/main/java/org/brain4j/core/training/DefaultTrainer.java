@@ -83,7 +83,7 @@ public final class DefaultTrainer implements Trainer {
         StatesCache cache = new StatesCache(true);
         
         if (device != null) {
-            device.createQueue();
+            device.createResources();
         }
         
         Tensor[] outputs = forward(cache, inputs);
@@ -91,7 +91,7 @@ public final class DefaultTrainer implements Trainer {
         resetGrad();
         
         if (device != null) {
-            SiliconContext.finishAndRelease(device.getQueue());
+            device.closeResources();
         }
     }
     

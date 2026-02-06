@@ -1,13 +1,14 @@
 package org.brain4j.math.activation;
 
 import org.brain4j.math.Tensors;
-import org.brain4j.math.gpu.GpuContext;
-import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.kernel.KernelFactory;
-import org.brain4j.math.gpu.memory.GpuQueue;
+import org.brain4j.math.gpu.silicon.SiliconContext;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.silicon.SiliconKernel;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 import org.brain4j.math.weightsinit.WeightInit;
+import org.silicon.api.function.ComputeFunction;
+import org.silicon.api.kernel.ComputeSize;
 
 import java.util.stream.IntStream;
 
@@ -52,12 +53,12 @@ public interface Activation {
      * @param other the resulting tensor
      * @return a kernel factory ready to be launched
      */
-    default KernelFactory createKernel(long kernel, GpuTensor current, GpuTensor other) {
-        return KernelFactory
+    default SiliconKernel createKernel(ComputeFunction kernel, SiliconGpuTensor current, SiliconGpuTensor other) {
+        return SiliconKernel
             .create(kernel)
-            .addMemParam(current.dataBuffer())
-            .addMemParam(other.dataBuffer())
-            .addIntParam(current.size());
+            .buffer(current.getDataBuffer())
+            .buffer(other.getDataBuffer())
+            .intVal(current.size());
     }
 
     /**
@@ -66,18 +67,19 @@ public interface Activation {
      */
     default Tensor activate(Tensor input) {
         int[] shape = input.shape();
-
-        if (input instanceof GpuTensor gpuInput) {
-            Device device = gpuInput.device();
-            GpuTensor result = new GpuTensor(device, gpuInput.shape());
-
-            try (GpuQueue queue = GpuContext.getOrCreate(device)) {
-                long kernel = GpuContext.findKernel(device, getKernelPrefix() + "_forward");
-
-                KernelFactory factory = createKernel(kernel, gpuInput, result);
-                factory.launch(queue, 1, gpuInput.size());
+        
+        if (input instanceof SiliconGpuTensor gpuInput) {
+            SiliconDevice device = gpuInput.device();
+            SiliconGpuTensor result = new SiliconGpuTensor(device, gpuInput.shape());
+            
+            try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
+                ComputeFunction kernel = SiliconContext.findFunction(device, getKernelPrefix() + "_forward");
+                SiliconKernel factory = createKernel(kernel, gpuInput, result);
+                
+                ComputeSize size = new ComputeSize(gpuInput.size(), 1, 1);
+                factory.launch(queue.queue(), size);
             }
-
+            
             return result;
         }
         
@@ -102,18 +104,19 @@ public interface Activation {
      */
     default Tensor derivative(Tensor input) {
         int[] shape = input.shape();
-
-        if (input instanceof GpuTensor gpuInput) {
-            Device device = gpuInput.device();
-            GpuTensor result = new GpuTensor(device, gpuInput.shape());
-
-            try (GpuQueue queue = GpuContext.getOrCreate(device)) {
-                long kernel = GpuContext.findKernel(device, getKernelPrefix() + "_backward");
-
-                KernelFactory factory = createKernel(kernel, gpuInput, result);
-                factory.launch(queue, 1, gpuInput.size());
+        
+        if (input instanceof SiliconGpuTensor gpuInput) {
+            SiliconDevice device = gpuInput.device();
+            SiliconGpuTensor result = new SiliconGpuTensor(device, gpuInput.shape());
+            
+            try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
+                ComputeFunction kernel = SiliconContext.findFunction(device, getKernelPrefix() + "_backward");
+                SiliconKernel factory = createKernel(kernel, gpuInput, result);
+                
+                ComputeSize size = new ComputeSize(gpuInput.size(), 1, 1);
+                factory.launch(queue.queue(), size);
             }
-
+            
             return result;
         }
         

@@ -32,7 +32,7 @@ public class SiliconDevice {
         this(0);
     }
 
-    public void createQueue() {
+    public void createResources() {
         if (queue == null) {
             try {
                 this.queue = context.createQueue();
@@ -58,32 +58,44 @@ public class SiliconDevice {
             throw new RuntimeException("Failed to create compute arena", e);
         }
     }
-
-    public ComputeBuffer createBuffer(float[] data) {
+    
+    public ComputeBuffer createBuffer(float[] data, boolean persistent) {
         try {
-            if (arena != null) return arena.allocateArray(data);
+            if (arena != null && !persistent) return arena.allocateArray(data);
             return context.allocateArray(data);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer from float array", e);
         }
     }
-
-    public ComputeBuffer createBuffer(int[] data) {
+    
+    public ComputeBuffer createBuffer(int[] data, boolean persistent) {
         try {
-            if (arena != null) return arena.allocateArray(data);
+            if (arena != null && !persistent) return arena.allocateArray(data);
             return context.allocateArray(data);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer from int array", e);
         }
     }
-
-    public ComputeBuffer createBuffer(long byteSize) {
+    
+    public ComputeBuffer createBuffer(long byteSize, boolean persistent) {
         try {
-            if (arena != null) return arena.allocateBytes(byteSize);
+            if (arena != null && !persistent) return arena.allocateBytes(byteSize);
             return context.allocateBytes(byteSize);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create buffer of size " + byteSize, e);
         }
+    }
+
+    public ComputeBuffer createBuffer(float[] data) {
+        return createBuffer(data, false);
+    }
+
+    public ComputeBuffer createBuffer(int[] data) {
+        return createBuffer(data, false);
+    }
+
+    public ComputeBuffer createBuffer(long byteSize) {
+        return createBuffer(byteSize, false);
     }
 
     public String getName() {
@@ -114,12 +126,15 @@ public class SiliconDevice {
         this.queue = queue;
     }
 
-    public void releaseQueue() {
+    public void closeResources() {
         if (queue != null) {
-            try {
-                queue.await();
-            } catch (Throwable ignored) {}
+            queue.await();
             queue = null;
+        }
+        
+        if (arena != null) {
+            arena.close();
+            arena = null;
         }
     }
 }

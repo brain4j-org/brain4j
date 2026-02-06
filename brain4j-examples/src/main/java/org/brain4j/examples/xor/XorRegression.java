@@ -24,28 +24,25 @@ import java.util.List;
 
 public class XorRegression {
     public static void main(String[] args) {
-        List<Sample> samples = new ArrayList<>();
+        List<Sample> samples = getSamples();
         
-        for (int x = 0; x <= 1; x++) {
-            for (int y = 0; y <= 1; y++) {
-                Tensor input = Tensors.vector(x, y);
-                Tensor label = Tensors.vector(x ^ y);
-                
-                samples.add(new Sample(input, label));
-            }
-        }
-
-        SiliconDevice device = Brain4J.firstDevice();
-        
-        ListDataSource dataSource = new ListDataSource(samples, true, 1);
+        ListDataSource dataSource = new ListDataSource(samples, false, 1);
         ModelSpecs specs = ModelSpecs.of(
             new InputLayer(2),
             new DenseLayer(16, Activations.RELU),
             new DenseLayer(16, Activations.RELU),
             new DenseLayer(1, Activations.SIGMOID)
         );
+        
         Model model = specs.compile(42);
+        SiliconDevice device = Brain4J.firstDevice();
 
+        if (device != null) {
+            System.out.println("Using device " + device.getName());
+            model = model.fork(device);
+            dataSource = dataSource.to(device);
+        }
+        
         TrainingConfig config = TrainingConfig.of(
             new BinaryCrossEntropy(),
             new AdamW(0.1)
@@ -57,5 +54,19 @@ public class XorRegression {
 
         Trainer trainer = Trainer.of(model, config, monitors);
         trainer.fit(dataSource, 50);
+    }
+    
+    private static List<Sample> getSamples() {
+        List<Sample> samples = new ArrayList<>();
+        
+        for (int x = 0; x <= 1; x++) {
+            for (int y = 0; y <= 1; y++) {
+                Tensor input = Tensors.vector(x, y);
+                Tensor label = Tensors.vector(x ^ y);
+                
+                samples.add(new Sample(input, label));
+            }
+        }
+        return samples;
     }
 }

@@ -8,7 +8,6 @@ import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconContext;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
@@ -62,7 +61,7 @@ public class GraphModel implements Model {
         }
         
         if (device != null) {
-            device.createQueue();
+            device.createResources();
         }
 
         Map<String, Tensor> computed = new HashMap<>(initializers);
@@ -99,7 +98,7 @@ public class GraphModel implements Model {
         }
 
         if (device != null && !cache.isTraining()) {
-            SiliconContext.finishAndRelease(device.getQueue());
+            device.closeResources();
         }
 
         return outputs;
