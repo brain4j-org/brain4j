@@ -28,7 +28,28 @@ public class Shape {
         return dims[dims.length - 1];
     }
 
+    public int last(int offset) {
+        if (offset > dims.length - 1) {
+            throw new IllegalArgumentException("Offset cannot be higher than rank - 1");
+        }
+
+        return dims[dims.length - 1 - offset];
+    }
+
+    public int rank() {
+        return dims.length;
+    }
+
     public int[] dims() {
         return dims;
+    }
+
+    public Shape slice(int start, int end) {
+        if (end <= start) {
+            throw new IllegalArgumentException("End must be greater than start!");
+        }
+        int[] result = new int[end - start];
+        System.arraycopy(dims, start, result, 0, result.length);
+        return Shape.of(result);
     }
 }
