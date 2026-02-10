@@ -56,7 +56,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
         this.shapeBuffer = device.createBuffer(shape);
         this.stridesBuffer = device.createBuffer(strides);
-        this.dataBuffer = otherBuffer.copy();
+        this.dataBuffer = device.copyBuffer(otherBuffer);
     }
 
     public SiliconGpuTensor(SiliconDevice device, int[] shape, int[] strides, float... data) {

@@ -137,5 +137,18 @@ public class SiliconDevice {
             arena = null;
         }
     }
+    
+    public ComputeBuffer copyBuffer(ComputeBuffer otherBuffer) {
+        try {
+            ComputeBuffer copy = arena != null
+                ? arena.allocateBytes(otherBuffer.size())
+                : context.allocateBytes(otherBuffer.size());
+            
+            otherBuffer.copyInto(copy);
+            return copy;
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create buffer from float array", e);
+        }
+    }
 }
 

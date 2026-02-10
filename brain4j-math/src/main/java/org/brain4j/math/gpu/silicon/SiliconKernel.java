@@ -25,11 +25,6 @@ public class SiliconKernel {
         return new SiliconKernel(function);
     }
 
-    public SiliconKernel buffer(SiliconBuffer buffer) {
-        args.buffer(buffer.getBuffer());
-        return this;
-    }
-
     public SiliconKernel buffer(ComputeBuffer buffer) {
         args.buffer(buffer);
         return this;
