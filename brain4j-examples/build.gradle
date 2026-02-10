@@ -16,9 +16,15 @@ dependencies {
     implementation(project(":brain4j-llm"))
     implementation(project(":brain4j-datasets"))
 
-    implementation libs.siliconCuda
-    implementation libs.siliconMetal
-    implementation libs.siliconOpenCL
+    implementation(libs.siliconCuda) {
+        changing = true
+    }
+    implementation(libs.siliconMetal) {
+        changing = true
+    }
+    implementation(libs.siliconOpenCL) {
+        changing = true
+    }
 }
 
 java {

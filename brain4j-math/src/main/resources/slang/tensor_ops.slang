@@ -2,7 +2,6 @@ static const int TILE_SIZE = 16;
 static const int MAX_RANK = 16;
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void layer_norm(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
@@ -37,6 +36,46 @@ void layer_norm(
     }
 }
 
+[shader("compute")]
+void matmul_naive(
+    uint3 id : SV_DispatchThreadID,
+
+    StructuredBuffer<float> A,
+    StructuredBuffer<float> B,
+    RWStructuredBuffer<float> C,
+
+    StructuredBuffer<int> offsetsA,
+    StructuredBuffer<int> offsetsB,
+    StructuredBuffer<int> offsetsC,
+
+    uniform int M,
+    uniform int K,
+    uniform int P,
+    uniform int batchCount
+)
+{
+    uint row = id.x;
+    uint col = id.y;
+    uint batch = id.z;
+
+    if (batch >= batchCount) return;
+    if (row >= M || col >= P) return;
+
+    int Aoff = offsetsA[batch];
+    int Boff = offsetsB[batch];
+    int Coff = offsetsC[batch];
+
+    float sum = 0.0f;
+
+    for (uint k = 0; k < K; ++k) {
+        float a = A[Aoff + row * K + k];
+        float b = B[Boff + k * P + col];
+        sum += a * b;
+    }
+
+    C[Coff + row * P + col] = sum;
+}
+
 groupshared float Asub[TILE_SIZE][TILE_SIZE];
 groupshared float Bsub[TILE_SIZE][TILE_SIZE];
 
@@ -69,14 +108,14 @@ void matmul_batched(
 
     if (batch >= batchCount) return;
 
-    int K = (transA == 0) ? N : M;
-
     int A_offset = offsetsA[batch];
     int B_offset = offsetsB[batch];
     int C_offset = offsetsC[batch];
 
-    int A_rowStride = (transA == 0) ? N : M;
-    int B_rowStride = (transB == 0) ? P : N;
+    int K = (transA == 0) ? N : M;
+
+    int A_rowStride = (transA == 0) ? K : M;
+    int B_rowStride = (transB == 0) ? P : K;
 
     float sum = 0.0f;
 
@@ -262,7 +301,6 @@ void matmul(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void add(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
@@ -274,20 +312,17 @@ void add(
 {
     uint gid = dispatchThreadID.x;
 
+    if (gid >= size) return;
+
     if (broadcast_dim == -1) {
-        if (gid < size) {
-            a[gid] += b[gid];
-        }
+        a[gid] += b[gid];
     } else {
-        if (gid < size) {
-            int j = gid % broadcast_dim;
-            a[gid] += b[j];
-        }
+        int j = gid % broadcast_dim;
+        a[gid] += b[j];
     }
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void sub(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
@@ -312,7 +347,6 @@ void sub(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void mul(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
@@ -337,7 +371,6 @@ void mul(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void div_op(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
@@ -388,7 +421,6 @@ void sum_along_dim(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void softmax_last_dim(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
@@ -423,7 +455,6 @@ void softmax_last_dim(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void slice(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> srcData,
@@ -458,7 +489,6 @@ void slice(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void concat_last_dim(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> A,
@@ -487,7 +517,6 @@ void concat_last_dim(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void concat_copy_a(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> A,
@@ -513,7 +542,6 @@ void concat_copy_a(
 }
 
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void concat_copy_b(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> B,

@@ -474,18 +474,19 @@ public class SiliconGpuTensor extends BaseTensor {
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             ComputeSize globalSize = new ComputeSize(roundUp(M), roundUp(P), Math.max(1, batchCount));
             ComputeSize localSize = new ComputeSize(TILE_SIZE, TILE_SIZE, 1);
-
-            SiliconKernel.create(device, "matmul_batched")
+            
+            // IMPORTANT TODO: FIX THE MATMUL WHICH CAUSES ILLEGAL ACCESS!!
+            SiliconKernel.create(device, "matmul")
                 .buffer(dataBuffer)
                 .buffer(B.dataBuffer)
                 .buffer(result.dataBuffer)
-                .buffer(memoryA)
-                .buffer(memoryB)
-                .buffer(memoryC)
+//                .buffer(memoryA)
+//                .buffer(memoryB)
+//                .buffer(memoryC)
                 .intVal(M)
                 .intVal(K)
                 .intVal(P)
-                .intVal(batchCount)
+//                .intVal(batchCount)
                 .intVal(transposed ? 1 : 0)
                 .intVal(other.transposed() ? 1 : 0)
                 .launch(qh.queue(), globalSize, localSize);

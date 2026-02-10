@@ -36,7 +36,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     protected final List<Tensor[]> batchedInputs;
     protected final List<Tensor[]> batchedLabels;
     protected final int batches;
-    protected Device device;
+    protected SiliconDevice device;
     protected int cursor;
     protected int batchSize;
 
@@ -61,8 +61,8 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
         computeBatches();
     }
-
-    public ListDataSource(Device device, List<Sample> samples, boolean shuffle, int batchSize) {
+    
+    public ListDataSource(SiliconDevice device, List<Sample> samples, boolean shuffle, int batchSize) {
         this.device = device;
         this.samples = samples;
         this.batchedInputs = new ArrayList<>();
@@ -75,6 +75,24 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         }
 
         computeBatches();
+    }
+    
+    /**
+     * Copy constructor.
+     */
+    private ListDataSource(
+        List<Tensor[]> batchedInputs,
+        List<Tensor[]> batchedLabels,
+        List<Sample> samples, SiliconDevice device,
+        int batches, int cursor, int batchSize
+    ) {
+        this.batchedInputs = batchedInputs;
+        this.batchedLabels = batchedLabels;
+        this.batches = batches;
+        this.samples = samples;
+        this.device = device;
+        this.cursor = cursor;
+        this.batchSize = batchSize;
     }
 
     /**
@@ -259,39 +277,13 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     }
 
     public ListDataSource to(SiliconDevice device) {
-        List<Sample> newSamples = new ArrayList<>(samples.size());
-
-        for (Sample sample : samples) {
-            Tensor[] inputs = sample.getInputs();
-            Tensor[] labels = sample.getLabels();
-
-            for (int i = 0; i < inputs.length; i++) {
-                inputs[i] = inputs[i].to(device);
-            }
-
-            for (int i = 0; i < labels.length; i++) {
-                labels[i] = labels[i].to(device);
-            }
-
-            newSamples.add(new Sample(inputs, labels));
-        }
-
-        samples.clear();
-        samples.addAll(newSamples);
-
         List<Tensor[]> newBatchedInputs = new ArrayList<>(batchedInputs.size());
         List<Tensor[]> newBatchedLabels = new ArrayList<>(batchedLabels.size());
 
         extract(batchedInputs, newBatchedInputs);
         extract(batchedLabels, newBatchedLabels);
-
-        batchedLabels.clear();
-        batchedInputs.clear();
-
-        batchedInputs.addAll(newBatchedInputs);
-        batchedLabels.addAll(newBatchedLabels);
-
-        return this;
+        
+        return new ListDataSource(newBatchedInputs, newBatchedLabels, samples, device, batches, cursor, batchSize);
     }
 
     private void extract(List<Tensor[]> in, List<Tensor[]> out) {

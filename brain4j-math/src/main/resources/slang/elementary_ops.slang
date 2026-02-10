@@ -1,6 +1,5 @@
 // mask operation: data[i] = max(0, data[i] - mask[i])
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void mask(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> data,
@@ -16,7 +15,6 @@ void mask(
 
 // add scalar: data[i] += value
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void add_scalar(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> data,
@@ -32,7 +30,6 @@ void add_scalar(
 
 // sub scalar: data[i] -= value
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void sub_scalar(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> data,
@@ -48,7 +45,6 @@ void sub_scalar(
 
 // mul scalar: data[i] *= value
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void mul_scalar(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> data,
@@ -64,7 +60,6 @@ void mul_scalar(
 
 // div scalar: data[i] /= value
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void div_scalar(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> data,
@@ -80,7 +75,6 @@ void div_scalar(
 
 // pow scalar: data[i] = pow(data[i], value)
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void pow_scalar(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> data,
@@ -96,7 +90,6 @@ void pow_scalar(
 
 // sqrt: data[i] = sqrt(data[i])
 [shader("compute")]
-[numthreads(256, 1, 1)]
 void sqrt_op(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> data,

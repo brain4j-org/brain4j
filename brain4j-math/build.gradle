@@ -7,13 +7,15 @@ dependencies {
     implementation platform(libs.lwjglBom)
     implementation libs.lwjgl
     implementation libs.lwjglOpenCL
-
-    implementation libs.siliconApi
     implementation libs.gson
 
-    testRuntimeOnly(libs.junitPlatform)
-    testImplementation(platform(libs.junitBom))
-    testImplementation(libs.junitJupiter)
+    implementation(libs.siliconApi) {
+        changing = true
+    }
+
+    testRuntimeOnly libs.junitPlatform
+    testImplementation platform(libs.junitBom)
+    testImplementation libs.junitJupiter
 }
 
 compileJava {
