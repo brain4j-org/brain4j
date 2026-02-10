@@ -74,6 +74,7 @@ public class SiliconContext {
     public static void finishAndRelease(ComputeQueue queue) {
         try {
             queue.await();
+            queue.free();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to finish and release queue", e);
         }

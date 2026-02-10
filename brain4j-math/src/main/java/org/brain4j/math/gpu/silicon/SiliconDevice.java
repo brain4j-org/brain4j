@@ -129,6 +129,7 @@ public class SiliconDevice {
     public void closeResources() {
         if (queue != null) {
             queue.await();
+            queue.free();
             queue = null;
         }
         
