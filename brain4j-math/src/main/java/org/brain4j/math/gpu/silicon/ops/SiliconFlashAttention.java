@@ -20,7 +20,7 @@ public class SiliconFlashAttention {
             !(v instanceof SiliconGpuTensor V)) {
             return null;
         }
-        if (!Q.device().equals(K.device()) || !Q.device().equals(V.device())) {
+        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice())) {
             return null;
         }
 
@@ -30,7 +30,7 @@ public class SiliconFlashAttention {
         int L = shape[2];
         int D = shape[3];
 
-        SiliconDevice device = Q.device();
+        SiliconDevice device = Q.getDevice();
         SiliconGpuTensor O = new SiliconGpuTensor(device, shape);
         O.setAutogradContext(Q.getAutogradContext());
 
@@ -67,7 +67,7 @@ public class SiliconFlashAttention {
             !(v instanceof SiliconGpuTensor V)) {
             return null;
         }
-        if (!Q.device().equals(K.device()) || !Q.device().equals(V.device())) {
+        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice())) {
             return null;
         }
 
@@ -77,7 +77,7 @@ public class SiliconFlashAttention {
         int L = shape[2];
         int D = shape[3];
 
-        SiliconDevice device = Q.device();
+        SiliconDevice device = Q.getDevice();
         SiliconGpuTensor O = new SiliconGpuTensor(device, shape);
         O.setAutogradContext(Q.getAutogradContext());
 
@@ -125,10 +125,10 @@ public class SiliconFlashAttention {
             return null;
         }
 
-        SiliconDevice device = Q.device();
-        if (!device.equals(K.device()) || !device.equals(V.device()) ||
-            !device.equals(O.device()) || !device.equals(DO.device()) ||
-            !device.equals(LSE.device())) {
+        SiliconDevice device = Q.getDevice();
+        if (!device.equals(K.getDevice()) || !device.equals(V.getDevice()) ||
+            !device.equals(O.getDevice()) || !device.equals(DO.getDevice()) ||
+            !device.equals(LSE.getDevice())) {
             return null;
         }
 
@@ -206,7 +206,7 @@ public class SiliconFlashAttention {
             !(v instanceof SiliconGpuTensor V)) {
             return null;
         }
-        if (!Q.device().equals(K.device()) || !Q.device().equals(V.device())) {
+        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice())) {
             return null;
         }
 
@@ -216,7 +216,7 @@ public class SiliconFlashAttention {
         int L = shape[2];
         int D = shape[3];
 
-        SiliconDevice device = Q.device();
+        SiliconDevice device = Q.getDevice();
         SiliconGpuTensor O = new SiliconGpuTensor(device, shape);
         O.setAutogradContext(Q.getAutogradContext());
         SiliconGpuTensor LSE = new SiliconGpuTensor(device, new int[]{B, H, L});
@@ -263,10 +263,10 @@ public class SiliconFlashAttention {
             return null;
         }
 
-        SiliconDevice device = Q.device();
-        if (!device.equals(K.device()) || !device.equals(V.device()) ||
-            !device.equals(O.device()) || !device.equals(DO.device()) ||
-            !device.equals(LSE.device())) {
+        SiliconDevice device = Q.getDevice();
+        if (!device.equals(K.getDevice()) || !device.equals(V.getDevice()) ||
+            !device.equals(O.getDevice()) || !device.equals(DO.getDevice()) ||
+            !device.equals(LSE.getDevice())) {
             return null;
         }
 

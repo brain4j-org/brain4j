@@ -7,6 +7,8 @@ import org.brain4j.math.gpu.silicon.SiliconDeviceUtils;
 import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,8 +35,9 @@ public class Brain4J {
 
     private static boolean logging = true;
     private static boolean disableColors = false;
+    private static boolean fixedOutStream = false;
     private static int decimalDigits = 4;
-
+    
     /**
      * Returns the current version of the Brain4J framework.
      *
@@ -44,6 +47,13 @@ public class Brain4J {
         return "3.0";
     }
 
+    public static void fixConsole() {
+        if (fixedOutStream) return;
+        
+        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+        fixedOutStream = true;
+    }
+    
     /**
      * Indicates whether training progress and system information
      * are currently being logged to the console.
@@ -51,6 +61,7 @@ public class Brain4J {
      * @return {@code true} if logging is enabled; {@code false} by default
      */
     public static boolean isLogging() {
+        fixConsole();
         return logging;
     }
 

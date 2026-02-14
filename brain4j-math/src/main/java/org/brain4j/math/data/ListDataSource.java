@@ -5,6 +5,7 @@ import org.brain4j.math.commons.Batch;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -246,13 +247,15 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         Tensor[] batchedInputTensors = new Tensor[inputCount];
 
         for (int i = 0; i < inputCount; i++) {
-            batchedInputTensors[i] = Tensors.mergeTensors(mergedInputs.get(i)).to(device);
+            Tensor merged = Tensors.mergeTensors(mergedInputs.get(i));
+            batchedInputTensors[i] = device == null ? merged : SiliconGpuTensor.persistent(merged, device);
         }
 
         Tensor[] batchedLabelTensors = new Tensor[labelCount];
 
         for (int i = 0; i < labelCount; i++) {
-            batchedLabelTensors[i] = Tensors.mergeTensors(mergedLabels.get(i)).to(device);
+            Tensor merged = Tensors.mergeTensors(mergedLabels.get(i));
+            batchedLabelTensors[i] = device == null ? merged : SiliconGpuTensor.persistent(merged, device);
         }
 
         return new Batch(batchedInputTensors, batchedLabelTensors);
@@ -276,6 +279,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         }
     }
 
+    @Deprecated
     public ListDataSource to(SiliconDevice device) {
         List<Tensor[]> newBatchedInputs = new ArrayList<>(batchedInputs.size());
         List<Tensor[]> newBatchedLabels = new ArrayList<>(batchedLabels.size());

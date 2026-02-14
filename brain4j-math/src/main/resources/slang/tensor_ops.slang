@@ -112,7 +112,7 @@ void matmul_batched(
     int B_offset = offsetsB[batch];
     int C_offset = offsetsC[batch];
 
-    int K = (transA == 0) ? N : M;
+    int K = N;
 
     int A_rowStride = (transA == 0) ? K : M;
     int B_rowStride = (transB == 0) ? P : K;
@@ -268,7 +268,7 @@ void matmul(
             else
                 Asub[local_row][local_col] = 0.0f;
         } else {
-            if (tiled_col_A < M && tiled_row < N)
+            if (tiled_col_A < N && tiled_row < M)
                 Asub[local_row][local_col] = A[tiled_col_A * M + tiled_row];
             else
                 Asub[local_row][local_col] = 0.0f;
@@ -281,7 +281,7 @@ void matmul(
             else
                 Bsub[local_row][local_col] = 0.0f;
         } else {
-            if (tiled_col < N && tiled_row_B < P)
+            if (tiled_col < P && tiled_row_B < N)
                 Bsub[local_row][local_col] = B[tiled_col * N + tiled_row_B];
             else
                 Bsub[local_row][local_col] = 0.0f;

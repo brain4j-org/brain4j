@@ -14,11 +14,9 @@ import org.brain4j.llm.core.architecture.ArchitectureRegistry;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.impl.SoftmaxActivation;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
-import javax.swing.plaf.nimbus.State;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;

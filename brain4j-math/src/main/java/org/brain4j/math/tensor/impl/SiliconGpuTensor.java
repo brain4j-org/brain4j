@@ -9,7 +9,8 @@ import org.brain4j.math.gpu.silicon.SiliconKernel;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
-import org.silicon.api.Silicon;
+import org.brain4j.math.tensor.TensorKey;
+import org.brain4j.math.tensor.Usage;
 import org.silicon.api.device.ComputeBuffer;
 import org.silicon.api.function.ComputeModule;
 import org.silicon.api.kernel.ComputeSize;
@@ -24,7 +25,6 @@ public class SiliconGpuTensor extends BaseTensor {
     private static final int TILE_SIZE = 16;
 
     private final SiliconDevice device;
-    private final ComputeBuffer shapeBuffer;
     private final ComputeBuffer stridesBuffer;
     private final int size;
     private ComputeBuffer dataBuffer;
@@ -43,9 +43,20 @@ public class SiliconGpuTensor extends BaseTensor {
             data = new float[size];
         }
         
-        this.shapeBuffer = device.createBuffer(shape, persistent);
-        this.stridesBuffer = device.createBuffer(strides, persistent);
-        this.dataBuffer = device.createBuffer(data, persistent);
+        float[] finalData = data;
+        
+        TensorKey stridesKey = new TensorKey(Usage.STRIDES, shape);
+        TensorKey dataKey = new TensorKey(Usage.DATA, shape);
+        if (persistent) {
+            // Persistent tensors (e.g. model params, optimizer state) must not be returned to
+            // the batch-level pool, otherwise they can be reused while still logically alive.
+            this.stridesBuffer = device.createBuffer(strides, true);
+            this.dataBuffer = device.createBuffer(finalData, true);
+        } else {
+            this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides, false));
+            this.dataBuffer = device.acquire(dataKey, () -> device.createBuffer(finalData, false),
+                buf -> buf.write(finalData));
+        }
     }
 
     public SiliconGpuTensor(SiliconDevice device, int[] shape, ComputeBuffer otherBuffer) {
@@ -53,27 +64,27 @@ public class SiliconGpuTensor extends BaseTensor {
         this.size = Tensors.computeSize(shape);
         this.shape = shape;
         this.strides = Tensors.computeStrides(shape);
-
-        this.shapeBuffer = device.createBuffer(shape);
-        this.stridesBuffer = device.createBuffer(strides);
-        this.dataBuffer = device.copyBuffer(otherBuffer);
+        
+        TensorKey stridesKey = new TensorKey(Usage.STRIDES, shape);
+        TensorKey dataKey = new TensorKey(Usage.DATA, shape);
+        
+        this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
+        this.dataBuffer = device.acquire(dataKey, () -> device.copyBuffer(otherBuffer));
     }
 
-    public SiliconGpuTensor(SiliconDevice device, int[] shape, int[] strides, float... data) {
+    public SiliconGpuTensor(SiliconDevice device, int[] shape, int[] strides) {
         this.device = device;
-        this.size = data.length == 0 ? Tensors.computeSize(shape) : data.length;
+        this.size = Tensors.computeSize(shape);
         this.shape = shape;
         this.strides = strides;
-
-        if (data.length > 0) {
-            this.dataBuffer = device.createBuffer(data);
-        } else {
-            long dataSize = (long) Float.BYTES * this.size;
-            this.dataBuffer = device.createBuffer(dataSize);
-        }
-
-        this.shapeBuffer = device.createBuffer(shape);
-        this.stridesBuffer = device.createBuffer(strides);
+        
+        TensorKey stridesKey = new TensorKey(Usage.STRIDES, shape);
+        TensorKey dataKey = new TensorKey(Usage.DATA, shape);
+        
+        long dataSize = (long) Float.BYTES * this.size;
+        
+        this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
+        this.dataBuffer = device.acquire(dataKey, () -> device.createBuffer(dataSize));
     }
 
     public SiliconGpuTensor(SiliconGpuTensor reference, int[] newShape) {
@@ -81,9 +92,22 @@ public class SiliconGpuTensor extends BaseTensor {
         this.size = Tensors.computeSize(newShape);
         this.shape = newShape;
         this.strides = Tensors.computeStrides(newShape);
+        
+        TensorKey stridesKey = new TensorKey(Usage.STRIDES, newShape);
+        
+        this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
+        this.dataBuffer = reference.dataBuffer;
+    }
 
-        this.shapeBuffer = device.createBuffer(shape);
-        this.stridesBuffer = device.createBuffer(strides);
+    private SiliconGpuTensor(SiliconGpuTensor reference, int[] newShape, int[] newStrides) {
+        this.device = reference.device;
+        this.size = Tensors.computeSize(newShape);
+        this.shape = newShape;
+        this.strides = newStrides;
+
+        TensorKey stridesKey = new TensorKey(Usage.STRIDES, newShape);
+
+        this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(newStrides));
         this.dataBuffer = reference.dataBuffer;
     }
     
@@ -91,16 +115,12 @@ public class SiliconGpuTensor extends BaseTensor {
         return new SiliconGpuTensor(device, true, first.shape(), first.data());
     }
     
-    public SiliconDevice device() {
+    public SiliconDevice getDevice() {
         return device;
     }
 
     public ComputeBuffer getDataBuffer() {
         return dataBuffer;
-    }
-
-    public ComputeBuffer getShapeBuffer() {
-        return shapeBuffer;
     }
 
     public ComputeBuffer getStridesBuffer() {
@@ -280,10 +300,7 @@ public class SiliconGpuTensor extends BaseTensor {
         newStrides[dim2] = strides[dim1];
         newStrides[dim1] = strides[dim2];
 
-        SiliconGpuTensor view = new SiliconGpuTensor(device, newShape, newStrides);
-
-        // we share the data buffer
-        view.dataBuffer = dataBuffer;
+        SiliconGpuTensor view = new SiliconGpuTensor(this, newShape, newStrides);
         view.transposed = !transposed;
 
         return view;
@@ -467,29 +484,45 @@ public class SiliconGpuTensor extends BaseTensor {
             offsetsC[b] = b * matrixSizeC;
         }
         
-        ComputeBuffer memoryA = device.createBuffer(offsetsA);
-        ComputeBuffer memoryB = device.createBuffer(offsetsB);
-        ComputeBuffer memoryC = device.createBuffer(offsetsC);
-
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             ComputeSize globalSize = new ComputeSize(roundUp(M), roundUp(P), Math.max(1, batchCount));
             ComputeSize localSize = new ComputeSize(TILE_SIZE, TILE_SIZE, 1);
-            
-            // IMPORTANT TODO: FIX THE MATMUL WHICH CAUSES ILLEGAL ACCESS!!
-            SiliconKernel.create(device, "matmul")
-                .buffer(dataBuffer)
-                .buffer(B.dataBuffer)
-                .buffer(result.dataBuffer)
-//                .buffer(memoryA)
-//                .buffer(memoryB)
-//                .buffer(memoryC)
-                .intVal(M)
-                .intVal(K)
-                .intVal(P)
-//                .intVal(batchCount)
-                .intVal(transposed ? 1 : 0)
-                .intVal(other.transposed() ? 1 : 0)
-                .launch(qh.queue(), globalSize, localSize);
+
+            if (batchCount == 1 && maxBatchRank == 0) {
+                SiliconKernel.create(device, "matmul")
+                    .buffer(dataBuffer)
+                    .buffer(B.dataBuffer)
+                    .buffer(result.dataBuffer)
+                    .intVal(M)
+                    .intVal(K)
+                    .intVal(P)
+                    .intVal(transposed ? 1 : 0)
+                    .intVal(other.transposed() ? 1 : 0)
+                    .launch(qh.queue(), globalSize, localSize);
+            } else {
+                TensorKey memoryAKey = new TensorKey(Usage.OTHER, offsetsA);
+                TensorKey memoryBKey = new TensorKey(Usage.OTHER, offsetsB);
+                TensorKey memoryCKey = new TensorKey(Usage.OTHER, offsetsC);
+
+                ComputeBuffer memoryA = device.acquire(memoryAKey, () -> device.createBuffer(offsetsA));
+                ComputeBuffer memoryB = device.acquire(memoryBKey, () -> device.createBuffer(offsetsB));
+                ComputeBuffer memoryC = device.acquire(memoryCKey, () -> device.createBuffer(offsetsC));
+
+                SiliconKernel.create(device, "matmul_batched")
+                    .buffer(dataBuffer)
+                    .buffer(B.dataBuffer)
+                    .buffer(result.dataBuffer)
+                    .buffer(memoryA)
+                    .buffer(memoryB)
+                    .buffer(memoryC)
+                    .intVal(M)
+                    .intVal(K)
+                    .intVal(P)
+                    .intVal(batchCount)
+                    .intVal(transposed ? 1 : 0)
+                    .intVal(other.transposed() ? 1 : 0)
+                    .launch(qh.queue(), globalSize, localSize);
+            }
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch matmul kernel", e);
         }
@@ -690,9 +723,13 @@ public class SiliconGpuTensor extends BaseTensor {
             steps[i] = range == null ? 1 : range.step();
         }
         
-        ComputeBuffer memoryShape = device.createBuffer(newShape);
-        ComputeBuffer memoryStart = device.createBuffer(starts);
-        ComputeBuffer memoryStep = device.createBuffer(steps);
+        TensorKey shapeKey = new TensorKey(Usage.OTHER, newShape);
+        TensorKey startKey = new TensorKey(Usage.OTHER, starts);
+        TensorKey stepKey = new TensorKey(Usage.OTHER, steps);
+        
+        ComputeBuffer memoryShape = device.acquire(shapeKey, () -> device.createBuffer(newShape));
+        ComputeBuffer memoryStart = device.acquire(startKey, () -> device.createBuffer(starts));
+        ComputeBuffer memoryStep = device.acquire(stepKey, () -> device.createBuffer(steps));
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, result.elements());
@@ -751,8 +788,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor set(float value, int... indices) {
-        // TODO
-        return null;
+        throw new UnsupportedOperationException("This operation is not supported for the GPU");
     }
 
     @Override

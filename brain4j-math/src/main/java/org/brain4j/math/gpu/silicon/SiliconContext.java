@@ -70,16 +70,7 @@ public class SiliconContext {
 
         return new QueueHandle(device.newTempQueue(), device.newTempArena(), true);
     }
-
-    public static void finishAndRelease(ComputeQueue queue) {
-        try {
-            queue.await();
-            queue.free();
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to finish and release queue", e);
-        }
-    }
-
+    
     public static void clearCache(SiliconDevice device) {
         KERNEL_CACHE.remove(device);
         MODULE_CACHE.remove(device);
@@ -94,8 +85,8 @@ public class SiliconContext {
         @Override
         public void close() {
             if (temporary) {
+                queue.await();
                 arena.close();
-                finishAndRelease(queue);
             }
         }
     }

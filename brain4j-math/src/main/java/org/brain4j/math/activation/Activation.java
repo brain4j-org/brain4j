@@ -69,7 +69,7 @@ public interface Activation {
         int[] shape = input.shape();
         
         if (input instanceof SiliconGpuTensor gpuInput) {
-            SiliconDevice device = gpuInput.device();
+            SiliconDevice device = gpuInput.getDevice();
             SiliconGpuTensor result = new SiliconGpuTensor(device, gpuInput.shape());
             
             try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
@@ -106,7 +106,7 @@ public interface Activation {
         int[] shape = input.shape();
         
         if (input instanceof SiliconGpuTensor gpuInput) {
-            SiliconDevice device = gpuInput.device();
+            SiliconDevice device = gpuInput.getDevice();
             SiliconGpuTensor result = new SiliconGpuTensor(device, gpuInput.shape());
             
             try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {

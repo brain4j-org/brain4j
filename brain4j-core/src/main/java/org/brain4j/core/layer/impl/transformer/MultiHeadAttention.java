@@ -233,10 +233,10 @@ public class MultiHeadAttention extends Layer {
 
     @Override
     public void toDevice(SiliconDevice device) {
-        this.weights = weights.to(device);
-        this.outProj = outProj.to(device);
-        if (attnQkvHasBias) this.bias = bias.to(device);
-        if (attnOutHasBias) this.outBias = outBias.to(device);
+        this.weights = toPersistentTensor(weights, device);
+        this.outProj = toPersistentTensor(outProj, device);
+        if (attnQkvHasBias) this.bias = toPersistentTensor(bias, device);
+        if (attnOutHasBias) this.outBias = toPersistentTensor(outBias, device);
     }
 
     @Override

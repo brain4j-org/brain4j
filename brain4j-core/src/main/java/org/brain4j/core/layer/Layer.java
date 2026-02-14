@@ -14,6 +14,7 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 import org.brain4j.math.weightsinit.WeightInit;
 
 import java.util.*;
@@ -208,8 +209,18 @@ public abstract class Layer implements ModelBlock, Cloneable {
      * @param device the device to port the weights on
      */
     public void toDevice(SiliconDevice device) {
-        if (weights != null) this.weights = weights.to(device);
-        if (bias != null) this.bias = bias.to(device);
+        if (weights != null) this.weights = toPersistentTensor(weights, device);
+        if (bias != null) this.bias = toPersistentTensor(bias, device);
+    }
+
+    protected Tensor toPersistentTensor(Tensor tensor, SiliconDevice device) {
+        if (tensor instanceof SiliconGpuTensor gpuTensor && gpuTensor.getDevice().equals(device)) {
+            return gpuTensor;
+        }
+
+        Tensor result = SiliconGpuTensor.persistent(tensor, device);
+        result.setAutogradContext(tensor.getAutogradContext());
+        return result;
     }
 
     /**

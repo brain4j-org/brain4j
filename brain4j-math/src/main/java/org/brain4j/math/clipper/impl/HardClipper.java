@@ -25,7 +25,7 @@ public class HardClipper implements GradientClipper {
 
     @Override
     public void clipGpu(SiliconGpuTensor grad) {
-        SiliconDevice device = grad.device();
+        SiliconDevice device = grad.getDevice();
 
         try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
             ComputeSize size = new ComputeSize(grad.size(), 1, 1);

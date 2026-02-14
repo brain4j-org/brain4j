@@ -10,6 +10,7 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 import java.util.*;
 
@@ -118,7 +119,11 @@ public class GraphModel implements Model {
         initializers.clear();
 
         for (Map.Entry<String, Tensor> entry : copy.entrySet()) {
-            Tensor weight = entry.getValue().to(device);
+            Tensor source = entry.getValue();
+            Tensor weight = source instanceof SiliconGpuTensor gpu && gpu.getDevice().equals(device)
+                ? source
+                : SiliconGpuTensor.persistent(source, device);
+            weight.setAutogradContext(source.getAutogradContext());
             initializers.put(entry.getKey(), weight);
         }
 

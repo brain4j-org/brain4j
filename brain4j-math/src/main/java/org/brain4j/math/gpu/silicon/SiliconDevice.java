@@ -1,11 +1,20 @@
 package org.brain4j.math.gpu.silicon;
 
+import org.brain4j.math.tensor.TensorKey;
 import org.silicon.api.Silicon;
+import org.silicon.api.cache.MemoryPool;
+import org.silicon.api.cache.Pooled;
 import org.silicon.api.device.ComputeArena;
 import org.silicon.api.device.ComputeBuffer;
 import org.silicon.api.device.ComputeContext;
 import org.silicon.api.device.ComputeDevice;
 import org.silicon.api.kernel.ComputeQueue;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class SiliconDevice {
 
@@ -13,6 +22,8 @@ public class SiliconDevice {
     private final ComputeContext context;
     private final int deviceIndex;
     private final String name;
+    private final MemoryPool<TensorKey> memoryPool;
+    private final List<Pooled> pooledQueue;
     
     private ComputeQueue queue;
     private ComputeArena arena;
@@ -23,6 +34,8 @@ public class SiliconDevice {
             this.device = Silicon.createDevice(deviceIndex);
             this.context = device.createContext();
             this.name = device.name();
+            this.memoryPool = context.createPool();
+            this.pooledQueue = new ArrayList<>();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create Silicon device at index " + deviceIndex, e);
         }
@@ -33,14 +46,18 @@ public class SiliconDevice {
     }
 
     public void createResources() {
-        if (queue == null) {
-            try {
-                this.queue = context.createQueue();
-                this.arena = context.createArena();
-            } catch (Throwable e) {
-                throw new RuntimeException("Failed to create compute queue", e);
-            }
+        if (!pooledQueue.isEmpty()) {
+            pooledQueue.forEach(Pooled::close);
+            pooledQueue.clear();
         }
+
+        if (queue == null) {
+            queue = context.createQueue();
+        }
+        
+//        if (arena == null) {
+//            arena = context.createArena();
+//        }
     }
 
     public ComputeQueue newTempQueue() {
@@ -57,6 +74,23 @@ public class SiliconDevice {
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create compute arena", e);
         }
+    }
+    
+    public ComputeBuffer acquire(TensorKey key, Supplier<ComputeBuffer> allocator) {
+        Pooled pooled = memoryPool.acquire(key, allocator);
+        pooledQueue.add(pooled);
+        
+        return pooled.value();
+    }
+    
+    public ComputeBuffer acquire(TensorKey key, Supplier<ComputeBuffer> allocator, Consumer<ComputeBuffer> writer) {
+        Pooled pooled = memoryPool.acquire(key, allocator);
+        pooledQueue.add(pooled);
+
+        ComputeBuffer result = pooled.value();
+        writer.accept(result);
+
+        return result;
     }
     
     public ComputeBuffer createBuffer(float[] data, boolean persistent) {
@@ -85,7 +119,11 @@ public class SiliconDevice {
             throw new RuntimeException("Failed to create buffer of size " + byteSize, e);
         }
     }
-
+    
+    public MemoryPool<TensorKey> getMemoryPool() {
+        return memoryPool;
+    }
+    
     public ComputeBuffer createBuffer(float[] data) {
         return createBuffer(data, false);
     }
@@ -129,14 +167,15 @@ public class SiliconDevice {
     public void closeResources() {
         if (queue != null) {
             queue.await();
-            queue.free();
-            queue = null;
         }
         
         if (arena != null) {
             arena.close();
             arena = null;
         }
+        
+        pooledQueue.forEach(Pooled::close); // frees this buffers to be used again
+        pooledQueue.clear();
     }
     
     public ComputeBuffer copyBuffer(ComputeBuffer otherBuffer) {

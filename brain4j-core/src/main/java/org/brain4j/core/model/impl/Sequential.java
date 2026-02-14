@@ -1,5 +1,6 @@
 package org.brain4j.core.model.impl;
 
+import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.loss.LossFunction;
@@ -121,6 +122,8 @@ public class Sequential implements Model, ModelBlock {
     
     @Override
     public void summary() {
+        Brain4J.fixConsole();
+        
         StringBuilder stats = new StringBuilder();
         DecimalFormat format = new DecimalFormat("#,###");
         
@@ -178,7 +181,7 @@ public class Sequential implements Model, ModelBlock {
         
         if (device != null) device.createResources();
         
-        StatesCache cache = new StatesCache(true);
+        StatesCache cache = new StatesCache(false);
         Tensor[] outputs = predict(cache, inputs);
         
         for (Tensor input : inputs) {

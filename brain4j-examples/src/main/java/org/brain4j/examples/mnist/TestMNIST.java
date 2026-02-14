@@ -53,9 +53,7 @@ public class TestMNIST {
         model.summary(); // prints a summary of the architecture on the console
         
         if (device != null) {
-            model = model.fork(device);
-            trainSource = trainSource.to(device);
-            testSource = testSource.to(device);
+//            model = model.fork(device);
         }
         
         TrainingConfig config = TrainingConfig.of(
@@ -69,7 +67,7 @@ public class TestMNIST {
         );
         
         Trainer trainer = Trainer.of(model, config, monitors);
-        trainer.fit(trainSource, 100);
+        trainer.fit(trainSource, 1);
         
         ModelZoo.saveModel(model, new File("mnist-100k.csv"));
     }
@@ -105,6 +103,6 @@ public class TestMNIST {
             samples.add(new Sample(input, output));
         }
         
-        return new ListDataSource(samples, true, 128);
+        return new ListDataSource(samples, false, 128);
     }
 }

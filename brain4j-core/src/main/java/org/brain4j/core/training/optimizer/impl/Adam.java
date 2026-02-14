@@ -2,10 +2,8 @@ package org.brain4j.core.training.optimizer.impl;
 
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 import java.util.HashMap;
@@ -59,7 +57,7 @@ public class Adam extends Optimizer {
             second = Tensors.zeros(gradient.shape());
 
             if (gradient instanceof SiliconGpuTensor gpuTensor) {
-                SiliconDevice device = gpuTensor.device();
+                SiliconDevice device = gpuTensor.getDevice();
                 first = SiliconGpuTensor.persistent(first, device);
                 second = SiliconGpuTensor.persistent(second, device);
             }

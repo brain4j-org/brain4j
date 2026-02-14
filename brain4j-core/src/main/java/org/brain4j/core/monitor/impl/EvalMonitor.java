@@ -19,6 +19,10 @@ public class EvalMonitor implements Monitor {
     public EvalMonitor(ListDataSource dataSource, int evaluationDelay) {
         this.dataSource = dataSource;
         this.evaluationDelay = evaluationDelay;
+        
+        if (evaluationDelay <= 0) {
+            throw new IllegalArgumentException("evaluationDelay must be greater than 0. Got: " + evaluationDelay);
+        }
     }
     
     @Override

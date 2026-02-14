@@ -32,7 +32,8 @@ public class CrossEntropy implements LossFunction {
             loss -= w * y * Math.log(p + 1e-15);
         }
 
-        return loss / actual.shapeAt(0);
+        int batchSize = actual.rank() > 1 ? actual.shapeAt(0) : 1;
+        return loss / batchSize;
     }
 
     @Override
