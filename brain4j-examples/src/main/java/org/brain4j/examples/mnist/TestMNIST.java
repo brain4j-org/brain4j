@@ -54,9 +54,9 @@ public class TestMNIST {
         model.summary(); // prints a summary of the architecture on the console
         
         if (device != null) {
-//            model = model.fork(device);
-//            trainSource = trainSource.to(device);
-//            testSource = testSource.to(device);
+            model = model.fork(device);
+            trainSource = trainSource.to(device);
+            testSource = testSource.to(device);
         }
         
         TrainingConfig config = TrainingConfig.of(
@@ -66,7 +66,7 @@ public class TestMNIST {
         
         List<Monitor> monitors = List.of(
             new ProgressMonitor(),
-            new EvalMonitor(testSource, 5)
+            new EvalMonitor(testSource, 10)
         );
         
         Trainer trainer = Trainer.of(model, config, monitors);
