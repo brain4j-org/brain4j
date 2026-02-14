@@ -65,10 +65,10 @@ public class SiliconContext {
         ComputeQueue queue = device.getQueue();
 
         if (queue != null) {
-            return new QueueHandle(queue, device.getArena(), false);
+            return new QueueHandle(queue, false);
         }
 
-        return new QueueHandle(device.newTempQueue(), device.newTempArena(), true);
+        return new QueueHandle(device.getContext().createQueue(), true);
     }
     
     public static void clearCache(SiliconDevice device) {
@@ -81,12 +81,11 @@ public class SiliconContext {
         MODULE_CACHE.clear();
     }
 
-    public record QueueHandle(ComputeQueue queue, ComputeArena arena, boolean temporary) implements AutoCloseable {
+    public record QueueHandle(ComputeQueue queue, boolean temporary) implements AutoCloseable {
         @Override
         public void close() {
             if (temporary) {
                 queue.await();
-                arena.close();
             }
         }
     }

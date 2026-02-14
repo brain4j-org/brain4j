@@ -2,7 +2,6 @@ package org.brain4j.math.data;
 
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Batch;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
@@ -32,11 +31,11 @@ import java.util.List;
  * @author Adversing
  */
 public class ListDataSource implements Cloneable, Iterable<Sample> {
-
-    protected List<Sample> samples;
-    protected final List<Tensor[]> batchedInputs;
-    protected final List<Tensor[]> batchedLabels;
+    
     protected final int batches;
+    protected List<Sample> samples;
+    protected List<Tensor[]> batchedInputs;
+    protected List<Tensor[]> batchedLabels;
     protected SiliconDevice device;
     protected int cursor;
     protected int batchSize;
@@ -81,19 +80,16 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     /**
      * Copy constructor.
      */
-    private ListDataSource(
-        List<Tensor[]> batchedInputs,
-        List<Tensor[]> batchedLabels,
-        List<Sample> samples, SiliconDevice device,
-        int batches, int cursor, int batchSize
-    ) {
-        this.batchedInputs = batchedInputs;
-        this.batchedLabels = batchedLabels;
-        this.batches = batches;
-        this.samples = samples;
+    private ListDataSource(List<Sample> samples, SiliconDevice device, int batches, int cursor, int batchSize) {
         this.device = device;
+        this.samples = samples;
+        this.batchedInputs = new ArrayList<>();
+        this.batchedLabels = new ArrayList<>();
         this.cursor = cursor;
+        this.batches = batches;
         this.batchSize = batchSize;
+        
+        computeBatches();
     }
 
     /**
@@ -278,30 +274,11 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
             throw new RuntimeException(e);
         }
     }
-
-    @Deprecated
+    
     public ListDataSource to(SiliconDevice device) {
-        List<Tensor[]> newBatchedInputs = new ArrayList<>(batchedInputs.size());
-        List<Tensor[]> newBatchedLabels = new ArrayList<>(batchedLabels.size());
-
-        extract(batchedInputs, newBatchedInputs);
-        extract(batchedLabels, newBatchedLabels);
-        
-        return new ListDataSource(newBatchedInputs, newBatchedLabels, samples, device, batches, cursor, batchSize);
+        return new ListDataSource(samples, device, batches, cursor, batchSize);
     }
-
-    private void extract(List<Tensor[]> in, List<Tensor[]> out) {
-        for (Tensor[] batchedInput : in) {
-            Tensor[] newInputs = new Tensor[batchedInput.length];
-
-            for (int i = 0; i < batchedInput.length; i++) {
-                newInputs[i] = batchedInput[i].to(device);
-            }
-
-            out.add(newInputs);
-        }
-    }
-
+    
     /**
      * Returns the total number of samples in the data source.
      * @return number of samples

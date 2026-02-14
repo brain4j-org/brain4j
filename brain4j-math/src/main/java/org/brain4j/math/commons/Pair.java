@@ -2,8 +2,8 @@ package org.brain4j.math.commons;
 
 public class Pair<K, V> {
 
-    private K first;
-    private V second;
+    protected K first;
+    protected V second;
 
     public Pair(K key, V second) {
         this.first = key;

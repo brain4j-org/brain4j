@@ -56,7 +56,7 @@ public final class DefaultTrainer implements Trainer {
         
         while (dataSource.hasNext()) {
             int cursor = dataSource.getCursor();
-            Batch batch = dataSource.nextBatch();
+            Batch batch = dataSource.nextBatch().to(model.getDevice());
             
             BatchStart batchStart = new BatchStart(this, cursor, totalBatches);
             monitors.forEach(x -> x.onEvent(batchStart));

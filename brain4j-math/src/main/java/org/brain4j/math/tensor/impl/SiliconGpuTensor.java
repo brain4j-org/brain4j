@@ -23,11 +23,11 @@ import static java.util.Arrays.stream;
 public class SiliconGpuTensor extends BaseTensor {
 
     private static final int TILE_SIZE = 16;
-
+    
     private final SiliconDevice device;
     private final ComputeBuffer stridesBuffer;
+    private final ComputeBuffer dataBuffer;
     private final int size;
-    private ComputeBuffer dataBuffer;
     
     public SiliconGpuTensor(SiliconDevice device, int[] shape, float... data) {
         this(device, false, shape, data);
@@ -39,23 +39,21 @@ public class SiliconGpuTensor extends BaseTensor {
         this.shape = shape;
         this.strides = Tensors.computeStrides(shape);
         
-        if (data.length == 0) {
-            data = new float[size];
-        }
-        
-        float[] finalData = data;
-        
         TensorKey stridesKey = new TensorKey(Usage.STRIDES, shape);
         TensorKey dataKey = new TensorKey(Usage.DATA, shape);
+        
         if (persistent) {
             // Persistent tensors (e.g. model params, optimizer state) must not be returned to
-            // the batch-level pool, otherwise they can be reused while still logically alive.
-            this.stridesBuffer = device.createBuffer(strides, true);
-            this.dataBuffer = device.createBuffer(finalData, true);
+            // the batch-level pool, otherwise they can be reused while still logically alive
+            this.stridesBuffer = device.createBuffer(strides);
+            this.dataBuffer = device.createBuffer(data);
         } else {
-            this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides, false));
-            this.dataBuffer = device.acquire(dataKey, () -> device.createBuffer(finalData, false),
-                buf -> buf.write(finalData));
+            this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
+            this.dataBuffer = device.acquire(dataKey, () -> {
+                float[] newData = data.length != 0 ? data : new float[size];
+                return device.createBuffer(newData);
+            });
+            if (data.length != 0) this.dataBuffer.write(data);
         }
     }
 
@@ -69,7 +67,8 @@ public class SiliconGpuTensor extends BaseTensor {
         TensorKey dataKey = new TensorKey(Usage.DATA, shape);
         
         this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
-        this.dataBuffer = device.acquire(dataKey, () -> device.copyBuffer(otherBuffer));
+        this.dataBuffer = device.acquire(dataKey, otherBuffer::copy);
+        otherBuffer.copyInto(dataBuffer);
     }
 
     public SiliconGpuTensor(SiliconDevice device, int[] shape, int[] strides) {

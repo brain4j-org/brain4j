@@ -2,6 +2,7 @@ package org.brain4j.examples.mnist;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.importing.ModelZoo;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.layer.impl.utility.ActivationLayer;
@@ -54,6 +55,8 @@ public class TestMNIST {
         
         if (device != null) {
 //            model = model.fork(device);
+//            trainSource = trainSource.to(device);
+//            testSource = testSource.to(device);
         }
         
         TrainingConfig config = TrainingConfig.of(
@@ -63,11 +66,11 @@ public class TestMNIST {
         
         List<Monitor> monitors = List.of(
             new ProgressMonitor(),
-            new EvalMonitor(testSource, 1)
+            new EvalMonitor(testSource, 5)
         );
         
         Trainer trainer = Trainer.of(model, config, monitors);
-        trainer.fit(trainSource, 1);
+        trainer.fit(trainSource, 50);
         
         ModelZoo.saveModel(model, new File("mnist-100k.csv"));
     }
