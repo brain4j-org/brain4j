@@ -10,6 +10,7 @@ dependencies {
     testRuntimeOnly(libs.junitPlatform)
     testImplementation(platform(libs.junitBom))
     testImplementation(libs.junitJupiter)
+    testImplementation("org.bytedeco:javacv-platform:1.5.12")
 
     implementation(project(":brain4j-core"))
     implementation(project(":brain4j-math"))
@@ -25,6 +26,7 @@ dependencies {
     implementation(libs.siliconOpenCL) {
         changing = true
     }
+
 }
 
 java {

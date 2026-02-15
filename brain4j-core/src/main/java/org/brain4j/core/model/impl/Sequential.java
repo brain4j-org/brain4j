@@ -108,6 +108,21 @@ public class Sequential implements Model, ModelBlock {
     }
     
     @Override
+    public double loss(ListDataSource dataSource, LossFunction lossFunction) {
+        Map<Integer, Tensor> classifications = new HashMap<>();
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+        
+        dataSource.reset();
+        
+        while (dataSource.hasNext()) {
+            Batch batch = dataSource.nextBatch();
+            makeEvaluation(batch, classifications, totalLoss, lossFunction);
+        }
+        
+        return totalLoss.get() / dataSource.getSize();
+    }
+    
+    @Override
     public Model fork(SiliconDevice device) {
         List<Layer> copiedLayers = layers.stream().map(Layer::clone).toList();
         copiedLayers.forEach(x -> x.toDevice(device));
@@ -208,9 +223,11 @@ public class Sequential implements Model, ModelBlock {
                     totalLoss.updateAndGet(v -> v + loss);
                     
                     Tensor predictions = classifications.get(targetIndex);
-                    int pred = (int) predictions.get(predIndex);
                     
-                    predictions.set(pred + 1, predIndex);
+                    if (predictions != null) {
+                        int pred = (int) predictions.get(predIndex);
+                        predictions.set(pred + 1, predIndex);
+                    }
                 }
             }
         }

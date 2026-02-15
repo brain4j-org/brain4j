@@ -160,7 +160,8 @@ public class SiliconGpuTensor extends BaseTensor {
 
             String[] tensorOps1Kernels = {
                 "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b",
-                "matmul", "matmul_batched", "layer_norm", "broadcast_to", "conv2d_nchw"
+                "matmul", "matmul_batched", "layer_norm", "broadcast_to", "conv2d_nchw",
+                "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw"
             };
             String[] tensorOps2Kernels = {
                 "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim"

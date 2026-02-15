@@ -63,6 +63,18 @@ public interface Model extends ModelBlock {
     EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction);
     
     /**
+     * Calculates the average loss on the given dataset.
+     * <p>
+     * This method works similarly to {@link Model#evaluate},
+     * but it's much less RAM consuming.
+     * </p>
+     * @param dataSource the dataset to evaluate the model on
+     * @param lossFunction the loss function to use
+     * @return a value representing the average loss on the entire dataset
+     */
+    double loss(ListDataSource dataSource, LossFunction lossFunction);
+    
+    /**
      * Copies all model parameters to the specified device.
      *
      * @param device the target device

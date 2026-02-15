@@ -13,8 +13,8 @@ import org.brain4j.math.data.ListDataSource;
 
 public class EvalMonitor implements Monitor {
     
-    private final ListDataSource dataSource;
-    private final int evaluationDelay;
+    protected final ListDataSource dataSource;
+    protected final int evaluationDelay;
     
     public EvalMonitor(ListDataSource dataSource, int evaluationDelay) {
         this.dataSource = dataSource;
@@ -34,7 +34,7 @@ public class EvalMonitor implements Monitor {
         }
     }
     
-    private void printEvaluation(Trainer trainer, int epoch, int epochs) {
+    protected void printEvaluation(Trainer trainer, int epoch, int epochs) {
         Model model = trainer.model();
         LossFunction lossFunction = trainer.config().loss();
         EvaluationResult result = model.evaluate(dataSource, lossFunction);

@@ -41,21 +41,21 @@ public class ReshapeLayer extends Layer {
     
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        Tensor[] result = new Tensor[inputs.length];
+        checkInputLength(1, inputs);
+        Tensor input = inputs[0];
+        
+        cache.rememberInput(this, input);
 
-        for (int i = 0; i < result.length; i++) {
-            Tensor input = inputs[i];
+        int[] inputShape = input.shape();
+        int[] newShape = new int[shape.length + 1];
 
-            int[] inputShape = input.shape();
-            int[] newShape = new int[shape.length + 1];
+        newShape[0] = inputShape[0];
+        System.arraycopy(shape, 0, newShape, 1, shape.length);
+        
+        Tensor out = input.reshapeGrad(newShape);
+        cache.rememberOutput(this, out);
 
-            newShape[0] = inputShape[0];
-            System.arraycopy(shape, 0, newShape, 1, shape.length);
-
-            result[i] = input.reshapeGrad(newShape);
-        }
-
-        return result;
+        return new Tensor[] { out };
     }
 
     @Override

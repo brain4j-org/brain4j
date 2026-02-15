@@ -111,6 +111,11 @@ public class GraphModel implements Model {
     }
     
     @Override
+    public double loss(ListDataSource dataSource, LossFunction lossFunction) {
+        return 0; // TODO
+    }
+    
+    @Override
     public Model fork(SiliconDevice device) {
         this.device = device;
 

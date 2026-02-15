@@ -85,11 +85,14 @@ public class ConvLayer extends Layer {
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
-
-        checkValidInput(input, "Input must have shape [batch, channels, height, width]! Got: %s", Arrays.toString(input.shape()));
+        cache.rememberInput(this, input);
+        
+        checkValidInput(input, "Input must have shape [N, C, H, W]! Got: %s", Arrays.toString(input.shape()));
 
         Tensor convolved = input.convolveGrad(weights, stride);
         Tensor added = convolved.addGrad(bias.reshape(1, filters, 1, 1));
+        
+        cache.rememberOutput(this, added);
 
         return new Tensor[] { added.activateGrad(activation) };
     }

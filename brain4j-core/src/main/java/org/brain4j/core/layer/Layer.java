@@ -242,7 +242,7 @@ public abstract class Layer implements ModelBlock, Cloneable {
         return true;
     }
     
-    protected void checkValidInput(Tensor tensor, String message, Object... args) {
+    protected final void checkValidInput(Tensor tensor, String message, Object... args) {
         if (validInput(tensor)) return;
         
         throw Commons.illegalArgument(message, args);
