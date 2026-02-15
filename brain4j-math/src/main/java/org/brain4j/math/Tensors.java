@@ -244,7 +244,19 @@ public class Tensors {
      * @return the result of the convolution
      */
     public static Tensor convolve(Tensor input, Tensor kernel) {
-        return ParallelConvolve.convolve(input, kernel);
+        return convolve(input, kernel, 1);
+    }
+
+    /**
+     * Performs a convolution between an input tensor and a kernel tensor with a configurable stride.
+     *
+     * @param input input tensor
+     * @param kernel convolution kernel
+     * @param stride stride to apply on both spatial dimensions
+     * @return the result of the convolution
+     */
+    public static Tensor convolve(Tensor input, Tensor kernel, int stride) {
+        return ParallelConvolve.convolve(input, kernel, stride);
     }
 
     /**
@@ -437,13 +449,26 @@ public class Tensors {
      * @return a 2D tensor of shape {@code [patchSize, totalPatches]}
      */
     public static Tensor im2col(Tensor input, int filterHeight, int filterWidth) {
+        return im2col(input, filterHeight, filterWidth, 1);
+    }
+
+    /**
+     * Transforms an input image tensor into column format (im2col) with a configurable stride.
+     *
+     * @param input input image tensor
+     * @param filterHeight convolution kernel height
+     * @param filterWidth convolution kernel width
+     * @param stride stride to apply on both spatial dimensions
+     * @return a 2D tensor of shape {@code [patchSize, totalPatches]}
+     */
+    public static Tensor im2col(Tensor input, int filterHeight, int filterWidth, int stride) {
         int[] shape = input.shape();
         int channels = shape[0];
         int inHeight = shape[1];
         int inWidth = shape[2];
 
-        int outHeight = inHeight - filterHeight + 1;
-        int outWidth = inWidth - filterWidth + 1;
+        int outHeight = (inHeight - filterHeight) / stride + 1;
+        int outWidth = (inWidth - filterWidth) / stride + 1;
 
         int patchSize = channels * filterHeight * filterWidth;
         int totalPatches = outHeight * outWidth;
@@ -487,11 +512,28 @@ public class Tensors {
      */
     public static Tensor col2im(Tensor cols, int channels, int inHeight, int inWidth,
                                 int filterHeight, int filterWidth) {
+        return col2im(cols, channels, inHeight, inWidth, filterHeight, filterWidth, 1);
+    }
+
+    /**
+     * Reconstructs an image tensor from its column representation (col2im) with a configurable stride.
+     *
+     * @param cols column tensor
+     * @param channels number of channels
+     * @param inHeight input height
+     * @param inWidth input width
+     * @param filterHeight kernel height
+     * @param filterWidth kernel width
+     * @param stride stride used during im2col
+     * @return reconstructed image tensor
+     */
+    public static Tensor col2im(Tensor cols, int channels, int inHeight, int inWidth,
+                                int filterHeight, int filterWidth, int stride) {
         int[] colShape = cols.shape(); // [patchSize, totalPatches]
         int patchSize = colShape[0];
         int totalPatches = colShape[1];
 
-        int outWidth = inWidth - filterWidth + 1;
+        int outWidth = (inWidth - filterWidth) / stride + 1;
 
         float[] colData = cols.data();
         float[] imgData = new float[channels * inHeight * inWidth];
@@ -499,6 +541,8 @@ public class Tensors {
         for (int patchIdx = 0; patchIdx < totalPatches; patchIdx++) {
             int outRow = patchIdx / outWidth;
             int outCol = patchIdx % outWidth;
+            int inRow = outRow * stride;
+            int inCol = outCol * stride;
             int baseOffset = patchIdx * patchSize;
 
             for (int c = 0; c < channels; c++) {
@@ -507,7 +551,7 @@ public class Tensors {
 
                 for (int fh = 0; fh < filterHeight; fh++) {
                     int srcPos = baseOffset + channelOffset + fh * filterWidth;
-                    int destPos = imgChannelOffset + (outRow + fh) * inWidth + outCol;
+                    int destPos = imgChannelOffset + (inRow + fh) * inWidth + inCol;
                     for (int fw = 0; fw < filterWidth; fw++) {
                         imgData[destPos + fw] += colData[srcPos + fw];
                     }

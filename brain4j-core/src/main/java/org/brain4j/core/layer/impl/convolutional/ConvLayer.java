@@ -28,16 +28,47 @@ public class ConvLayer extends Layer {
         this(inputChannels, filters, kernelWidth, kernelHeight, new LinearActivation());
     }
 
+    public ConvLayer(int inputChannels, int filters, int kernelWidth, int kernelHeight, int stride) {
+        this(inputChannels, filters, kernelWidth, kernelHeight, stride, new LinearActivation());
+    }
+
     public ConvLayer(int inputChannels, int filters, int kernelWidth, int kernelHeight, Activations activation) {
         this(inputChannels, filters, kernelWidth, kernelHeight, activation.function());
     }
 
+    public ConvLayer(
+        int inputChannels,
+        int filters,
+        int kernelWidth,
+        int kernelHeight,
+        int stride,
+        Activations activation
+    ) {
+        this(inputChannels, filters, kernelWidth, kernelHeight, stride, activation.function());
+    }
+
     public ConvLayer(int inputChannels, int filters, int kernelWidth, int kernelHeight, Activation activation) {
+        this(inputChannels, filters, kernelWidth, kernelHeight, 1, activation);
+    }
+
+    public ConvLayer(
+        int inputChannels,
+        int filters,
+        int kernelWidth,
+        int kernelHeight,
+        int stride,
+        Activation activation
+    ) {
         this.channels = inputChannels;
         this.filters = filters;
         this.kernelWidth = kernelWidth;
         this.kernelHeight = kernelHeight;
+        this.stride = stride;
         this.activation = activation;
+
+        if (stride <= 0) {
+            throw new IllegalArgumentException("Stride must be > 0. Got: " + stride);
+        }
     }
     
     @Override
@@ -57,7 +88,7 @@ public class ConvLayer extends Layer {
 
         checkValidInput(input, "Input must have shape [batch, channels, height, width]! Got: %s", Arrays.toString(input.shape()));
 
-        Tensor convolved = input.convolveGrad(weights);
+        Tensor convolved = input.convolveGrad(weights, stride);
         Tensor added = convolved.addGrad(bias.reshape(1, filters, 1, 1));
 
         return new Tensor[] { added.activateGrad(activation) };
@@ -135,6 +166,9 @@ public class ConvLayer extends Layer {
     }
     
     public ConvLayer setStride(int stride) {
+        if (stride <= 0) {
+            throw new IllegalArgumentException("Stride must be > 0. Got: " + stride);
+        }
         this.stride = stride;
         return this;
     }

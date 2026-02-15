@@ -304,3 +304,93 @@ void concat_copy_b(
     C[destIndex] = B[gid];
 }
 
+[shader("compute")]
+void broadcast_to(
+    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uniform StructuredBuffer<float> srcData,
+    uniform RWStructuredBuffer<float> dstData,
+    uniform StructuredBuffer<int> targetShape,
+    uniform StructuredBuffer<int> targetFlatStrides,
+    uniform StructuredBuffer<int> alignedSrcShape,
+    uniform StructuredBuffer<int> alignedSrcStrides,
+    uniform int rank,
+    uniform int totalElements
+)
+{
+    int gid = dispatchThreadID.x;
+    if (gid >= totalElements) return;
+
+    int srcOffset = 0;
+    int useZero = 0;
+
+    for (int d = 0; d < rank; d++) {
+        int coord = (gid / targetFlatStrides[d]) % targetShape[d];
+        int srcDim = alignedSrcShape[d];
+        int srcCoord = 0;
+
+        if (srcDim == targetShape[d]) {
+            srcCoord = coord;
+        } else if (srcDim == 1) {
+            srcCoord = 0;
+        } else if (coord < srcDim) {
+            srcCoord = coord;
+        } else {
+            useZero = 1;
+            break;
+        }
+
+        srcOffset += srcCoord * alignedSrcStrides[d];
+    }
+
+    dstData[gid] = useZero == 1 ? 0.0f : srcData[srcOffset];
+}
+
+[shader("compute")]
+[numthreads(8, 8, 1)]
+void conv2d_nchw(
+    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uniform StructuredBuffer<float> input,
+    uniform StructuredBuffer<float> kernel,
+    uniform RWStructuredBuffer<float> output,
+    uniform int batchSize,
+    uniform int inChannels,
+    uniform int inHeight,
+    uniform int inWidth,
+    uniform int numFilters,
+    uniform int kernelHeight,
+    uniform int kernelWidth,
+    uniform int stride,
+    uniform int outHeight,
+    uniform int outWidth
+)
+{
+    int outX = dispatchThreadID.x;
+    int outY = dispatchThreadID.y;
+    int bf = dispatchThreadID.z;
+
+    if (outX >= outWidth || outY >= outHeight) return;
+    if (bf >= batchSize * numFilters) return;
+
+    int b = bf / numFilters;
+    int f = bf % numFilters;
+
+    float sum = 0.0f;
+
+    for (int c = 0; c < inChannels; c++) {
+        for (int ky = 0; ky < kernelHeight; ky++) {
+            int iy = outY * stride + ky;
+            for (int kx = 0; kx < kernelWidth; kx++) {
+                int ix = outX * stride + kx;
+
+                int inputIdx = ((b * inChannels + c) * inHeight + iy) * inWidth + ix;
+                int kernelIdx = ((f * inChannels + c) * kernelHeight + ky) * kernelWidth + kx;
+
+                sum += input[inputIdx] * kernel[kernelIdx];
+            }
+        }
+    }
+
+    int outputIdx = ((b * numFilters + f) * outHeight + outY) * outWidth + outX;
+    output[outputIdx] = sum;
+}
+

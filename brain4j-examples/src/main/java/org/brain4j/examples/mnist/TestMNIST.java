@@ -44,8 +44,8 @@ public class TestMNIST {
         
         ModelSpecs specs = ModelSpecs.of(
             new InputLayer(28 * 28),
-            new DenseLayer(128, Activations.RELU),
-            new DenseLayer(64, Activations.RELU),
+            denseNormActivation(128),
+            denseNormActivation(64),
             new DenseLayer(10, Activations.SOFTMAX)
         );
         

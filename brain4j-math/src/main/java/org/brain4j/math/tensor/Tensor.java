@@ -389,6 +389,15 @@ public interface Tensor extends Iterable<Float> {
     Tensor convolve(Tensor kernel);
 
     /**
+     * Computes a convolution between this tensor and the specified kernel with a configurable stride.
+     *
+     * @param kernel the kernel tensor to use for convolution
+     * @param stride the stride to apply on both spatial dimensions
+     * @return a new tensor resulting from the convolution
+     */
+    Tensor convolve(Tensor kernel, int stride);
+
+    /**
      * Performs a layer normalization along this tensor.
      * @param epsilon the epsilon to avoid division by zero
      * @return the current tensor
@@ -758,6 +767,14 @@ public interface Tensor extends Iterable<Float> {
      * @return the resulting tensor from the operation
      */
     Tensor convolveGrad(Tensor other);
+
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link ConvolveOperation} with a configurable stride.
+     * @param other the convolution kernel
+     * @param stride the stride to apply on both spatial dimensions
+     * @return the resulting tensor from the operation
+     */
+    Tensor convolveGrad(Tensor other, int stride);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MaxPoolOperation}.

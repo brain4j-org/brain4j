@@ -41,10 +41,23 @@ public class TensorTest {
         Tensor b = a.relu();
         Tensor gpuB = gpuA.relu();
 
-        System.out.println(Arrays.toString(b.data()));
-        System.out.println(Arrays.toString(gpuB.data()));
+        assertArrayEquals(b.data(), gpuB.data(), 0.0001f);
     }
 
+    @Test
+    public void convTest() {
+        Tensor a = Tensors.random(512, 512);
+        Tensor b = Tensors.random(3, 3);
+        
+        Tensor gpuA = a.to(device);
+        Tensor gpuB = b.to(device);
+        
+        Tensor c = a.convolve(b);
+        Tensor gpuC = gpuA.convolve(gpuB);
+        
+        assertArrayEquals(c.data(), gpuC.data(), 0.0001f);
+    }
+    
     @Test
     public void normTest() {
         double epsilon = 1e-5;

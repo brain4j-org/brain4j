@@ -2,6 +2,7 @@ package org.brain4j.math.tensor.impl;
 
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.gpu.silicon.SiliconContext;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.gpu.silicon.SiliconKernel;
@@ -159,7 +160,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
             String[] tensorOps1Kernels = {
                 "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b",
-                "matmul", "matmul_batched", "layer_norm"
+                "matmul", "matmul_batched", "layer_norm", "broadcast_to", "conv2d_nchw"
             };
             String[] tensorOps2Kernels = {
                 "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim"
@@ -234,14 +235,37 @@ public class SiliconGpuTensor extends BaseTensor {
     }
 
     private Tensor launchElementaryKernel(String kernelName, Tensor other) {
-        if (!(other instanceof SiliconGpuTensor)) {
-            other = other.to(device);
+        if (!(other instanceof SiliconGpuTensor B)) {
+            return launchElementaryKernel(kernelName, other.to(device));
         }
 
-        SiliconGpuTensor B = (SiliconGpuTensor) other;
+        int rankA = shape.length;
+        int rankB = B.shape.length;
 
-        int broadcastDim = (Arrays.equals(shape, B.shape)) ? -1 : shape[1];
-        int batch = (broadcastDim == -1) ? 0 : shape[0];
+        int[] aFlatStrides = Tensors.computeStrides(shape);
+        int[] bEffStrides = new int[rankA];
+        int dimOffset = rankA - rankB;
+
+        for (int d = 0; d < rankA; d++) {
+            int db = d - dimOffset;
+            if (db < 0) {
+                bEffStrides[d] = 0;
+            } else if (B.shape[db] == 1) {
+                bEffStrides[d] = 0;
+            } else {
+                bEffStrides[d] = B.strides[db];
+            }
+        }
+
+        int sameShape = Arrays.equals(shape, B.shape) ? 1 : 0;
+
+        TensorKey aShapeKey = new TensorKey(Usage.OTHER, shape);
+        TensorKey aFlatStridesKey = new TensorKey(Usage.OTHER, aFlatStrides);
+        TensorKey bEffStridesKey = new TensorKey(Usage.OTHER, bEffStrides);
+
+        ComputeBuffer aShapeBuffer = device.acquire(aShapeKey, () -> device.createBuffer(shape));
+        ComputeBuffer aFlatStridesBuffer = device.acquire(aFlatStridesKey, () -> device.createBuffer(aFlatStrides));
+        ComputeBuffer bEffStridesBuffer = device.acquire(bEffStridesKey, () -> device.createBuffer(bEffStrides));
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, size);
@@ -250,8 +274,11 @@ public class SiliconGpuTensor extends BaseTensor {
                 .buffer(dataBuffer)
                 .buffer(B.dataBuffer)
                 .intVal(size)
-                .intVal(broadcastDim)
-                .intVal(batch)
+                .buffer(aShapeBuffer)
+                .buffer(aFlatStridesBuffer)
+                .buffer(bEffStridesBuffer)
+                .intVal(rankA)
+                .intVal(sameShape)
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch elementary kernel: " + kernelName, e);
@@ -752,9 +779,6 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor layerNorm(double epsilon) {
-        SiliconGpuTensor result = new SiliconGpuTensor(device, shape);
-        result.setAutogradContext(autogradContext);
-
         int rank = shape.length;
         int featuresSize = shape[rank - 1];
         int batchSize = 1;
@@ -766,7 +790,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
             SiliconKernel.create(device, "layer_norm")
                 .buffer(this.dataBuffer)
-                .buffer(result.dataBuffer)
+                .buffer(this.dataBuffer)
                 .intVal(featuresSize)
                 .intVal(batchSize)
                 .floatVal((float) epsilon)
@@ -775,7 +799,7 @@ public class SiliconGpuTensor extends BaseTensor {
             throw new RuntimeException("Failed to launch layer_norm kernel", e);
         }
 
-        return result;
+        return this;
     }
 
     @Override
@@ -799,14 +823,42 @@ public class SiliconGpuTensor extends BaseTensor {
     public Tensor softmax(double temperature) {
         SiliconGpuTensor result = new SiliconGpuTensor(device, shape);
 
+        int rank = shape.length;
         int lastDim = shape[shape.length - 1];
         int rows = size / lastDim;
+        int lastStride = strides[rank - 1];
+
+        int[] rowOffsets = new int[rows];
+        if (rows > 1) {
+            int outerRank = rank - 1;
+            int acc = 1;
+            int[] outerStrides = new int[outerRank];
+            
+            for (int d = outerRank - 1; d >= 0; d--) {
+                outerStrides[d] = acc;
+                acc *= shape[d];
+            }
+
+            for (int row = 0; row < rows; row++) {
+                int base = 0;
+                for (int d = 0; d < outerRank; d++) {
+                    int idx = (row / outerStrides[d]) % shape[d];
+                    base += idx * strides[d];
+                }
+                rowOffsets[row] = base;
+            }
+        }
+
+        TensorKey rowOffsetsKey = new TensorKey(Usage.OTHER, rowOffsets);
+        ComputeBuffer rowOffsetsBuffer = device.acquire(rowOffsetsKey, () -> device.createBuffer(rowOffsets));
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, rows);
             SiliconKernel.create(device, "softmax_last_dim")
                 .buffer(dataBuffer)
                 .buffer(result.dataBuffer)
+                .buffer(rowOffsetsBuffer)
+                .intVal(lastStride)
                 .intVal(rows)
                 .intVal(lastDim)
                 .floatVal((float) temperature)
@@ -816,6 +868,169 @@ public class SiliconGpuTensor extends BaseTensor {
         }
 
         return result;
+    }
+
+    @Override
+    public Tensor convolve(Tensor other) {
+        return convolve(other, 1);
+    }
+
+    @Override
+    public Tensor convolve(Tensor other, int stride) {
+        if (stride <= 0) {
+            throw Commons.illegalArgument("Stride must be > 0. Got: %s", stride);
+        }
+
+        if (!(other instanceof SiliconGpuTensor K)) {
+            return convolve(other.to(device), stride);
+        }
+
+        Tensor input4 = this;
+        Tensor kernel4 = K;
+
+        while (input4.rank() < 4) input4 = input4.unsqueeze();
+        while (kernel4.rank() < 4) kernel4 = kernel4.unsqueeze();
+
+        SiliconGpuTensor A = (SiliconGpuTensor) input4;
+        SiliconGpuTensor B = (SiliconGpuTensor) kernel4;
+
+        int[] aShape = A.shape;
+        int[] bShape = B.shape;
+
+        int[] aStdStrides = Tensors.computeStrides(aShape);
+        int[] bStdStrides = Tensors.computeStrides(bShape);
+        boolean contiguousA = Arrays.equals(A.strides, aStdStrides);
+        boolean contiguousB = Arrays.equals(B.strides, bStdStrides);
+        
+        if (!contiguousA || !contiguousB) {
+            return Tensors.convolve(A.to(null), B.to(null), stride).to(device);
+        }
+
+        int batch = aShape[0];
+        int inChannels = aShape[1];
+        int inHeight = aShape[2];
+        int inWidth = aShape[3];
+
+        int numFilters = bShape[0];
+        int kernelChannels = bShape[1];
+        int kernelHeight = bShape[2];
+        int kernelWidth = bShape[3];
+
+        if (inChannels != kernelChannels) {
+            throw Commons.illegalArgument(
+                "Convolution channel mismatch: input channels %s, kernel channels %s", inChannels, kernelChannels
+            );
+        }
+
+        int outHeight = (inHeight - kernelHeight) / stride + 1;
+        int outWidth = (inWidth - kernelWidth) / stride + 1;
+
+        if (outHeight <= 0 || outWidth <= 0) {
+            throw Commons.illegalArgument(
+                "Invalid convolution output shape: [%s, %s]", outHeight, outWidth
+            );
+        }
+
+        SiliconGpuTensor out = new SiliconGpuTensor(device, new int[] { batch, numFilters, outHeight, outWidth });
+
+        try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
+            ComputeSize localSize = new ComputeSize(8, 8, 1);
+            ComputeSize globalSize = new ComputeSize(
+                roundUp(outWidth),
+                roundUp(outHeight),
+                Math.max(1, batch * numFilters)
+            );
+
+            SiliconKernel.create(device, "conv2d_nchw")
+                .buffer(A.dataBuffer)
+                .buffer(B.dataBuffer)
+                .buffer(out.dataBuffer)
+                .intVal(batch)
+                .intVal(inChannels)
+                .intVal(inHeight)
+                .intVal(inWidth)
+                .intVal(numFilters)
+                .intVal(kernelHeight)
+                .intVal(kernelWidth)
+                .intVal(stride)
+                .intVal(outHeight)
+                .intVal(outWidth)
+                .launch(qh.queue(), globalSize, localSize);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to launch convolution kernel", e);
+        }
+
+        return out;
+    }
+
+    @Override
+    public Tensor broadcast(int[] targetShape) {
+        if (Arrays.equals(shape, targetShape)) {
+            return this;
+        }
+
+        int targetRank = targetShape.length;
+        int srcRank = shape.length;
+
+        if (targetRank < srcRank) {
+            throw new IllegalArgumentException(
+                "Cannot broadcast: target rank " + targetRank + " is smaller than source rank " + srcRank
+            );
+        }
+
+        int[] alignedSrcShape = new int[targetRank];
+        int[] alignedSrcStrides = new int[targetRank];
+        int[] targetFlatStrides = Tensors.computeStrides(targetShape);
+
+        int pad = targetRank - srcRank;
+        for (int i = 0; i < pad; i++) {
+            alignedSrcShape[i] = 1;
+            alignedSrcStrides[i] = 0;
+        }
+
+        for (int i = 0; i < srcRank; i++) {
+            alignedSrcShape[pad + i] = shape[i];
+            alignedSrcStrides[pad + i] = strides[i];
+        }
+
+        for (int d = 0; d < targetRank; d++) {
+            if (alignedSrcShape[d] > targetShape[d]) {
+                throw new IllegalArgumentException(
+                    "Cannot broadcast: source dimension " + alignedSrcShape[d] +
+                    " > target dimension " + targetShape[d] + " at axis " + d
+                );
+            }
+        }
+
+        SiliconGpuTensor out = new SiliconGpuTensor(device, targetShape);
+        int totalElements = out.elements();
+
+        TensorKey targetShapeKey = new TensorKey(Usage.OTHER, targetShape);
+        TensorKey targetFlatStridesKey = new TensorKey(Usage.OTHER, targetFlatStrides);
+        TensorKey alignedSrcShapeKey = new TensorKey(Usage.OTHER, alignedSrcShape);
+        TensorKey alignedSrcStridesKey = new TensorKey(Usage.OTHER, alignedSrcStrides);
+
+        ComputeBuffer targetShapeBuffer = device.acquire(targetShapeKey, () -> device.createBuffer(targetShape));
+        ComputeBuffer targetFlatStridesBuffer = device.acquire(targetFlatStridesKey, () -> device.createBuffer(targetFlatStrides));
+        ComputeBuffer alignedSrcShapeBuffer = device.acquire(alignedSrcShapeKey, () -> device.createBuffer(alignedSrcShape));
+        ComputeBuffer alignedSrcStridesBuffer = device.acquire(alignedSrcStridesKey, () -> device.createBuffer(alignedSrcStrides));
+
+        try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
+            SiliconKernel.create(device, "broadcast_to")
+                .buffer(dataBuffer)
+                .buffer(out.dataBuffer)
+                .buffer(targetShapeBuffer)
+                .buffer(targetFlatStridesBuffer)
+                .buffer(alignedSrcShapeBuffer)
+                .buffer(alignedSrcStridesBuffer)
+                .intVal(targetRank)
+                .intVal(totalElements)
+                .launch(qh.queue(), Math.max(1, totalElements));
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to launch broadcast kernel", e);
+        }
+
+        return out;
     }
 }
 

@@ -112,6 +112,10 @@ public class SiliconDevice {
         this.queue = queue;
     }
 
+    public void free() {
+        memoryPool.free();
+    }
+    
     public void closeResources() {
         if (queue != null) {
             queue.await();

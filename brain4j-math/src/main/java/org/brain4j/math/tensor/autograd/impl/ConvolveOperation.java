@@ -7,11 +7,15 @@ import org.brain4j.math.commons.Range;
 
 import java.util.stream.IntStream;
 
-public class ConvolveOperation implements Operation {
+public record ConvolveOperation(int stride) implements Operation {
+
+    public ConvolveOperation() {
+        this(1);
+    }
 
     @Override
     public Tensor compute(Tensor... inputs) {
-        return Tensors.convolve(inputs[0], inputs[1]);
+        return Tensors.convolve(inputs[0], inputs[1], stride);
     }
 
     @Override
@@ -44,7 +48,7 @@ public class ConvolveOperation implements Operation {
             Tensor inputBatch = A.slice(Range.point(b)).squeeze(0); // [C_in, H, W]
             Tensor dOutBatch = gradOutput.slice(Range.point(b)); // [F, H_out, W_out]
 
-            Tensor X_col = Tensors.im2col(inputBatch, filterHeight, filterWidth);
+            Tensor X_col = Tensors.im2col(inputBatch, filterHeight, filterWidth, stride);
             Tensor W_col = B.reshape(numFilters, inChannels * filterHeight * filterWidth);
 
             Tensor dY_col = dOutBatch.reshape(numFilters, outHeight * outWidth);
@@ -52,7 +56,9 @@ public class ConvolveOperation implements Operation {
             gradB.add(dW_col.reshape(B.shape()));
 
             Tensor dX_col = W_col.transpose().matmul(dY_col);
-            Tensor dInputBatch = Tensors.col2im(dX_col, inChannels, inHeight, inWidth, filterHeight, filterWidth);
+            Tensor dInputBatch = Tensors.col2im(
+                dX_col, inChannels, inHeight, inWidth, filterHeight, filterWidth, stride
+            );
 
             float[] dInputData = dInputBatch.data();
             System.arraycopy(dInputData, 0, gradAData, b * batchSize, batchSize);

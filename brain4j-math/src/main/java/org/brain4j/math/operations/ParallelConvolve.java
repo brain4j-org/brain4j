@@ -19,6 +19,14 @@ public class ParallelConvolve {
     private static final ForkJoinPool POOL = new ForkJoinPool(CORES);
     
     public static Tensor convolve(Tensor a, Tensor b) {
+        return convolve(a, b, 1);
+    }
+
+    public static Tensor convolve(Tensor a, Tensor b, int stride) {
+        if (stride <= 0) {
+            throw new IllegalArgumentException("Stride must be > 0. Got: " + stride);
+        }
+
         while (a.rank() < 4) a = a.unsqueeze();
         while (b.rank() < 4) b = b.unsqueeze();
 
@@ -39,8 +47,12 @@ public class ParallelConvolve {
         int filterHeight = bShape[2];
         int filterWidth = bShape[3];
 
-        int outHeight = inHeight - filterHeight + 1;
-        int outWidth = inWidth - filterWidth + 1;
+        int outHeight = (inHeight - filterHeight) / stride + 1;
+        int outWidth = (inWidth - filterWidth) / stride + 1;
+
+        if (outHeight <= 0 || outWidth <= 0) {
+            throw new IllegalArgumentException("Invalid convolution output shape with stride " + stride);
+        }
 
         int patchSize = inChannels * filterHeight * filterWidth;
         int totalPatches = outHeight * outWidth;
@@ -53,7 +65,7 @@ public class ParallelConvolve {
 
         for (int bIdx = 0; bIdx < batch; bIdx++) {
             Tensor inputBatch = (aHasBatch ? a.slice(Range.point(bIdx)) : a).squeeze(0);
-            Tensor patchMatrix = Tensors.im2col(inputBatch, filterHeight, filterWidth);
+            Tensor patchMatrix = Tensors.im2col(inputBatch, filterHeight, filterWidth, stride);
             float[] patchData = patchMatrix.data(); // [patch_size, total_patches]
             
             List<Callable<Void>> tasks = new ArrayList<>();

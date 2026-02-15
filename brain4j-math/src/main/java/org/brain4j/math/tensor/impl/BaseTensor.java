@@ -348,7 +348,12 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
     @Override
     public Tensor convolve(Tensor kernel) {
-        return Tensors.convolve(this, kernel);
+        return convolve(kernel, 1);
+    }
+
+    @Override
+    public Tensor convolve(Tensor kernel, int stride) {
+        return Tensors.convolve(this, kernel, stride);
     }
 
     @Override
@@ -786,7 +791,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
         for (int i = 0; i < rank; i++) {
             if (i != dimension && shape[i] != other.shape()[i]) {
                 throw Commons.illegalArgument("Shapes must match in all dims except the concatenation one. " +
-                    "Current: %s, Other: %s".formatted(Arrays.toString(shape), Arrays.toString(other.shape())));
+                    "Current: %s, Other: %s", Arrays.toString(shape), Arrays.toString(other.shape()));
             }
         }
 
@@ -1055,11 +1060,16 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
     @Override
     public Tensor convolveGrad(Tensor other) {
+        return convolveGrad(other, 1);
+    }
+
+    @Override
+    public Tensor convolveGrad(Tensor other, int stride) {
         if (!usesGrad()) {
-            return convolve(other);
+            return convolve(other, stride);
         }
 
-        return forward(new ConvolveOperation(), other);
+        return forward(new ConvolveOperation(stride), other);
     }
 
     @Override

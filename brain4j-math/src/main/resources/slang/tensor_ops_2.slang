@@ -4,19 +4,26 @@ void add(
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
     uniform int size,
-    uniform int broadcast_dim,
-    uniform int batch
+    uniform StructuredBuffer<int> aShape,
+    uniform StructuredBuffer<int> aFlatStrides,
+    uniform StructuredBuffer<int> bEffStrides,
+    uniform int rank,
+    uniform int sameShape
 )
 {
     uint gid = dispatchThreadID.x;
 
     if (gid >= size) return;
 
-    if (broadcast_dim == -1) {
+    if (sameShape == 1) {
         a[gid] += b[gid];
     } else {
-        int j = gid % broadcast_dim;
-        a[gid] += b[j];
+        int bIdx = 0;
+        for (int d = 0; d < rank; d++) {
+            int idx = (gid / aFlatStrides[d]) % aShape[d];
+            bIdx += idx * bEffStrides[d];
+        }
+        a[gid] += b[bIdx];
     }
 }
 
@@ -26,21 +33,25 @@ void sub(
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
     uniform int size,
-    uniform int broadcast_dim,
-    uniform int batch
+    uniform StructuredBuffer<int> aShape,
+    uniform StructuredBuffer<int> aFlatStrides,
+    uniform StructuredBuffer<int> bEffStrides,
+    uniform int rank,
+    uniform int sameShape
 )
 {
     uint gid = dispatchThreadID.x;
+    if (gid >= size) return;
 
-    if (broadcast_dim == -1) {
-        if (gid < size) {
-            a[gid] -= b[gid];
-        }
+    if (sameShape == 1) {
+        a[gid] -= b[gid];
     } else {
-        if (gid < size) {
-            int j = gid % broadcast_dim;
-            a[gid] -= b[j];
+        int bIdx = 0;
+        for (int d = 0; d < rank; d++) {
+            int idx = (gid / aFlatStrides[d]) % aShape[d];
+            bIdx += idx * bEffStrides[d];
         }
+        a[gid] -= b[bIdx];
     }
 }
 
@@ -50,21 +61,25 @@ void mul(
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
     uniform int size,
-    uniform int broadcast_dim,
-    uniform int batch
+    uniform StructuredBuffer<int> aShape,
+    uniform StructuredBuffer<int> aFlatStrides,
+    uniform StructuredBuffer<int> bEffStrides,
+    uniform int rank,
+    uniform int sameShape
 )
 {
     uint gid = dispatchThreadID.x;
+    if (gid >= size) return;
 
-    if (broadcast_dim == -1) {
-        if (gid < size) {
-            a[gid] *= b[gid];
-        }
+    if (sameShape == 1) {
+        a[gid] *= b[gid];
     } else {
-        if (gid < size) {
-            int j = gid % broadcast_dim;
-            a[gid] *= b[j];
+        int bIdx = 0;
+        for (int d = 0; d < rank; d++) {
+            int idx = (gid / aFlatStrides[d]) % aShape[d];
+            bIdx += idx * bEffStrides[d];
         }
+        a[gid] *= b[bIdx];
     }
 }
 
@@ -74,21 +89,25 @@ void div(
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
     uniform int size,
-    uniform int broadcast_dim,
-    uniform int batch
+    uniform StructuredBuffer<int> aShape,
+    uniform StructuredBuffer<int> aFlatStrides,
+    uniform StructuredBuffer<int> bEffStrides,
+    uniform int rank,
+    uniform int sameShape
 )
 {
     uint gid = dispatchThreadID.x;
+    if (gid >= size) return;
 
-    if (broadcast_dim == -1) {
-        if (gid < size) {
-            a[gid] /= b[gid];
-        }
+    if (sameShape == 1) {
+        a[gid] /= b[gid];
     } else {
-        if (gid < size) {
-            int j = gid % broadcast_dim;
-            a[gid] /= b[j];
+        int bIdx = 0;
+        for (int d = 0; d < rank; d++) {
+            int idx = (gid / aFlatStrides[d]) % aShape[d];
+            bIdx += idx * bEffStrides[d];
         }
+        a[gid] /= b[bIdx];
     }
 }
 
@@ -123,6 +142,8 @@ void softmax_last_dim(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
     uniform RWStructuredBuffer<float> output,
+    uniform StructuredBuffer<int> rowOffsets,
+    uniform int lastStride,
     uniform int rows,
     uniform int lastDim,
     uniform float temperature
@@ -130,26 +151,28 @@ void softmax_last_dim(
 {
     int row = dispatchThreadID.x;
     if (row >= rows) return;
-    int offset = row * lastDim;
+
+    int inputBaseOffset = rowOffsets[row];
+    int outputBaseOffset = row * lastDim;
 
     // look for max for numerical stability
-    float max_val = input[offset];
+    float max_val = input[inputBaseOffset];
     for (int i = 1; i < lastDim; i++) {
-        float val = input[offset + i];
+        float val = input[inputBaseOffset + i * lastStride];
         if (val > max_val) max_val = val;
     }
 
     // compute exp and sum
     float sum = 0.0f;
     for (int i = 0; i < lastDim; i++) {
-        float val = (input[offset + i] - max_val) / temperature;
+        float val = (input[inputBaseOffset + i * lastStride] - max_val) / temperature;
         float exp_val = exp(val);
-        output[offset + i] = exp_val;
+        output[outputBaseOffset + i] = exp_val;
         sum += exp_val;
     }
 
     // normalization
     for (int i = 0; i < lastDim; i++) {
-        output[offset + i] /= sum;
+        output[outputBaseOffset + i] /= sum;
     }
 }
