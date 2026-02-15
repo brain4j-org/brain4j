@@ -18,7 +18,6 @@ public class TensorTest {
 
     public TensorTest() {
         this.device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
     }
 
     @Test
@@ -35,6 +34,18 @@ public class TensorTest {
     }
 
     @Test
+    public void activationTest() {
+        Tensor a = Tensors.random(10, 10);
+        Tensor gpuA = a.to(device);
+
+        Tensor b = a.relu();
+        Tensor gpuB = gpuA.relu();
+
+        System.out.println(Arrays.toString(b.data()));
+        System.out.println(Arrays.toString(gpuB.data()));
+    }
+
+    @Test
     public void normTest() {
         double epsilon = 1e-5;
 
@@ -45,14 +56,6 @@ public class TensorTest {
         Tensor gpuB = gpuA.layerNorm(epsilon);
 
         assertArrayEquals(B.data(), gpuB.data(), 0.001f);
-    }
-
-    @Test
-    public void convTest() {
-        Tensor A = Tensors.random(16, 3, 64, 64);
-        Tensor B = Tensors.random(3, 7, 7);
-
-        Tensor C = A.convolve(B);
     }
 
     @Test
@@ -112,9 +115,6 @@ public class TensorTest {
 
     @Test
     public void subTest() {
-        SiliconDevice device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Tensor A = Tensors.random(32, 32);
         Tensor B = Tensors.random(32, 32);
         Tensor C = A.minus(B);
@@ -128,9 +128,6 @@ public class TensorTest {
 
     @Test
     public void mulTest() {
-        SiliconDevice device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Tensor A = Tensors.random(32, 32);
         Tensor B = Tensors.random(32, 32);
         Tensor C = A.times(B);
