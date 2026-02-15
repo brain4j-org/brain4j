@@ -99,7 +99,8 @@ public interface Activation {
         int[] shape = input.shape();
         
         if (input instanceof SiliconGpuTensor gpuInput) {
-            return computeGpu(gpuInput, "backward");
+            Tensor derivative = computeGpu(gpuInput, "backward");
+            return gradOut == null ? derivative : derivative.mul(gradOut);
         }
         
         float[] inputData = input.data();
@@ -118,7 +119,6 @@ public interface Activation {
         SiliconGpuTensor result = new SiliconGpuTensor(device, input.shape());
 
         try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
-            System.out.println("Activating gpu kernel with id: " + getActivationId());
             ComputeFunction kernel = SiliconContext.findFunction(device, "activation_" + suffix);
             SiliconKernel factory = createKernel(kernel, input, result);
 

@@ -9,40 +9,35 @@ static const int ACT_GELU      = 7;
 static const int ACT_MISH      = 8;
 static const int ACT_LINEAR    = 9;
 
-struct ActivationParams
-{
-    int activationType;
-    float alpha;
-    int length;
-};
-
 [shader("compute")]
 [numthreads(256,1,1)]
 void activation_forward(
     uint3 dispatchThreadID : SV_DispatchThreadID,
-    ConstantBuffer<ActivationParams> params,
+    uniform int activationType,
+    uniform float alpha,
+    uniform int length,
     StructuredBuffer<float> input,
     RWStructuredBuffer<float> output
 )
 {
     uint gid = dispatchThreadID.x;
-    if (gid >= params.length) return;
+    if (gid >= length) return;
 
     float x = input[gid];
     float result = x;
 
-    switch (params.activationType)
+    switch (activationType)
     {
         case ACT_RELU:
             result = max(x, 0.0f);
             break;
 
         case ACT_LEAKYRELU:
-            result = x > 0.0f ? x : params.alpha * x;
+            result = x > 0.0f ? x : alpha * x;
             break;
 
         case ACT_ELU:
-            result = x > 0.0f ? x : params.alpha * (exp(x) - 1.0f);
+            result = x > 0.0f ? x : alpha * (exp(x) - 1.0f);
             break;
 
         case ACT_SIGMOID:
@@ -94,29 +89,31 @@ void activation_forward(
 [numthreads(256,1,1)]
 void activation_backward(
     uint3 dispatchThreadID : SV_DispatchThreadID,
-    ConstantBuffer<ActivationParams> params,
+    uniform int activationType,
+    uniform float alpha,
+    uniform int length,
     StructuredBuffer<float> input,
     RWStructuredBuffer<float> output
 )
 {
     uint gid = dispatchThreadID.x;
-    if (gid >= params.length) return;
+    if (gid >= length) return;
 
     float x = input[gid];
     float result = 1.0f;
 
-    switch (params.activationType)
+    switch (activationType)
     {
         case ACT_RELU:
             result = x > 0.0f ? 1.0f : 0.0f;
             break;
 
         case ACT_LEAKYRELU:
-            result = x > 0.0f ? 1.0f : params.alpha;
+            result = x > 0.0f ? 1.0f : alpha;
             break;
 
         case ACT_ELU:
-            result = x > 0.0f ? 1.0f : params.alpha * exp(x);
+            result = x > 0.0f ? 1.0f : alpha * exp(x);
             break;
 
         case ACT_SIGMOID:

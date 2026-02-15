@@ -41,6 +41,8 @@ public record SoftmaxActivation(double temperature) implements Activation {
 
     @Override
     public Tensor derivative(Tensor input, Tensor output, Tensor gradOut) {
+        if (gradOut == null) return null;
+        
         Tensor dot = gradOut.mul(output).sum(-1, true);
         return output.mul(gradOut.minus(dot));
     }

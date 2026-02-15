@@ -123,11 +123,13 @@ void softmax_last_dim(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
     uniform RWStructuredBuffer<float> output,
+    uniform int rows,
     uniform int lastDim,
     uniform float temperature
 )
 {
     int row = dispatchThreadID.x;
+    if (row >= rows) return;
     int offset = row * lastDim;
 
     // look for max for numerical stability

@@ -159,7 +159,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
             String[] tensorOps1Kernels = {
                 "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b",
-                "matmul", "layer_norm"
+                "matmul", "matmul_batched", "layer_norm"
             };
             String[] tensorOps2Kernels = {
                 "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim"
@@ -507,7 +507,7 @@ public class SiliconGpuTensor extends BaseTensor {
                 ComputeBuffer memoryB = device.acquire(memoryBKey, () -> device.createBuffer(offsetsB));
                 ComputeBuffer memoryC = device.acquire(memoryCKey, () -> device.createBuffer(offsetsC));
 
-                SiliconKernel.create(device, "matmul")
+                SiliconKernel.create(device, "matmul_batched")
                     .buffer(dataBuffer)
                     .buffer(B.dataBuffer)
                     .buffer(result.dataBuffer)
@@ -713,11 +713,11 @@ public class SiliconGpuTensor extends BaseTensor {
 
         SiliconGpuTensor result = new SiliconGpuTensor(device, newShape);
 
-        int[] starts = new int[ranges.length];
-        int[] steps = new int[ranges.length];
+        int[] starts = new int[shape.length];
+        int[] steps = new int[shape.length];
 
-        for (int i = 0; i < ranges.length; i++) {
-            Range range = ranges[i];
+        for (int i = 0; i < shape.length; i++) {
+            Range range = i < ranges.length ? ranges[i] : null;
             starts[i] = range == null ? 0 : range.start();
             steps[i] = range == null ? 1 : range.step();
         }
@@ -807,6 +807,7 @@ public class SiliconGpuTensor extends BaseTensor {
             SiliconKernel.create(device, "softmax_last_dim")
                 .buffer(dataBuffer)
                 .buffer(result.dataBuffer)
+                .intVal(rows)
                 .intVal(lastDim)
                 .floatVal((float) temperature)
                 .launch(qh.queue(), workSize);

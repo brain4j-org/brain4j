@@ -53,8 +53,14 @@ public class SiliconKernel {
     public void launch(ComputeQueue queue, ComputeSize globalSize, ComputeSize localSize) {
         try {
             queue.dispatch(function, globalSize, localSize, args);
+            if (Boolean.getBoolean("brain4j.gpu.sync")) {
+                // debugging utility, do not delete!
+                queue.await();
+            }
         } catch (Throwable e) {
-            throw new RuntimeException("Failed to launch kernel", e);
+            throw new RuntimeException(
+                "Failed to launch kernel " + function + " with global=" + globalSize + ", local=" + localSize, e
+            );
         }
     }
     

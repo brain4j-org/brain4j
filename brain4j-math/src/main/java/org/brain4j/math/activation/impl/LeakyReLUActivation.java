@@ -41,9 +41,10 @@ public record LeakyReLUActivation(double alpha) implements Activation {
     @Override
     public SiliconKernel createKernel(ComputeFunction kernel, SiliconGpuTensor input, SiliconGpuTensor output) {
         return SiliconKernel.create(kernel)
-            .buffer(input.getDataBuffer())
-            .buffer(output.getDataBuffer())
+            .intVal(getActivationId())
             .floatVal((float) alpha)
-            .intVal(input.size());
+            .intVal(input.size())
+            .buffer(input.getDataBuffer())
+            .buffer(output.getDataBuffer());
     }
 }
