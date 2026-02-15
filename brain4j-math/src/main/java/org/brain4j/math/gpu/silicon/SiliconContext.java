@@ -86,6 +86,7 @@ public class SiliconContext {
         public void close() {
             if (temporary) {
                 queue.await();
+                queue.free();
             }
         }
     }
