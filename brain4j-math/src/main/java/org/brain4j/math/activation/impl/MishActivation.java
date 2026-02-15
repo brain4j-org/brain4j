@@ -30,4 +30,9 @@ public class MishActivation implements Activation {
     public String getKernelPrefix() {
         return "mish";
     }
+
+    @Override
+    public int getActivationId() {
+        return 8;
+    }
 }

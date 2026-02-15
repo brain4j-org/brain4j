@@ -25,4 +25,9 @@ public class LinearActivation implements Activation {
     public String getKernelPrefix() {
         return "linear";
     }
+
+    @Override
+    public int getActivationId() {
+        return 9;
+    }
 }

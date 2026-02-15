@@ -28,7 +28,7 @@ public class SqueezeOperation implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         return new Tensor[] { gradOutput.reshape(originalShape) };
     }
 }

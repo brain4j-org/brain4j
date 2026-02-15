@@ -16,7 +16,7 @@ public record ReshapeOperation(int[] newShape) implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor input = inputs[0];
         int[] oldShape = input.shape();
 

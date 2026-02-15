@@ -2,7 +2,6 @@ package org.brain4j.math.tensor.impl;
 
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.activation.Activations;
 import org.brain4j.math.gpu.silicon.SiliconContext;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.gpu.silicon.SiliconKernel;
@@ -134,46 +133,47 @@ public class SiliconGpuTensor extends BaseTensor {
         try {
             // JIT compiles the kernels
             SlangCompiler compiler = new SlangCompiler(device.getContext());
-            
-            ComputeModule tensorOpsModule = compiler.compileFromResource("slang/tensor_ops.slang");
+
+            // we need 2 tensor ops modules because of a Metal compile bug on Slang
+
+            ComputeModule tensorOps1Module = compiler.compileFromResource("slang/tensor_ops_1.slang");
+            ComputeModule tensorOps2Module = compiler.compileFromResource("slang/tensor_ops_2.slang");
             ComputeModule elementaryOpsModule = compiler.compileFromResource("slang/elementary_ops.slang");
             ComputeModule activationsModule = compiler.compileFromResource("slang/activations.slang");
             ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
-            ComputeModule flashAttentionModule = compiler.compileFromResource("slang/flash_attention.slang");
+            // ComputeModule flashAttentionModule = compiler.compileFromResource("slang/flash_attention.slang");
 
-//            ComputeModule fftModule = compiler.compileFromResource("slang/fft.slang");
-//            ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
-//            ComputeModule complexOpsModule = compiler.compileFromResource("slang/complex_ops.slang");
+            // ComputeModule fftModule = compiler.compileFromResource("slang/fft.slang");
+            // ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
+            // ComputeModule complexOpsModule = compiler.compileFromResource("slang/complex_ops.slang");
 
-            SiliconContext.storeModule(device, "tensor_ops", tensorOpsModule);
+            SiliconContext.storeModule(device, "tensor_ops_1", tensorOps1Module);
+            SiliconContext.storeModule(device, "tensor_ops_2", tensorOps2Module);
             SiliconContext.storeModule(device, "elementary_ops", elementaryOpsModule);
             SiliconContext.storeModule(device, "activations", activationsModule);
             SiliconContext.storeModule(device, "gradient_clippers", gradientClipModule);
-            SiliconContext.storeModule(device, "flash_attention", flashAttentionModule);
-//            SiliconContext.storeModule(device, "fft", fftModule);
-//            SiliconContext.storeModule(device, "convolution", convolutionModule);
-//            SiliconContext.storeModule(device, "complex_ops", complexOpsModule);
+            // SiliconContext.storeModule(device, "flash_attention", flashAttentionModule);
+            // SiliconContext.storeModule(device, "fft", fftModule);
+            // SiliconContext.storeModule(device, "convolution", convolutionModule);
+            // SiliconContext.storeModule(device, "complex_ops", complexOpsModule);
 
-            String[] tensorOpsKernels = {
+            String[] tensorOps1Kernels = {
                 "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b",
-                "matmul_batched", "matmul_legacy", "matmul", "add", "sub", "mul", "div_op",
-                "sum_along_dim", "softmax_last_dim", "layer_norm"
+                "matmul", "layer_norm"
             };
-            SiliconContext.registerAll(device, tensorOpsModule, tensorOpsKernels);
+            String[] tensorOps2Kernels = {
+                "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim"
+            };
+            SiliconContext.registerAll(device, tensorOps1Module, tensorOps1Kernels);
+            SiliconContext.registerAll(device, tensorOps2Module, tensorOps2Kernels);
 
             String[] scalarKernels = {
                 "mask", "add_scalar", "sub_scalar", "mul_scalar",
                 "div_scalar", "pow_scalar", "sqrt_op"
             };
             SiliconContext.registerAll(device, elementaryOpsModule, scalarKernels);
-
-            for (Activations activation : Activations.values()) {
-                Activation function = activation.function();
-                String prefix = function.getKernelPrefix();
-
-                SiliconContext.register(device, prefix + "_forward", activationsModule);
-                SiliconContext.register(device, prefix + "_backward", activationsModule);
-            }
+            SiliconContext.register(device, "activation_forward", activationsModule);
+            SiliconContext.register(device, "activation_backward", activationsModule);
 
             String[] gradientClipKernels = {
                 "hard_clip", "l2_clip",
@@ -187,25 +187,25 @@ public class SiliconGpuTensor extends BaseTensor {
                 "flash_attention_backward", "flash_attention_backward_dq",
                 "flash_attention_forward_tiled", "flash_attention_backward_tiled"
             };
-            SiliconContext.registerAll(device, flashAttentionModule, flashAttentionKernels);
+            // SiliconContext.registerAll(device, flashAttentionModule, flashAttentionKernels);
 
             String[] fftKernels = {
                 "fft1d", "bit_reverse_permute", "fft_butterfly_stage", "fft_normalize",
                 "fft2d_rows", "fft2d_transpose", "fft2d_copy"
             };
-//            SiliconContext.registerAll(device, fftModule, fftKernels);
+            // SiliconContext.registerAll(device, fftModule, fftKernels);
 
             String[] convolutionKernels = {
                 "convolve1d_direct", "convolve2d_direct", "convolve2d_fft_extract",
                 "convolve1d_fft_prepare", "convolve1d_fft_multiply", "convolve1d_fft_extract",
                 "convolve2d_fft_prepare_input", "convolve2d_fft_prepare_kernel", "convolve2d_fft_multiply"
             };
-//            SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
+            // SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
 
             String[] complexKernels = {
                 "complex_pointwise_mul", "complex_pointwise_add"
             };
-//            SiliconContext.registerAll(device, complexOpsModule, complexKernels);
+            // SiliconContext.registerAll(device, complexOpsModule, complexKernels);
 
         } catch (Throwable e) {
             throw new RuntimeException("Failed to initialize GPU kernels", e);
@@ -337,7 +337,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor div(Tensor other) {
-        return launchElementaryKernel("div_op", other);
+        return launchElementaryKernel("div", other);
     }
 
     @Override
@@ -507,7 +507,7 @@ public class SiliconGpuTensor extends BaseTensor {
                 ComputeBuffer memoryB = device.acquire(memoryBKey, () -> device.createBuffer(offsetsB));
                 ComputeBuffer memoryC = device.acquire(memoryCKey, () -> device.createBuffer(offsetsC));
 
-                SiliconKernel.create(device, "matmul_batched")
+                SiliconKernel.create(device, "matmul")
                     .buffer(dataBuffer)
                     .buffer(B.dataBuffer)
                     .buffer(result.dataBuffer)

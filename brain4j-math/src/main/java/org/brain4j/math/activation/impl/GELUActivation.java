@@ -28,4 +28,9 @@ public class GELUActivation implements Activation {
     public String getKernelPrefix() {
         return "gelu";
     }
+
+    @Override
+    public int getActivationId() {
+        return 7;
+    }
 }

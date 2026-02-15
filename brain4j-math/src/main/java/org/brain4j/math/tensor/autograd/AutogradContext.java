@@ -4,6 +4,7 @@ import org.brain4j.math.tensor.Tensor;
 
 public class AutogradContext {
 
+    private final Tensor owner;
     private final boolean requiresGrad;
     private Tensor[] inputs;
     private Tensor grad;
@@ -11,7 +12,8 @@ public class AutogradContext {
     private int expectedContributions = 0;
     private int receivedContributions = 0;
 
-    public AutogradContext(boolean requiresGrad) {
+    public AutogradContext(Tensor owner, boolean requiresGrad) {
+        this.owner = owner;
         this.requiresGrad = requiresGrad;
         this.grad = null;
     }
@@ -60,7 +62,7 @@ public class AutogradContext {
 
         if (operation == null) return;
 
-        Tensor[] inputGrads = operation.backward(gradOutput, inputs);
+        Tensor[] inputGrads = operation.backward(gradOutput, owner, inputs);
 
         for (int i = 0; i < inputs.length; i++) {
             Tensor input = inputs[i];

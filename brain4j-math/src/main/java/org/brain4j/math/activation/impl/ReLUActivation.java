@@ -25,4 +25,9 @@ public class ReLUActivation implements Activation {
     public String getKernelPrefix() {
         return "relu";
     }
+
+    @Override
+    public int getActivationId() {
+        return 0;
+    }
 }

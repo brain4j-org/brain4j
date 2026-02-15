@@ -1,9 +1,9 @@
-package org.brain4j.core.loss;
+package org.brain4j.math.loss;
 
-import org.brain4j.core.loss.impl.BinaryCrossEntropy;
-import org.brain4j.core.loss.impl.CrossEntropy;
-import org.brain4j.core.loss.impl.MeanAbsoluteError;
-import org.brain4j.core.loss.impl.MeanSquaredError;
+import org.brain4j.math.loss.impl.BinaryCrossEntropy;
+import org.brain4j.math.loss.impl.CrossEntropy;
+import org.brain4j.math.loss.impl.MeanAbsoluteError;
+import org.brain4j.math.loss.impl.MeanSquaredError;
 import org.brain4j.math.tensor.Tensor;
 
 /**

@@ -20,7 +20,7 @@ public record SliceOperation(Range... ranges) implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         // TODO: make a GPU-specialized version
         if (gradOutput instanceof GpuTensor) {
             throw Commons.illegalState("Backward for Slice Op is not supported yet for GPU!");

@@ -1,7 +1,7 @@
 package org.brain4j.core.monitor.impl;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.training.Trainer;

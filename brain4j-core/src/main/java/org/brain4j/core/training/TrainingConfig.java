@@ -1,6 +1,6 @@
 package org.brain4j.core.training;
 
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;

@@ -1,7 +1,7 @@
 package org.brain4j.core.graphs;
 
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.training.wrappers.EvaluationResult;

@@ -11,7 +11,7 @@ public class SubOperation implements Operation {
     }
     
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         return new Tensor[] {
             gradOutput.clone(), 
             gradOutput.times(-1.0f)

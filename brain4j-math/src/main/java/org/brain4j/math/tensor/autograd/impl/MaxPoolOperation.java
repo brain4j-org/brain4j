@@ -23,7 +23,7 @@ public class MaxPoolOperation implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         return new Tensor[] { pooling.backward(gradOutput, inputs[0]) };
     }
 }

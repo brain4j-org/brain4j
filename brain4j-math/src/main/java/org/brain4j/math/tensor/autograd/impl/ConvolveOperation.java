@@ -15,7 +15,7 @@ public class ConvolveOperation implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor A = inputs[0]; // input
         Tensor B = inputs[1]; // filter
 

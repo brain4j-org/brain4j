@@ -18,7 +18,7 @@ public record ConcatOperation(int dimension) implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         if (inputs.length != 2) {
             throw new IllegalArgumentException("ConcatOperation supports exactly two input tensors.");
         }

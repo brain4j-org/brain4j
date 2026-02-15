@@ -10,8 +10,6 @@ import org.brain4j.math.weightsinit.WeightInit;
 import org.silicon.api.function.ComputeFunction;
 import org.silicon.api.kernel.ComputeSize;
 
-import java.util.stream.IntStream;
-
 public interface Activation {
 
     /**
@@ -39,6 +37,12 @@ public interface Activation {
     String getKernelPrefix();
 
     /**
+     * Gets the identifier of this activation
+     * @return the activation identifier
+     */
+    int getActivationId();
+
+    /**
      * Gets the default name for this activation function.
      * @return The name of the activation function.
      */
@@ -49,16 +53,22 @@ public interface Activation {
     /**
      * Creates the kernel to execute.
      * @param kernel the OpenCL kernel instance
-     * @param current the current tensor
-     * @param other the resulting tensor
+     * @param input the current tensor
+     * @param output the resulting tensor
      * @return a kernel factory ready to be launched
      */
-    default SiliconKernel createKernel(ComputeFunction kernel, SiliconGpuTensor current, SiliconGpuTensor other) {
+    default SiliconKernel createKernel(
+        ComputeFunction kernel,
+        SiliconGpuTensor input,
+        SiliconGpuTensor output
+    ) {
         return SiliconKernel
             .create(kernel)
-            .buffer(current.getDataBuffer())
-            .buffer(other.getDataBuffer())
-            .intVal(current.size());
+            .intVal(getActivationId()) // activation type
+            .floatVal(0f) // alpha
+            .intVal(input.size()) // length
+            .buffer(input.getDataBuffer())
+            .buffer(output.getDataBuffer());
     }
 
     /**
@@ -69,31 +79,14 @@ public interface Activation {
         int[] shape = input.shape();
         
         if (input instanceof SiliconGpuTensor gpuInput) {
-            SiliconDevice device = gpuInput.getDevice();
-            SiliconGpuTensor result = new SiliconGpuTensor(device, gpuInput.shape());
-            
-            try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
-                ComputeFunction kernel = SiliconContext.findFunction(device, getKernelPrefix() + "_forward");
-                SiliconKernel factory = createKernel(kernel, gpuInput, result);
-                
-                ComputeSize size = new ComputeSize(gpuInput.size(), 1, 1);
-                factory.launch(queue.queue(), size);
-            }
-            
-            return result;
+            return computeGpu(gpuInput, "forward");
         }
         
         float[] inputData = input.data();
         float[] resultData = new float[inputData.length];
-        
-        if (resultData.length > 65536) {
-            IntStream.range(0, inputData.length)
-                .parallel()
-                .forEach(i -> resultData[i] = (float) activate(inputData[i]));
-        } else {
-            for (int i = 0; i < resultData.length; i++) {
-                resultData[i] = (float) activate(inputData[i]);
-            }
+
+        for (int i = 0; i < resultData.length; i++) {
+            resultData[i] = (float) activate(inputData[i]);
         }
 
         return Tensors.create(shape, resultData);
@@ -102,37 +95,37 @@ public interface Activation {
     /**
      * Get the derivative (vector) of the activation at a vector of values.
      */
-    default Tensor derivative(Tensor input) {
+    default Tensor derivative(Tensor input, Tensor output, Tensor gradOut) {
         int[] shape = input.shape();
         
         if (input instanceof SiliconGpuTensor gpuInput) {
-            SiliconDevice device = gpuInput.getDevice();
-            SiliconGpuTensor result = new SiliconGpuTensor(device, gpuInput.shape());
-            
-            try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
-                ComputeFunction kernel = SiliconContext.findFunction(device, getKernelPrefix() + "_backward");
-                SiliconKernel factory = createKernel(kernel, gpuInput, result);
-                
-                ComputeSize size = new ComputeSize(gpuInput.size(), 1, 1);
-                factory.launch(queue.queue(), size);
-            }
-            
-            return result;
+            return computeGpu(gpuInput, "backward");
         }
         
         float[] inputData = input.data();
         float[] resultData = new float[inputData.length];
-        
-        if (resultData.length > 65536) {
-            IntStream.range(0, inputData.length)
-                .parallel()
-                .forEach(i -> resultData[i] = (float) derivative(inputData[i]));
-        } else {
-            for (int i = 0; i < resultData.length; i++) {
-                resultData[i] = (float) derivative(inputData[i]);
-            }
+
+        for (int i = 0; i < resultData.length; i++) {
+            resultData[i] = (float) derivative(inputData[i]);
         }
 
-        return Tensors.create(shape, resultData);
+        Tensor derivative = Tensors.create(shape, resultData);
+        return gradOut == null ? derivative : gradOut.times(derivative);
+    }
+
+    private SiliconGpuTensor computeGpu(SiliconGpuTensor input, String suffix) {
+        SiliconDevice device = input.getDevice();
+        SiliconGpuTensor result = new SiliconGpuTensor(device, input.shape());
+
+        try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
+            System.out.println("Activating gpu kernel with id: " + getActivationId());
+            ComputeFunction kernel = SiliconContext.findFunction(device, "activation_" + suffix);
+            SiliconKernel factory = createKernel(kernel, input, result);
+
+            ComputeSize size = new ComputeSize(input.size(), 1, 1);
+            factory.launch(queue.queue(), size);
+        }
+
+        return result;
     }
 }

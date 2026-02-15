@@ -11,7 +11,7 @@ public class MatMulOperation implements Operation {
     }
     
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor a = inputs[0];
         Tensor b = inputs[1];
         

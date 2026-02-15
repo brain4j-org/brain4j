@@ -34,11 +34,18 @@ public record ELUActivation(double alpha) implements Activation {
     }
 
     @Override
-    public SiliconKernel createKernel(ComputeFunction kernel, SiliconGpuTensor current, SiliconGpuTensor other) {
-        return SiliconKernel.create(kernel)
-            .buffer(current.getDataBuffer())
-            .buffer(other.getDataBuffer())
-            .floatVal((float) alpha)
-            .intVal(current.size());
+    public int getActivationId() {
+        return 2;
+    }
+
+    @Override
+    public SiliconKernel createKernel(ComputeFunction kernel, SiliconGpuTensor input, SiliconGpuTensor output) {
+        return SiliconKernel
+            .create(kernel)
+            .intVal(getActivationId()) // activation type
+            .floatVal((float) alpha) // alpha
+            .intVal(input.size()) // length
+            .buffer(input.getDataBuffer())
+            .buffer(output.getDataBuffer());
     }
 }

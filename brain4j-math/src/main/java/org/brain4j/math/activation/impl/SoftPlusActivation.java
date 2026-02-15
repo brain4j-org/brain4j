@@ -38,4 +38,9 @@ public class SoftPlusActivation implements Activation {
     public String getKernelPrefix() {
         return "softplus";
     }
+
+    @Override
+    public int getActivationId() {
+        return 6;
+    }
 }

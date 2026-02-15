@@ -1,7 +1,7 @@
 package org.brain4j.core.layer;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
@@ -11,7 +11,6 @@ import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.clipper.impl.HardClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
@@ -142,8 +141,8 @@ public abstract class Layer implements ModelBlock, Cloneable {
                     Arrays.toString(output.shape()), Arrays.toString(target.shape()));
             }
 
-            Tensor derivatives = activation.derivative(preOutput);
-            Tensor delta = lossFunction.delta(output, target, derivatives);
+            Tensor derivative = activation.derivative(preOutput, output, null); // dy/dx
+            Tensor delta = lossFunction.delta(output, target, derivative);
             
             preOutput.backward(delta);
         }

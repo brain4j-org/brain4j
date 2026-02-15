@@ -26,4 +26,9 @@ public class SwishActivation implements Activation {
     public String getKernelPrefix() {
         return "swish";
     }
+
+    @Override
+    public int getActivationId() {
+        return 5;
+    }
 }

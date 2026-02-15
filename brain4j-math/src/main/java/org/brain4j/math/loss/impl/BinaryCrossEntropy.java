@@ -1,16 +1,16 @@
-package org.brain4j.core.loss.impl;
+package org.brain4j.math.loss.impl;
 
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.tensor.Tensor;
 
-public class CrossEntropy implements LossFunction {
+public class BinaryCrossEntropy implements LossFunction {
 
     private Tensor classWeights;
 
-    public CrossEntropy() {
+    public BinaryCrossEntropy() {
     }
 
-    public CrossEntropy(Tensor classWeights) {
+    public BinaryCrossEntropy(Tensor classWeights) {
         this.classWeights = classWeights;
     }
 
@@ -29,18 +29,29 @@ public class CrossEntropy implements LossFunction {
                 w = classWeights.get(cls);
             }
 
-            loss -= w * y * Math.log(p + 1e-15);
+            loss -= w * (y * Math.log(p + 1e-15) + (1 - y) * Math.log(1 - p + 1e-15));
         }
 
-        int batchSize = actual.rank() > 1 ? actual.shapeAt(0) : 1;
-        return loss / batchSize;
+        return loss / actual.shapeAt(0);
     }
 
     @Override
     public Tensor delta(Tensor output, Tensor target, Tensor derivative) {
         Tensor error = output.minus(target);
 
-        return classWeights == null ? error : error.mul(classWeights);
+        if (classWeights == null) return error;
+
+        float w0 = classWeights.get(0);
+        float w1 = classWeights.get(1);
+
+        // W = y * w1 + (1 - y) * w0
+        Tensor oneMinusTarget = target.mul(-1).plus(1);
+        Tensor weightOne = target.times(w1);
+        Tensor weightZero = oneMinusTarget.times(w0);
+        Tensor W = weightOne.plus(weightZero);
+
+        // delta = error * W
+        return error.mul(W);
     }
 
     @Override

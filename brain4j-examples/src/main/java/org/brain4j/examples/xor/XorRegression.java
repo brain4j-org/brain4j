@@ -3,7 +3,7 @@ package org.brain4j.examples.xor;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
-import org.brain4j.core.loss.impl.BinaryCrossEntropy;
+import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.monitor.Monitor;

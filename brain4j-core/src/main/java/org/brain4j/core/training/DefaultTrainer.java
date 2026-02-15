@@ -1,7 +1,7 @@
 package org.brain4j.core.training;
 
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.training.events.*;
@@ -10,7 +10,6 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.commons.Batch;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconContext;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 

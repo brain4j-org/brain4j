@@ -5,7 +5,7 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
 
 public record ActivationOperation(Activation activation) implements Operation {
-    
+
     @Override
     public int requiredInputs() {
         return 1;
@@ -17,10 +17,8 @@ public record ActivationOperation(Activation activation) implements Operation {
     }
     
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
-        Tensor derivative = activation.derivative(inputs[0]); // ∂activation/∂x
-        Tensor gradInput = gradOutput.times(derivative); // Chain rule: dL/dx = dL/dy * dy/dx
-        
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
+        Tensor gradInput = activation.derivative(inputs[0], output, gradOutput);
         return new Tensor[] { gradInput };
     }
 }

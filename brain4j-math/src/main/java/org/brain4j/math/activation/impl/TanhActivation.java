@@ -26,4 +26,9 @@ public class TanhActivation implements Activation {
     public String getKernelPrefix() {
         return "tanh";
     }
+
+    @Override
+    public int getActivationId() {
+        return 4;
+    }
 }

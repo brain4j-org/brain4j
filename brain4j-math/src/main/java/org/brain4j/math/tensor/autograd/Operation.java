@@ -10,5 +10,5 @@ public interface Operation {
 
     Tensor compute(Tensor... inputs);
 
-    Tensor[] backward(Tensor gradOutput, Tensor... inputs);
+    Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs);
 } 

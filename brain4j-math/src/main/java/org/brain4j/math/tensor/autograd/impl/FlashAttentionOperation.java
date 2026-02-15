@@ -65,16 +65,16 @@ public class FlashAttentionOperation implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor q = inputs[0];
         Tensor k = inputs[1];
         Tensor v = inputs[2];
 
-        if (lse == null || output == null) {
+        if (lse == null || this.output == null) {
             throw new IllegalStateException("Forward pass must be called before backward pass");
         }
 
-        Tensor[] grads = FlashAttention.backward(q, k, v, output, gradOutput, lse, scale, causal);
+        Tensor[] grads = FlashAttention.backward(q, k, v, this.output, gradOutput, lse, scale, causal);
 
         if (grads == null) {
             throw new IllegalStateException("FlashAttention backward failed - inputs must be GpuTensors");

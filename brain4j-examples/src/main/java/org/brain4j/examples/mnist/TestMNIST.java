@@ -2,12 +2,11 @@ package org.brain4j.examples.mnist;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.importing.ModelZoo;
-import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.layer.impl.utility.ActivationLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
-import org.brain4j.core.loss.impl.CrossEntropy;
+import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.model.ModelSpecs;

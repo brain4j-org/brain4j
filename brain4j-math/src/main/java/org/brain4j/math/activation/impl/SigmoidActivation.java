@@ -26,4 +26,9 @@ public class SigmoidActivation implements Activation {
     public String getKernelPrefix() {
         return "sigmoid";
     }
+
+    @Override
+    public int getActivationId() {
+        return 3;
+    }
 }

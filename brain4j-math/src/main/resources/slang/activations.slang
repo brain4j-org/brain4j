@@ -1,380 +1,193 @@
+static const int ACT_RELU      = 0;
+static const int ACT_LEAKYRELU = 1;
+static const int ACT_ELU       = 2;
+static const int ACT_SIGMOID   = 3;
+static const int ACT_TANH      = 4;
+static const int ACT_SWISH     = 5;
+static const int ACT_SOFTPLUS  = 6;
+static const int ACT_GELU      = 7;
+static const int ACT_MISH      = 8;
+static const int ACT_LINEAR    = 9;
+
+struct ActivationParams
+{
+    int activationType;
+    float alpha;
+    int length;
+};
+
 [shader("compute")]
-[numthreads(256, 1, 1)]
-void elu_forward(
+[numthreads(256,1,1)]
+void activation_forward(
     uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform float alpha,
-    uniform int length
+    ConstantBuffer<ActivationParams> params,
+    StructuredBuffer<float> input,
+    RWStructuredBuffer<float> output
 )
 {
     uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
+    if (gid >= params.length) return;
 
     float x = input[gid];
-    output[gid] = x > 0.0f ? x : (alpha * (exp(x) - 1.0f));
-}
+    float result = x;
 
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void elu_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform float alpha,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
+    switch (params.activationType)
+    {
+        case ACT_RELU:
+            result = max(x, 0.0f);
+            break;
 
-    float x = input[gid];
-    output[gid] = x > 0.0f ? 1.0f : alpha * exp(x);
-}
+        case ACT_LEAKYRELU:
+            result = x > 0.0f ? x : params.alpha * x;
+            break;
 
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void gelu_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
+        case ACT_ELU:
+            result = x > 0.0f ? x : params.alpha * (exp(x) - 1.0f);
+            break;
 
-    float x = input[gid];
-    float c = 0.044715f;
-    float root2_over_pi = 0.7978845608f; // TODO: move to common, this is the value of sqrt(2/pi)
-    float x3 = x * x * x;
-    float tanh_val = tanh(root2_over_pi * (x + c * x3));
-    output[gid] = 0.5f * x * (1.0f + tanh_val);
-}
+        case ACT_SIGMOID:
+            result = 1.0f / (1.0f + exp(-x));
+            break;
 
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void gelu_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
+        case ACT_TANH:
+            result = tanh(x);
+            break;
 
-    float x = input[gid];
-    float c = 0.044715f;
-    float root2_over_pi = 0.7978845608f;
-    float x2 = x * x;
-    float x3 = x2 * x;
-    float tanh_arg = root2_over_pi * (x + c * x3);
-    float tanh_val = tanh(tanh_arg);
-    float sech2 = 1.0f - tanh_val * tanh_val;
-    float term1 = 0.5f * (1.0f + tanh_val);
-    float term2 = 0.5f * x * sech2 * root2_over_pi * (1.0f + 3.0f * c * x2);
-    output[gid] = term1 + term2;
-}
+        case ACT_SWISH:
+        {
+            float s = 1.0f / (1.0f + exp(-x));
+            result = x * s;
+            break;
+        }
 
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void leakyrelu_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform float alpha,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
+        case ACT_SOFTPLUS:
+            result = log(1.0f + exp(x));
+            break;
 
-    float x = input[gid];
-    output[gid] = x > 0.0f ? x : alpha * x;
-}
+        case ACT_GELU:
+        {
+            float c = 0.044715f;
+            float root2_over_pi = 0.7978845608f;
+            float x3 = x * x * x;
+            float t = tanh(root2_over_pi * (x + c * x3));
+            result = 0.5f * x * (1.0f + t);
+            break;
+        }
 
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void leakyrelu_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform float alpha,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
+        case ACT_MISH:
+        {
+            float sp = log(1.0f + exp(x));
+            result = x * tanh(sp);
+            break;
+        }
 
-    float x = input[gid];
-    output[gid] = x > 0.0f ? 1.0f : alpha;
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void linear_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    output[gid] = input[gid];
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void linear_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    output[gid] = 1.0f;
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void mish_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    float sp = log(1.0f + exp(x));
-    output[gid] = x * tanh(sp);
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void mish_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    float e = exp(x);
-    float om = log(1.0f + e);
-    float tanh_om = tanh(om);
-    float sech2 = 1.0f - tanh_om * tanh_om;
-    output[gid] = tanh_om + x * e * sech2 / (1.0f + e);
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void relu_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    output[gid] = max(x, 0.0f);
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void relu_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    output[gid] = x > 0.0f ? 1.0f : 0.0f;
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void sigmoid_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    output[gid] = 1.0f / (1.0f + exp(-x));
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void sigmoid_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    float activated = 1.0f / (1.0f + exp(-x));
-    output[gid] = activated * (1.0f - activated);
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void softmax_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    // TODO: implement row-wise softmax
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void softmax_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    output[gid] = x * (1.0f - x);
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void swish_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    float sigmoid_x = 1.0f / (1.0f + exp(-x));
-    output[gid] = x * sigmoid_x;
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void swish_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    float sigmoid_x = 1.0f / (1.0f + exp(-x));
-    output[gid] = sigmoid_x + x * sigmoid_x * (1.0f - sigmoid_x);
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void softplus_forward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    // log1p prevents numerical instability when exp(x) << arbitrary value
-    output[gid] = log(1.0f + exp(x));
-}
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void softplus_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    // TODO: check for numerical stability
-    if (x >= 0.0f) {
-        float expNeg = exp(-x);
-        output[gid] = 1.0f / (1.0f + expNeg);
-    } else {
-        float expPos = exp(x);
-        output[gid] = expPos / (1.0f + expPos);
+        case ACT_LINEAR:
+            result = x;
+            break;
     }
+
+    output[gid] = result;
 }
 
+
 [shader("compute")]
-[numthreads(256, 1, 1)]
-void tanh_forward(
+[numthreads(256,1,1)]
+void activation_backward(
     uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
+    ConstantBuffer<ActivationParams> params,
+    StructuredBuffer<float> input,
+    RWStructuredBuffer<float> output
 )
 {
     uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
+    if (gid >= params.length) return;
 
     float x = input[gid];
-    output[gid] = tanh(x);
+    float result = 1.0f;
+
+    switch (params.activationType)
+    {
+        case ACT_RELU:
+            result = x > 0.0f ? 1.0f : 0.0f;
+            break;
+
+        case ACT_LEAKYRELU:
+            result = x > 0.0f ? 1.0f : params.alpha;
+            break;
+
+        case ACT_ELU:
+            result = x > 0.0f ? 1.0f : params.alpha * exp(x);
+            break;
+
+        case ACT_SIGMOID:
+        {
+            float s = 1.0f / (1.0f + exp(-x));
+            result = s * (1.0f - s);
+            break;
+        }
+
+        case ACT_TANH:
+        {
+            float t = tanh(x);
+            result = 1.0f - t * t;
+            break;
+        }
+
+        case ACT_SWISH:
+        {
+            float s = 1.0f / (1.0f + exp(-x));
+            result = s + x * s * (1.0f - s);
+            break;
+        }
+
+        case ACT_SOFTPLUS:
+        {
+            if (x >= 0.0f)
+            {
+                float expNeg = exp(-x);
+                result = 1.0f / (1.0f + expNeg);
+            }
+            else
+            {
+                float expPos = exp(x);
+                result = expPos / (1.0f + expPos);
+            }
+            break;
+        }
+
+        case ACT_GELU:
+        {
+            float c = 0.044715f;
+            float r = 0.7978845608f;
+            float x2 = x * x;
+            float x3 = x2 * x;
+
+            float tanh_arg = r * (x + c * x3);
+            float t = tanh(tanh_arg);
+            float sech2 = 1.0f - t * t;
+
+            float term1 = 0.5f * (1.0f + t);
+            float term2 = 0.5f * x * sech2 * r * (1.0f + 3.0f * c * x2);
+
+            result = term1 + term2;
+            break;
+        }
+
+        case ACT_MISH:
+        {
+            float e = exp(x);
+            float om = log(1.0f + e);
+            float t = tanh(om);
+            float sech2 = 1.0f - t * t;
+
+            result = t + x * e * sech2 / (1.0f + e);
+            break;
+        }
+
+        case ACT_LINEAR:
+            result = 1.0f;
+            break;
+    }
+
+    output[gid] = result;
 }
-
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void tanh_backward(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<float> output,
-    uniform int length
-)
-{
-    uint gid = dispatchThreadID.x;
-    if (gid >= length) return;
-
-    float x = input[gid];
-    float t = tanh(x);
-    output[gid] = 1.0f - t * t;
-}
-
