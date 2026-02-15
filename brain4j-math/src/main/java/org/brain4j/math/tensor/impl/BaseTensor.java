@@ -785,7 +785,8 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
         for (int i = 0; i < rank; i++) {
             if (i != dimension && shape[i] != other.shape()[i]) {
-                throw new IllegalArgumentException("Shapes must match in all dimensions except the concatenation one.");
+                throw Commons.illegalArgument("Shapes must match in all dims except the concatenation one. " +
+                    "Current: %s, Other: %s".formatted(Arrays.toString(shape), Arrays.toString(other.shape())));
             }
         }
 
