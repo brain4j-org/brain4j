@@ -145,7 +145,7 @@ public class SiliconGpuTensor extends BaseTensor {
             // ComputeModule flashAttentionModule = compiler.compileFromResource("slang/flash_attention.slang");
 
             // ComputeModule fftModule = compiler.compileFromResource("slang/fft.slang");
-            // ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
+             ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
             // ComputeModule complexOpsModule = compiler.compileFromResource("slang/complex_ops.slang");
 
             SiliconContext.storeModule(device, "tensor_ops_1", tensorOps1Module);
@@ -160,8 +160,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
             String[] tensorOps1Kernels = {
                 "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b",
-                "matmul", "matmul_batched", "layer_norm", "broadcast_to", "conv2d_nchw",
-                "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw"
+                "matmul", "matmul_batched", "layer_norm", "broadcast_to"
             };
             String[] tensorOps2Kernels = {
                 "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim"
@@ -198,11 +197,10 @@ public class SiliconGpuTensor extends BaseTensor {
             // SiliconContext.registerAll(device, fftModule, fftKernels);
 
             String[] convolutionKernels = {
-                "convolve1d_direct", "convolve2d_direct", "convolve2d_fft_extract",
-                "convolve1d_fft_prepare", "convolve1d_fft_multiply", "convolve1d_fft_extract",
-                "convolve2d_fft_prepare_input", "convolve2d_fft_prepare_kernel", "convolve2d_fft_multiply"
+                "conv2d_nchw",
+                "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw"
             };
-            // SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
+             SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
 
             String[] complexKernels = {
                 "complex_pointwise_mul", "complex_pointwise_add"
@@ -935,7 +933,7 @@ public class SiliconGpuTensor extends BaseTensor {
         SiliconGpuTensor out = new SiliconGpuTensor(device, new int[] { batch, numFilters, outHeight, outWidth });
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
-            ComputeSize localSize = new ComputeSize(8, 8, 1);
+            ComputeSize localSize = new ComputeSize(16, 16, 1);
             ComputeSize globalSize = new ComputeSize(
                 roundUp(outWidth),
                 roundUp(outHeight),

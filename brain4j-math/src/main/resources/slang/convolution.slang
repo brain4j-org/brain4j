@@ -1,292 +1,195 @@
-import complex_ops;
-
-groupshared float localKernel1D[256];
-
 [shader("compute")]
-[numthreads(256, 1, 1)]
-void convolve1d_direct(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uint3 groupThreadID : SV_GroupThreadID,
+[numthreads(16, 16, 1)]
+void conv2d_nchw_shared(
+    uint3 dispatchThreadID: SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
-    uniform StructuredBuffer<float> kern,
+    uniform StructuredBuffer<float> kernel,
     uniform RWStructuredBuffer<float> output,
-    uniform int inputSize,
-    uniform int kernelSize,
-    uniform int outputSize,
-    uniform int paddingLeft
+    // input info
+    uniform int batchSize,
+    uniform int inChannels,
+    uniform int inHeight,
+    uniform int inWidth,
+    // kernel info
+    uniform int numFilters,
+    uniform int kernelHeight,
+    uniform int kernelWidth,
+    // conv/out info
+    uniform int stride,
+    uniform int outHeight,
+    uniform int outWidth
 )
 {
-    int i = dispatchThreadID.x;
-    if (i >= outputSize) {
-        return;
-    }
-
-    int lid = groupThreadID.x;
-
-    // we load the kernel into local memory (reversed for convolution)
-    if (lid < kernelSize) {
-        localKernel1D[lid] = kern[kernelSize - 1 - lid];
-    }
-    GroupMemoryBarrierWithGroupSync();
-
-    float sum = 0.0f;
-    for (int k = 0; k < kernelSize; k++) {
-        int pos = i - paddingLeft + k;
-        if (pos >= 0 && pos < inputSize) {
-            sum += input[pos] * localKernel1D[k];
-        }
-    }
-
-    output[i] = sum;
+    // TODO
 }
-
-groupshared float localKernel2D[256];
 
 [shader("compute")]
 [numthreads(16, 16, 1)]
-void convolve2d_direct(
+void conv2d_nchw(
     uint3 dispatchThreadID : SV_DispatchThreadID,
-    uint3 groupThreadID : SV_GroupThreadID,
     uniform StructuredBuffer<float> input,
-    uniform StructuredBuffer<float> kern,
+    uniform StructuredBuffer<float> kernel,
     uniform RWStructuredBuffer<float> output,
-    uniform int inputRows,
-    uniform int inputCols,
-    uniform int kernelRows,
-    uniform int kernelCols,
-    uniform int outputRows,
-    uniform int outputCols,
-    uniform int paddingTop,
-    uniform int paddingLeft
+    // input info
+    uniform int batchSize,
+    uniform int inChannels,
+    uniform int inHeight,
+    uniform int inWidth,
+    // kernel info
+    uniform int numFilters,
+    uniform int kernelHeight,
+    uniform int kernelWidth,
+    // conv/out info
+    uniform int stride,
+    uniform int outHeight,
+    uniform int outWidth
 )
 {
-    int row = dispatchThreadID.x;
-    int col = dispatchThreadID.y;
+    int outX = dispatchThreadID.x;
+    int outY = dispatchThreadID.y;
+    int bf = dispatchThreadID.z;
 
-    if (row >= outputRows || col >= outputCols) return;
+    if (outX >= outWidth || outY >= outHeight) return;
+    if (bf >= batchSize * numFilters) return;
 
-    int lid = groupThreadID.x * 16 + groupThreadID.y;
+    int b = bf / numFilters;
+    int f = bf % numFilters;
 
-    // we load the kernel into local memory (reversed for convolution)
-    if (lid < kernelRows * kernelCols) {
-        int kr = kernelRows - 1 - (lid / kernelCols);
-        int kc = kernelCols - 1 - (lid % kernelCols);
-        localKernel2D[lid] = kern[kr * kernelCols + kc];
-    }
-    GroupMemoryBarrierWithGroupSync();
+    int batchStride = b * inChannels;
+    int filterStride = f * inChannels;
 
     float sum = 0.0f;
-    for (int ki = 0; ki < kernelRows; ki++) {
-        for (int kj = 0; kj < kernelCols; kj++) {
-            int r = row - paddingTop + ki;
-            int c = col - paddingLeft + kj;
+    int outYStride = outY * stride;
+    int outXStride = outX * stride;
 
-            if (r >= 0 && r < inputRows && c >= 0 && c < inputCols) {
-                int kernelIdx = ki * kernelCols + kj;
-                sum += input[r * inputCols + c] * localKernel2D[kernelIdx];
+    for (int c = 0; c < inChannels; c++) {
+        int channelBStride = (batchStride + c) * inHeight;
+        int channelFStride = (filterStride + c) * kernelHeight;
+
+        for (int ky = 0; ky < kernelHeight; ky++) {
+            int iy = outYStride + ky;
+            int inputStride = (channelBStride + iy) * inWidth;
+            int kernelStride = (channelFStride + ky) * kernelWidth;
+
+            for (int kx = 0; kx < kernelWidth; kx++) {
+                int ix = outXStride + kx;
+
+                int inputIdx = inputStride + ix;
+                int kernelIdx = kernelStride + kx;
+
+                sum += input[inputIdx] * kernel[kernelIdx];
             }
         }
     }
 
-    output[row * outputCols + col] = sum;
+    int outputIdx = ((b * numFilters + f) * outHeight + outY) * outWidth + outX;
+    output[outputIdx] = sum;
 }
-
-/*
-struct Complex
-{
-    float real;
-    float imag;
-};
-*/
 
 [shader("compute")]
 [numthreads(16, 16, 1)]
-void convolve2d_fft_extract(
+void conv2d_backward_input_nchw(
     uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<Complex> result,
-    uniform RWStructuredBuffer<float> output,
-    uniform int outputRows,
-    uniform int outputCols,
-    uniform int startRow,
-    uniform int startCol,
-    uniform int resultCols
+    uniform StructuredBuffer<float> gradOutput,
+    uniform StructuredBuffer<float> kernel,
+    uniform RWStructuredBuffer<float> gradInput,
+    uniform int batchSize,
+    uniform int inChannels,
+    uniform int inHeight,
+    uniform int inWidth,
+    uniform int numFilters,
+    uniform int kernelHeight,
+    uniform int kernelWidth,
+    uniform int stride,
+    uniform int outHeight,
+    uniform int outWidth
 )
 {
-    int row = dispatchThreadID.x;
-    int col = dispatchThreadID.y;
+    int inX = dispatchThreadID.x;
+    int inY = dispatchThreadID.y;
+    int bc = dispatchThreadID.z;
 
-    if (row >= outputRows || col >= outputCols) return;
+    if (inX >= inWidth || inY >= inHeight) return;
+    if (bc >= batchSize * inChannels) return;
 
-    float val = result[(startRow + row) * resultCols + (startCol + col)].real;
+    int b = bc / inChannels;
+    int c = bc % inChannels;
 
-    // let's clean up some noise
-    if (abs(val) < 1e-10f) {
-        val = 0.0f;
+    float sum = 0.0f;
+
+    for (int f = 0; f < numFilters; f++) {
+        for (int ky = 0; ky < kernelHeight; ky++) {
+            int oyNumerator = inY - ky;
+            if (oyNumerator < 0 || (oyNumerator % stride) != 0) continue;
+
+            int oy = oyNumerator / stride;
+            if (oy < 0 || oy >= outHeight) continue;
+
+            for (int kx = 0; kx < kernelWidth; kx++) {
+                int oxNumerator = inX - kx;
+                if (oxNumerator < 0 || (oxNumerator % stride) != 0) continue;
+
+                int ox = oxNumerator / stride;
+                if (ox < 0 || ox >= outWidth) continue;
+
+                int gradOutIdx = ((b * numFilters + f) * outHeight + oy) * outWidth + ox;
+                int kernelIdx = ((f * inChannels + c) * kernelHeight + ky) * kernelWidth + kx;
+
+                sum += gradOutput[gradOutIdx] * kernel[kernelIdx];
+            }
+        }
     }
 
-    output[row * outputCols + col] = val;
+    int gradInputIdx = ((b * inChannels + c) * inHeight + inY) * inWidth + inX;
+    gradInput[gradInputIdx] = sum;
 }
 
-Complex conv_complex_mul(Complex a, Complex b)
-{
-    Complex res;
-    res.real = a.real * b.real - a.imag * b.imag;
-    res.imag = a.real * b.imag + a.imag * b.real;
-    return res;
-}
-
-Complex conv_twiddle_factor(int k, int n, int direction)
-{
-    Complex w;
-    float angle = float(direction) * 2.0f * 3.14159265358979323846f /*M_PI*/ * float(k) / float(n);
-    w.real = cos(angle);
-    w.imag = sin(angle);
-    return w;
-}
 [shader("compute")]
-[numthreads(256, 1, 1)]
-void convolve1d_fft_prepare(
+[numthreads(16, 16, 1)]
+void conv2d_backward_filter_nchw(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
-    uniform StructuredBuffer<float> kern,
-    uniform RWStructuredBuffer<Complex> inputFFT,
-    uniform RWStructuredBuffer<Complex> kernFFT,
-    uniform int inputSize,
-    uniform int kernelSize,
-    uniform int fftSize
+    uniform StructuredBuffer<float> gradOutput,
+    uniform RWStructuredBuffer<float> gradFilter,
+    uniform int batchSize,
+    uniform int inChannels,
+    uniform int inHeight,
+    uniform int inWidth,
+    uniform int numFilters,
+    uniform int kernelHeight,
+    uniform int kernelWidth,
+    uniform int stride,
+    uniform int outHeight,
+    uniform int outWidth
 )
 {
-    int i = dispatchThreadID.x;
-    if (i >= fftSize) return;
+    int kx = dispatchThreadID.x;
+    int ky = dispatchThreadID.y;
+    int fc = dispatchThreadID.z;
 
-    // zero-padded input buffer
-    inputFFT[i].real = (i < inputSize) ? input[i] : 0.0f;
-    inputFFT[i].imag = 0.0f;
-    kernFFT[i].real = (i < kernelSize) ? kern[kernelSize - 1 - i] : 0.0f;
-    kernFFT[i].imag = 0.0f;
-}
+    if (kx >= kernelWidth || ky >= kernelHeight) return;
+    if (fc >= numFilters * inChannels) return;
 
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void convolve1d_fft_multiply(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<Complex> inputFFT,
-    uniform StructuredBuffer<Complex> kernFFT,
-    uniform RWStructuredBuffer<Complex> resultFFT,
-    uniform int fftSize
-)
-{
-    int i = dispatchThreadID.x;
-    if (i >= fftSize) return;
+    int f = fc / inChannels;
+    int c = fc % inChannels;
 
-    resultFFT[i] = conv_complex_mul(inputFFT[i], kernFFT[i]);
-}
+    float sum = 0.0f;
 
-[shader("compute")]
-[numthreads(256, 1, 1)]
-void convolve1d_fft_extract(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<Complex> resultFFT,
-    uniform RWStructuredBuffer<float> output,
-    uniform int outputSize,
-    uniform int kernelSize,
-    uniform int paddingLeft
-)
-{
-    int i = dispatchThreadID.x;
-    if (i >= outputSize) return;
+    for (int b = 0; b < batchSize; b++) {
+        for (int oy = 0; oy < outHeight; oy++) {
+            int inY = oy * stride + ky;
 
-    // here we compute the start index from the padding value
-    int startIdx;
-    if (paddingLeft == 0) {
-        startIdx = kernelSize - 1;
-    } else if (paddingLeft == (kernelSize - 1) / 2) {
-        startIdx = paddingLeft;
-    } else {
-        startIdx = 0;
+            for (int ox = 0; ox < outWidth; ox++) {
+                int inX = ox * stride + kx;
+
+                int inputIdx = ((b * inChannels + c) * inHeight + inY) * inWidth + inX;
+                int gradOutIdx = ((b * numFilters + f) * outHeight + oy) * outWidth + ox;
+
+                sum += input[inputIdx] * gradOutput[gradOutIdx];
+            }
+        }
     }
 
-    float result = resultFFT[startIdx + i].real;
-
-    // noise cleaning
-    if (abs(result) < 1e-10f) {
-        result = 0.0f;
-    }
-
-    output[i] = result;
-}
-[shader("compute")]
-[numthreads(16, 16, 1)]
-void convolve2d_fft_prepare_input(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> input,
-    uniform RWStructuredBuffer<Complex> inputFFT,
-    uniform int inputRows,
-    uniform int inputCols,
-    uniform int fftRows,
-    uniform int fftCols
-)
-{
-    int row = dispatchThreadID.x;
-    int col = dispatchThreadID.y;
-
-    if (row >= fftRows || col >= fftCols) return;
-
-    int fftIdx = row * fftCols + col;
-
-    if (row < inputRows && col < inputCols) {
-        inputFFT[fftIdx].real = input[row * inputCols + col];
-    } else {
-        inputFFT[fftIdx].real = 0.0f;
-    }
-    inputFFT[fftIdx].imag = 0.0f;
-}
-
-[shader("compute")]
-[numthreads(16, 16, 1)]
-void convolve2d_fft_prepare_kernel(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<float> kern,
-    uniform RWStructuredBuffer<Complex> kernFFT,
-    uniform int kernelRows,
-    uniform int kernelCols,
-    uniform int fftRows,
-    uniform int fftCols
-)
-{
-    int row = dispatchThreadID.x;
-    int col = dispatchThreadID.y;
-
-    if (row >= fftRows || col >= fftCols) return;
-
-    int fftIdx = row * fftCols + col;
-
-    if (row < kernelRows && col < kernelCols) {
-        int kr = kernelRows - 1 - row;
-        int kc = kernelCols - 1 - col;
-        kernFFT[fftIdx].real = kern[kr * kernelCols + kc];
-    } else {
-        kernFFT[fftIdx].real = 0.0f;
-    }
-    kernFFT[fftIdx].imag = 0.0f;
-}
-
-[shader("compute")]
-[numthreads(16, 16, 1)]
-void convolve2d_fft_multiply(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
-    uniform StructuredBuffer<Complex> inputFFT,
-    uniform StructuredBuffer<Complex> kernFFT,
-    uniform RWStructuredBuffer<Complex> resultFFT,
-    uniform int fftRows,
-    uniform int fftCols
-)
-{
-    int row = dispatchThreadID.x;
-    int col = dispatchThreadID.y;
-
-    if (row >= fftRows || col >= fftCols) return;
-
-    int idx = row * fftCols + col;
-    resultFFT[idx] = conv_complex_mul(inputFFT[idx], kernFFT[idx]);
+    int gradFilterIdx = ((f * inChannels + c) * kernelHeight + ky) * kernelWidth + kx;
+    gradFilter[gradFilterIdx] = sum;
 }

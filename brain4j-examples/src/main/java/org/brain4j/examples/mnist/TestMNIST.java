@@ -4,8 +4,10 @@ import org.brain4j.core.Brain4J;
 import org.brain4j.core.importing.ModelZoo;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.NormLayer;
+import org.brain4j.core.layer.impl.convolutional.ConvLayer;
 import org.brain4j.core.layer.impl.utility.ActivationLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.core.layer.impl.utility.ReshapeLayer;
 import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelBlock;
@@ -42,13 +44,7 @@ public class TestMNIST {
         ListDataSource trainSource = getSource("mnist/mnist-train.csv");
         ListDataSource testSource = getSource("mnist/mnist-test.csv");
         
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(28 * 28),
-            denseNormActivation(128),
-            denseNormActivation(64),
-            new DenseLayer(10, Activations.SOFTMAX)
-        );
-        
+        ModelSpecs specs = getCNNSpecs();
         Model model = specs.compile(42);
         model.summary(); // prints a summary of the architecture on the console
         
@@ -74,13 +70,24 @@ public class TestMNIST {
         ModelZoo.saveModel(model, new File("mnist-100k.csv"));
     }
     
-    private ModelBlock denseNormActivation(int dimension) {
-        return layers -> layers.addAll(
-            List.of(
-                new DenseLayer(dimension),
-                new NormLayer(),
-                new ActivationLayer(Activations.RELU)
-            )
+    private ModelSpecs getCNNSpecs() {
+        return ModelSpecs.of(
+            new InputLayer(28 * 28),
+            new ReshapeLayer(1, 28, 28),
+            new ConvLayer(1, 16, 3, 3, 1, Activations.LEAKY_RELU), // 16x26x26
+            new ConvLayer(16, 32, 3, 3, 2, Activations.LEAKY_RELU), // 32x12x12
+            new ConvLayer(32, 64, 3, 3, 2, Activations.LEAKY_RELU), // 64x5x5
+            new ReshapeLayer(64 * 5 * 5),
+            new DenseLayer(10, Activations.SOFTMAX)
+        );
+    }
+    
+    private ModelSpecs getMLPSpecs() {
+        return ModelSpecs.of(
+            new InputLayer(28 * 28),
+            new DenseLayer(128, Activations.RELU),
+            new DenseLayer(64, Activations.RELU),
+            new DenseLayer(10, Activations.SOFTMAX)
         );
     }
     
