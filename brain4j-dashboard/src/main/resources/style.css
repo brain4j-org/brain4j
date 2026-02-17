@@ -1,0 +1,120 @@
+:root {
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --primary-color: #4361ee;
+    --accent-color: #4cc9f0;
+    --text-main: #2b2d42;
+    --text-muted: #6f7a8a;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text-main);
+}
+
+.navbar {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 1rem 2rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--primary-color) !important;
+}
+
+.card {
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    display: block;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+.metric-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.status-badge {
+    padding: 0.5em 1.2em;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-group .btn {
+    border-radius: 8px !important;
+    margin: 0 2px;
+}
+
+.chart-container span {
+    letter-spacing: 1px;
+    background: #f0f0f0;
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px dashed #ccc;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    background: #fdfdfd;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.metric-value {
+    font-size: 1.8rem;
+}

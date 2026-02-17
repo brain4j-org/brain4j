@@ -1,0 +1,9 @@
+plugins {
+    id "java"
+    alias libs.plugins.shadowJar
+}
+
+dependencies {
+    implementation project(':brain4j-core')
+    implementation libs.jacksonDatabind
+}

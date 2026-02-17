@@ -20,7 +20,7 @@ void conv2d_nchw_shared(
     uniform int outWidth
 )
 {
-    // TODO
+     // TODO
 }
 
 [shader("compute")]
