@@ -63,11 +63,10 @@ public class SiliconContext {
 
     public static QueueHandle getOrCreateQueue(SiliconDevice device) {
         ComputeQueue queue = device.getQueue();
-
         if (queue != null) {
             return new QueueHandle(queue, false);
         }
-
+        
         return new QueueHandle(device.getContext().createQueue(), true);
     }
     

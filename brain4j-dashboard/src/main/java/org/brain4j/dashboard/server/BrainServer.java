@@ -163,8 +163,8 @@ public class BrainServer extends MiniServer {
             return Response.json(400, Map.of("message", "Path points to a directory, not a file"));
         }
 
-        if (!modelFile.getName().toLowerCase().endsWith(".brain")) {
-            modelFile = new File(modelFile.getAbsolutePath() + ".brain");
+         if (!modelFile.getName().toLowerCase().endsWith(".zip")) {
+            modelFile = new File(modelFile.getAbsolutePath() + ".zip");
         }
 
         File parent = modelFile.getParentFile();

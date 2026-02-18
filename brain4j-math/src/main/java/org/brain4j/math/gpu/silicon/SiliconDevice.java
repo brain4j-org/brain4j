@@ -30,6 +30,7 @@ public class SiliconDevice {
             this.deviceIndex = deviceIndex;
             this.device = Silicon.createDevice(deviceIndex);
             this.context = device.createContext();
+            this.queue = context.createQueue();
             this.name = device.name();
             this.memoryPool = context.createPool();
             this.pooledQueue = new ArrayList<>();
@@ -42,14 +43,10 @@ public class SiliconDevice {
         this(0);
     }
 
-    public void createResources() {
+    public synchronized void createResources() {
         if (!pooledQueue.isEmpty()) {
             pooledQueue.forEach(Pooled::close);
             pooledQueue.clear();
-        }
-
-        if (queue == null) {
-            queue = context.createQueue();
         }
     }
     
@@ -112,11 +109,16 @@ public class SiliconDevice {
         this.queue = queue;
     }
 
-    public void free() {
+    public synchronized void free() {
+        if (queue != null) {
+            queue.await();
+            queue.free();
+            queue = null;
+        }
         memoryPool.free();
     }
     
-    public void closeResources() {
+    public synchronized void closeResources() {
         if (queue != null) {
             queue.await();
         }

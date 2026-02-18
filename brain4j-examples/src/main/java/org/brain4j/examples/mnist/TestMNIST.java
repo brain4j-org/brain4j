@@ -47,12 +47,12 @@ public class TestMNIST {
         Model model = specs.compile(42);
         model.summary(); // prints a summary of the architecture on the console
 
-//        SiliconDevice device = Brain4J.firstDevice();
-//        if (device != null) {
-//            model = model.fork(device);
-//            trainSource = trainSource.to(device);
-//            testSource = testSource.to(device);
-//        }
+        SiliconDevice device = Brain4J.firstDevice();
+        if (device != null) {
+            model = model.fork(device);
+            trainSource = trainSource.to(device);
+            testSource = testSource.to(device);
+        }
         
         TrainingConfig config = TrainingConfig.of(
             new CrossEntropy(),
