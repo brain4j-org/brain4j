@@ -9,6 +9,7 @@ const controlButtons = Array.from(document.querySelectorAll(".control-panel butt
 const startBtn = controlButtons.find((btn) => btn.textContent.trim() === "START");
 const pauseBtn = controlButtons.find((btn) => btn.textContent.trim() === "PAUSE");
 const stopBtn = controlButtons.find((btn) => btn.textContent.trim() === "STOP");
+const saveBtn = document.getElementById("saveBtn");
 const lossChartCanvas = document.getElementById("lossChart");
 let lossChart = null;
 let chartMode = "loss";
@@ -307,6 +308,52 @@ async function sendTrainingAction(path) {
     }
 }
 
+async function saveModel() {
+    if (!saveBtn) return;
+
+    const directory = window.prompt(
+        "Cartella destinazione (percorso locale del processo Java, es. C:\\\\models):",
+        ""
+    );
+    if (directory === null) return;
+
+    const filenameInput = window.prompt("Nome file modello:", "model.zip");
+    if (filenameInput === null) return;
+
+    const cleanDirectory = directory.trim().replace(/[\\/]+$/, "");
+    let cleanFilename = filenameInput.trim().replace(/^[/\\]+/, "");
+
+    if (!cleanFilename) {
+        alert("Nome file non valido.");
+        return;
+    }
+
+    if (!cleanFilename.toLowerCase().endsWith(".zip")) {
+        cleanFilename += ".zip";
+    }
+
+    const fullPath = cleanDirectory ? `${cleanDirectory}/${cleanFilename}` : cleanFilename;
+
+    try {
+        saveBtn.disabled = true;
+        const response = await fetch(`/api/save-model?path=${encodeURIComponent(fullPath)}`, {
+            method: "POST"
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload.message || `Errore HTTP ${response.status}`);
+        }
+
+        alert(`Modello salvato in:\n${payload.path || fullPath}`);
+    } catch (err) {
+        console.error("Model save failed:", err);
+        alert(`Salvataggio fallito: ${err.message || err}`);
+    } finally {
+        saveBtn.disabled = false;
+    }
+}
+
 if (startBtn) startBtn.addEventListener("click", () => sendTrainingAction("/api/training/start"));
 if (pauseBtn) {
     pauseBtn.addEventListener("click", async () => {
@@ -317,6 +364,7 @@ if (pauseBtn) {
     });
 }
 if (stopBtn) stopBtn.addEventListener("click", () => sendTrainingAction("/api/training/stop"));
+if (saveBtn) saveBtn.addEventListener("click", saveModel);
 
 if (lossBtn) {
     lossBtn.addEventListener("click", () => {

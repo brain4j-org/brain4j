@@ -1,6 +1,7 @@
 package org.brain4j.dashboard.server;
 
 import com.sun.management.OperatingSystemMXBean;
+import org.brain4j.core.importing.ModelZoo;
 import org.brain4j.core.monitor.impl.TimingMonitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
 import org.brain4j.core.training.Trainer;
@@ -9,10 +10,10 @@ import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.dashboard.miniserver.*;
 import org.brain4j.math.data.ListDataSource;
 
-import java.io.IOException;
+import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +26,7 @@ public class BrainServer extends MiniServer {
     private final EvalMonitor evalMonitor;
     private final LossRecorder lossRecorder;
     private final int epochs;
-    private double lastLoss;
-
+    
     public BrainServer(BrainDashboard dashboard, ListDataSource trainSet, ListDataSource testSet, int epochs) {
         this.dashboard = dashboard;
         this.trainSet = trainSet;
@@ -40,7 +40,7 @@ public class BrainServer extends MiniServer {
     public List<Object> getServices() {
         return List.of(this);
     }
-
+    
     @Route("/")
     public Response html(Request request) {
         return serveResource("index.html", "text/html; charset=utf-8");
@@ -58,7 +58,7 @@ public class BrainServer extends MiniServer {
 
     @Route(value = "/api/training/start", accepted = { HttpMethod.POST })
     public Response start(Request request) {
-        Trainer trainer = dashboard.getTrainer();
+        Trainer trainer = dashboard.trainer();
 
         if (trainer.isTraining()) {
             return Response.json(400, Map.of("message", "Already training"));
@@ -72,7 +72,7 @@ public class BrainServer extends MiniServer {
 
     @Route(value = "/api/training/pause", accepted = { HttpMethod.POST })
     public Response pause(Request request) {
-        Trainer trainer = dashboard.getTrainer();
+        Trainer trainer = dashboard.trainer();
 
         if (!trainer.isTraining()) {
             return Response.json(400, Map.of("message", "Not training"));
@@ -84,7 +84,7 @@ public class BrainServer extends MiniServer {
 
     @Route(value = "/api/training/resume", accepted = { HttpMethod.POST })
     public Response resume(Request request) {
-        Trainer trainer = dashboard.getTrainer();
+        Trainer trainer = dashboard.trainer();
 
         if (!trainer.isTraining()) {
             return Response.json(400, Map.of("message", "Not training"));
@@ -96,7 +96,7 @@ public class BrainServer extends MiniServer {
 
     @Route(value = "/api/training/stop", accepted = { HttpMethod.POST })
     public Response stop(Request request) {
-        Trainer trainer = dashboard.getTrainer();
+        Trainer trainer = dashboard.trainer();
 
         if (!trainer.isTraining()) {
             return Response.json(400, Map.of("message", "Not training"));
@@ -108,7 +108,7 @@ public class BrainServer extends MiniServer {
 
     @Route("/api/training/info")
     public Response info(Request request) {
-        Trainer trainer = dashboard.getTrainer();
+        Trainer trainer = dashboard.trainer();
         EvaluationResult result = evalMonitor.getEvalResult();
 
         double loss = result == null ? 0.0 : result.loss();
@@ -127,7 +127,7 @@ public class BrainServer extends MiniServer {
                 "average_time_per_batch", timingMonitor.averagePerBatch()
             )
         );
-
+        
         info.put("loss_table", lossRecorder.getRecordedLoss());
         info.put("accuracy_table", lossRecorder.getRecordedAccuracy());
         info.put("f1_table", lossRecorder.getRecordedF1());
@@ -138,8 +138,8 @@ public class BrainServer extends MiniServer {
     @Route("/api/system/resources")
     public Response resources(Request request) {
         OperatingSystemMXBean os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        double cpuUsage = os.getSystemLoadAverage();
-
+        double cpuUsage = os.getCpuLoad() * 100;
+        
         return Response.json(200, Map.of(
             "cpu_usage", cpuUsage,
             "gpu_usage", 0.0,
@@ -147,22 +147,42 @@ public class BrainServer extends MiniServer {
             "free", os.getFreeMemorySize()
         ));
     }
+    
+    @Route(value = "/api/save-model", accepted = { HttpMethod.POST })
+    public Response saveModel(Request request) {
+        String rawPath = request.queryParams().get("path");
 
-    @Route("/hello")
-    public Response hello(Request request) {
-        return Response.text(200, "Hello!");
-    }
+        if (rawPath == null || rawPath.isBlank()) {
+            return Response.json(400, Map.of("message", "Missing required query param: path"));
+        }
 
-    private Response serveResource(String resourceName, String contentType) {
-        try (var stream = getClass().getClassLoader().getResourceAsStream(resourceName)) {
-            if (stream == null) {
-                return Response.json(404, Map.of("message", "Resource not found"));
-            }
+        String decodedPath = URLDecoder.decode(rawPath, StandardCharsets.UTF_8);
+        File modelFile = new File(decodedPath);
 
-            String resource = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-            return Response.text(200, resource).addHeader("Content-Type", contentType);
-        } catch (IOException e) {
-            return Response.json(500, Map.of("message", "Cannot load resource"));
+        if (modelFile.isDirectory()) {
+            return Response.json(400, Map.of("message", "Path points to a directory, not a file"));
+        }
+
+        if (!modelFile.getName().toLowerCase().endsWith(".brain")) {
+            modelFile = new File(modelFile.getAbsolutePath() + ".brain");
+        }
+
+        File parent = modelFile.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            return Response.json(500, Map.of("message", "Cannot create destination directory"));
+        }
+
+        try {
+            ModelZoo.saveModel(dashboard.model(), modelFile);
+            return Response.json(200, Map.of(
+                "message", "Model saved successfully",
+                "path", modelFile.getAbsolutePath()
+            ));
+        } catch (Exception ex) {
+            return Response.json(500, Map.of(
+                "message", "Model save failed",
+                "error", String.valueOf(ex.getMessage())
+            ));
         }
     }
 }
