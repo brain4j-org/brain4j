@@ -100,10 +100,11 @@
                         <div class="d-flex gap-2">
                             <button id="lossBtn" class="btn btn-sm btn-outline-primary active">Loss</button>
                             <button id="accuracyBtn" class="btn btn-sm btn-outline-primary">Accuracy</button>
+                            <button id="f1Btn" class="btn btn-sm btn-outline-primary">F1</button>
                         </div>
                     </div>
                     <div class="chart-container">
-                        <span class="text-muted italic">No data yet</span>
+                        <canvas id="lossChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -126,6 +127,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

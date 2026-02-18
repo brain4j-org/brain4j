@@ -61,7 +61,7 @@ public class TestMNIST {
         
         List<Monitor> monitors = List.of(
             new ProgressMonitor(),
-            new EvalMonitor(testSource, 10)
+            new EvalMonitor(testSource, 1)
         );
         
         Trainer trainer = Trainer.of(model, config, monitors);

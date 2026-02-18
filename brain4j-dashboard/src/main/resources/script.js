@@ -2,12 +2,21 @@ const POLL_MS = 200;
 
 const lossBtn = document.getElementById("lossBtn");
 const accuracyBtn = document.getElementById("accuracyBtn");
+const f1Btn = document.getElementById("f1Btn");
 const statusBadge = document.querySelector(".status-badge");
 const controlButtons = Array.from(document.querySelectorAll(".control-panel button"));
 
 const startBtn = controlButtons.find((btn) => btn.textContent.trim() === "START");
 const pauseBtn = controlButtons.find((btn) => btn.textContent.trim() === "PAUSE");
 const stopBtn = controlButtons.find((btn) => btn.textContent.trim() === "STOP");
+const lossChartCanvas = document.getElementById("lossChart");
+let lossChart = null;
+let chartMode = "loss";
+let latestTables = {
+    loss_table: {},
+    accuracy_table: {},
+    f1_table: {}
+};
 
 const trainingOverviewRoot = Array.from(document.querySelectorAll(".section-title")).find(
     (n) => n.textContent.trim() === "Training Overview"
@@ -81,6 +90,101 @@ async function api(path, method = "GET") {
     return response.json();
 }
 
+function initLossChart() {
+    if (!lossChartCanvas || typeof Chart === "undefined") return;
+    const cfg = getChartMetricConfig(chartMode);
+
+    lossChart = new Chart(lossChartCanvas, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: cfg.label,
+                data: [],
+                borderColor: cfg.borderColor,
+                backgroundColor: cfg.backgroundColor,
+                borderWidth: 2,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                tension: 0.25,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: "Epoch" }
+                },
+                y: {
+                    title: { display: true, text: cfg.yTitle },
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}
+
+function getChartMetricConfig(mode) {
+    if (mode === "accuracy") {
+        return {
+            key: "accuracy_table",
+            label: "Accuracy",
+            yTitle: "Accuracy",
+            borderColor: "#0d6efd",
+            backgroundColor: "rgba(13, 110, 253, 0.15)"
+        };
+    }
+    if (mode === "f1") {
+        return {
+            key: "f1_table",
+            label: "F1",
+            yTitle: "F1",
+            borderColor: "#20c997",
+            backgroundColor: "rgba(32, 201, 151, 0.15)"
+        };
+    }
+    return {
+        key: "loss_table",
+        label: "Loss",
+        yTitle: "Loss",
+        borderColor: "#dc3545",
+        backgroundColor: "rgba(220, 53, 69, 0.15)"
+    };
+}
+
+function updateMetricButtons() {
+    if (lossBtn) lossBtn.classList.toggle("active", chartMode === "loss");
+    if (accuracyBtn) accuracyBtn.classList.toggle("active", chartMode === "accuracy");
+    if (f1Btn) f1Btn.classList.toggle("active", chartMode === "f1");
+}
+
+function updateLossChart() {
+    if (!lossChart) return;
+    const cfg = getChartMetricConfig(chartMode);
+    const table = latestTables[cfg.key] || {};
+
+    const entries = Object.entries(table)
+        .map(([epoch, loss]) => [Number(epoch), Number(loss)])
+        .filter(([epoch, loss]) => Number.isFinite(epoch) && Number.isFinite(loss))
+        .sort((a, b) => a[0] - b[0]);
+
+    const labels = entries.map(([epoch]) => String(epoch + 1));
+    const values = entries.map(([, loss]) => loss);
+
+    lossChart.data.labels = labels;
+    lossChart.data.datasets[0].label = cfg.label;
+    lossChart.data.datasets[0].borderColor = cfg.borderColor;
+    lossChart.data.datasets[0].backgroundColor = cfg.backgroundColor;
+    lossChart.data.datasets[0].data = values;
+    lossChart.options.scales.y.title.text = cfg.yTitle;
+    lossChart.update();
+}
+
 function updateControls(training) {
     if (!startBtn || !pauseBtn || !stopBtn) return;
     startBtn.disabled = training;
@@ -106,6 +210,11 @@ function updateTrainingInfo(info) {
     const loss = info?.loss;
     const accuracy = info?.accuracy;
     const avgTimePerBatchMs = info?.average_time_per_batch ?? info?.avgTimePerBatch;
+    latestTables = {
+        loss_table: info?.loss_table ?? {},
+        accuracy_table: info?.accuracy_table ?? {},
+        f1_table: info?.f1_table ?? {}
+    };
 
     if (metricCards["Epoch"]) {
         metricCards["Epoch"].innerHTML = `${epoch >= 0 ? epoch + 1 : "--"}<small class="text-muted fs-6">/${totalEpochs >= 0 ? totalEpochs : "--"}</small>`;
@@ -153,6 +262,7 @@ function updateTrainingInfo(info) {
 
     updateStatusBadge(training);
     updateControls(training);
+    updateLossChart();
     if (pauseBtn) {
         pauseBtn.textContent = paused ? "RESUME" : "PAUSE";
     }
@@ -203,23 +313,34 @@ if (pauseBtn) {
         const action = pauseBtn.textContent.trim() === "RESUME"
             ? "/api/training/resume"
             : "/api/training/pause";
-        pauseBtn.textContent = "RESUME";
         await sendTrainingAction(action);
     });
 }
 if (stopBtn) stopBtn.addEventListener("click", () => sendTrainingAction("/api/training/stop"));
 
-if (lossBtn && accuracyBtn) {
+if (lossBtn) {
     lossBtn.addEventListener("click", () => {
-        lossBtn.classList.add("active");
-        accuracyBtn.classList.remove("active");
+        chartMode = "loss";
+        updateMetricButtons();
+        updateLossChart();
     });
-
+}
+if (accuracyBtn) {
     accuracyBtn.addEventListener("click", () => {
-        accuracyBtn.classList.add("active");
-        lossBtn.classList.remove("active");
+        chartMode = "accuracy";
+        updateMetricButtons();
+        updateLossChart();
+    });
+}
+if (f1Btn) {
+    f1Btn.addEventListener("click", () => {
+        chartMode = "f1";
+        updateMetricButtons();
+        updateLossChart();
     });
 }
 
+initLossChart();
+updateMetricButtons();
 refresh();
 setInterval(refresh, POLL_MS);

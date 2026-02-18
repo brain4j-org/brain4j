@@ -12,6 +12,8 @@ import org.brain4j.math.data.ListDataSource;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,19 +21,18 @@ public class BrainServer extends MiniServer {
 
     private final BrainDashboard dashboard;
     private final ListDataSource trainSet;
-    private final ListDataSource testSet;
     private final TimingMonitor timingMonitor;
     private final EvalMonitor evalMonitor;
+    private final LossRecorder lossRecorder;
     private final int epochs;
-
     private double lastLoss;
 
     public BrainServer(BrainDashboard dashboard, ListDataSource trainSet, ListDataSource testSet, int epochs) {
         this.dashboard = dashboard;
         this.trainSet = trainSet;
-        this.testSet = testSet;
         this.timingMonitor = dashboard.attach(TimingMonitor.class, () -> new TimingMonitor(20));
         this.evalMonitor = dashboard.attach(EvalMonitor.class, () -> new EvalMonitor(testSet, 1, false));
+        this.lossRecorder = dashboard.attach(LossRecorder.class, () -> new LossRecorder(evalMonitor));
         this.epochs = epochs;
     }
 
@@ -63,7 +64,9 @@ public class BrainServer extends MiniServer {
             return Response.json(400, Map.of("message", "Already training"));
         }
 
+        lossRecorder.getRecordedLoss().clear();
         trainer.start(trainSet, epochs);
+
         return Response.ok();
     }
 
@@ -111,17 +114,24 @@ public class BrainServer extends MiniServer {
         double loss = result == null ? 0.0 : result.loss();
         double accuracy = result == null ? 0.0 : result.accuracy();
 
-        var info = Map.of(
-            "training", trainer.isTraining(),
-            "paused", trainer.isPaused(),
-            "epoch", trainer.currentEpoch(),
-            "total_epochs", trainer.totalEpochs(),
-            "batch", trainer.currentBatch(),
-            "total_batches", trainer.totalBatches(),
-            "loss", loss,
-            "accuracy", accuracy,
-            "average_time_per_batch", timingMonitor.averagePerBatch()
+        Map<String, Object> info = new HashMap<>(
+            Map.of(
+                "training", trainer.isTraining(),
+                "paused", trainer.isPaused(),
+                "epoch", trainer.currentEpoch(),
+                "total_epochs", trainer.totalEpochs(),
+                "batch", trainer.currentBatch(),
+                "total_batches", trainer.totalBatches(),
+                "loss", loss,
+                "accuracy", accuracy,
+                "average_time_per_batch", timingMonitor.averagePerBatch()
+            )
         );
+
+        info.put("loss_table", lossRecorder.getRecordedLoss());
+        info.put("accuracy_table", lossRecorder.getRecordedAccuracy());
+        info.put("f1_table", lossRecorder.getRecordedF1());
+
         return Response.json(200, info);
     }
 
