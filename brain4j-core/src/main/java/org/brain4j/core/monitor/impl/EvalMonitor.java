@@ -15,10 +15,18 @@ public class EvalMonitor implements Monitor {
     
     protected final ListDataSource dataSource;
     protected final int evaluationDelay;
-    
+
+    protected EvaluationResult lastRecordedEvaluation;
+    protected boolean logging;
+
     public EvalMonitor(ListDataSource dataSource, int evaluationDelay) {
+        this(dataSource, evaluationDelay, Brain4J.isLogging());
+    }
+
+    public EvalMonitor(ListDataSource dataSource, int evaluationDelay, boolean logging) {
         this.dataSource = dataSource;
         this.evaluationDelay = evaluationDelay;
+        this.logging = logging;
         
         if (evaluationDelay <= 0) {
             throw new IllegalArgumentException("evaluationDelay must be greater than 0. Got: " + evaluationDelay);
@@ -26,19 +34,21 @@ public class EvalMonitor implements Monitor {
     }
     
     @Override
-    public void onEvent(TrainingEvent event) {
-        if (event instanceof EpochEnd(Trainer trainer, int epoch, int total)) {
+    public void onEvent(TrainingEvent event, Trainer trainer) {
+        if (event instanceof EpochEnd(int epoch, int total)) {
             if ((epoch + 1) % evaluationDelay != 0) return;
-            
-            printEvaluation(trainer, epoch, total);
+
+            evaluate(trainer, epoch, total);
         }
     }
     
-    protected void printEvaluation(Trainer trainer, int epoch, int epochs) {
+    protected void evaluate(Trainer trainer, int epoch, int epochs) {
         Model model = trainer.model();
         LossFunction lossFunction = trainer.config().loss();
         EvaluationResult result = model.evaluate(dataSource, lossFunction);
-        
+
+        this.lastRecordedEvaluation = result;
+
         double r2 = result.loss() / result.totalDeviation();
         boolean regression = lossFunction.isRegression();
         
@@ -51,8 +61,13 @@ public class EvalMonitor implements Monitor {
             : Colored.renderText(" | Accuracy: <blue>%.2f%%<reset>", accuracy);
         String secondMetric = regression ? "" : Colored.renderText(" | F1-Score: <green>%.2f%%<reset>", f1);
         String prefix = Colored.renderText("Epoch <yellow>%s<white>/<yellow>%s<white> ", epoch + 1, epochs);
-        
+
+
         String message = prefix + lossMsg + firstMetric + secondMetric + "\n";
         System.out.print("\n\r" + message);
+    }
+
+    public EvaluationResult getEvalResult() {
+        return lastRecordedEvaluation;
     }
 }

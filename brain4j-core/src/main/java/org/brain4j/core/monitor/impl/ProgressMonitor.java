@@ -1,25 +1,14 @@
 package org.brain4j.core.monitor.impl;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.events.*;
 import org.brain4j.core.utils.Colored;
 import org.brain4j.math.commons.Commons;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public final class ProgressMonitor implements Monitor {
+public final class ProgressMonitor extends TimingMonitor {
     
     private static final long PRINT_THRESHOLD = 20 * 1_000_000; // 20 ms in ns
-    
-    private final List<Double> times = new ArrayList<>();
-    private final int timeWindow;
-    
-    private double batchStart;
-    private int epoch;
-    private int totalEpochs;
     private long lastLogTimestamp;
     
     public ProgressMonitor() {
@@ -27,43 +16,24 @@ public final class ProgressMonitor implements Monitor {
     }
     
     public ProgressMonitor(int timeWindow) {
-        this.timeWindow = timeWindow;
+        super(timeWindow);
     }
     
     @Override
-    public void onEvent(TrainingEvent event) {
+    public void onEvent(TrainingEvent event, Trainer trainer) {
+        super.onEvent(event, trainer);
         switch (event) {
-            case BatchStart ignored -> this.batchStart = System.nanoTime();
-            case BatchEnd(Trainer trainer, int batch, int totalBatches) -> batchCompleted(batch, totalBatches);
-            case EpochStart(Trainer trainer, int epoch, int totalEpochs) -> epochStarted(epoch, totalEpochs);
+            case BatchEnd(int batch, int totalBatches) -> batchCompleted(batch, totalBatches);
             case TrainingEnd() -> trainingEnd();
             default -> {}
         }
     }
     
     private void batchCompleted(int batch, int total) {
-        double end = System.nanoTime();
-        double took = (end - batchStart) / 1e6;
-        
-        times.add(took);
-        
-        if (times.size() > timeWindow) {
-            times.removeFirst();
-        }
-        
-        double totalTime = times.stream().reduce(Double::sum).orElse(0.0);
-        double average = totalTime / Math.min(batch + 1, timeWindow);
-        
         if (Brain4J.isLogging()) {
-            printProgress(batch + 1, total, average);
+            printProgress(batch + 1, total, averagePerBatch());
         }
     }
-    
-    public void epochStarted(int epoch, int total) {
-        this.epoch = epoch;
-        this.totalEpochs = total;
-    }
-    
     private void trainingEnd() {
         if (!Brain4J.isLogging()) return;
         
@@ -91,7 +61,7 @@ public final class ProgressMonitor implements Monitor {
         ) + " ";
         String progress = Colored.renderText(progressBar);
         
-        String intro = Colored.renderText("Epoch <yellow>%s<white>/<yellow>%s ", epoch + 1, totalEpochs);
+        String intro = Colored.renderText("Epoch <yellow>%s<white>/<yellow>%s ", currentEpoch + 1, totalEpochs);
         String batches = Colored.renderText("<blue>%s<white>/<blue>%s <white>batches", batch, totalBatches);
         String time = Colored.renderText("<gray> [%s/batch]<reset>", timeStr);
         

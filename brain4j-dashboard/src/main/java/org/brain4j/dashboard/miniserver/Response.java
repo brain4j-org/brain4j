@@ -25,7 +25,19 @@ public class Response {
         r.headers.put("Content-Type", "application/json");
         return r;
     }
-    
+
+    public static Response html(int status, String body) {
+        Response r = new Response();
+        r.status = status;
+        r.body = body.getBytes(StandardCharsets.UTF_8);
+        r.headers.put("Content-Type", "text/html; charset=utf-8");
+        return r;
+    }
+
+    public static Response ok() {
+        return text(200, "");
+    }
+
     public Response addHeader(String key, String value) {
         headers.put(key, value);
         return this;

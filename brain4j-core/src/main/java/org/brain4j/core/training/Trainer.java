@@ -18,14 +18,26 @@ public interface Trainer {
     static DefaultTrainer of(Model model, TrainingConfig config, List<Monitor> monitors) {
         return new DefaultTrainer(model, config, monitors);
     }
-    
+
+    <T extends Monitor> T getMonitor(Class<T> monitorClass);
+    <T extends Monitor> void attach(T monitor);
+
+    Thread start(ListDataSource dataSource, int epochs);
     void fit(ListDataSource dataSource, int epochs);
-    void fit(ListDataSource dataSource);
-    void fitBatch(Batch batch, int index, int totalBatches);
+    void pause();
+    void resume();
+    void stop();
+    boolean isTraining();
+    boolean isPaused();
 
     Tensor[] forward(StatesCache cache, Tensor[] inputs);
     void backward(StatesCache cache, Batch batch, Tensor[] outputs);
     void resetGrad();
+
+    int currentEpoch();
+    int currentBatch();
+    int totalEpochs();
+    int totalBatches();
 
     TrainingConfig config();
     Model model();

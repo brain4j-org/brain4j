@@ -13,13 +13,24 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class DefaultTrainer implements Trainer {
     
     private final Model model;
     private final TrainingConfig config;
-    private final List<Monitor> monitors;
+    private final Map<Class<? extends Monitor>, Monitor> monitors;
+    private final Object trainingLock = new Object();
+
+    private volatile boolean training;
+    private volatile boolean paused;
+    private volatile boolean stopRequested;
+    private volatile int currentEpoch = -1;
+    private volatile int currentBatch = -1;
+    private volatile int totalEpochs = -1;
+    private volatile int totalBatches = -1;
     
     DefaultTrainer(Model model, TrainingConfig config, List<Monitor> monitors) {
         if (model == null) throw new IllegalArgumentException("Model cannot be null!");
@@ -30,40 +41,185 @@ public final class DefaultTrainer implements Trainer {
         
         this.model = model;
         this.config = config;
-        this.monitors = monitors;
+        this.monitors = new HashMap<>();
+
+        monitors.forEach(m -> this.monitors.put(m.getClass(), m));
     }
-    
+
+    @Override
+    public <T extends Monitor> T getMonitor(Class<T> monitorClass) {
+        return (T) monitors.get(monitorClass);
+    }
+
+    @Override
+    public <T extends Monitor> void attach(T monitor) {
+        monitors.put(monitor.getClass(), monitor);
+    }
+
+    @Override
+    public Thread start(ListDataSource dataSource, int epochs) {
+        if (dataSource == null) throw new IllegalArgumentException("Data source cannot be null!");
+        if (epochs <= 0) throw new IllegalArgumentException("Epochs must be greater than 0. Got: " + epochs);
+
+        synchronized (trainingLock) {
+            if (training) {
+                throw new IllegalStateException("The model is already being trained!");
+            }
+
+            training = true;
+            paused = false;
+            stopRequested = false;
+        }
+
+        Thread thread = new Thread(() -> {
+            try {
+                runTraining(dataSource, epochs);
+            } finally {
+                finishTraining();
+            }
+        }, "brain4j-trainer-thread");
+
+        thread.start();
+        return thread;
+    }
+
+    @Override
     public void fit(ListDataSource dataSource, int epochs) {
+        if (dataSource == null) throw new IllegalArgumentException("Data source cannot be null!");
+        if (epochs <= 0) throw new IllegalArgumentException("Epochs must be greater than 0. Got: " + epochs);
+
+        synchronized (trainingLock) {
+            if (training) {
+                throw new IllegalStateException("The model is already being trained!");
+            }
+
+            training = true;
+            paused = false;
+            stopRequested = false;
+        }
+
+        try {
+            runTraining(dataSource, epochs);
+        } finally {
+            finishTraining();
+        }
+    }
+
+    @Override
+    public void pause() {
+        synchronized (trainingLock) {
+            if (!training) {
+                throw new IllegalStateException("The model is not being trained!");
+            }
+
+            paused = true;
+        }
+    }
+
+    @Override
+    public void resume() {
+        synchronized (trainingLock) {
+            if (!training) {
+                throw new IllegalStateException("The model is not being trained!");
+            }
+
+            if (!paused) return;
+
+            paused = false;
+            trainingLock.notifyAll();
+        }
+    }
+
+    @Override
+    public void stop() {
+        synchronized (trainingLock) {
+            if (!training) return;
+
+            stopRequested = true;
+            paused = false;
+            trainingLock.notifyAll();
+        }
+    }
+
+    @Override
+    public boolean isTraining() {
+        return training;
+    }
+
+    @Override
+    public boolean isPaused() {
+        return paused;
+    }
+
+    @Override
+    public int currentEpoch() {
+        return currentEpoch;
+    }
+
+    @Override
+    public int currentBatch() {
+        return currentBatch;
+    }
+
+    @Override
+    public int totalEpochs() {
+        return totalEpochs;
+    }
+
+    @Override
+    public int totalBatches() {
+        return totalBatches;
+    }
+
+    private void runTraining(ListDataSource dataSource, int epochs) {
+        totalEpochs = epochs;
+
         for (int i = 0; i < epochs; i++) {
+            if (shouldStop()) break;
             fitEpoch(dataSource, i, epochs);
         }
-        
-        monitors.forEach(x -> x.onEvent(new TrainingEnd()));
     }
-    
-    public void fit(ListDataSource dataSource) {
-        fitEpoch(dataSource, 0, 1);
-        monitors.forEach(x -> x.onEvent(new TrainingEnd()));
+
+    private void finishTraining() {
+        synchronized (trainingLock) {
+            training = false;
+            paused = false;
+            stopRequested = false;
+            currentEpoch = -1;
+            currentBatch = -1;
+            totalEpochs = -1;
+            totalBatches = -1;
+            trainingLock.notifyAll();
+        }
+
+        monitors.forEach((k, x) -> x.onEvent(new TrainingEnd(), this));
     }
     
     private void fitEpoch(ListDataSource dataSource, int index, int total) {
-        EpochStart epochStart = new EpochStart(this, index, total);
-        monitors.forEach(x -> x.onEvent(epochStart));
+        currentEpoch = index;
+        currentBatch = -1;
+
+        EpochStart epochStart = new EpochStart(index, total);
+        monitors.forEach((k, x) -> x.onEvent(epochStart, this));
         
         dataSource.reset();
         int totalBatches = dataSource.getBatches();
+        this.totalBatches = totalBatches;
         
         while (dataSource.hasNext()) {
+            if (shouldStop()) break;
+
             int cursor = dataSource.getCursor();
+            currentBatch = cursor;
             Batch batch = dataSource.nextBatch().to(model.getDevice());
             
             BatchStart batchStart = new BatchStart(this, cursor, totalBatches);
-            monitors.forEach(x -> x.onEvent(batchStart));
+            monitors.forEach((k, x) -> x.onEvent(batchStart, this));
             
-            fitBatch(batch, cursor, totalBatches);
+            fitBatch(batch);
             
-            BatchEnd end = new BatchEnd(this, cursor, totalBatches);
-            monitors.forEach(x -> x.onEvent(end));
+            BatchEnd end = new BatchEnd(cursor, totalBatches);
+            monitors.forEach((k, x) -> x.onEvent(end, this));
         }
         
         Optimizer optimizer = config.optimizer();
@@ -71,11 +227,28 @@ public final class DefaultTrainer implements Trainer {
         
         updater.postFit(optimizer.getLearningRate(), dataSource.getSize());
         
-        EpochEnd end = new EpochEnd(this, index, total);
-        monitors.forEach(x -> x.onEvent(end));
+        EpochEnd end = new EpochEnd(index, total);
+        monitors.forEach((k, x) -> x.onEvent(end, this));
+    }
+
+    private boolean shouldStop() {
+        synchronized (trainingLock) {
+            while (paused && !stopRequested) {
+                try {
+                    trainingLock.wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    stopRequested = true;
+                    paused = false;
+                    break;
+                }
+            }
+
+            return stopRequested;
+        }
     }
     
-    public void fitBatch(Batch batch, int cursor, int totalBatches) {
+    private void fitBatch(Batch batch) {
         Tensor[] inputs = batch.getFirst();
         
         SiliconDevice device = model.getDevice();
@@ -140,6 +313,6 @@ public final class DefaultTrainer implements Trainer {
     
     @Override
     public List<Monitor> monitors() {
-        return monitors;
+        return monitors.values().stream().toList();
     }
 }

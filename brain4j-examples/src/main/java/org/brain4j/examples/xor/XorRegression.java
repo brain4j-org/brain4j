@@ -1,8 +1,10 @@
 package org.brain4j.examples.xor;
 
 import org.brain4j.core.Brain4J;
+import org.brain4j.core.importing.format.impl.BrainAdapter;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
@@ -35,12 +37,12 @@ public class XorRegression {
         );
         
         Model model = specs.compile(42);
-        SiliconDevice device = Brain4J.firstDevice();
+        SiliconDevice device = null;
 
         if (device != null) {
             System.out.println("Using device " + device.getName());
-            model = model.fork(device);
-            dataSource = dataSource.to(device);
+//            model = model.fork(device);
+//            dataSource = dataSource.to(device);
         }
         
         TrainingConfig config = TrainingConfig.of(
@@ -53,7 +55,10 @@ public class XorRegression {
         );
 
         Trainer trainer = Trainer.of(model, config, monitors);
-        trainer.fit(dataSource, 50);
+        // trainer.fit(dataSource, 50);
+
+        BrainDashboard dashboard = new BrainDashboard(model, trainer);
+        dashboard.launch(dataSource, dataSource, 50, 8080);
     }
     
     private static List<Sample> getSamples() {

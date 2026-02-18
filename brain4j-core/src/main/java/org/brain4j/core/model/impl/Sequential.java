@@ -90,9 +90,11 @@ public class Sequential implements Model, ModelBlock {
     public EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction) {
         int classes = Math.max(2, dataSource.getSamples().getFirst().getLabel(0).elements());
         Map<Integer, Tensor> classifications = new HashMap<>();
-        
-        for (int i = 0; i < classes; i++) {
-            classifications.put(i, Tensors.zeros(classes));
+
+        if (!lossFunction.isRegression()) {
+            for (int i = 0; i < classes; i++) {
+                classifications.put(i, Tensors.zeros(classes));
+            }
         }
         
         AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);

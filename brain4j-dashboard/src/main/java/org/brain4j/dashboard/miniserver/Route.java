@@ -6,4 +6,5 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 public @interface Route {
     String value();
+    HttpMethod[] accepted() default { HttpMethod.GET };
 }

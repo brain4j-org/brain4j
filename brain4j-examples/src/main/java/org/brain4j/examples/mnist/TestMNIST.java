@@ -8,6 +8,7 @@ import org.brain4j.core.layer.impl.convolutional.ConvLayer;
 import org.brain4j.core.layer.impl.utility.ActivationLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.layer.impl.utility.ReshapeLayer;
+import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelBlock;
@@ -39,20 +40,19 @@ public class TestMNIST {
     }
     
     private void start() throws IOException {
-        SiliconDevice device = Brain4J.firstDevice();
-        
         ListDataSource trainSource = getSource("mnist/mnist-train.csv");
         ListDataSource testSource = getSource("mnist/mnist-test.csv");
         
-        ModelSpecs specs = getCNNSpecs();
+        ModelSpecs specs = getMLPSpecs();
         Model model = specs.compile(42);
         model.summary(); // prints a summary of the architecture on the console
-        
-        if (device != null) {
-            model = model.fork(device);
-            trainSource = trainSource.to(device);
-            testSource = testSource.to(device);
-        }
+
+//        SiliconDevice device = Brain4J.firstDevice();
+//        if (device != null) {
+//            model = model.fork(device);
+//            trainSource = trainSource.to(device);
+//            testSource = testSource.to(device);
+//        }
         
         TrainingConfig config = TrainingConfig.of(
             new CrossEntropy(),
@@ -65,9 +65,12 @@ public class TestMNIST {
         );
         
         Trainer trainer = Trainer.of(model, config, monitors);
-        trainer.fit(trainSource, 50);
+
+        BrainDashboard dashboard = new BrainDashboard(model, trainer);
+        dashboard.launch(trainSource, testSource, 50, 8080);
+        //trainer.fit(trainSource, 50);
         
-        ModelZoo.saveModel(model, new File("mnist-100k.csv"));
+        // ModelZoo.saveModel(model, new File("mnist-100k.csv"));
     }
     
     private ModelSpecs getCNNSpecs() {
