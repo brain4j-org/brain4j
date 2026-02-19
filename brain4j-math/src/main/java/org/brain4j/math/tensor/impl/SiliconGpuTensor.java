@@ -144,8 +144,7 @@ public class SiliconGpuTensor extends BaseTensor {
             ComputeModule activationsModule = compiler.compileFromResource("slang/activations.slang");
             ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
             ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
-
-
+            
             SiliconContext.storeModule(device, "matmul", matmul);
             SiliconContext.storeModule(device, "concat", concat);
 
@@ -181,7 +180,7 @@ public class SiliconGpuTensor extends BaseTensor {
             };
             SiliconContext.registerAll(device, gradientClipModule, gradientClipKernels);
 
-            String[] convolutionKernels = { "conv2d_nchw", "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw" };
+            String[] convolutionKernels = { "conv2d_nchw", "conv2d_nchw_shared", "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw" };
             SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to initialize GPU kernels", e);
@@ -909,14 +908,31 @@ public class SiliconGpuTensor extends BaseTensor {
         SiliconGpuTensor out = new SiliconGpuTensor(device, new int[] { batch, numFilters, outHeight, outWidth });
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
-            ComputeSize localSize = new ComputeSize(16, 16, 1);
-            ComputeSize globalSize = new ComputeSize(
-                roundUp(outWidth),
-                roundUp(outHeight * numFilters),
-                Math.max(1, batch)
-            );
-
-            SiliconKernel.create(device, "conv2d_nchw")
+            String kernel = "conv2d_nchw_shared";
+            int tile = 16;
+            
+            ComputeSize localSize = new ComputeSize(tile, tile, 1);
+            ComputeSize globalSize;
+            
+            if (kernel == "conv2d_nchw_shared") {
+                int groupsX = (outWidth + tile - 1) / tile;
+                int groupsY = (outHeight + tile - 1) / tile;
+                int groupsZ = batch * numFilters;
+                
+                globalSize = new ComputeSize(
+                    groupsX * tile,
+                    groupsY * tile,
+                    groupsZ
+                );
+            } else {
+                globalSize = new ComputeSize(
+                    roundUp(outWidth),
+                    roundUp(outHeight * numFilters),
+                    Math.max(1, batch)
+                );
+            }
+            
+            SiliconKernel.create(device, kernel)
                 .buffer(A.dataBuffer)
                 .buffer(B.dataBuffer)
                 .buffer(out.dataBuffer)
