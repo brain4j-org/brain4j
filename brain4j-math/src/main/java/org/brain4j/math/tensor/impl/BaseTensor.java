@@ -511,7 +511,6 @@ public abstract class BaseTensor implements Tensor, Cloneable {
             return this;
         }
         
-        // TODO: GPU kernel
         int targetRank = targetShape.length;
         int srcRank = shape.length;
 

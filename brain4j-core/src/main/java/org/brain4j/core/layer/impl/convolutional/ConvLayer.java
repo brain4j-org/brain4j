@@ -18,7 +18,7 @@ public class ConvLayer extends Layer {
     private int filters;
     private int kernelWidth;
     private int kernelHeight;
-    private int stride = 1; // TODO: configurable
+    private int stride = 1;
     private int padding = 0; // TODO: configurable
     
     private ConvLayer() {
