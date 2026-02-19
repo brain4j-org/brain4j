@@ -135,36 +135,37 @@ public class SiliconGpuTensor extends BaseTensor {
             // JIT compiles the kernels
             SlangCompiler compiler = new SlangCompiler(device.getContext());
 
+            ComputeModule matmul = compiler.compileFromResource("slang/matmul.slang");
+            ComputeModule concat = compiler.compileFromResource("slang/concat.slang");
             // we need 2 tensor ops modules because of a Metal compile bug on Slang
-
             ComputeModule tensorOps1Module = compiler.compileFromResource("slang/tensor_ops_1.slang");
             ComputeModule tensorOps2Module = compiler.compileFromResource("slang/tensor_ops_2.slang");
             ComputeModule elementaryOpsModule = compiler.compileFromResource("slang/elementary_ops.slang");
             ComputeModule activationsModule = compiler.compileFromResource("slang/activations.slang");
             ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
-            // ComputeModule flashAttentionModule = compiler.compileFromResource("slang/flash_attention.slang");
+            ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
 
-            // ComputeModule fftModule = compiler.compileFromResource("slang/fft.slang");
-             ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
-            // ComputeModule complexOpsModule = compiler.compileFromResource("slang/complex_ops.slang");
+
+            SiliconContext.storeModule(device, "matmul", matmul);
+            SiliconContext.storeModule(device, "concat", concat);
 
             SiliconContext.storeModule(device, "tensor_ops_1", tensorOps1Module);
             SiliconContext.storeModule(device, "tensor_ops_2", tensorOps2Module);
             SiliconContext.storeModule(device, "elementary_ops", elementaryOpsModule);
             SiliconContext.storeModule(device, "activations", activationsModule);
             SiliconContext.storeModule(device, "gradient_clippers", gradientClipModule);
-            // SiliconContext.storeModule(device, "flash_attention", flashAttentionModule);
-            // SiliconContext.storeModule(device, "fft", fftModule);
-            // SiliconContext.storeModule(device, "convolution", convolutionModule);
-            // SiliconContext.storeModule(device, "complex_ops", complexOpsModule);
 
-            String[] tensorOps1Kernels = {
-                "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b",
-                "matmul", "matmul_batched", "layer_norm", "broadcast_to"
-            };
-            String[] tensorOps2Kernels = {
-                "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim"
-            };
+            SiliconContext.register(device, "activation_forward", activationsModule);
+            SiliconContext.register(device, "activation_backward", activationsModule);
+
+            String[] matmulKernels = { "matmul", "matmul_batched" };
+            String[] concatKernels = { "concat_last_dim", "concat_copy_a", "concat_copy_b" };
+
+            SiliconContext.registerAll(device, matmul, matmulKernels);
+            SiliconContext.registerAll(device, concat, concatKernels);
+
+            String[] tensorOps1Kernels = { "slice", "layer_norm", "broadcast_to" };
+            String[] tensorOps2Kernels = { "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim" };
             SiliconContext.registerAll(device, tensorOps1Module, tensorOps1Kernels);
             SiliconContext.registerAll(device, tensorOps2Module, tensorOps2Kernels);
 
@@ -173,40 +174,15 @@ public class SiliconGpuTensor extends BaseTensor {
                 "div_scalar", "pow_scalar", "sqrt_op"
             };
             SiliconContext.registerAll(device, elementaryOpsModule, scalarKernels);
-            SiliconContext.register(device, "activation_forward", activationsModule);
-            SiliconContext.register(device, "activation_backward", activationsModule);
 
             String[] gradientClipKernels = {
-                "hard_clip", "l2_clip",
-                "l2_norm_squared_reduce", "l2_norm_squared_final",
+                "hard_clip", "l2_clip", "l2_norm_squared_reduce", "l2_norm_squared_final",
                 "l2_norm_squared_single_block", "l2_norm_sqrt", "compute_l2_clip_scale"
             };
             SiliconContext.registerAll(device, gradientClipModule, gradientClipKernels);
 
-            String[] flashAttentionKernels = {
-                "flash_attention_forward", "flash_attention_forward_with_lse",
-                "flash_attention_backward", "flash_attention_backward_dq",
-                "flash_attention_forward_tiled", "flash_attention_backward_tiled"
-            };
-            // SiliconContext.registerAll(device, flashAttentionModule, flashAttentionKernels);
-
-            String[] fftKernels = {
-                "fft1d", "bit_reverse_permute", "fft_butterfly_stage", "fft_normalize",
-                "fft2d_rows", "fft2d_transpose", "fft2d_copy"
-            };
-            // SiliconContext.registerAll(device, fftModule, fftKernels);
-
-            String[] convolutionKernels = {
-                "conv2d_nchw",
-                "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw"
-            };
-             SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
-
-            String[] complexKernels = {
-                "complex_pointwise_mul", "complex_pointwise_add"
-            };
-            // SiliconContext.registerAll(device, complexOpsModule, complexKernels);
-
+            String[] convolutionKernels = { "conv2d_nchw", "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw" };
+            SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to initialize GPU kernels", e);
         }
