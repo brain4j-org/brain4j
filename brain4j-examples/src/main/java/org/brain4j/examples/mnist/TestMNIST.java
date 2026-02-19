@@ -43,7 +43,7 @@ public class TestMNIST {
         ListDataSource trainSource = getSource("mnist/mnist-train.csv");
         ListDataSource testSource = getSource("mnist/mnist-test.csv");
         
-        ModelSpecs specs = getMLPSpecs();
+        ModelSpecs specs = getCNNSpecs();
         Model model = specs.compile(42);
         model.summary(); // prints a summary of the architecture on the console
 
@@ -68,9 +68,6 @@ public class TestMNIST {
 
         BrainDashboard dashboard = new BrainDashboard(model, trainer);
         dashboard.launch(trainSource, testSource, 50, 8080);
-        //trainer.fit(trainSource, 50);
-        
-        // ModelZoo.saveModel(model, new File("mnist-100k.csv"));
     }
     
     private ModelSpecs getCNNSpecs() {
@@ -115,6 +112,6 @@ public class TestMNIST {
             samples.add(new Sample(input, output));
         }
         
-        return new ListDataSource(samples, false, 128);
+        return new ListDataSource(samples, true, 128);
     }
 }

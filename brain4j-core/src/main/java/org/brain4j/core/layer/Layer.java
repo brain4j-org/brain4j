@@ -213,6 +213,12 @@ public abstract class Layer implements ModelBlock, Cloneable {
     }
 
     protected Tensor toPersistentTensor(Tensor tensor, SiliconDevice device) {
+        if (device == null) {
+            Tensor result = tensor.to(null);
+            result.setAutogradContext(tensor.getAutogradContext());
+            return result;
+        }
+        
         if (tensor instanceof SiliconGpuTensor gpuTensor && gpuTensor.getDevice().equals(device)) {
             return gpuTensor;
         }

@@ -912,8 +912,8 @@ public class SiliconGpuTensor extends BaseTensor {
             ComputeSize localSize = new ComputeSize(16, 16, 1);
             ComputeSize globalSize = new ComputeSize(
                 roundUp(outWidth),
-                roundUp(outHeight),
-                Math.max(1, batch * numFilters)
+                roundUp(outHeight * numFilters),
+                Math.max(1, batch)
             );
 
             SiliconKernel.create(device, "conv2d_nchw")

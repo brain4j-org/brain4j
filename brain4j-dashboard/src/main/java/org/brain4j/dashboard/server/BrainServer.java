@@ -179,6 +179,7 @@ public class BrainServer extends MiniServer {
                 "path", modelFile.getAbsolutePath()
             ));
         } catch (Exception ex) {
+            ex.printStackTrace(System.err);
             return Response.json(500, Map.of(
                 "message", "Model save failed",
                 "error", String.valueOf(ex.getMessage())

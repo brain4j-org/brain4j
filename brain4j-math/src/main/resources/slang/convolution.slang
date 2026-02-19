@@ -1,7 +1,7 @@
 [shader("compute")]
 [numthreads(16, 16, 1)]
 void conv2d_nchw_shared(
-    uint3 dispatchThreadID: SV_DispatchThreadID,
+    uint3 id: SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
     uniform StructuredBuffer<float> kernel,
     uniform RWStructuredBuffer<float> output,
@@ -26,7 +26,7 @@ void conv2d_nchw_shared(
 [shader("compute")]
 [numthreads(16, 16, 1)]
 void conv2d_nchw(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uint3 id : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
     uniform StructuredBuffer<float> kernel,
     uniform RWStructuredBuffer<float> output,
@@ -42,54 +42,57 @@ void conv2d_nchw(
     // conv/out info
     uniform int stride,
     uniform int outHeight,
-    uniform int outWidth
+    uniform int outWidth,
 )
 {
-    int outX = dispatchThreadID.x;
-    int outY = dispatchThreadID.y;
-    int bf = dispatchThreadID.z;
+    int outX = id.x;
+    int combinedY = id.y;
+    int b = id.z;
 
-    if (outX >= outWidth || outY >= outHeight) return;
-    if (bf >= batchSize * numFilters) return;
+    if (outX >= outWidth || b >= batchSize) return;
 
-    int b = bf / numFilters;
-    int f = bf % numFilters;
+    int f = combinedY / outHeight;
+    int outY = combinedY % outHeight;
 
-    int batchStride = b * inChannels;
-    int filterStride = f * inChannels;
+    if (f >= numFilters || outY >= outHeight) return;
 
     float sum = 0.0f;
-    int outYStride = outY * stride;
-    int outXStride = outX * stride;
 
-    for (int c = 0; c < inChannels; c++) {
-        int channelBStride = (batchStride + c) * inHeight;
-        int channelFStride = (filterStride + c) * kernelHeight;
+    int baseInputBatch = b * inChannels;
+    int baseKernelFilter = f * inChannels;
 
-        for (int ky = 0; ky < kernelHeight; ky++) {
-            int iy = outYStride + ky;
-            int inputStride = (channelBStride + iy) * inWidth;
-            int kernelStride = (channelFStride + ky) * kernelWidth;
+    int inYBase = outY * stride;
+    int inXBase = outX * stride;
 
-            for (int kx = 0; kx < kernelWidth; kx++) {
-                int ix = outXStride + kx;
+    for (int c = 0; c < inChannels; c++)
+    {
+        int inputChannelOffset = (baseInputBatch + c) * inHeight;
+        int kernelChannelOffset = (baseKernelFilter + c) * kernelHeight;
 
-                int inputIdx = inputStride + ix;
-                int kernelIdx = kernelStride + kx;
+        for (int ky = 0; ky < kernelHeight; ky++)
+        {
+            int iy = inYBase + ky;
+            int inputRow = (inputChannelOffset + iy) * inWidth;
+            int kernelRow = (kernelChannelOffset + ky) * kernelWidth;
 
-                sum += input[inputIdx] * kernel[kernelIdx];
+            for (int kx = 0; kx < kernelWidth; kx++)
+            {
+                int ix = inXBase + kx;
+                sum += input[inputRow + ix] * kernel[kernelRow + kx];
             }
         }
     }
 
-    int outputIdx = ((b * numFilters + f) * outHeight + outY) * outWidth + outX;
+    int outputIdx =
+        ((b * numFilters + f) * outHeight + outY) * outWidth + outX;
+
     output[outputIdx] = sum;
 }
 
 [shader("compute")]
 [numthreads(16, 16, 1)]
 void conv2d_backward_input_nchw(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uint3 id : SV_DispatchThreadID,
     uniform StructuredBuffer<float> gradOutput,
     uniform StructuredBuffer<float> kernel,
     uniform RWStructuredBuffer<float> gradInput,
@@ -105,34 +108,39 @@ void conv2d_backward_input_nchw(
     uniform int outWidth
 )
 {
-    int inX = dispatchThreadID.x;
-    int inY = dispatchThreadID.y;
-    int bc = dispatchThreadID.z;
+    int inX = id.x;
+    int combinedY = id.y;
+    int b = id.z;
 
-    if (inX >= inWidth || inY >= inHeight) return;
-    if (bc >= batchSize * inChannels) return;
+    if (inX >= inWidth || b >= batchSize) return;
 
-    int b = bc / inChannels;
-    int c = bc % inChannels;
+    int c = combinedY / inHeight;
+    int inY = combinedY % inHeight;
+
+    if (c >= inChannels || inY >= inHeight) return;
 
     float sum = 0.0f;
 
-    for (int f = 0; f < numFilters; f++) {
-        for (int ky = 0; ky < kernelHeight; ky++) {
+    for (int f = 0; f < numFilters; f++)
+    {
+        for (int ky = 0; ky < kernelHeight; ky++)
+        {
             int oyNumerator = inY - ky;
             if (oyNumerator < 0 || (oyNumerator % stride) != 0) continue;
 
             int oy = oyNumerator / stride;
-            if (oy < 0 || oy >= outHeight) continue;
+            if (oy >= outHeight) continue;
 
-            for (int kx = 0; kx < kernelWidth; kx++) {
+            for (int kx = 0; kx < kernelWidth; kx++)
+            {
                 int oxNumerator = inX - kx;
                 if (oxNumerator < 0 || (oxNumerator % stride) != 0) continue;
 
                 int ox = oxNumerator / stride;
-                if (ox < 0 || ox >= outWidth) continue;
+                if (ox >= outWidth) continue;
 
                 int gradOutIdx = ((b * numFilters + f) * outHeight + oy) * outWidth + ox;
+
                 int kernelIdx = ((f * inChannels + c) * kernelHeight + ky) * kernelWidth + kx;
 
                 sum += gradOutput[gradOutIdx] * kernel[kernelIdx];
@@ -141,13 +149,14 @@ void conv2d_backward_input_nchw(
     }
 
     int gradInputIdx = ((b * inChannels + c) * inHeight + inY) * inWidth + inX;
+
     gradInput[gradInputIdx] = sum;
 }
 
 [shader("compute")]
 [numthreads(16, 16, 1)]
 void conv2d_backward_filter_nchw(
-    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uint3 id : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
     uniform StructuredBuffer<float> gradOutput,
     uniform RWStructuredBuffer<float> gradFilter,
@@ -163,26 +172,31 @@ void conv2d_backward_filter_nchw(
     uniform int outWidth
 )
 {
-    int kx = dispatchThreadID.x;
-    int ky = dispatchThreadID.y;
-    int fc = dispatchThreadID.z;
+    int kx = id.x;
+    int combinedY = id.y;
+    int f = id.z;
 
-    if (kx >= kernelWidth || ky >= kernelHeight) return;
-    if (fc >= numFilters * inChannels) return;
+    if (kx >= kernelWidth || f >= numFilters) return;
 
-    int f = fc / inChannels;
-    int c = fc % inChannels;
+    int c = combinedY / kernelHeight;
+    int ky = combinedY % kernelHeight;
+
+    if (c >= inChannels || ky >= kernelHeight) return;
 
     float sum = 0.0f;
 
-    for (int b = 0; b < batchSize; b++) {
-        for (int oy = 0; oy < outHeight; oy++) {
+    for (int b = 0; b < batchSize; b++)
+    {
+        for (int oy = 0; oy < outHeight; oy++)
+        {
             int inY = oy * stride + ky;
 
-            for (int ox = 0; ox < outWidth; ox++) {
+            for (int ox = 0; ox < outWidth; ox++)
+            {
                 int inX = ox * stride + kx;
 
                 int inputIdx = ((b * inChannels + c) * inHeight + inY) * inWidth + inX;
+
                 int gradOutIdx = ((b * numFilters + f) * outHeight + oy) * outWidth + ox;
 
                 sum += input[inputIdx] * gradOutput[gradOutIdx];
@@ -191,5 +205,6 @@ void conv2d_backward_filter_nchw(
     }
 
     int gradFilterIdx = ((f * inChannels + c) * kernelHeight + ky) * kernelWidth + kx;
+
     gradFilter[gradFilterIdx] = sum;
 }

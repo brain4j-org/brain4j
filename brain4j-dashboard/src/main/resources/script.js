@@ -1,4 +1,5 @@
 const POLL_MS = 200;
+const HTTP_TIMEOUT_MS = 3000;
 
 const lossBtn = document.getElementById("lossBtn");
 const accuracyBtn = document.getElementById("accuracyBtn");
@@ -13,6 +14,7 @@ const saveBtn = document.getElementById("saveBtn");
 const lossChartCanvas = document.getElementById("lossChart");
 let lossChart = null;
 let chartMode = "loss";
+let refreshInFlight = false;
 let latestTables = {
     loss_table: {},
     accuracy_table: {},
@@ -86,7 +88,16 @@ function setProgress(bar, percent) {
 }
 
 async function api(path, method = "GET") {
-    const response = await fetch(path, { method });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS);
+
+    let response;
+    try {
+        response = await fetch(path, { method, signal: controller.signal });
+    } finally {
+        clearTimeout(timeoutId);
+    }
+
     if (!response.ok) throw new Error(`${path} -> ${response.status}`);
     return response.json();
 }
@@ -287,15 +298,17 @@ function updateSystemResources(resources) {
 }
 
 async function refresh() {
+    if (refreshInFlight) return;
+    refreshInFlight = true;
     try {
-        const [info, resources] = await Promise.all([
-            api("/api/training/info"),
-            api("/api/system/resources")
-        ]);
+        const info = await api("/api/training/info");
+        const resources = await api("/api/system/resources");
         updateTrainingInfo(info);
         updateSystemResources(resources);
     } catch (err) {
         console.error("Dashboard refresh failed:", err);
+    } finally {
+        refreshInFlight = false;
     }
 }
 
@@ -342,10 +355,10 @@ async function saveModel() {
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-            throw new Error(payload.message || `Errore HTTP ${response.status}`);
+            throw new Error(payload.message || `Error HTTP ${response.status}`);
         }
 
-        alert(`Modello saved in:\n${payload.path || fullPath}`);
+        alert(`Model saved in:\n${payload.path || fullPath}`);
     } catch (err) {
         console.error("Model save failed:", err);
         alert(`Save failed: ${err.message || err}`);

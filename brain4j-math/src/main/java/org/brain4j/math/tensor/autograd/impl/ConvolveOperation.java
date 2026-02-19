@@ -75,14 +75,14 @@ public record ConvolveOperation(int stride) implements Operation {
 
         ComputeSize gradInputGlobal = new ComputeSize(
             roundUp(inWidth, tile),
-            roundUp(inHeight, tile),
-            Math.max(1, batch * inChannels)
+            roundUp(inHeight * inChannels, tile),
+            Math.max(1, batch)
         );
 
         ComputeSize gradFilterGlobal = new ComputeSize(
             roundUp(kernelWidth, tile),
-            roundUp(kernelHeight, tile),
-            Math.max(1, numFilters * inChannels)
+            roundUp(kernelHeight * inChannels, tile),
+            Math.max(1, numFilters)
         );
 
         try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {

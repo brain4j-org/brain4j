@@ -64,7 +64,9 @@ public abstract class MiniServer {
                         response.status(),
                         respBody.length
                     );
-
+                    
+                    if (respBody.length == 0) return;
+                    
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(response.body());
                     }
