@@ -41,10 +41,12 @@ public class BrainAdapter implements BinaryAdapter {
     }
     
     @Override
-    public void serialize(Model input, File file) {
+    public void serialize(Model model, File file) {
+        if (model.getDevice() != null) model = model.fork(null);
+        
         Map<String, Tensor> weights = new HashMap<>();
         
-        byte[] metadata = buildMetadata(input, weights);
+        byte[] metadata = buildMetadata(model, weights);
         byte[] weightData = buildWeights(weights);
         
         writeZip(file, Map.of(

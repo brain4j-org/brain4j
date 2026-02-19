@@ -24,12 +24,14 @@ public class SiliconDevice {
     private final MemoryPool<TensorKey> memoryPool;
     private final List<Pooled> pooledQueue;
     private ComputeQueue queue;
+    private Thread threadContext;
 
     public SiliconDevice(int deviceIndex) {
         try {
             this.deviceIndex = deviceIndex;
             this.device = Silicon.createDevice(deviceIndex);
             this.context = device.createContext();
+            this.threadContext = Thread.currentThread();
             this.queue = context.createQueue();
             this.name = device.name();
             this.memoryPool = context.createPool();
@@ -42,8 +44,18 @@ public class SiliconDevice {
     public SiliconDevice() {
         this(0);
     }
+    
+    private void ensureSameThread() {
+        Thread current = Thread.currentThread();
+        if (current != threadContext) {
+            context.syncThread();
+            threadContext = current;
+        }
+    }
 
     public synchronized void createResources() {
+        ensureSameThread();
+        
         if (!pooledQueue.isEmpty()) {
             pooledQueue.forEach(Pooled::close);
             pooledQueue.clear();
@@ -51,6 +63,8 @@ public class SiliconDevice {
     }
     
     public ComputeBuffer acquire(TensorKey key, Supplier<ComputeBuffer> allocator) {
+        ensureSameThread();
+        
         Pooled pooled = memoryPool.acquire(key, allocator);
         pooledQueue.add(pooled);
         
@@ -58,6 +72,8 @@ public class SiliconDevice {
     }
     
     public ComputeBuffer createBuffer(float[] data) {
+        ensureSameThread();
+        
         try {
             return context.allocateArray(data);
         } catch (Throwable e) {
@@ -66,6 +82,8 @@ public class SiliconDevice {
     }
     
     public ComputeBuffer createBuffer(int[] data) {
+        ensureSameThread();
+        
         try {
             return context.allocateArray(data);
         } catch (Throwable e) {
@@ -74,6 +92,8 @@ public class SiliconDevice {
     }
     
     public ComputeBuffer createBuffer(long byteSize) {
+        ensureSameThread();
+        
         try {
             return context.allocateBytes(byteSize);
         } catch (Throwable e) {
@@ -110,15 +130,20 @@ public class SiliconDevice {
     }
 
     public synchronized void free() {
+        ensureSameThread();
+        
         if (queue != null) {
             queue.await();
             queue.free();
             queue = null;
         }
+        
         memoryPool.free();
     }
     
     public synchronized void closeResources() {
+        ensureSameThread();
+        
         if (queue != null) {
             queue.await();
         }

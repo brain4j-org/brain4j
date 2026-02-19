@@ -78,6 +78,8 @@ public class OnnxAdapter implements BinaryAdapter {
     
     @Override
     public void serialize(Model model, File file) {
+        if (model.getDevice() != null) model = model.fork(null);
+        
         GraphProto.Builder graphBuilder = GraphProto.newBuilder();
         
         Map<Tensor, String> weightsMap = new HashMap<>();

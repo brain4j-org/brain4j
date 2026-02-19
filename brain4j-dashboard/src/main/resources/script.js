@@ -312,19 +312,19 @@ async function saveModel() {
     if (!saveBtn) return;
 
     const directory = window.prompt(
-        "Cartella destinazione (percorso locale del processo Java, es. C:\\\\models):",
+        "Destination folder (local path of the Java process, ex. C:\\\\models):",
         ""
     );
     if (directory === null) return;
 
-    const filenameInput = window.prompt("Nome file modello:", "model.zip");
+    const filenameInput = window.prompt("Model file name:", "model.zip");
     if (filenameInput === null) return;
 
     const cleanDirectory = directory.trim().replace(/[\\/]+$/, "");
     let cleanFilename = filenameInput.trim().replace(/^[/\\]+/, "");
 
     if (!cleanFilename) {
-        alert("Nome file non valido.");
+        alert("Invalid file name.");
         return;
     }
 
@@ -345,10 +345,10 @@ async function saveModel() {
             throw new Error(payload.message || `Errore HTTP ${response.status}`);
         }
 
-        alert(`Modello salvato in:\n${payload.path || fullPath}`);
+        alert(`Modello saved in:\n${payload.path || fullPath}`);
     } catch (err) {
         console.error("Model save failed:", err);
-        alert(`Salvataggio fallito: ${err.message || err}`);
+        alert(`Save failed: ${err.message || err}`);
     } finally {
         saveBtn.disabled = false;
     }
