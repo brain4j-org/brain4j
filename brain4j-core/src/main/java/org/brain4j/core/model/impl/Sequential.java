@@ -248,7 +248,7 @@ public class Sequential implements Model, ModelBlock {
             
             if (layer.isFrozen()) continue;
 
-            layer.connect();
+            layer.connect(prev);
             prev = layer;
         }
         

@@ -78,28 +78,18 @@ public class DenseLayer extends Layer0 {
     }
     
     @Override
-    public int getInputLength() {
-        return 1;
-    }
-    
-    @Override
-    public List<Shape> getOutputShapes() {
-        return List.of();
-    }
-    
-    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         validateInputLength(inputs);
         
         Tensor input = inputs[0];
         Tensor output = input.matmulGrad(weights);
         
-        cache.recordInput(this, input);
+        cache.setStates(this, "input", input);
         
         if (bias != null) output = output.addGrad(bias);
 
         Tensor beforeActivation = output;
-        cache.recordOutput(this, beforeActivation);
+        cache.setStates(this, "pre_activation", beforeActivation);
         
         return new Tensor[] { output.activateGrad(activation) };
     }

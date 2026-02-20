@@ -7,6 +7,7 @@ import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.layer.impl.utility.ReshapeLayer;
 import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.activation.impl.LeakyReLU;
+import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.core.model.Model;
@@ -82,9 +83,9 @@ public class TestMNIST {
     private ModelSpecs getMLPSpecs() {
         return ModelSpecs.of(
             new InputLayer(28 * 28),
-            new DenseLayer(128, Activations.RELU),
-            new DenseLayer(64, Activations.RELU),
-            new DenseLayer(10, Activations.SOFTMAX)
+            new DenseLayer(128, new ReLU()),
+            new DenseLayer(64, new ReLU()),
+            new DenseLayer(10, new Softmax())
         );
     }
     

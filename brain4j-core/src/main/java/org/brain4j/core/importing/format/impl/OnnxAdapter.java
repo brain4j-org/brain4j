@@ -1,8 +1,7 @@
 package org.brain4j.core.importing.format.impl;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.graphs.GraphModel;
-import org.brain4j.core.graphs.GraphNode;
+import org.brain4j.core.model.impl.GraphModel;
 import org.brain4j.core.importing.format.BinaryAdapter;
 import org.brain4j.core.importing.onnx.ProtoOnnx.*;
 import org.brain4j.core.layer.Layer0;
@@ -63,7 +62,7 @@ public class OnnxAdapter implements BinaryAdapter {
                         + node.getInputCount() + " inputs but operation requires " + op.requiredInputs());
                 }
                 
-                model.addNode(new GraphNode(node.getName(), op, node.getInputList(), node.getOutputList()));
+                model.addNode(new GraphModel.GraphNode(node.getName(), op, node.getInputList(), node.getOutputList()));
             }
             
             List<String> inputs = graphProto.getInputList().stream().map(ValueInfoProto::getName).toList();

@@ -96,7 +96,7 @@ public class GraphConvLayer extends Layer0 {
         Tensor out = adjNorm.matmulGrad(support)
             .addGrad(bias);
 
-        cache.recordOutput(this, out);
+        cache.setStates(this, "pre_activation", out);
 
         return new Tensor[] { out.activateGrad(activation), adjacencyMatrix };
     }

@@ -86,7 +86,7 @@ public class RecurrentLayer extends Layer0 {
         Tensor sequence = Tensors.concatGrad(List.of(allStates), 1);
         Tensor output = sequence.matmulGrad(weights).addGrad(bias);
         
-        cache.recordOutput(this, output);
+        cache.setStates(this, "pre_activation", output);
         return new Tensor[] { output };
     }
     

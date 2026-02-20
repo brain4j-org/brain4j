@@ -74,10 +74,6 @@ public abstract class Layer0 implements ModelBlock {
         // No-op
     }
     
-    public abstract int getInputLength();
-    
-    public abstract List<Shape> getOutputShapes();
-    
     /**
      * Performs a forward pass through this layer.
      *
@@ -134,7 +130,7 @@ public abstract class Layer0 implements ModelBlock {
         Tensor[] outputs,
         LossFunction lossFunction
     ) {
-        Tensor[] preOutputs = cache.getOutputs(this);
+        Tensor[] preOutputs = cache.getStates(this, "pre_activation");
         
         if (labels.length != outputs.length) {
             throw Commons.illegalArgument("Labels amount does not match outputs amount!");
@@ -163,9 +159,9 @@ public abstract class Layer0 implements ModelBlock {
      * @param inputs the input tensors
      */
     public void validateInputLength(Tensor... inputs) {
-        if (inputs.length != getInputLength()) {
-            throw Commons.illegalArgument("Layer expects %s inputs but %s were received",
-                inputs.length, getInputLength());
+        if (inputs.length != 1) {
+            throw Commons.illegalArgument("Layer expects %s inputs but %s were given",
+                inputs.length, 1);
         }
     }
     
@@ -284,6 +280,27 @@ public abstract class Layer0 implements ModelBlock {
         if (bias != null) result.put("bias", bias);
         
         return result;
+    }
+    
+    @Override
+    public Layer0 clone() {
+        try {
+            Layer0 clone = (Layer0) super.clone();
+            
+            if (weights != null) {
+                clone.weights = weights.clone();
+                if (weights.usesGrad()) clone.weights.withGrad();
+            }
+            
+            if (bias != null) {
+                clone.bias = bias.clone();
+                if (bias.usesGrad()) clone.bias.withGrad();
+            }
+            
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 
     public Activation getActivation() {

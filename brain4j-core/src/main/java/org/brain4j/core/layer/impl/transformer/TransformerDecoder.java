@@ -96,7 +96,7 @@ public class TransformerDecoder extends TransformerEncoder {
         }
 
         Tensor added2 = downProjected.addGrad(added);
-        cache.recordOutput(this, added2);
+        cache.setStates(this, "pre_activation", added2);
 
         return new Tensor[] { added2 };
     }

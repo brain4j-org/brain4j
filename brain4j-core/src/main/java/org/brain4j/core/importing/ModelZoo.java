@@ -1,6 +1,6 @@
 package org.brain4j.core.importing;
 
-import org.brain4j.core.graphs.GraphModel;
+import org.brain4j.core.model.impl.GraphModel;
 import org.brain4j.core.importing.format.impl.BrainAdapter;
 import org.brain4j.core.importing.format.impl.OnnxAdapter;
 import org.brain4j.core.model.Model;

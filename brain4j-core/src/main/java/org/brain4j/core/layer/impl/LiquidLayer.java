@@ -134,16 +134,6 @@ public class LiquidLayer extends Layer0 {
     }
     
     @Override
-    public int getInputLength() {
-        return 2;
-    }
-    
-    @Override
-    public List<Shape> getOutputShapes(Layer0 previous) {
-        return List.of();
-    }
-    
-    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         validateInputLength(inputs);
         

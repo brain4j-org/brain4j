@@ -10,6 +10,7 @@ import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.List;
+import java.util.random.RandomGenerator;
 
 public class DenseLayer extends Layer {
     
@@ -25,9 +26,7 @@ public class DenseLayer extends Layer {
     }
     
     @Override
-    public void build(List<Shape> inputShapes) {
-        inferOutputShapes(inputShapes);
-        
+    public void build(List<Shape> inputShapes, RandomGenerator rng) {
         Shape inputShape = inputShapes.getFirst();
         
         Tensor weights = Tensors.matrix(inputShape.last(), outDimension);
@@ -35,20 +34,17 @@ public class DenseLayer extends Layer {
         
         parameters.put("weights", weights);
         parameters.put("bias", bias);
+        
+        generateWeights(rng, inputShape.last(), outDimension);
     }
     
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.size() != 1) {
-            throw Commons.illegalArgument("Dense requires 1 input but %s were given!", inputShapes.size());
+            throw Commons.illegalArgument("Layer requires 1 input but %s were given!", inputShapes.size());
         }
         
         Shape inputShape = inputShapes.getFirst();
-        
-        if (inputShape.rank() < 2) {
-            throw Commons.illegalArgument("Dense requires tensors to be rank 2 or higher");
-        }
-        
         Shape inputBatch = inputShape.slice(0, -2);
         
         int[] outShape = new int[inputShape.rank()];
@@ -62,6 +58,10 @@ public class DenseLayer extends Layer {
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
+        
+        if (input.rank() < 2) {
+            throw Commons.illegalArgument("Dense requires tensors to be rank 2 or higher");
+        }
         
         cache.setStates(this, "input", input);
         

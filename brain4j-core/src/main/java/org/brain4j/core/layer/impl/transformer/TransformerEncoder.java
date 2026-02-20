@@ -224,7 +224,7 @@ public class TransformerEncoder extends Layer0 {
         Tensor added2 = downProjected.addGrad(normalized);
         normalized = normalizer2.forward(cache, added2);
 
-        cache.recordOutput(this, normalized);
+        cache.setStates(this, "pre_activation", normalized);
         
         return new Tensor[] { normalized };
     }

@@ -60,7 +60,7 @@ public class ActivationLayer extends Layer0 {
             result[i] = inputs[i].activateGrad(activation);
         }
 
-        cache.recordOutput(this, result);
+        cache.setStates(this, "pre_activation", result);
         return result;
     }
 

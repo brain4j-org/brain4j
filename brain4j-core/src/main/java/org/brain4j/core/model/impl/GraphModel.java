@@ -1,15 +1,16 @@
-package org.brain4j.core.graphs;
+package org.brain4j.core.model.impl;
 
 import org.brain4j.core.layer.Layer0;
-import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 import java.util.*;
@@ -185,5 +186,8 @@ public class GraphModel implements Model {
         public GraphModel compile() {
             return new GraphModel(nodes, inputs, outputs, initializers);
         }
+    }
+    
+    public static record GraphNode(String name, Operation operation, List<String> inputs, List<String> outputs) {
     }
 }

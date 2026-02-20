@@ -69,11 +69,8 @@ public class ConvLayer extends Layer0 {
     
     @Override
     public void connect() {
-        Shape previousShape = previous.getOutputShapes().getFirst();
-        
         this.bias = Tensors.zeros(filters).withGrad();
         this.weights = Tensors.zeros(filters, channels, kernelHeight, kernelWidth).withGrad();
-        this.outputShape = List.of(inferOutputShape(previousShape));
     }
     
     @Override
@@ -82,58 +79,16 @@ public class ConvLayer extends Layer0 {
     }
     
     @Override
-    public int getInputLength() {
-        return 1;
-    }
-    
-    public Shape inferOutputShape(Shape input) {
-        if (input.rank() != 3) {
-            throw new IllegalArgumentException(
-                "ConvLayer expects input shape [C, H, W] but got: " + input
-            );
-        }
-        
-        int inChannels = input.dim(0);
-        int inHeight = input.dim(1);
-        int inWidth = input.dim(2);
-        
-        if (inChannels != channels) {
-            throw new IllegalArgumentException(
-                "Channel mismatch. Expected " + channels + " but got " + inChannels
-            );
-        }
-        
-        if (kernelHeight > inHeight + 2 * padding ||
-            kernelWidth > inWidth + 2 * padding) {
-            throw new IllegalArgumentException(
-                "Kernel larger than input."
-            );
-        }
-        
-        int outHeight = (inHeight + 2 * padding - kernelHeight) / stride + 1;
-        int outWidth  = (inWidth + 2 * padding - kernelWidth) / stride + 1;
-        
-        if ((inHeight + 2 * padding - kernelHeight) % stride != 0 ||
-            (inWidth + 2 * padding - kernelWidth) % stride != 0) {
-            throw new IllegalArgumentException(
-                "Stride does not evenly divide spatial dimensions."
-            );
-        }
-        
-        return Shape.of(filters, outHeight, outWidth);
-    }
-    
-    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
-        cache.recordInput(this, input);
+        cache.setStates(this, "input", input);
         
         validateInputTensor(input, "Input must have shape [N, C, H, W] while got: %s", Arrays.toString(input.shape()));
 
         Tensor convolved = input.convolveGrad(weights, stride);
         Tensor added = convolved.addGrad(bias.reshape(1, filters, 1, 1));
         
-        cache.recordOutput(this, added);
+        cache.setStates(this, "pre_activation", added);
 
         return new Tensor[] { added.activateGrad(activation) };
     }

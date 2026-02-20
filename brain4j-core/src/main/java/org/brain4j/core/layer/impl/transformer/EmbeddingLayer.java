@@ -60,11 +60,6 @@ public class EmbeddingLayer extends Layer0 {
     }
     
     @Override
-    public List<Shape> getOutputShapes() {
-        return List.of(Shape.of(-1, embeddingDim));
-    }
-    
-    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         validateInputLength(inputs);
 
@@ -103,8 +98,8 @@ public class EmbeddingLayer extends Layer0 {
             output = output.to(gpuInput.device());
         }
 
-        cache.recordInput(this, inputs);
-        cache.recordOutput(this, output);
+        cache.setStates(this, "input", inputs);
+        cache.setStates(this, "output", output);
 
         // [batch, seq_len, embedding_dim]
         return new Tensor[] { output };
@@ -114,8 +109,8 @@ public class EmbeddingLayer extends Layer0 {
     public void backward(StatesCache cache, Updater updater, Optimizer optimizer) {
         if (!weights.usesGrad()) return;
         
-        Tensor input = cache.getInputs(this)[0];
-        Tensor output = cache.getOutputs(this)[0];
+        Tensor input = cache.getStates(this, "input")[0];
+        Tensor output = cache.getStates(this, "output")[0];
         Tensor gradOutput = output.grad();
         
         int[] shape = output.shape();

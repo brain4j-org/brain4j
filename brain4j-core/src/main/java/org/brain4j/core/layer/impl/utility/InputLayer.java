@@ -56,11 +56,6 @@ public class InputLayer extends Layer0 {
     }
     
     @Override
-    public List<Shape> getOutputShapes() {
-        return List.of(Shape.of(shape));
-    }
-    
-    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         for (Tensor input : inputs) {
             if (validInput(input)) continue;

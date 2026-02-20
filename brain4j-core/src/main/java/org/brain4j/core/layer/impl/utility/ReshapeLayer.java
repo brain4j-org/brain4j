@@ -43,16 +43,11 @@ public class ReshapeLayer extends Layer0 {
     }
     
     @Override
-    public List<Shape> getOutputShapes() {
-        return List.of(Shape.of(shape));
-    }
-    
-    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         validateInputLength(inputs);
         
         Tensor input = inputs[0];
-        cache.recordInput(this, input);
+        cache.setStates(this, "input", input);
 
         int[] inputShape = input.shape();
         int[] newShape = new int[shape.length + 1];
@@ -61,7 +56,7 @@ public class ReshapeLayer extends Layer0 {
         System.arraycopy(shape, 0, newShape, 1, shape.length);
         
         Tensor out = input.reshapeGrad(newShape);
-        cache.recordOutput(this, out);
+        cache.setStates(this, "pre_activation", out);
 
         return new Tensor[] { out };
     }

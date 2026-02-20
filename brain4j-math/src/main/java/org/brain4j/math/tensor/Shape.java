@@ -6,7 +6,7 @@ public class Shape {
 
     private final int[] dims;
 
-    private Shape(int[] dims) {
+    protected Shape(int[] dims) {
         for (int dim : dims) {
             if (dim < 0) {
                 throw Commons.illegalArgument("Dimension at %s is negative!", dim);
@@ -47,8 +47,8 @@ public class Shape {
     public Shape slice(int start, int end) {
         end = Math.floorMod(end, dims.length); // support for negative indices
         
-        if (end <= start) {
-            throw new IllegalArgumentException("End must be greater than start!");
+        if (end < start) {
+            throw new IllegalArgumentException("End must be greater or equal than start!");
         }
         
         int[] result = new int[end - start];
