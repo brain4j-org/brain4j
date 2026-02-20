@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
@@ -17,7 +17,7 @@ import java.util.random.RandomGenerator;
  *
  * @author xEcho1337
  */
-public class DropoutLayer extends Layer {
+public class DropoutLayer extends Layer0 {
 
     private final RandomGenerator random;
     private double dropoutRate;
@@ -42,7 +42,7 @@ public class DropoutLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.size = previous.size();
     }
 

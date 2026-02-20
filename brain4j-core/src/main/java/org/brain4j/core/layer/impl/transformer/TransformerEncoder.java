@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl.transformer;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.DropoutLayer;
 import org.brain4j.core.layer.impl.NormLayer;
@@ -38,13 +38,13 @@ import java.util.random.RandomGenerator;
  * @see NormLayer
  * @author xEcho1337
  */
-public class TransformerEncoder extends Layer {
+public class TransformerEncoder extends Layer0 {
 
     protected DenseLayer upProjection;
     protected DenseLayer gateProjection;
     protected DenseLayer downProjection;
-    protected Layer normalizer1;
-    protected Layer normalizer2;
+    protected Layer0 normalizer1;
+    protected Layer0 normalizer2;
     protected DropoutLayer dropout;
     protected MultiHeadAttention attention;
     protected NormType normType;
@@ -115,7 +115,7 @@ public class TransformerEncoder extends Layer {
         attention.setAttnOutBias(attnOutHasBias);
     }
 
-    public Layer createNormLayer() {
+    public Layer0 createNormLayer() {
         return switch (normType) {
             case LAYER_NORM -> new NormLayer();
             case RMS_NORM -> new RMSNormLayer();
@@ -140,14 +140,14 @@ public class TransformerEncoder extends Layer {
     }
     
     @Override
-    public void connect(Layer previous) {
-        normalizer1.connect(this);
-        normalizer2.connect(this);
-        upProjection.connect(this);
-        downProjection.connect(upProjection);
-        attention.connect(previous);
+    public void connect() {
+        normalizer1.connect();
+        normalizer2.connect();
+        upProjection.connect();
+        downProjection.connect();
+        attention.connect();
 
-        if (useGating) gateProjection.connect(this);
+        if (useGating) gateProjection.connect();
         
         if (frozen) {
             normalizer1.freeze();
@@ -189,7 +189,7 @@ public class TransformerEncoder extends Layer {
     
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(1, inputs);
+        validateInputLength(inputs);
         Tensor input = inputs[0];
 
         if (input.rank() != 3) {
@@ -224,7 +224,7 @@ public class TransformerEncoder extends Layer {
         Tensor added2 = downProjected.addGrad(normalized);
         normalized = normalizer2.forward(cache, added2);
 
-        cache.rememberOutput(this, normalized);
+        cache.recordOutput(this, normalized);
         
         return new Tensor[] { normalized };
     }
@@ -281,7 +281,7 @@ public class TransformerEncoder extends Layer {
     }
     
     @Override
-    public Layer freeze() {
+    public Layer0 freeze() {
         upProjection.freeze();
         downProjection.freeze();
         normalizer1.freeze();
@@ -294,7 +294,7 @@ public class TransformerEncoder extends Layer {
     }
     
     @Override
-    public Layer unfreeze() {
+    public Layer0 unfreeze() {
         upProjection.unfreeze();
         downProjection.unfreeze();
         normalizer1.unfreeze();
@@ -334,25 +334,25 @@ public class TransformerEncoder extends Layer {
     }
     
     @Override
-    public int totalBiases() {
-        int total = upProjection.totalBiases()
-            + downProjection.totalBiases()
-            + normalizer1.totalBiases()
-            + normalizer2.totalBiases();
+    public int getTotalBias() {
+        int total = upProjection.getTotalBias()
+            + downProjection.getTotalBias()
+            + normalizer1.getTotalBias()
+            + normalizer2.getTotalBias();
 
-        if (useGating) total += gateProjection.totalBiases();
+        if (useGating) total += gateProjection.getTotalBias();
         return total;
     }
     
     @Override
-    public int totalWeights() {
-        int total = upProjection.totalWeights()
-            + downProjection.totalWeights()
-            + normalizer1.totalWeights()
-            + normalizer2.totalWeights()
-            + attention.totalWeights();
+    public int getTotalWeights() {
+        int total = upProjection.getTotalWeights()
+            + downProjection.getTotalWeights()
+            + normalizer1.getTotalWeights()
+            + normalizer2.getTotalWeights()
+            + attention.getTotalWeights();
 
-        if (useGating) total += gateProjection.totalWeights();
+        if (useGating) total += gateProjection.getTotalWeights();
         return total;
     }
     
@@ -414,20 +414,20 @@ public class TransformerEncoder extends Layer {
         return this;
     }
     
-    public Layer getNormalizer1() {
+    public Layer0 getNormalizer1() {
         return normalizer1;
     }
     
-    public TransformerEncoder setNormalizer1(Layer normalizer1) {
+    public TransformerEncoder setNormalizer1(Layer0 normalizer1) {
         this.normalizer1 = normalizer1;
         return this;
     }
     
-    public Layer getNormalizer2() {
+    public Layer0 getNormalizer2() {
         return normalizer2;
     }
     
-    public TransformerEncoder setNormalizer2(Layer normalizer2) {
+    public TransformerEncoder setNormalizer2(Layer0 normalizer2) {
         this.normalizer2 = normalizer2;
         return this;
     }

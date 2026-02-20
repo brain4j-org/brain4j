@@ -2,7 +2,7 @@ package org.brain4j.core.transformer.attention;
 
 import org.brain4j.core.layer.impl.transformer.MultiHeadAttention;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.activation.impl.SoftmaxActivation;
+import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.ops.FlashAttention;
@@ -156,7 +156,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         // [batch, heads, seq_len, seq_len]
         Tensor scores = Q.matmulGrad(K_T).div(normalizer);
         Tensor attentionMap = scores.addGrad(mask);
-        Tensor probabilities = attentionMap.activateGrad(new SoftmaxActivation());
+        Tensor probabilities = attentionMap.activateGrad(new Softmax());
         // [batch, heads, seq_len, head_dim]
         Tensor context = probabilities.matmulGrad(V);
         // [batch, seq_len, heads, head_dim]

@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
@@ -46,7 +46,7 @@ import java.util.random.RandomGenerator;
  *           for all gates to improve memory locality and performance
  * @author xEcho1337
  */
-public class LSTMLayer extends Layer {
+public class LSTMLayer extends Layer0 {
     
     private Tensor hiddenWeights;
     private int hiddenDimension;
@@ -67,7 +67,7 @@ public class LSTMLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         List<Tensor> gates = new ArrayList<>();
         
         for (int i = 0; i < 4; i++) {
@@ -158,13 +158,13 @@ public class LSTMLayer extends Layer {
     }
     
     @Override
-    public Layer freeze() {
+    public Layer0 freeze() {
         hiddenWeights.noGrad();
         return super.freeze();
     }
     
     @Override
-    public Layer unfreeze() {
+    public Layer0 unfreeze() {
         hiddenWeights.withGrad();
         return super.unfreeze();
     }
@@ -199,12 +199,12 @@ public class LSTMLayer extends Layer {
     }
     
     @Override
-    public int totalBiases() {
+    public int getTotalBias() {
         return bias.elements();
     }
     
     @Override
-    public int totalWeights() {
+    public int getTotalWeights() {
         return weights.elements() + hiddenWeights.elements();
     }
     

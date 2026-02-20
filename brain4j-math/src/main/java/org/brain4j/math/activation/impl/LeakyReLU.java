@@ -7,9 +7,9 @@ import org.brain4j.math.weightsinit.impl.NormalHeInit;
 import org.brain4j.math.weightsinit.WeightInit;
 import org.silicon.api.function.ComputeFunction;
 
-public record LeakyReLUActivation(double alpha) implements Activation {
+public record LeakyReLU(double alpha) implements Activation {
 
-    public LeakyReLUActivation() {
+    public LeakyReLU() {
         this(0.01);
     }
 

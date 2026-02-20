@@ -12,7 +12,7 @@ import org.brain4j.llm.api.ModelInfo;
 import org.brain4j.llm.core.architecture.ArchitectureAdapter;
 import org.brain4j.llm.core.architecture.ArchitectureRegistry;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.activation.impl.SoftmaxActivation;
+import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
@@ -94,7 +94,7 @@ public class LLM implements InferenceProvider {
         if (model.getDevice() != null) input = input.to(model.getDevice());
 
         Random random = config.random();
-        SoftmaxActivation activation = new SoftmaxActivation(config.temperature());
+        Softmax activation = new Softmax(config.temperature());
         
         while (generatedTokens < config.maxLength()) {
             Tensor logits = model.predict(cache, input)[0].squeeze().cpu(); // [vocab_size]

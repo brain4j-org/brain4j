@@ -2,9 +2,12 @@ package org.brain4j.core.layer.impl.utility;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
+
+import java.util.List;
 
 /**
  * A utility layer that reshapes input tensors while preserving the batch dimension.
@@ -20,7 +23,7 @@ import org.brain4j.math.tensor.Tensor;
  *
  * @author xEcho1337
  */
-public class ReshapeLayer extends Layer {
+public class ReshapeLayer extends Layer0 {
 
     private int[] shape;
     
@@ -40,11 +43,16 @@ public class ReshapeLayer extends Layer {
     }
     
     @Override
+    public List<Shape> getOutputShapes() {
+        return List.of(Shape.of(shape));
+    }
+    
+    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(1, inputs);
-        Tensor input = inputs[0];
+        validateInputLength(inputs);
         
-        cache.rememberInput(this, input);
+        Tensor input = inputs[0];
+        cache.recordInput(this, input);
 
         int[] inputShape = input.shape();
         int[] newShape = new int[shape.length + 1];
@@ -53,7 +61,7 @@ public class ReshapeLayer extends Layer {
         System.arraycopy(shape, 0, newShape, 1, shape.length);
         
         Tensor out = input.reshapeGrad(newShape);
-        cache.rememberOutput(this, out);
+        cache.recordOutput(this, out);
 
         return new Tensor[] { out };
     }

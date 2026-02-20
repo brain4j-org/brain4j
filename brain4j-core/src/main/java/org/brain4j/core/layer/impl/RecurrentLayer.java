@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;
 
-public class RecurrentLayer extends Layer {
+public class RecurrentLayer extends Layer0 {
 
     private Tensor inputWeights;
     private Tensor hiddenWeights;
@@ -41,7 +41,7 @@ public class RecurrentLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         int size = previous == null ? dimension : previous.size();
         this.inputWeights = Tensors.zeros(size, hiddenDimension).withGrad();
         this.hiddenWeights = Tensors.orthogonal(hiddenDimension, hiddenDimension).withGrad();
@@ -61,7 +61,7 @@ public class RecurrentLayer extends Layer {
         // [batch, timesteps, dimension]
         Tensor input = inputs[0];
 
-        checkValidInput(input, "Input must have shape [batch, timesteps, dimension]! Got: %s", Arrays.toString(input.shape()));
+        validateInputTensor(input, "Input must have shape [batch, timesteps, dimension]! Got: %s", Arrays.toString(input.shape()));
         
         int batch = input.shapeAt(0);
         int timesteps = input.shapeAt(1);
@@ -86,7 +86,7 @@ public class RecurrentLayer extends Layer {
         Tensor sequence = Tensors.concatGrad(List.of(allStates), 1);
         Tensor output = sequence.matmulGrad(weights).addGrad(bias);
         
-        cache.rememberOutput(this, output);
+        cache.recordOutput(this, output);
         return new Tensor[] { output };
     }
     
@@ -103,7 +103,7 @@ public class RecurrentLayer extends Layer {
     }
     
     @Override
-    public Layer freeze() {
+    public Layer0 freeze() {
         inputWeights.noGrad();
         hiddenWeights.noGrad();
         hiddenBias.noGrad();
@@ -111,7 +111,7 @@ public class RecurrentLayer extends Layer {
     }
     
     @Override
-    public Layer unfreeze() {
+    public Layer0 unfreeze() {
         inputWeights.withGrad();
         hiddenWeights.withGrad();
         hiddenBias.withGrad();
@@ -157,12 +157,12 @@ public class RecurrentLayer extends Layer {
     }
     
     @Override
-    public int totalBiases() {
+    public int getTotalBias() {
         return hiddenBias.elements() + bias.elements();
     }
     
     @Override
-    public int totalWeights() {
+    public int getTotalWeights() {
         return weights.elements() + inputWeights.elements() + hiddenWeights.elements();
     }
     

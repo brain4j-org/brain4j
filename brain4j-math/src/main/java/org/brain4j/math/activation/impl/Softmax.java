@@ -1,16 +1,13 @@
 package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.gpu.silicon.SiliconKernel;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 import org.brain4j.math.weightsinit.WeightInit;
-import org.silicon.api.function.ComputeFunction;
 
-public record SoftmaxActivation(double temperature) implements Activation {
+public record Softmax(double temperature) implements Activation {
 
-    public SoftmaxActivation() {
+    public Softmax() {
         this(1.0);
     }
 

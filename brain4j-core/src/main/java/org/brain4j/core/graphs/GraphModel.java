@@ -1,6 +1,6 @@
 package org.brain4j.core.graphs;
 
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
@@ -151,7 +151,7 @@ public class GraphModel implements Model {
     }
     
     @Override
-    public List<Layer> getLayers() {
+    public List<Layer0> getLayers() {
         throw new UnsupportedOperationException();
     }
 

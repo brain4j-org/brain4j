@@ -1,34 +1,33 @@
 package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.weightsinit.impl.UniformXavierInit;
+import org.brain4j.math.weightsinit.impl.NormalHeInit;
 import org.brain4j.math.weightsinit.WeightInit;
 
-public class SigmoidActivation implements Activation {
+public class ReLU implements Activation {
 
     @Override
     public WeightInit defaultWeightInit() {
-        return new UniformXavierInit();
+        return new NormalHeInit();
     }
 
     @Override
     public double activate(double input) {
-        return 1 / (1 + Math.exp(-input));
+        return Math.max(0, input);
     }
 
     @Override
     public double derivative(double input) {
-        double activated = activate(input);
-        return activated * (1 - activated);
+        return input > 0 ? 1 : 0;
     }
 
     @Override
     public String getKernelPrefix() {
-        return "sigmoid";
+        return "relu";
     }
 
     @Override
     public int getActivationId() {
-        return 3;
+        return 0;
     }
 }

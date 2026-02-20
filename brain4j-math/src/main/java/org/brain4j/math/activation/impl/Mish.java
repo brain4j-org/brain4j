@@ -4,7 +4,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weightsinit.impl.NormalXavierInit;
 import org.brain4j.math.weightsinit.WeightInit;
 
-public class SwishActivation implements Activation {
+public class Mish implements Activation {
 
     @Override
     public WeightInit defaultWeightInit() {
@@ -13,22 +13,26 @@ public class SwishActivation implements Activation {
 
     @Override
     public double activate(double input) {
-        return input * (1.0 / (1.0 + Math.exp(-input)));
+        double softplus = Math.log1p(Math.exp(input));
+        return input * Math.tanh(softplus);
     }
 
     @Override
     public double derivative(double input) {
+        double softplus = Math.log1p(Math.exp(input));
+        double tanhSp = Math.tanh(softplus);
         double sigmoid = 1.0 / (1.0 + Math.exp(-input));
-        return sigmoid + input * sigmoid * (1 - sigmoid);
+
+        return tanhSp + input * sigmoid * (1 - tanhSp * tanhSp);
     }
 
     @Override
     public String getKernelPrefix() {
-        return "swish";
+        return "mish";
     }
 
     @Override
     public int getActivationId() {
-        return 5;
+        return 8;
     }
 }

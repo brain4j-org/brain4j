@@ -7,9 +7,9 @@ import org.brain4j.math.weightsinit.impl.NormalHeInit;
 import org.brain4j.math.weightsinit.WeightInit;
 import org.silicon.api.function.ComputeFunction;
 
-public record ELUActivation(double alpha) implements Activation {
+public record ELU(double alpha) implements Activation {
 
-    public ELUActivation() {
+    public ELU() {
         this(1.0);
     }
 

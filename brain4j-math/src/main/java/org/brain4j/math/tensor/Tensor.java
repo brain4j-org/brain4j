@@ -1,9 +1,9 @@
 package org.brain4j.math.tensor;
 
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.activation.impl.ReLUActivation;
-import org.brain4j.math.activation.impl.SigmoidActivation;
-import org.brain4j.math.activation.impl.TanhActivation;
+import org.brain4j.math.activation.impl.ReLU;
+import org.brain4j.math.activation.impl.Sigmoid;
+import org.brain4j.math.activation.impl.Tanh;
 import org.brain4j.math.commons.D2DFunction;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
@@ -868,7 +868,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor relu() {
-        return activateAuto(new ReLUActivation());
+        return activateAuto(new ReLU());
     }
 
     /**
@@ -876,7 +876,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor sigmoid() {
-        return activateAuto(new SigmoidActivation());
+        return activateAuto(new Sigmoid());
     }
 
     /**
@@ -884,7 +884,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor tanh() {
-        return activateAuto(new TanhActivation());
+        return activateAuto(new Tanh());
     }
     
     default Tensor cpu() {

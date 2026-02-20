@@ -4,7 +4,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 import org.brain4j.math.weightsinit.WeightInit;
 
-public class LinearActivation implements Activation {
+public class Tanh implements Activation {
 
     @Override
     public WeightInit defaultWeightInit() {
@@ -13,21 +13,22 @@ public class LinearActivation implements Activation {
 
     @Override
     public double activate(double input) {
-        return input;
+        return Math.tanh(input);
     }
 
     @Override
     public double derivative(double input) {
-        return 1;
+        double activated = Math.tanh(input);
+        return 1.0 - activated * activated;
     }
 
     @Override
     public String getKernelPrefix() {
-        return "linear";
+        return "tanh";
     }
 
     @Override
     public int getActivationId() {
-        return 9;
+        return 4;
     }
 }

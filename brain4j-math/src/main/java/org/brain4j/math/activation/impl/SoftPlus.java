@@ -4,7 +4,7 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 import org.brain4j.math.weightsinit.WeightInit;
 
-public class SoftPlusActivation implements Activation {
+public class SoftPlus implements Activation {
     
     @Override
     public WeightInit defaultWeightInit() {

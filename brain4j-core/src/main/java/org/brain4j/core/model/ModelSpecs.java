@@ -1,6 +1,6 @@
 package org.brain4j.core.model;
 
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.model.impl.Sequential;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public class ModelSpecs implements ModelBlock, Cloneable {
     }
     
     @Override
-    public void appendTo(List<Layer> layers) {
+    public void appendTo(List<Layer0> layers) {
         for (ModelBlock component : components) {
             component.appendTo(layers);
         }
@@ -56,8 +56,8 @@ public class ModelSpecs implements ModelBlock, Cloneable {
         return components;
     }
     
-    public List<Layer> buildLayerList() {
-        List<Layer> flat = new ArrayList<>();
+    public List<Layer0> buildLayerList() {
+        List<Layer0> flat = new ArrayList<>();
         appendTo(flat);
         return flat;
     }

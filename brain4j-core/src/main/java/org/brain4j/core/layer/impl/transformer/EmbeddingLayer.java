@@ -1,17 +1,19 @@
 package org.brain4j.core.layer.impl.transformer;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
 
@@ -28,7 +30,7 @@ import java.util.stream.IntStream;
  * </p>
  * @author xEcho1337
  */
-public class EmbeddingLayer extends Layer {
+public class EmbeddingLayer extends Layer0 {
 
     private int vocabSize;
     private int embeddingDim;
@@ -48,7 +50,7 @@ public class EmbeddingLayer extends Layer {
     }
     
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.weights = Tensors.zeros(vocabSize, embeddingDim).withGrad();
     }
     
@@ -58,11 +60,16 @@ public class EmbeddingLayer extends Layer {
     }
     
     @Override
+    public List<Shape> getOutputShapes() {
+        return List.of(Shape.of(-1, embeddingDim));
+    }
+    
+    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(1, inputs);
+        validateInputLength(inputs);
 
         Tensor input = inputs[0];
-        checkValidInput(input, "Input must have shape [batch, tokens]! Got: %s", Arrays.toString(input.shape()));
+        validateInputTensor(input, "Input must have shape [batch, tokens]! Got: %s", Arrays.toString(input.shape()));
 
         int[] shape = input.shape();
 
@@ -96,8 +103,8 @@ public class EmbeddingLayer extends Layer {
             output = output.to(gpuInput.device());
         }
 
-        cache.rememberInput(this, inputs);
-        cache.rememberOutput(this, output);
+        cache.recordInput(this, inputs);
+        cache.recordOutput(this, output);
 
         // [batch, seq_len, embedding_dim]
         return new Tensor[] { output };

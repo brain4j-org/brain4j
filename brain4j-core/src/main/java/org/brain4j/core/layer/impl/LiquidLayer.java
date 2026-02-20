@@ -1,20 +1,20 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.solver.NumericalSolver;
 import org.brain4j.math.solver.impl.EulerSolver;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.commons.Range;
+import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,13 +59,13 @@ import java.util.random.RandomGenerator;
  * @implNote this layer expects exactly two input tensors: the signal and its time deltas
  * @author xEcho1337
  */
-public class LiquidLayer extends Layer {
+public class LiquidLayer extends Layer0 {
     
     private DenseLayer hiddenParams;
     private DenseLayer tauParams;
     private NumericalSolver solver;
     
-    /* Hyper parameters */
+    /* Hyperparameters */
     private int dimension;
     private double tauMin;
     private double tauMax;
@@ -115,14 +115,14 @@ public class LiquidLayer extends Layer {
     }
     
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.weights = Tensors.zeros(previous.size(), dimension);
         this.bias = Tensors.zeros(dimension);
         this.hiddenParams = new DenseLayer(dimension);
         this.tauParams = new DenseLayer(dimension, Activations.SOFTPLUS);
 
-        hiddenParams.connect(this);
-        tauParams.connect(previous);
+        hiddenParams.connect();
+        tauParams.connect();
 
     }
     
@@ -134,8 +134,18 @@ public class LiquidLayer extends Layer {
     }
     
     @Override
+    public int getInputLength() {
+        return 2;
+    }
+    
+    @Override
+    public List<Shape> getOutputShapes(Layer0 previous) {
+        return List.of();
+    }
+    
+    @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(2, inputs);
+        validateInputLength(inputs);
         
         Tensor input = inputs[0];
         Tensor deltas = inputs[1];
@@ -157,8 +167,8 @@ public class LiquidLayer extends Layer {
         
         Tensor hidden = Tensors.zeros(batch, dimension).withGrad();
         
-        if (input instanceof GpuTensor gpu) {
-            hidden = hidden.to(gpu.device()).withGrad();
+        if (input instanceof SiliconGpuTensor gpu) {
+            hidden = hidden.to(gpu.getDevice()).withGrad();
         }
         
         List<Tensor> hiddenStates = new ArrayList<>();
@@ -198,7 +208,7 @@ public class LiquidLayer extends Layer {
     }
     
     @Override
-    public Layer freeze() {
+    public Layer0 freeze() {
         super.freeze();
         hiddenParams.freeze();
         tauParams.freeze();
@@ -206,7 +216,7 @@ public class LiquidLayer extends Layer {
     }
     
     @Override
-    public Layer unfreeze() {
+    public Layer0 unfreeze() {
         super.unfreeze();
         hiddenParams.unfreeze();
         tauParams.unfreeze();
@@ -256,17 +266,17 @@ public class LiquidLayer extends Layer {
     }
     
     @Override
-    public int totalWeights() {
+    public int getTotalWeights() {
         return weights.elements()
-            + hiddenParams.totalWeights()
-            + tauParams.totalWeights();
+            + hiddenParams.getTotalWeights()
+            + tauParams.getTotalWeights();
     }
     
     @Override
-    public int totalBiases() {
+    public int getTotalBias() {
         return bias.elements()
-            + hiddenParams.totalBiases()
-            + tauParams.totalBiases();
+            + hiddenParams.getTotalBias()
+            + tauParams.getTotalBias();
     }
     
     @Override

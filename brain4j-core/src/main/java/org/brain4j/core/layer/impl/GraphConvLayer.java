@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
@@ -36,7 +36,7 @@ import org.brain4j.math.tensor.Tensor;
  * @implNote this layer expects two input tensors for it to work
  * @author xEcho1337
  */
-public class GraphConvLayer extends Layer {
+public class GraphConvLayer extends Layer0 {
 
     private int dimension;
 
@@ -73,20 +73,20 @@ public class GraphConvLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.weights = Tensors.zeros(previous.size(), dimension).withGrad();
         this.bias = Tensors.zeros(dimension).withGrad();
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(2, inputs);
+        validateInputLength(inputs);
 
         Tensor features = inputs[0]; // [batch, nodes, features]
         Tensor adjacencyMatrix = inputs[1]; // [batch, nodes, nodes]
         
-        checkValidInput(features, "Features must have shape [batch, nodes, features]!");
-        checkValidInput(adjacencyMatrix, "Adjacency matrix must have shape [batch, nodes, nodes]!");
+        validateInputTensor(features, "Features must have shape [batch, nodes, features]!");
+        validateInputTensor(adjacencyMatrix, "Adjacency matrix must have shape [batch, nodes, nodes]!");
         
         // [batch, nodes, dimension]
         Tensor support = features.matmulGrad(weights);
@@ -96,7 +96,7 @@ public class GraphConvLayer extends Layer {
         Tensor out = adjNorm.matmulGrad(support)
             .addGrad(bias);
 
-        cache.rememberOutput(this, out);
+        cache.recordOutput(this, out);
 
         return new Tensor[] { out.activateGrad(activation), adjacencyMatrix };
     }

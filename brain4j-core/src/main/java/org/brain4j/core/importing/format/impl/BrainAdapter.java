@@ -3,7 +3,7 @@ package org.brain4j.core.importing.format.impl;
 import com.google.gson.*;
 import org.brain4j.core.importing.SafeTensorsConverter;
 import org.brain4j.core.importing.format.BinaryAdapter;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.math.tensor.Tensor;
@@ -71,7 +71,7 @@ public class BrainAdapter implements BinaryAdapter {
             String activation = layerJson.get("activation").getAsString();
             String clipper = layerJson.get("clipper").getAsString();
             
-            Layer layer = LAYER_REGISTRY.toInstance(type);
+            Layer0 layer = LAYER_REGISTRY.toInstance(type);
             layer.setActivation(ACTIVATION_REGISTRY.toInstance(activation));
             layer.setClipper(CLIPPERS_REGISTRY.toInstance(clipper));
             
@@ -91,8 +91,8 @@ public class BrainAdapter implements BinaryAdapter {
             throw new RuntimeException("Failed to deserialize safe tensors!", e);
         }
         
-        List<Layer> layers = model.getLayers();
-        Map<Layer, Map<String, Tensor>> weightsPerLayer = new HashMap<>();
+        List<Layer0> layers = model.getLayers();
+        Map<Layer0, Map<String, Tensor>> weightsPerLayer = new HashMap<>();
         
         for (Map.Entry<String, Tensor> entry : tensors.entrySet()) {
             String fullName = entry.getKey(); // es: dense.0.weights
@@ -110,7 +110,7 @@ public class BrainAdapter implements BinaryAdapter {
                 throw new IllegalStateException("Invalid layer index: " + layerIndex);
             }
             
-            Layer layer = layers.get(layerIndex);
+            Layer0 layer = layers.get(layerIndex);
             
             weightsPerLayer
                 .computeIfAbsent(layer, l -> new HashMap<>())
@@ -118,7 +118,7 @@ public class BrainAdapter implements BinaryAdapter {
         }
         
         for (var entry : weightsPerLayer.entrySet()) {
-            Layer layer = entry.getKey();
+            Layer0 layer = entry.getKey();
             Map<String, Tensor> weights = entry.getValue();
             layer.loadWeights(weights);
         }
@@ -130,10 +130,10 @@ public class BrainAdapter implements BinaryAdapter {
         root.addProperty("created_at", Instant.now().toString());
         
         JsonArray architecture = new JsonArray();
-        List<Layer> layers = model.getLayers();
+        List<Layer0> layers = model.getLayers();
         
         for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+            Layer0 layer = layers.get(i);
             JsonObject obj = new JsonObject();
             
             obj.addProperty("index", i);

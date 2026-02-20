@@ -1,7 +1,7 @@
 package org.brain4j.core.model.impl;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
@@ -29,10 +29,10 @@ public class Sequential implements Model, ModelBlock {
     
     private final long seed;
     private final ModelSpecs specs;
-    private final List<Layer> layers;
+    private final List<Layer0> layers;
     private final SiliconDevice device;
     
-    private Sequential(ModelSpecs specs, SiliconDevice device, List<Layer> layers, long seed) {
+    private Sequential(ModelSpecs specs, SiliconDevice device, List<Layer0> layers, long seed) {
         this.specs = specs;
         this.device = device;
         this.layers = layers;
@@ -75,7 +75,7 @@ public class Sequential implements Model, ModelBlock {
             buffer[i] = chosen.to(device);
         }
         
-        for (Layer layer : layers) {
+        for (Layer0 layer : layers) {
             buffer = layer.forward(cache, buffer);
         }
         
@@ -126,7 +126,7 @@ public class Sequential implements Model, ModelBlock {
     
     @Override
     public Model fork(SiliconDevice device) {
-        List<Layer> copiedLayers = layers.stream().map(Layer::clone).toList();
+        List<Layer0> copiedLayers = layers.stream().map(Layer0::clone).toList();
         copiedLayers.forEach(x -> x.toDevice(device));
         return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
     }
@@ -182,7 +182,7 @@ public class Sequential implements Model, ModelBlock {
         return specs;
     }
     
-    public List<Layer> getLayers() {
+    public List<Layer0> getLayers() {
         return Collections.unmodifiableList(layers);
     }
     
@@ -241,19 +241,19 @@ public class Sequential implements Model, ModelBlock {
         if (layers.isEmpty()) return;
         
         int length = layers.size();
-        Layer prev = layers.getFirst();
+        Layer0 prev = layers.getFirst();
         
         for (int i = 1; i < length; i++) {
-            Layer layer = layers.get(i);
+            Layer0 layer = layers.get(i);
             
             if (layer.isFrozen()) continue;
 
-            layer.connect(prev);
+            layer.connect();
             prev = layer;
         }
         
         IntStream.range(1, length).parallel().forEach(i -> {
-            Layer layer = layers.get(i);
+            Layer0 layer = layers.get(i);
             if (layer.isFrozen()) return;
             
             int input = layers.get(i - 1).size();
@@ -272,11 +272,11 @@ public class Sequential implements Model, ModelBlock {
         AtomicLong totalBiases
     ) {
         for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+            Layer0 layer = layers.get(i);
             String layerType = layer.getClass().getSimpleName();
             
-            int biases = layer.totalBiases();
-            int weights = layer.totalWeights();
+            int biases = layer.getTotalBias();
+            int weights = layer.getTotalWeights();
             
             Tensor weightsTensor = layer.getWeights();
             
@@ -293,7 +293,7 @@ public class Sequential implements Model, ModelBlock {
     }
     
     public Sequential copy() {
-        List<Layer> copiedLayers = layers.stream().map(Layer::clone).toList();
+        List<Layer0> copiedLayers = layers.stream().map(Layer0::clone).toList();
         
         return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
     }

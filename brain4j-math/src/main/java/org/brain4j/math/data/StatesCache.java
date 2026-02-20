@@ -8,8 +8,8 @@ import java.util.Map;
 public class StatesCache {
 
     private final Map<Object, Tensor> tensorCache;
-    private final Map<Object, Tensor[]> inputStates;
-    private final Map<Object, Tensor[]> outputStates;
+    private final Map<String, Tensor[]> states;
+    
     private final boolean training;
 
     public static StatesCache withTraining() {
@@ -22,8 +22,7 @@ public class StatesCache {
 
     public StatesCache(boolean training) {
         this.training = training;
-        this.inputStates = new HashMap<>();
-        this.outputStates = new HashMap<>();
+        this.states = new HashMap<>();
         this.tensorCache = new HashMap<>();
     }
 
@@ -39,20 +38,12 @@ public class StatesCache {
         tensorCache.put(key, value);
     }
     
-    public Tensor[] getInputs(Object layer) {
-        return inputStates.get(layer);
+    public Tensor[] getStates(Object key, String id) {
+        return states.get(key.hashCode() + id);
     }
-
-    public void rememberInput(Object layer, Tensor... tensor) {
-        inputStates.put(layer, tensor);
-    }
-
-    public Tensor[] getOutputs(Object layer) {
-        return outputStates.computeIfAbsent(layer, (x) -> new Tensor[0]);
-    }
-
-    public void rememberOutput(Object layer, Tensor... state) {
-        outputStates.put(layer, state);
+    
+    public void setStates(Object key, String id, Tensor... values) {
+        states.put(key.hashCode() + id, values);
     }
 }
 

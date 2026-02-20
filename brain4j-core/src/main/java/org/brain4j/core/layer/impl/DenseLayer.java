@@ -1,15 +1,15 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
-import org.brain4j.math.activation.impl.LinearActivation;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
 
+import java.util.List;
 import java.util.random.RandomGenerator;
 
 /**
@@ -30,7 +30,7 @@ import java.util.random.RandomGenerator;
  *
  * @author xEcho1337
  */
-public class DenseLayer extends Layer {
+public class DenseLayer extends Layer0 {
 
     private int dimension;
 
@@ -66,7 +66,7 @@ public class DenseLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         // Shape: [input_size, output_size]
         this.weights = Tensors.zeros(previous.size(), dimension).withGrad();
         this.bias = Tensors.zeros(dimension).withGrad();
@@ -76,24 +76,32 @@ public class DenseLayer extends Layer {
     public void initWeights(RandomGenerator generator, int input, int output) {
         this.weights.map(x -> weightInit.generate(generator, input, output));
     }
-
+    
+    @Override
+    public int getInputLength() {
+        return 1;
+    }
+    
+    @Override
+    public List<Shape> getOutputShapes() {
+        return List.of();
+    }
+    
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        Tensor[] result = new Tensor[inputs.length];
-        Tensor[] beforeActivation = new Tensor[inputs.length];
-
-        for (int i = 0; i < result.length; i++) {
-            Tensor input = inputs[i];
-            Tensor output = input.matmulGrad(weights);
-            
-            if (bias != null) output = output.addGrad(bias);
-
-            beforeActivation[i] = output;
-            result[i] = output.activateGrad(activation);
-        }
+        validateInputLength(inputs);
         
-        cache.rememberOutput(this, beforeActivation);
-        return result;
+        Tensor input = inputs[0];
+        Tensor output = input.matmulGrad(weights);
+        
+        cache.recordInput(this, input);
+        
+        if (bias != null) output = output.addGrad(bias);
+
+        Tensor beforeActivation = output;
+        cache.recordOutput(this, beforeActivation);
+        
+        return new Tensor[] { output.activateGrad(activation) };
     }
 
     @Override

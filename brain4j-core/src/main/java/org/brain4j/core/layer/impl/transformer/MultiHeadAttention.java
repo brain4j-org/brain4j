@@ -1,14 +1,13 @@
 package org.brain4j.core.layer.impl.transformer;
 
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.activation.impl.SoftmaxActivation;
+import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.ops.FlashAttention;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
@@ -38,7 +37,7 @@ import java.util.random.RandomGenerator;
  * @see Optimizer
  * @see Updater
  */
-public class MultiHeadAttention extends Layer {
+public class MultiHeadAttention extends Layer0 {
 
     protected Tensor outProj;
     protected Tensor outBias;
@@ -74,7 +73,7 @@ public class MultiHeadAttention extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.outProj = Tensors.matrix(embeddingDim, embeddingDim).withGrad();
 
         if (attnQkvHasBias) this.bias = Tensors.zeros(3 * embeddingDim).withGrad();
@@ -200,7 +199,7 @@ public class MultiHeadAttention extends Layer {
         Tensor K_T = K.transposeGrad();
         // [batch, heads, seq_len, seq_len]
         Tensor scores = Q.matmulGrad(K_T).div(normalizer);
-        Tensor attentionWeights = scores.activateGrad(new SoftmaxActivation());
+        Tensor attentionWeights = scores.activateGrad(new Softmax());
         // [batch, heads, seq_len, head_dim]
         Tensor context = attentionWeights.matmulGrad(V);
         // [batch, seq_len, heads, head_dim]
@@ -240,14 +239,14 @@ public class MultiHeadAttention extends Layer {
     }
 
     @Override
-    public Layer freeze() {
+    public Layer0 freeze() {
         outProj.noGrad();
         if (outBias != null) outBias.noGrad();
         return super.freeze();
     }
 
     @Override
-    public Layer unfreeze() {
+    public Layer0 unfreeze() {
         outProj.withGrad();
         if (outBias != null) outBias.withGrad();
         return super.unfreeze();
@@ -259,12 +258,12 @@ public class MultiHeadAttention extends Layer {
     }
 
     @Override
-    public int totalWeights() {
+    public int getTotalWeights() {
         return weights.elements() + outProj.elements();
     }
 
     @Override
-    public int totalBiases() {
+    public int getTotalBias() {
         int total = 0;
         if (attnQkvHasBias) total += bias.elements();
         if (attnOutHasBias) total += outBias.elements();

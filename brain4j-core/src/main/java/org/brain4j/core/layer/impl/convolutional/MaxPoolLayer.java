@@ -1,11 +1,11 @@
 package org.brain4j.core.layer.impl.convolutional;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 
-public class MaxPoolLayer extends Layer {
+public class MaxPoolLayer extends Layer0 {
 
     private int stride;
     private int windowHeight;
@@ -22,7 +22,7 @@ public class MaxPoolLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.size = previous.size();
     }
 

@@ -1,11 +1,11 @@
 package org.brain4j.core.layer.impl.utility;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 
-public class SqueezeLayer extends Layer {
+public class SqueezeLayer extends Layer0 {
     
     private int dimension;
     private int size;
@@ -18,7 +18,7 @@ public class SqueezeLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.size = previous.size();
     }
 

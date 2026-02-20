@@ -1,17 +1,15 @@
 package org.brain4j.examples.mnist;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.importing.ModelZoo;
 import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.layer.impl.convolutional.ConvLayer;
-import org.brain4j.core.layer.impl.utility.ActivationLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.layer.impl.utility.ReshapeLayer;
 import org.brain4j.dashboard.BrainDashboard;
+import org.brain4j.math.activation.impl.LeakyReLU;
+import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
@@ -26,7 +24,6 @@ import org.brain4j.math.data.Sample;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -74,11 +71,11 @@ public class TestMNIST {
         return ModelSpecs.of(
             new InputLayer(28 * 28),
             new ReshapeLayer(1, 28, 28),
-            new ConvLayer(1, 16, 3, 3, 1, Activations.LEAKY_RELU), // 16x26x26
-            new ConvLayer(16, 32, 3, 3, 2, Activations.LEAKY_RELU), // 32x12x12
-            new ConvLayer(32, 64, 3, 3, 2, Activations.LEAKY_RELU), // 64x5x5
+            new ConvLayer(1, 16, 3, 3, 1, new LeakyReLU()), // 16x26x26
+            new ConvLayer(16, 32, 3, 3, 2, new LeakyReLU()), // 32x12x12
+            new ConvLayer(32, 64, 3, 3, 2, new LeakyReLU()), // 64x5x5
             new ReshapeLayer(64 * 5 * 5),
-            new DenseLayer(10, Activations.SOFTMAX)
+            new DenseLayer(10, new Softmax())
         );
     }
     

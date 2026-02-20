@@ -63,9 +63,9 @@ public class PADEmotionalModeler {
 
         ModelSpecs specs = ModelSpecs.of(
             new InputLayer(inputSize),
-            new DenseLayer(64, Activations.RELU).setWeightInit(new UniformXavierInit()),
-            new DenseLayer(32, Activations.RELU).setWeightInit(new UniformXavierInit()),
-            new DenseLayer(outputSize, Activations.TANH).setWeightInit(new UniformXavierInit())
+            new DenseLayer(64, Activations.RELU),
+            new DenseLayer(32, Activations.RELU),
+            new DenseLayer(outputSize, Activations.TANH)
         );
 
         Model model = specs.compile();

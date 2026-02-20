@@ -1,6 +1,6 @@
 package org.brain4j.core.model;
 
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.data.ListDataSource;
@@ -119,10 +119,10 @@ public interface Model extends ModelBlock {
      * Returns an immutable view of the layers composing this model, in execution order.
      * @return an unmodifiable list of layers
      */
-    List<Layer> getLayers();
+    List<Layer0> getLayers();
 
     @Override
-    default void appendTo(List<Layer> layers) {
+    default void appendTo(List<Layer0> layers) {
         layers.addAll(getLayers());
     }
 }

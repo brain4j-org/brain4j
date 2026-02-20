@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
@@ -25,7 +25,7 @@ import org.brain4j.math.tensor.Tensor;
  *
  * @author xEcho1337
  */
-public class RMSNormLayer extends Layer {
+public class RMSNormLayer extends Layer0 {
 
     private double epsilon;
 
@@ -38,13 +38,13 @@ public class RMSNormLayer extends Layer {
     }
 
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
         this.weights = Tensors.ones(previous.size()).withGrad();
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(1, inputs);
+        validateInputLength(inputs);
 
         Tensor input = inputs[0];
         // x / sqrt(mean(x^2) + eps)

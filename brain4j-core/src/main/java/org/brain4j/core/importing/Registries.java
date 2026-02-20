@@ -2,7 +2,7 @@ package org.brain4j.core.importing;
 
 import org.brain4j.core.importing.format.GeneralRegistry;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.impl.*;
 import org.brain4j.core.layer.impl.convolutional.ConvLayer;
 import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
@@ -43,7 +43,7 @@ public class Registries {
     public static final GeneralRegistry<Updater, Object> UPDATERS_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<GradientClipper, Object> CLIPPERS_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<Activation, Object> ACTIVATION_REGISTRY = new GeneralRegistry<>();
-    public static final GeneralRegistry<Layer, Object> LAYER_REGISTRY = new GeneralRegistry<>();
+    public static final GeneralRegistry<Layer0, Object> LAYER_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<FeatureScaler, Object> SCALER_REGISTRY = new GeneralRegistry<>();
 
     static {
@@ -64,17 +64,17 @@ public class Registries {
             return new SqueezeOperation(dimension);
         });
         ONNX_OPERATIONS_REGISTRY.register("Concat", ConcatOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Relu", (x) -> new ActivationOperation(new ReLUActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Relu", (x) -> new ActivationOperation(new ReLU()));
         ONNX_OPERATIONS_REGISTRY.register("Relu", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Sigmoid", (x) -> new ActivationOperation(new SigmoidActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Sigmoid", (x) -> new ActivationOperation(new Sigmoid()));
         ONNX_OPERATIONS_REGISTRY.register("Sigmoid", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Tanh", (x) -> new ActivationOperation(new TanhActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Tanh", (x) -> new ActivationOperation(new Tanh()));
         ONNX_OPERATIONS_REGISTRY.register("Tanh", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("LeakyRelu", (x) -> new ActivationOperation(new LeakyReLUActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("LeakyRelu", (x) -> new ActivationOperation(new LeakyReLU()));
         ONNX_OPERATIONS_REGISTRY.register("LeakyRelu", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Gelu", (x) -> new ActivationOperation(new GELUActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Gelu", (x) -> new ActivationOperation(new GELU()));
         ONNX_OPERATIONS_REGISTRY.register("Gelu", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Softmax", (x) -> new ActivationOperation(new SoftmaxActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Softmax", (x) -> new ActivationOperation(new Softmax()));
         ONNX_OPERATIONS_REGISTRY.register("Softmax", ActivationOperation.class);
         ONNX_OPERATIONS_REGISTRY.register("LayerNormalization", (node) -> {
             float epsilon = node.getAttribute(0).getF();
@@ -98,17 +98,17 @@ public class Registries {
         CLIPPERS_REGISTRY.register("clamp", HardClipper.class);
         CLIPPERS_REGISTRY.register("l2", L2Clipper.class);
         
-        ACTIVATION_REGISTRY.register("elu", ELUActivation.class);
-        ACTIVATION_REGISTRY.register("gelu", GELUActivation.class);
-        ACTIVATION_REGISTRY.register("leaky_relu", LeakyReLUActivation.class);
-        ACTIVATION_REGISTRY.register("linear", LinearActivation.class);
-        ACTIVATION_REGISTRY.register("mish", MishActivation.class);
-        ACTIVATION_REGISTRY.register("relu", ReLUActivation.class);
-        ACTIVATION_REGISTRY.register("sigmoid", SigmoidActivation.class);
-        ACTIVATION_REGISTRY.register("softmax", SoftmaxActivation.class);
-        ACTIVATION_REGISTRY.register("softplus", SoftPlusActivation.class);
-        ACTIVATION_REGISTRY.register("swish", SwishActivation.class);
-        ACTIVATION_REGISTRY.register("tanh", TanhActivation.class);
+        ACTIVATION_REGISTRY.register("elu", ELU.class);
+        ACTIVATION_REGISTRY.register("gelu", GELU.class);
+        ACTIVATION_REGISTRY.register("leaky_relu", LeakyReLU.class);
+        ACTIVATION_REGISTRY.register("linear", Linear.class);
+        ACTIVATION_REGISTRY.register("mish", Mish.class);
+        ACTIVATION_REGISTRY.register("relu", ReLU.class);
+        ACTIVATION_REGISTRY.register("sigmoid", Sigmoid.class);
+        ACTIVATION_REGISTRY.register("softmax", Softmax.class);
+        ACTIVATION_REGISTRY.register("softplus", SoftPlus.class);
+        ACTIVATION_REGISTRY.register("swish", Swish.class);
+        ACTIVATION_REGISTRY.register("tanh", Tanh.class);
 
         LAYER_REGISTRY.register("input", InputLayer.class);
         LAYER_REGISTRY.register("dense", DenseLayer.class);

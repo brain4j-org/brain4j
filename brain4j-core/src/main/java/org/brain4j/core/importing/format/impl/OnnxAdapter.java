@@ -5,7 +5,7 @@ import org.brain4j.core.graphs.GraphModel;
 import org.brain4j.core.graphs.GraphNode;
 import org.brain4j.core.importing.format.BinaryAdapter;
 import org.brain4j.core.importing.onnx.ProtoOnnx.*;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.math.Tensors;
@@ -30,12 +30,12 @@ import static org.brain4j.core.importing.Registries.ONNX_OPERATIONS_REGISTRY;
 public class OnnxAdapter implements BinaryAdapter {
     
     private static final Map<Class<? extends Activation>, String> ACTIVATION_MAP = Map.of(
-        ReLUActivation.class, "Relu",
-        GELUActivation.class, "Gelu",
-        SoftmaxActivation.class, "Softmax",
-        SigmoidActivation.class, "Sigmoid",
-        TanhActivation.class, "Tanh",
-        LeakyReLUActivation.class, "LeakyReLU"
+        ReLU.class, "Relu",
+        GELU.class, "Gelu",
+        Softmax.class, "Softmax",
+        Sigmoid.class, "Sigmoid",
+        Tanh.class, "Tanh",
+        LeakyReLU.class, "LeakyReLU"
     );
     
     @Override
@@ -88,7 +88,7 @@ public class OnnxAdapter implements BinaryAdapter {
         
         addInitializers(model, graphBuilder, weightsMap);
         
-        Layer inputLayer = model.getLayers().getFirst();
+        Layer0 inputLayer = model.getLayers().getFirst();
         
         if (!(inputLayer instanceof InputLayer wrapped)) {
             throw Commons.illegalArgument("First layer is not an InputLayer instance!");
@@ -126,10 +126,10 @@ public class OnnxAdapter implements BinaryAdapter {
     }
     
     private void addInitializers(Model model, GraphProto.Builder graphBuilder, Map<Tensor, String> weightsMap) {
-        List<Layer> layers = model.getLayers();
+        List<Layer0> layers = model.getLayers();
         
         for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+            Layer0 layer = layers.get(i);
             String layerId = LAYER_REGISTRY.fromClass(layer.getClass());
             
             for (Map.Entry<String, Tensor> weight : layer.weightsMap().entrySet()) {

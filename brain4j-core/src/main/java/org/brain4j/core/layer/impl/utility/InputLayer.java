@@ -2,12 +2,14 @@ package org.brain4j.core.layer.impl.utility;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Input layer used to define the expected shape of data entering the network.
@@ -35,7 +37,7 @@ import java.util.Arrays;
  *
  * @author xEcho1337
  */
-public class InputLayer extends Layer {
+public class InputLayer extends Layer0 {
 
     private int[] shape;
     
@@ -52,7 +54,12 @@ public class InputLayer extends Layer {
     public InputLayer(int... shape) {
         this.shape = shape;
     }
-
+    
+    @Override
+    public List<Shape> getOutputShapes() {
+        return List.of(Shape.of(shape));
+    }
+    
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         for (Tensor input : inputs) {

@@ -1,7 +1,7 @@
 package org.brain4j.llm.core.architecture.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
@@ -111,7 +111,7 @@ public class GPT2Adapter implements ArchitectureAdapter {
         return specs.compile();
     }
     
-    static class TokenSelectionLayer extends Layer {
+    static class TokenSelectionLayer extends Layer0 {
         @Override
         public Tensor[] forward(StatesCache cache, Tensor... inputs) {
             if (cache.isTraining()) return inputs;

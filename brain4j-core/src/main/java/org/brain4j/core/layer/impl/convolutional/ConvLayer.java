@@ -1,18 +1,20 @@
 package org.brain4j.core.layer.impl.convolutional;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
-import org.brain4j.math.activation.impl.LinearActivation;
+import org.brain4j.math.activation.impl.Linear;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.random.RandomGenerator;
 
-public class ConvLayer extends Layer {
+public class ConvLayer extends Layer0 {
 
     private int channels;
     private int filters;
@@ -25,25 +27,19 @@ public class ConvLayer extends Layer {
     }
     
     public ConvLayer(int inputChannels, int filters, int kernelWidth, int kernelHeight) {
-        this(inputChannels, filters, kernelWidth, kernelHeight, new LinearActivation());
+        this(inputChannels, filters, kernelWidth, kernelHeight, new Linear());
     }
 
     public ConvLayer(int inputChannels, int filters, int kernelWidth, int kernelHeight, int stride) {
-        this(inputChannels, filters, kernelWidth, kernelHeight, stride, new LinearActivation());
+        this(inputChannels, filters, kernelWidth, kernelHeight, stride, new Linear());
     }
 
     public ConvLayer(int inputChannels, int filters, int kernelWidth, int kernelHeight, Activations activation) {
         this(inputChannels, filters, kernelWidth, kernelHeight, activation.function());
     }
 
-    public ConvLayer(
-        int inputChannels,
-        int filters,
-        int kernelWidth,
-        int kernelHeight,
-        int stride,
-        Activations activation
-    ) {
+    public ConvLayer(int inputChannels, int filters, int kernelWidth,
+                     int kernelHeight, int stride, Activations activation) {
         this(inputChannels, filters, kernelWidth, kernelHeight, stride, activation.function());
     }
 
@@ -72,27 +68,72 @@ public class ConvLayer extends Layer {
     }
     
     @Override
-    public void connect(Layer previous) {
+    public void connect() {
+        Shape previousShape = previous.getOutputShapes().getFirst();
+        
         this.bias = Tensors.zeros(filters).withGrad();
         this.weights = Tensors.zeros(filters, channels, kernelHeight, kernelWidth).withGrad();
+        this.outputShape = List.of(inferOutputShape(previousShape));
     }
     
     @Override
     public void initWeights(RandomGenerator generator, int input, int output) {
         this.weights.map(x -> weightInit.generate(generator, input, output));
     }
-
+    
+    @Override
+    public int getInputLength() {
+        return 1;
+    }
+    
+    public Shape inferOutputShape(Shape input) {
+        if (input.rank() != 3) {
+            throw new IllegalArgumentException(
+                "ConvLayer expects input shape [C, H, W] but got: " + input
+            );
+        }
+        
+        int inChannels = input.dim(0);
+        int inHeight = input.dim(1);
+        int inWidth = input.dim(2);
+        
+        if (inChannels != channels) {
+            throw new IllegalArgumentException(
+                "Channel mismatch. Expected " + channels + " but got " + inChannels
+            );
+        }
+        
+        if (kernelHeight > inHeight + 2 * padding ||
+            kernelWidth > inWidth + 2 * padding) {
+            throw new IllegalArgumentException(
+                "Kernel larger than input."
+            );
+        }
+        
+        int outHeight = (inHeight + 2 * padding - kernelHeight) / stride + 1;
+        int outWidth  = (inWidth + 2 * padding - kernelWidth) / stride + 1;
+        
+        if ((inHeight + 2 * padding - kernelHeight) % stride != 0 ||
+            (inWidth + 2 * padding - kernelWidth) % stride != 0) {
+            throw new IllegalArgumentException(
+                "Stride does not evenly divide spatial dimensions."
+            );
+        }
+        
+        return Shape.of(filters, outHeight, outWidth);
+    }
+    
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
-        cache.rememberInput(this, input);
+        cache.recordInput(this, input);
         
-        checkValidInput(input, "Input must have shape [N, C, H, W]! Got: %s", Arrays.toString(input.shape()));
+        validateInputTensor(input, "Input must have shape [N, C, H, W] while got: %s", Arrays.toString(input.shape()));
 
         Tensor convolved = input.convolveGrad(weights, stride);
         Tensor added = convolved.addGrad(bias.reshape(1, filters, 1, 1));
         
-        cache.rememberOutput(this, added);
+        cache.recordOutput(this, added);
 
         return new Tensor[] { added.activateGrad(activation) };
     }
@@ -132,56 +173,47 @@ public class ConvLayer extends Layer {
         return channels;
     }
     
-    public ConvLayer setChannels(int channels) {
+    public void setChannels(int channels) {
         this.channels = channels;
-        return this;
     }
     
     public int getFilters() {
         return filters;
     }
     
-    public ConvLayer setFilters(int filters) {
+    public void setFilters(int filters) {
         this.filters = filters;
-        return this;
     }
     
     public int getKernelWidth() {
         return kernelWidth;
     }
     
-    public ConvLayer setKernelWidth(int kernelWidth) {
+    public void setKernelWidth(int kernelWidth) {
         this.kernelWidth = kernelWidth;
-        return this;
     }
     
     public int getKernelHeight() {
         return kernelHeight;
     }
     
-    public ConvLayer setKernelHeight(int kernelHeight) {
+    public void setKernelHeight(int kernelHeight) {
         this.kernelHeight = kernelHeight;
-        return this;
     }
     
     public int getStride() {
         return stride;
     }
     
-    public ConvLayer setStride(int stride) {
-        if (stride <= 0) {
-            throw new IllegalArgumentException("Stride must be > 0. Got: " + stride);
-        }
+    public void setStride(int stride) {
         this.stride = stride;
-        return this;
     }
     
     public int getPadding() {
         return padding;
     }
     
-    public ConvLayer setPadding(int padding) {
+    public void setPadding(int padding) {
         this.padding = padding;
-        return this;
     }
 }

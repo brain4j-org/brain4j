@@ -52,7 +52,7 @@ public class TransformerDecoder extends TransformerEncoder {
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(1, inputs);
+        validateInputLength(inputs);
         Tensor input = inputs[0];
 
         if (input.rank() != 3) {
@@ -96,7 +96,7 @@ public class TransformerDecoder extends TransformerEncoder {
         }
 
         Tensor added2 = downProjected.addGrad(added);
-        cache.rememberOutput(this, added2);
+        cache.recordOutput(this, added2);
 
         return new Tensor[] { added2 };
     }

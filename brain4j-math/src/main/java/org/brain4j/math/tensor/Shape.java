@@ -45,11 +45,23 @@ public class Shape {
     }
 
     public Shape slice(int start, int end) {
+        end = Math.floorMod(end, dims.length); // support for negative indices
+        
         if (end <= start) {
             throw new IllegalArgumentException("End must be greater than start!");
         }
+        
         int[] result = new int[end - start];
         System.arraycopy(dims, start, result, 0, result.length);
         return Shape.of(result);
+    }
+    
+    public void copy(int[] result, int destOffset) {
+        if (rank() > result.length) throw Commons.illegalArgument("Rank is higher than result array");
+        System.arraycopy(dims, 0, result, destOffset, dims.length);
+    }
+    
+    public void copy(int[] result) {
+        copy(result, 0);
     }
 }
