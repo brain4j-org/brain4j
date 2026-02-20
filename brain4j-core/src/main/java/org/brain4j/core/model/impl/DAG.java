@@ -33,6 +33,10 @@ public class DAG implements Model {
         
         int current = 0;
         
+        for (Node in : input) {
+            in.build(seed + (current++));
+        }
+        
         for (Node topologyNode : topology) {
             topologyNode.build(seed + (current++));
         }
@@ -53,9 +57,9 @@ public class DAG implements Model {
         
         if (node.getInputs().isEmpty()) {
             input.add(node);
+        } else {
+            topology.add(node);
         }
-        
-        topology.add(node);
     }
     
     @Override

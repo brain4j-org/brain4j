@@ -30,13 +30,14 @@ public class Node {
         
         this.outputShapes = layer.inferOutputShapes(inputShapes);
         
+        System.out.println(layer + " | " + seed);
         RandomGenerator rng = new SplittableRandom(seed);
         layer.build(inputShapes, rng);
     }
 
     public Tensor[] forward(StatesCache cache, Map<Node, Tensor[]> computed) {
         List<Tensor> tensors = new ArrayList<>();
-
+        
         for (Node input : inputs) {
             // outputs of the previous node
             Tensor[] inTensors = computed.get(input);

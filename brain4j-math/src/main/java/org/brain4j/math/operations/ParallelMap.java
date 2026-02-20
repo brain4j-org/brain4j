@@ -63,7 +63,6 @@ public class ParallelMap extends RecursiveAction {
             return;
         }
 
-
         int step = work / PARALLELISM;
         var params = new MapParameters(function, data);
         List<ParallelMap> actions = new ArrayList<>();
