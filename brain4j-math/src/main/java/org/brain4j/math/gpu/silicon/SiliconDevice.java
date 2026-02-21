@@ -4,7 +4,6 @@ import org.brain4j.math.tensor.TensorKey;
 import org.silicon.api.Silicon;
 import org.silicon.api.cache.MemoryPool;
 import org.silicon.api.cache.Pooled;
-import org.silicon.api.device.ComputeArena;
 import org.silicon.api.device.ComputeBuffer;
 import org.silicon.api.device.ComputeContext;
 import org.silicon.api.device.ComputeDevice;
@@ -12,7 +11,6 @@ import org.silicon.api.kernel.ComputeQueue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class SiliconDevice {

@@ -1,12 +1,14 @@
 package org.brain4j.core.importing.format.impl;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.model.impl.GraphModel;
 import org.brain4j.core.importing.format.BinaryAdapter;
 import org.brain4j.core.importing.onnx.ProtoOnnx.*;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Layer0;
-import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.core.layer.Node;
+import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.DAG;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.*;
@@ -26,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.brain4j.core.importing.Registries.LAYER_REGISTRY;
 import static org.brain4j.core.importing.Registries.ONNX_OPERATIONS_REGISTRY;
 
-public class OnnxAdapter implements BinaryAdapter {
+public class OnnxAdapter implements BinaryAdapter<DAG> {
     
     private static final Map<Class<? extends Activation>, String> ACTIVATION_MAP = Map.of(
         ReLU.class, "Relu",
@@ -38,16 +40,15 @@ public class OnnxAdapter implements BinaryAdapter {
     );
     
     @Override
-    public GraphModel deserialize(File file) {
+    public DAG deserialize(File file) {
         try {
             byte[] data = Files.readAllBytes(file.toPath());
             
             ModelProto modelProto = ModelProto.parseFrom(data);
             GraphProto graphProto = modelProto.getGraph();
-            GraphModel.Builder model = GraphModel.builder();
             
             for (TensorProto tensor : graphProto.getInitializerList()) {
-                model.initializer(tensor.getName(), deserializeTensor(tensor));
+//                model.initializer(tensor.getName(), deserializeTensor(tensor));
             }
             
             for (NodeProto node : graphProto.getNodeList()) {
@@ -62,13 +63,14 @@ public class OnnxAdapter implements BinaryAdapter {
                         + node.getInputCount() + " inputs but operation requires " + op.requiredInputs());
                 }
                 
-                model.addNode(new GraphModel.GraphNode(node.getName(), op, node.getInputList(), node.getOutputList()));
+//                model.addNode(new GraphModel.GraphNode(node.getName(), op, node.getInputList(), node.getOutputList()));
             }
             
             List<String> inputs = graphProto.getInputList().stream().map(ValueInfoProto::getName).toList();
             List<String> outputs = graphProto.getOutputList().stream().map(ValueInfoProto::getName).toList();
             
-            return model.inputs(inputs).outputs(outputs).compile();
+            return null; // TODO: fix
+//            return model.inputs(inputs).outputs(outputs).compile();
         } catch (Exception e) {
             e.printStackTrace(System.err);
             return null;
@@ -76,7 +78,7 @@ public class OnnxAdapter implements BinaryAdapter {
     }
     
     @Override
-    public void serialize(Model model, File file) {
+    public void serialize(DAG model, File file) {
         if (model.getDevice() != null) model = model.fork(null);
         
         GraphProto.Builder graphBuilder = GraphProto.newBuilder();
@@ -87,7 +89,7 @@ public class OnnxAdapter implements BinaryAdapter {
         
         addInitializers(model, graphBuilder, weightsMap);
         
-        Layer0 inputLayer = model.getLayers().getFirst();
+        Layer inputLayer = model.getLayers().getFirst();
         
         if (!(inputLayer instanceof InputLayer wrapped)) {
             throw Commons.illegalArgument("First layer is not an InputLayer instance!");
@@ -124,14 +126,14 @@ public class OnnxAdapter implements BinaryAdapter {
         }
     }
     
-    private void addInitializers(Model model, GraphProto.Builder graphBuilder, Map<Tensor, String> weightsMap) {
-        List<Layer0> layers = model.getLayers();
+    private void addInitializers(DAG model, GraphProto.Builder graphBuilder, Map<Tensor, String> weightsMap) {
+        List<Layer> layers = model.getLayers();
         
         for (int i = 0; i < layers.size(); i++) {
-            Layer0 layer = layers.get(i);
+            Layer layer = layers.get(i);
             String layerId = LAYER_REGISTRY.fromClass(layer.getClass());
             
-            for (Map.Entry<String, Tensor> weight : layer.weightsMap().entrySet()) {
+            for (Map.Entry<String, Tensor> weight : layer.parameters().entrySet()) {
                 String name = String.format("%s.%d.%s", layerId, i, weight.getKey());
                 
                 weightsMap.put(weight.getValue(), name);

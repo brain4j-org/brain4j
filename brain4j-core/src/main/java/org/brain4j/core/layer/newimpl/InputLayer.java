@@ -21,6 +21,10 @@ public class InputLayer extends Layer {
     }
     
     @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+    }
+    
+    @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         return List.of(shape);
     }
@@ -28,5 +32,14 @@ public class InputLayer extends Layer {
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         return inputs;
+    }
+    
+    public Shape shape() {
+        return shape;
+    }
+    
+    @Override
+    public Layer copy() {
+        return new InputLayer(shape.copy());
     }
 }

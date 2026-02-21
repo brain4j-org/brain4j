@@ -1,30 +1,37 @@
 package org.brain4j.core.model;
 
+import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.model.impl.Sequential;
+import org.brain4j.math.Copyable;
+import org.brain4j.math.commons.Commons;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ModelSpecs implements ModelBlock, Cloneable {
+public class ModelSpecs implements ModelBlock, Copyable<ModelSpecs> {
     
-    private List<ModelBlock> components = new ArrayList<>();
+    private final List<ModelBlock> components = new ArrayList<>();
     private boolean frozen = false;
     
-    public static ModelSpecs of(ModelBlock... components) {
+    public static ModelSpecs of(List<ModelBlock> components) {
         if (components == null) {
-            throw new IllegalArgumentException("Component list cannot be null!");
+            throw Commons.illegalArgument("Component list must not be null!");
         }
         
         ModelSpecs specs = new ModelSpecs();
-        specs.components.addAll(List.of(components));
+        specs.components.addAll(components);
         
         return specs;
     }
     
+    public static ModelSpecs of(ModelBlock... components) {
+        return of(List.of(components));
+    }
+    
     @Override
-    public void appendTo(List<Layer0> layers) {
+    public void appendTo(List<Layer> layers) {
         for (ModelBlock component : components) {
             component.appendTo(layers);
         }
@@ -39,11 +46,11 @@ public class ModelSpecs implements ModelBlock, Cloneable {
         return this;
     }
     
-    public Model compile() {
-        return compile(System.currentTimeMillis());
+    public Sequential compile() {
+        return compile((int) (System.currentTimeMillis() % 1_000_000_000));
     }
     
-    public Model compile(long seed) {
+    public Sequential compile(int seed) {
         this.frozen = true;
         return new Sequential(this, null, seed);
     }
@@ -56,24 +63,14 @@ public class ModelSpecs implements ModelBlock, Cloneable {
         return components;
     }
     
-    public List<Layer0> buildLayerList() {
-        List<Layer0> flat = new ArrayList<>();
+    public List<Layer> buildLayerList() {
+        List<Layer> flat = new ArrayList<>();
         appendTo(flat);
         return flat;
     }
     
     @Override
-    public ModelSpecs clone() {
-        try {
-            ModelSpecs clone = (ModelSpecs) super.clone();
-            
-            clone.frozen = false;
-            clone.components = new ArrayList<>();
-            clone.components.addAll(components);
-            
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+    public ModelSpecs copy() {
+        return ModelSpecs.of(components);
     }
 }

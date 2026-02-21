@@ -5,6 +5,7 @@ import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.convolutional.ConvLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
 import org.brain4j.core.layer.impl.utility.ReshapeLayer;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.activation.impl.LeakyReLU;
 import org.brain4j.math.activation.impl.ReLU;
@@ -42,7 +43,7 @@ public class TestMNIST {
         ListDataSource testSource = getSource("mnist/mnist-test.csv");
         
         ModelSpecs specs = getCNNSpecs();
-        Model model = specs.compile(42);
+        Sequential model = specs.compile(42);
         model.summary(); // prints a summary of the architecture on the console
 
         SiliconDevice device = Brain4J.firstDevice();

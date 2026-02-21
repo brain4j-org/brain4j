@@ -1,8 +1,9 @@
 package org.brain4j.math.tensor;
 
+import org.brain4j.math.Copyable;
 import org.brain4j.math.commons.Commons;
 
-public class Shape {
+public class Shape implements Copyable<Shape> {
 
     private final int[] dims;
 
@@ -17,6 +18,11 @@ public class Shape {
     }
 
     public static Shape of(int... dims) {
+        return new Shape(dims);
+    }
+    
+    @Override
+    public Shape copy() {
         return new Shape(dims);
     }
 

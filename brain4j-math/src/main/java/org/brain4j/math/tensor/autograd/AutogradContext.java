@@ -52,7 +52,7 @@ public class AutogradContext {
     public void backward(Tensor gradOutput) {
         if (!requiresGrad) return;
         
-        this.grad = grad == null ? gradOutput.clone() : grad.add(gradOutput.broadcastLike(grad));
+        this.grad = grad == null ? gradOutput.copy() : grad.add(gradOutput.broadcastLike(grad));
 
         receivedContributions++;
 

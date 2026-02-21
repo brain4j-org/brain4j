@@ -3,9 +3,11 @@ package org.brain4j.core.importing.format.impl;
 import com.google.gson.*;
 import org.brain4j.core.importing.SafeTensorsConverter;
 import org.brain4j.core.importing.format.BinaryAdapter;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.tensor.Tensor;
 
 import java.io.*;
@@ -23,17 +25,17 @@ import java.util.zip.ZipOutputStream;
 
 import static org.brain4j.core.importing.Registries.*;
 
-public class BrainAdapter implements BinaryAdapter {
+public class BrainAdapter implements BinaryAdapter<Sequential> {
     
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final int FORMAT_VERSION = 2;
     
     @Override
-    public Model deserialize(File file) {
+    public Sequential deserialize(File file) {
         Map<String, byte[]> files = readZip(file);
         
         ModelSpecs specs = deserializeSpecs(files.get("metadata.json"));
-        Model model = specs.compile(System.currentTimeMillis());
+        Sequential model = specs.compile();
         
         deserializeWeights(model, files.get("weights.safetensors"));
         
@@ -41,7 +43,7 @@ public class BrainAdapter implements BinaryAdapter {
     }
     
     @Override
-    public void serialize(Model model, File file) {
+    public void serialize(Sequential model, File file) {
         if (model.getDevice() != null) model = model.fork(null);
         
         Map<String, Tensor> weights = new HashMap<>();
@@ -71,12 +73,14 @@ public class BrainAdapter implements BinaryAdapter {
             String activation = layerJson.get("activation").getAsString();
             String clipper = layerJson.get("clipper").getAsString();
             
-            Layer0 layer = LAYER_REGISTRY.toInstance(type);
-            layer.setActivation(ACTIVATION_REGISTRY.toInstance(activation));
-            layer.setClipper(CLIPPERS_REGISTRY.toInstance(clipper));
+            Layer layer = LAYER_REGISTRY.toInstance(type);
             
-            layer.deserialize(layerJson);
-            specs.add(layer);
+            
+//            layer.setActivation(ACTIVATION_REGISTRY.toInstance(activation));
+//            layer.setClipper(CLIPPERS_REGISTRY.toInstance(clipper));
+//
+//            layer.deserialize(layerJson);
+//            specs.add(layer);
         }
         
         return specs;
@@ -91,8 +95,8 @@ public class BrainAdapter implements BinaryAdapter {
             throw new RuntimeException("Failed to deserialize safe tensors!", e);
         }
         
-        List<Layer0> layers = model.getLayers();
-        Map<Layer0, Map<String, Tensor>> weightsPerLayer = new HashMap<>();
+        List<Layer> layers = model.getLayers();
+        Map<Layer, Map<String, Tensor>> weightsPerLayer = new HashMap<>();
         
         for (Map.Entry<String, Tensor> entry : tensors.entrySet()) {
             String fullName = entry.getKey(); // es: dense.0.weights
@@ -110,7 +114,7 @@ public class BrainAdapter implements BinaryAdapter {
                 throw new IllegalStateException("Invalid layer index: " + layerIndex);
             }
             
-            Layer0 layer = layers.get(layerIndex);
+            Layer layer = layers.get(layerIndex);
             
             weightsPerLayer
                 .computeIfAbsent(layer, l -> new HashMap<>())
@@ -118,9 +122,9 @@ public class BrainAdapter implements BinaryAdapter {
         }
         
         for (var entry : weightsPerLayer.entrySet()) {
-            Layer0 layer = entry.getKey();
+            Layer layer = entry.getKey();
             Map<String, Tensor> weights = entry.getValue();
-            layer.loadWeights(weights);
+//            layer.loadWeights(weights);
         }
     }
     
@@ -130,26 +134,26 @@ public class BrainAdapter implements BinaryAdapter {
         root.addProperty("created_at", Instant.now().toString());
         
         JsonArray architecture = new JsonArray();
-        List<Layer0> layers = model.getLayers();
+        List<Layer> layers = model.getLayers();
         
         for (int i = 0; i < layers.size(); i++) {
-            Layer0 layer = layers.get(i);
+            Layer layer = layers.get(i);
             JsonObject obj = new JsonObject();
             
             obj.addProperty("index", i);
-            obj.addProperty("type", LAYER_REGISTRY.fromClass(layer.getClass()));
-            obj.addProperty("activation", ACTIVATION_REGISTRY.fromClass(layer.getActivation().getClass()));
-            obj.addProperty("clipper", CLIPPERS_REGISTRY.fromClass(layer.getClipper().getClass()));
+//            obj.addProperty("type", LAYER_REGISTRY.fromClass(layer.getClass()));
+//            obj.addProperty("activation", ACTIVATION_REGISTRY.fromClass(layer.getActivation().getClass()));
+//            obj.addProperty("clipper", CLIPPERS_REGISTRY.fromClass(layer.getClipper().getClass()));
             
-            layer.serialize(obj);
+//            layer.serialize(obj);
             
             JsonArray weights = new JsonArray();
-            for (var entry : layer.weightsMap().entrySet()) {
-                String id = "%s.%d.%s".formatted(obj.get("type").getAsString(), i, entry.getKey());
-                globalWeights.put(id, entry.getValue());
-                weights.add(id);
-            }
-            
+//            for (var entry : layer.weightsMap().entrySet()) {
+//                String id = "%s.%d.%s".formatted(obj.get("type").getAsString(), i, entry.getKey());
+//                globalWeights.put(id, entry.getValue());
+//                weights.add(id);
+//            }
+//
             obj.add("weights", weights);
             architecture.add(obj);
         }

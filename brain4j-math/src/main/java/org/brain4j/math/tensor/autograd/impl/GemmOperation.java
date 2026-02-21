@@ -45,6 +45,6 @@ public class GemmOperation implements Operation {
         // dL/dB = A.T @ dL/dC
         Tensor gradB = a.transpose().matmul(gradOutput);
 
-        return new Tensor[] { gradA, gradB, gradOutput.clone() };
+        return new Tensor[] { gradA, gradB, gradOutput.copy() };
     }
 }

@@ -51,7 +51,7 @@ public class NormLayer extends Layer0 {
         validateInputLength(inputs);
 
         Tensor input = inputs[0];
-        Tensor cloned = input.clone();
+        Tensor cloned = input.copy();
         cloned.setAutogradContext(input.getAutogradContext());
 
         Tensor result = cloned.layerNorm(epsilon).mulGrad(weights).addGrad(bias);

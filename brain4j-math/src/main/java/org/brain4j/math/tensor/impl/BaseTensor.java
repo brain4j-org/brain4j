@@ -1,5 +1,6 @@
 package org.brain4j.math.tensor.impl;
 
+import org.brain4j.math.Copyable;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.commons.Commons;
@@ -28,7 +29,7 @@ import java.util.stream.IntStream;
 
 import static org.brain4j.math.Tensors.ones;
 
-public abstract class BaseTensor implements Tensor, Cloneable {
+public abstract class BaseTensor implements Tensor {
 
     protected AutogradContext autogradContext;
     protected int[] shape;
@@ -134,13 +135,13 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     }
     
     protected Tensor softmax1D(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         softmax1D(result.data(), 0, result.elements(), temperature);
         return result;
     }
     
     protected Tensor softmax2D(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         
         int rows = shape[0];
         int cols = shape[1];
@@ -153,7 +154,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     }
     
     protected Tensor softmax3D(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         
         int batches = shape[0];
         int rows = shape[1];
@@ -172,7 +173,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     }
     
     protected Tensor softmaxND(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         
         int rank = shape.length;
         int lastDim = shape[rank - 1];
@@ -295,50 +296,6 @@ public abstract class BaseTensor implements Tensor, Cloneable {
         }
 
         return maxIndex;
-    }
-
-    @Override
-    public Tensor clone() {
-        try {
-            BaseTensor copy = (BaseTensor) super.clone();
-
-            copy.shape = shape.clone();
-            copy.autogradContext = null;
-
-            int[] standardStrides = Tensors.computeStrides(shape);
-            boolean isContiguous = Arrays.equals(strides, standardStrides);
-
-            if (isContiguous) {
-                copy.strides = strides.clone();
-                copy.data = data.clone();
-            } else {
-                copy.strides = standardStrides;
-                int total = Tensors.computeSize(shape);
-                copy.data = new float[total];
-
-                int rank = shape.length;
-                int[] index = new int[rank];
-
-                for (int i = 0; i < total; i++) {
-                    int remaining = i;
-                    for (int d = rank - 1; d >= 0; d--) {
-                        index[d] = remaining % shape[d];
-                        remaining /= shape[d];
-                    }
-
-                    int srcIdx = 0;
-                    for (int d = 0; d < rank; d++) {
-                        srcIdx += index[d] * strides[d];
-                    }
-
-                    copy.data[i] = data[srcIdx];
-                }
-            }
-
-            return copy;
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
     }
     
     @Override
@@ -706,8 +663,8 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     public Tensor variance(Tensor mean, int dim, boolean keepDim) {
         dim = Commons.mod(dim, shape.length);
 
-        Tensor meanFirstSquare = clone().pow(2).mean(dim, keepDim);
-        Tensor meanSecondSquare = mean.clone().pow(2);
+        Tensor meanFirstSquare = copy().pow(2).mean(dim, keepDim);
+        Tensor meanSecondSquare = mean.copy().pow(2);
         
         return meanFirstSquare.sub(meanSecondSquare);
     }

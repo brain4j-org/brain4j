@@ -1,6 +1,6 @@
 package org.brain4j.core.training;
 
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.monitor.Monitor;
@@ -211,6 +211,7 @@ public final class DefaultTrainer implements Trainer {
 
             int cursor = dataSource.getCursor();
             currentBatch = cursor;
+            
             Batch batch = dataSource.nextBatch().to(model.getDevice());
             
             BatchStart batchStart = new BatchStart(this, cursor, totalBatches);
@@ -274,7 +275,7 @@ public final class DefaultTrainer implements Trainer {
     
     @Override
     public void backward(StatesCache cache, Batch batch, Tensor[] outputs) {
-        List<Layer0> layers = model.getLayers();
+        List<Layer> layers = model.getLayers();
         
         Tensor[] inputs = batch.getFirst();
         Tensor[] targets = batch.getSecond();
@@ -283,8 +284,9 @@ public final class DefaultTrainer implements Trainer {
         Optimizer optimizer = config.optimizer();
         LossFunction loss = config.loss();
         
-        layers.getLast().computeLoss(cache, targets, outputs, loss);
-        layers.forEach(layer -> layer.backward(cache, updater, optimizer));
+        // TODO: fix this
+//        layers.getLast().computeLoss(cache, targets, outputs, loss);
+//        layers.forEach(layer -> layer.backward(cache, updater, optimizer));
         
         int elements = 0;
         
@@ -298,7 +300,7 @@ public final class DefaultTrainer implements Trainer {
     
     @Override
     public void resetGrad() {
-        model.getLayers().forEach(Layer0::resetGrad);
+        model.getLayers().forEach(Layer::resetGrad);
     }
     
     @Override

@@ -1,6 +1,7 @@
 package org.brain4j.core.model;
 
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.Layer;
+import org.brain4j.math.Copyable;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.data.ListDataSource;
@@ -20,7 +21,7 @@ import java.util.List;
  *
  * @author xEcho1337
  */
-public interface Model extends ModelBlock {
+public interface Model extends Copyable<Model> {
     
     /**
      * Performs a full forward pass using a temporary {@link StatesCache}
@@ -29,11 +30,11 @@ public interface Model extends ModelBlock {
      * This is a convenience method for single-input, single-output models.
      * </p>
      *
-     * @param input the input tensor
+     * @param inputs the input tensors
      * @return the first output tensor produced by the model
      */
-    default Tensor predict(Tensor input) {
-        return predict(new StatesCache(false), input)[0];
+    default Tensor predict(Tensor... inputs) {
+        return predict(new StatesCache(), inputs)[0];
     }
     
     /**
@@ -48,6 +49,12 @@ public interface Model extends ModelBlock {
      * @return an array containing all output tensors of the model
      */
     Tensor[] predict(StatesCache cache, Tensor... inputs);
+    
+    /**
+     * Returns the device on which the model parameters are currently stored.
+     * @return the device associated with this model
+     */
+    SiliconDevice getDevice();
     
     /**
      * Evaluates the model on the given dataset.
@@ -75,14 +82,6 @@ public interface Model extends ModelBlock {
     double loss(ListDataSource dataSource, LossFunction lossFunction);
     
     /**
-     * Copies all model parameters to the specified device.
-     *
-     * @param device the target device
-     * @return a copy of this model instance
-     */
-    Model fork(SiliconDevice device);
-    
-    /**
      * Prints a formatted summary of the model architecture to the console.
      * <p>
      * The summary typically includes:
@@ -99,30 +98,16 @@ public interface Model extends ModelBlock {
     void summary();
     
     /**
-     * Returns the specifications used to construct this model.
-     * <p>
-     * {@link ModelSpecs} describes the logical structure of the model
-     * independently of its runtime state.
-     * </p>
+     * Copies all model parameters to the specified device.
      *
-     * @return the model specifications
+     * @param device the target device
+     * @return a copy of this model instance
      */
-    ModelSpecs getSpecs();
-
+    Model fork(SiliconDevice device);
+    
     /**
-     * Returns the device on which the model parameters are currently stored.
-     * @return the device associated with this model
-     */
-    SiliconDevice getDevice();
-
-    /**
-     * Returns an immutable view of the layers composing this model, in execution order.
+     * Returns an immutable view of the layers composing this object, in order.
      * @return an unmodifiable list of layers
      */
-    List<Layer0> getLayers();
-
-    @Override
-    default void appendTo(List<Layer0> layers) {
-        layers.addAll(getLayers());
-    }
+    List<Layer> getLayers();
 }

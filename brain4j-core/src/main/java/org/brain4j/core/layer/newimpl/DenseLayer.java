@@ -34,8 +34,11 @@ public class DenseLayer extends Layer {
         
         parameters.put("weights", weights);
         parameters.put("bias", bias);
-        
-        generateWeights(rng, inputShape.last(), outDimension);
+    }
+    
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+        generateWeights(rng, inputShapes.getFirst().last(), outDimension);
     }
     
     @Override
@@ -72,5 +75,12 @@ public class DenseLayer extends Layer {
         cache.setStates(this, "pre_activation", proj);
         
         return new Tensor[] { proj.activateGrad(activation) };
+    }
+    
+    @Override
+    public DenseLayer copy() {
+        DenseLayer copy = new DenseLayer(outDimension, activation);
+        copyParameters(copy);
+        return copy;
     }
 }

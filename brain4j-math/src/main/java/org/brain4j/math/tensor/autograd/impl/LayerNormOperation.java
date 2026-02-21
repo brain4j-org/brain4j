@@ -23,6 +23,6 @@ public record LayerNormOperation(double epsilon) implements Operation {
         Tensor gradA = gradOutput.times(b);  // ∂z/∂a = ∂z/∂out * b
         Tensor gradB = gradOutput.times(a);  // ∂z/∂b = ∂z/∂out * a
 
-        return new Tensor[] { gradA, gradB, gradOutput.clone() };
+        return new Tensor[] { gradA, gradB, gradOutput.copy() };
     }
 }

@@ -303,4 +303,9 @@ public class CpuTensor extends BaseTensor {
 
         return result;
     }
+    
+    @Override
+    public Tensor copy() {
+        return new CpuTensor(Shape.of(shape), strides.clone(), data.clone());
+    }
 }

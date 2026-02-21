@@ -1,8 +1,9 @@
 package org.brain4j.core.model.impl;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.layer.Layer0;
-import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Node;
+import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.core.model.Model;
@@ -22,68 +23,56 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.random.RandomGenerator;
-import java.util.stream.IntStream;
 
 public class Sequential implements Model, ModelBlock {
     
-    private final long seed;
+    private final DAG dag;
     private final ModelSpecs specs;
-    private final List<Layer0> layers;
+    private final List<Layer> layers;
     private final SiliconDevice device;
     
-    private Sequential(ModelSpecs specs, SiliconDevice device, List<Layer0> layers, long seed) {
+    private Sequential(ModelSpecs specs, SiliconDevice device, List<Layer> layers, int seed) {
         this.specs = specs;
         this.device = device;
         this.layers = layers;
-        this.seed = seed;
-    }
-    
-    public Sequential(ModelSpecs specs, SiliconDevice device, long seed) {
-        this.specs = specs;
-        this.layers = specs.buildLayerList();
-        this.device = device;
-        this.seed = seed;
         
-        if (!(layers.getFirst() instanceof InputLayer)) {
-            throw Commons.illegalArgument("First layer in the model must be an InputLayer instance!");
+        if (layers.isEmpty()) {
+            throw Commons.illegalArgument("Layer list is empty!");
         }
         
-        initLayers();
+        Layer first = layers.getFirst();
+        
+        if (!(first instanceof InputLayer inputLayer)) {
+            throw Commons.illegalArgument("First layer is not an input layer!");
+        }
+        
+        Node lastNode = Node.input(inputLayer.shape());
+        
+        for (int i = 1; i < layers.size(); i++) {
+            Layer current = layers.get(i);
+            lastNode = current.apply(lastNode);
+        }
+        
+        this.dag = DAG.of(seed, lastNode);
+    }
+    
+    public Sequential(ModelSpecs specs, SiliconDevice device, int seed) {
+        this(specs, device, specs.buildLayerList(), seed);
     }
     
     @Override
     public Tensor[] predict(StatesCache cache, Tensor... inputs) {
-        Tensor[] buffer = new Tensor[inputs.length];
-        
         if (device != null && !cache.isTraining()) {
             device.createResources();
         }
         
-        for (int i = 0; i < buffer.length; i++) {
-            Tensor input = inputs[i];
-            
-            if (input == null || input.rank() == 0) {
-                throw Commons.illegalArgument("Input at %s is either null or has dimension of 0!", i);
-            }
-            
-            if (input.rank() < 2) {
-                input = input.reshape(1, input.elements()); // reshape to [batch, input_size]
-            }
-            
-            Tensor chosen = cache.isTraining() ? input.withGrad() : input;
-            buffer[i] = chosen.to(device);
-        }
-        
-        for (Layer0 layer : layers) {
-            buffer = layer.forward(cache, buffer);
-        }
+        Tensor[] out = dag.predict(cache, inputs);
         
         if (device != null && !cache.isTraining()) {
             device.closeResources();
         }
         
-        return buffer;
+        return out;
     }
     
     @Override
@@ -125,10 +114,11 @@ public class Sequential implements Model, ModelBlock {
     }
     
     @Override
-    public Model fork(SiliconDevice device) {
-        List<Layer0> copiedLayers = layers.stream().map(Layer0::clone).toList();
-        copiedLayers.forEach(x -> x.toDevice(device));
-        return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
+    public Sequential fork(SiliconDevice device) {
+        return null; // TODO
+//        List<Layer0> copiedLayers = layers.stream().map(Layer::clone).toList();
+//        copiedLayers.forEach(x -> x.toDevice(device));
+//        return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
     }
     
     @Override
@@ -147,42 +137,34 @@ public class Sequential implements Model, ModelBlock {
         String divider = Commons.getHeader(" Architecture ", Commons.HEADER_CHAR);
         
         stats.append(divider);
-        stats.append(pattern.formatted("Index", "Layer Type", "Parameters", "Biases", "Activation")).append("\n");
+        stats.append(pattern.formatted("Index", "Layer Type", "Weights Shape", "Parameters", "Activation")).append("\n");
         
-        AtomicLong totalWeights = new AtomicLong(0);
-        AtomicLong totalBiases = new AtomicLong(0);
+        AtomicLong totalParams = new AtomicLong(0);
+        AtomicLong trainableParams = new AtomicLong(0);
         
-        append(pattern, stats, format, totalWeights, totalBiases);
-        
-        long weightsCount = totalWeights.get();
-        long biasesCount = totalBiases.get();
-        
-        long params = weightsCount + biasesCount;
-        
-        String parameters = format.format(params);
-        String weights = format.format(totalWeights);
-        String biases = format.format(totalBiases);
+        append(pattern, stats, format, totalParams, trainableParams);
         
         byte floatSize = Float.BYTES; // 4 bytes
-        String sizeOfParams = Commons.formatNumber(params * floatSize);
-        String sizeOfWeights = Commons.formatNumber(weightsCount * floatSize);
-        String sizeOfBiases = Commons.formatNumber(biasesCount * floatSize);
+        
+        long totalParameters = totalParams.get();
+        long trainableParameters = trainableParams.get();
+        
+        String sizeOfTotalParams = Commons.formatNumber(totalParams.get() * floatSize);
+        String sizeOfTrainableParams = Commons.formatNumber(trainableParams.get() * floatSize);
         
         stats.append(Commons.getHeader(" Recap ", Commons.HEADER_CHAR));
-        stats.append("Total weights: %s (%s)\n".formatted(weights, sizeOfWeights));
-        stats.append("Total biases: %s (%s)\n".formatted(biases, sizeOfBiases));
-        stats.append("Total parameters: %s (%s)\n".formatted(parameters, sizeOfParams));
+        stats.append("Total parameters: %s (%s)\n".formatted(totalParameters, sizeOfTotalParams));
+        stats.append("Trainable parameters: %s (%s)\n".formatted(trainableParameters, sizeOfTrainableParams));
         stats.append(Commons.getHeader("", Commons.HEADER_CHAR));
         
         Arrays.stream(stats.toString().split("\n")).forEach(System.out::println);
     }
     
-    @Override
     public ModelSpecs getSpecs() {
         return specs;
     }
     
-    public List<Layer0> getLayers() {
+    public List<Layer> getLayers() {
         return Collections.unmodifiableList(layers);
     }
     
@@ -237,64 +219,41 @@ public class Sequential implements Model, ModelBlock {
         if (device != null) device.closeResources();
     }
     
-    private void initLayers() {
-        if (layers.isEmpty()) return;
-        
-        int length = layers.size();
-        Layer0 prev = layers.getFirst();
-        
-        for (int i = 1; i < length; i++) {
-            Layer0 layer = layers.get(i);
-            
-            if (layer.isFrozen()) continue;
-
-            layer.connect(prev);
-            prev = layer;
-        }
-        
-        IntStream.range(1, length).parallel().forEach(i -> {
-            Layer0 layer = layers.get(i);
-            if (layer.isFrozen()) return;
-            
-            int input = layers.get(i - 1).size();
-            int output = layer.size();
-            
-            RandomGenerator localRandom = new SplittableRandom(seed + i);
-            layer.initWeights(localRandom, input, output);
-        });
-    }
-    
     private void append(
         String pattern,
         StringBuilder builder,
         DecimalFormat format,
-        AtomicLong totalWeights,
-        AtomicLong totalBiases
+        AtomicLong totalParams,
+        AtomicLong trainableParams
     ) {
         for (int i = 0; i < layers.size(); i++) {
-            Layer0 layer = layers.get(i);
+            Layer layer = layers.get(i);
             String layerType = layer.getClass().getSimpleName();
             
-            int biases = layer.getTotalBias();
-            int weights = layer.getTotalWeights();
+            int total = layer.calculateTotalParameters();
+            Tensor weightsTensor = layer.getParam("weights");
             
-            Tensor weightsTensor = layer.getWeights();
+            String shape = weightsTensor == null ? "N/A" : Arrays.toString(weightsTensor.shape());
+            String row = pattern.formatted(i, layerType, shape, format.format(total), layer.activation().name());
             
-            String formatWeights = weights == 0 ? "-" : format.format(weights);
-            String shape = weightsTensor == null
-                ? "[" + biases + "]"
-                : Arrays.toString(weightsTensor.shape());
+            builder.append(row);
             
-            builder.append(pattern.formatted(i, layerType, formatWeights, shape, layer.getActivation().name()));
-            
-            totalWeights.addAndGet(weights);
-            totalBiases.addAndGet(biases);
+            totalParams.addAndGet(total);
+            if (!layer.frozen()) trainableParams.addAndGet(total);
         }
     }
     
+    @Override
     public Sequential copy() {
-        List<Layer0> copiedLayers = layers.stream().map(Layer0::clone).toList();
+        List<Layer> copiedLayers = layers.stream()
+            .map(Layer::copy)
+            .toList();
         
-        return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
+        return new Sequential(specs.copy(), device, copiedLayers, dag.seed());
+    }
+    
+    @Override
+    public void appendTo(List<Layer> layers) {
+        layers.addAll(getLayers());
     }
 }

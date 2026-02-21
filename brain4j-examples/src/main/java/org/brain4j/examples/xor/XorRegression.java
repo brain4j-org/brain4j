@@ -4,6 +4,7 @@ import org.brain4j.core.Brain4J;
 import org.brain4j.core.importing.format.impl.BrainAdapter;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.core.model.Model;
@@ -36,7 +37,7 @@ public class XorRegression {
             new DenseLayer(1, Activations.SIGMOID)
         );
         
-        Model model = specs.compile(42);
+        Sequential model = specs.compile(42);
         SiliconDevice device = null;
 
         if (device != null) {

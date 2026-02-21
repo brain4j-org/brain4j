@@ -116,7 +116,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     public ListDataSource normalize() {
         if (samples.isEmpty()) return this;
 
-        int numInputs = samples.getFirst().getInputs().length;
+        int numInputs = samples.getFirst().inputs().length;
         List<List<Tensor>> inputStreams = new ArrayList<>(numInputs);
         
         for (int i = 0; i < numInputs; i++) {
@@ -124,7 +124,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         }
 
         for (Sample sample : samples) {
-            Tensor[] inputs = sample.getInputs();
+            Tensor[] inputs = sample.inputs();
             
             for (int i = 0; i < inputs.length; i++) {
                 inputStreams.get(i).add(inputs[i]);
@@ -212,8 +212,8 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
         Sample first = subSet.getFirst();
 
-        int inputCount = first.getInputs().length;
-        int labelCount = first.getLabels().length;
+        int inputCount = first.inputs().length;
+        int labelCount = first.labels().length;
 
         List<List<Tensor>> mergedInputs = new ArrayList<>(inputCount);
         List<List<Tensor>> mergedLabels = new ArrayList<>();
@@ -227,8 +227,8 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         }
 
         for (Sample sample : subSet) {
-            Tensor[] inputs = sample.getInputs();
-            Tensor[] labels = sample.getLabels();
+            Tensor[] inputs = sample.inputs();
+            Tensor[] labels = sample.labels();
 
 
             for (int i = 0; i < inputs.length; i++) {
@@ -266,7 +266,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
             clone.batchSize = batchSize;
             
             for (Sample sample : samples) {
-                clone.samples.add(sample.clone());
+                clone.samples.add(sample.copy());
             }
             
             return clone;

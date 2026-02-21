@@ -1,6 +1,7 @@
 package org.brain4j.core.layer;
 
 import org.brain4j.core.layer.newimpl.InputLayer;
+import org.brain4j.math.Copyable;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
@@ -8,7 +9,7 @@ import org.brain4j.math.tensor.Tensor;
 import java.util.*;
 import java.util.random.RandomGenerator;
 
-public class Node {
+public class Node implements Copyable<Node> {
 
     private final Layer layer;
     private final List<Node> inputs;
@@ -23,18 +24,28 @@ public class Node {
         return new Node(new InputLayer(shape), List.of());
     }
     
-    public void build(int seed) {
+    @Override
+    public Node copy() {
+        return new Node(layer.copy(), inputs);
+    }
+    
+    public void build() {
         List<Shape> inputShapes = inputs.stream()
             .flatMap(n -> n.getOutputShapes().stream())
             .toList();
         
         this.outputShapes = layer.inferOutputShapes(inputShapes);
+    }
+    
+    public void initWeights(int seed) {
+        List<Shape> inputShapes = inputs.stream()
+            .flatMap(n -> n.getOutputShapes().stream())
+            .toList();
         
-        System.out.println(layer + " | " + seed);
         RandomGenerator rng = new SplittableRandom(seed);
         layer.build(inputShapes, rng);
     }
-
+    
     public Tensor[] forward(StatesCache cache, Map<Node, Tensor[]> computed) {
         List<Tensor> tensors = new ArrayList<>();
         

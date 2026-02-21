@@ -1,9 +1,8 @@
 package org.brain4j.core.model.impl;
 
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.ListDataSource;
@@ -13,37 +12,53 @@ import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class DAG implements Model {
     
     private final List<Node> input;
     private final List<Node> output;
     private final List<Node> topology;
+    private final SiliconDevice device;
+    private final int seed;
     
-    private DAG(List<Node> output, int seed) {
-        this.input = new ArrayList<>();
+    protected DAG(List<Node> output, SiliconDevice device, int seed) {
+        this.device = device;
         this.output = output;
+        this.seed = seed;
+        this.input = new ArrayList<>();
         this.topology = new ArrayList<>();
-        
+
         Set<Node> visited = new HashSet<>();
         
         for (Node outNode : output) {
             dfs(outNode, visited);
         }
         
-        int current = 0;
-        
         for (Node in : input) {
-            in.build(seed + (current++));
+            in.build();
         }
         
         for (Node topologyNode : topology) {
-            topologyNode.build(seed + (current++));
+            topologyNode.build();
         }
+        
+        IntStream.range(0, topology.size()).parallel().forEach(i -> {
+            Node topologyNode = topology.get(i);
+            topologyNode.initWeights(seed + i);
+        });
     }
     
     public static DAG of(Node... output) {
-        return new DAG(List.of(output), 42);
+        return new DAG(List.of(output), null, 42);
+    }
+    
+    public static DAG of(int seed, Node... output) {
+        return new DAG(List.of(output), null, seed);
+    }
+    
+    public static DAG of(int seed, SiliconDevice device, Node... output) {
+        return new DAG(List.of(output), device, seed);
     }
     
     private void dfs(Node node, Set<Node> visited) {
@@ -68,7 +83,6 @@ public class DAG implements Model {
             throw Commons.illegalArgument("DAG expects %s inputs but %s were given!", input.size(), inputs.length);
         }
         
-        Tensor[] out = new Tensor[output.size()];
         Map<Node, Tensor[]> outputs = new HashMap<>();
         
         for (int i = 0; i < input.size(); i++) {
@@ -76,11 +90,22 @@ public class DAG implements Model {
         }
         
         for (Node node : topology) {
-            out = node.forward(cache, outputs);
+            node.forward(cache, outputs);
         }
         
-        // TODO: Multi out node support
-        return out;
+        List<Tensor> finalOutputs = new ArrayList<>();
+        
+        for (Node outNode : output) {
+            Tensor[] nodeOutputs = outputs.get(outNode);
+            Collections.addAll(finalOutputs, nodeOutputs);
+        }
+        
+        return finalOutputs.toArray(new Tensor[0]);
+    }
+    
+    @Override
+    public SiliconDevice getDevice() {
+        return device;
     }
     
     @Override
@@ -94,27 +119,28 @@ public class DAG implements Model {
     }
     
     @Override
-    public Model fork(SiliconDevice device) {
-        return null;
-    }
-    
-    @Override
     public void summary() {
     
     }
     
     @Override
-    public ModelSpecs getSpecs() {
-        return null;
+    public DAG fork(SiliconDevice device) {
+        List<Node> copy = output.stream().map(Node::copy).toList();
+        return new DAG(copy, device, seed);
     }
     
     @Override
-    public SiliconDevice getDevice() {
-        return null;
+    public DAG copy() {
+        List<Node> copy = output.stream().map(Node::copy).toList();
+        return new DAG(copy, device, seed);
     }
     
     @Override
-    public List<Layer0> getLayers() {
-        return List.of();
+    public List<Layer> getLayers() {
+        return topology.stream().map(Node::getLayer).toList();
+    }
+    
+    public int seed() {
+        return seed;
     }
 }

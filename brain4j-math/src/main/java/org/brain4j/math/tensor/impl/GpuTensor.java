@@ -201,11 +201,6 @@ public class GpuTensor extends BaseTensor {
     }
 
     @Override
-    public Tensor clone() {
-        return new GpuTensor(device, shape, dataBuffer.value());
-    }
-
-    @Override
     public Tensor to(Object device) {
         if (device == null) {
             Tensor result = new CpuTensor(Shape.of(shape), data());
@@ -721,5 +716,10 @@ public class GpuTensor extends BaseTensor {
         }
 
         return result;
+    }
+    
+    @Override
+    public Tensor copy() {
+        return new GpuTensor(device, shape, dataBuffer.value());
     }
 }

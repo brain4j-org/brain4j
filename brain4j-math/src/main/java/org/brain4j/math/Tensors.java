@@ -402,7 +402,7 @@ public class Tensors {
                 ui = ui.minus(qj.times(dot.get(0, 0)));
             }
 
-            double norm = Math.sqrt(ui.clone().pow(2).sum());
+            double norm = Math.sqrt(ui.copy().pow(2).sum());
             Tensor qi = ui.divide(norm);
 
             Q.add(qi);

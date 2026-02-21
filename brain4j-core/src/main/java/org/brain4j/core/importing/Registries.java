@@ -2,6 +2,7 @@ package org.brain4j.core.importing;
 
 import org.brain4j.core.importing.format.GeneralRegistry;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.impl.*;
 import org.brain4j.core.layer.impl.convolutional.ConvLayer;
@@ -43,7 +44,7 @@ public class Registries {
     public static final GeneralRegistry<Updater, Object> UPDATERS_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<GradientClipper, Object> CLIPPERS_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<Activation, Object> ACTIVATION_REGISTRY = new GeneralRegistry<>();
-    public static final GeneralRegistry<Layer0, Object> LAYER_REGISTRY = new GeneralRegistry<>();
+    public static final GeneralRegistry<Layer, Object> LAYER_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<FeatureScaler, Object> SCALER_REGISTRY = new GeneralRegistry<>();
 
     static {
@@ -110,23 +111,23 @@ public class Registries {
         ACTIVATION_REGISTRY.register("swish", Swish.class);
         ACTIVATION_REGISTRY.register("tanh", Tanh.class);
 
-        LAYER_REGISTRY.register("input", InputLayer.class);
-        LAYER_REGISTRY.register("dense", DenseLayer.class);
-        LAYER_REGISTRY.register("dropout", DropoutLayer.class);
-        LAYER_REGISTRY.register("lstm", LSTMLayer.class);
-        LAYER_REGISTRY.register("layer_norm", NormLayer.class);
-        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
-        LAYER_REGISTRY.register("conv_2d", ConvLayer.class);
-        
-        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
-        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
-        LAYER_REGISTRY.register("transformer_decoder", TransformerDecoder.class);
-        LAYER_REGISTRY.register("transformer_encoder", TransformerEncoder.class);
-        
-        LAYER_REGISTRY.register("activation", ActivationLayer.class);
-        LAYER_REGISTRY.register("reshape", ReshapeLayer.class);
-        LAYER_REGISTRY.register("slice", SliceLayer.class);
-        LAYER_REGISTRY.register("squeeze", SqueezeLayer.class);
+//        LAYER_REGISTRY.register("input", InputLayer.class);
+//        LAYER_REGISTRY.register("dense", DenseLayer.class);
+//        LAYER_REGISTRY.register("dropout", DropoutLayer.class);
+//        LAYER_REGISTRY.register("lstm", LSTMLayer.class);
+//        LAYER_REGISTRY.register("layer_norm", NormLayer.class);
+//        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
+//        LAYER_REGISTRY.register("conv_2d", ConvLayer.class);
+//
+//        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
+//        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
+//        LAYER_REGISTRY.register("transformer_decoder", TransformerDecoder.class);
+//        LAYER_REGISTRY.register("transformer_encoder", TransformerEncoder.class);
+//
+//        LAYER_REGISTRY.register("activation", ActivationLayer.class);
+//        LAYER_REGISTRY.register("reshape", ReshapeLayer.class);
+//        LAYER_REGISTRY.register("slice", SliceLayer.class);
+//        LAYER_REGISTRY.register("squeeze", SqueezeLayer.class);
 
         SCALER_REGISTRY.register("z_score", ZScoreScaler.class);
         SCALER_REGISTRY.register("min_max", MinMaxScaler.class);

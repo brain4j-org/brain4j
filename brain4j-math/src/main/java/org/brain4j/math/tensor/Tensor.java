@@ -1,5 +1,6 @@
 package org.brain4j.math.tensor;
 
+import org.brain4j.math.Copyable;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
@@ -40,7 +41,7 @@ import java.util.function.Supplier;
  * @apiNote unless specified otherwise, all operations which return
  *          a new tensor do not retain the autograd context from the input
  */
-public interface Tensor extends Iterable<Float> {
+public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
 
     /**
      * Returns the size of the specified dimension.
@@ -166,18 +167,7 @@ public interface Tensor extends Iterable<Float> {
      * @return tensor on the target device
      */
     Tensor to(Object device);
-
-    /**
-     * Creates a deep copy of this tensor.
-     * <p>
-     * The clone has its own copy of the data buffer and shape information.
-     * Modifying the clone will not affect the original tensor.
-     *
-     * @implNote the cloned tensor will not have an active autograd context
-     * @return new independent copy of this tensor
-     */
-    Tensor clone();
-
+    
     /**
      * Adds this tensor with another tensor element-wise.
      * @param other the tensor to add
@@ -191,7 +181,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor plus(Tensor other) {
-        return clone().add(other);
+        return copy().add(other);
     }
     
     /**
@@ -207,7 +197,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor plus(double value) {
-        return clone().add(value);
+        return copy().add(value);
     }
 
     /**
@@ -223,7 +213,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor minus(Tensor other) {
-        return clone().sub(other);
+        return copy().sub(other);
     }
     
     /**
@@ -239,7 +229,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor minus(double value) {
-        return clone().sub(value);
+        return copy().sub(value);
     }
 
     /**
@@ -255,7 +245,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor times(Tensor other) {
-        return clone().mul(other);
+        return copy().mul(other);
     }
     
     /**
@@ -271,7 +261,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor times(double value) {
-        return clone().mul(value);
+        return copy().mul(value);
     }
 
     /**
@@ -287,7 +277,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor divide(Tensor other) {
-        return clone().div(other);
+        return copy().div(other);
     }
 
     /**
@@ -303,7 +293,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor divide(double value) {
-        return clone().div(value);
+        return copy().div(value);
     }
 
     /**

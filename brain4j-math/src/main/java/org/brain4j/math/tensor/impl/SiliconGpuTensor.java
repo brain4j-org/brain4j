@@ -261,11 +261,6 @@ public class SiliconGpuTensor extends BaseTensor {
     }
 
     @Override
-    public Tensor clone() {
-        return new SiliconGpuTensor(device, shape, dataBuffer);
-    }
-
-    @Override
     public Tensor to(Object deviceObj) {
         if (deviceObj == null) {
             Tensor result = new CpuTensor(Shape.of(shape), data());
@@ -1022,6 +1017,11 @@ public class SiliconGpuTensor extends BaseTensor {
         }
 
         return out;
+    }
+    
+    @Override
+    public Tensor copy() {
+        return new SiliconGpuTensor(device, shape, dataBuffer);
     }
 }
 

@@ -48,8 +48,8 @@ public abstract class Layer0 implements ModelBlock {
     protected boolean frozen;
     
     @Override
-    public void appendTo(List<Layer0> layers) {
-        layers.add(this);
+    public void appendTo(List<Layer> layers) {
+        //layers.add(this);
     }
     
     public void connect(Layer0 previous) {
@@ -288,12 +288,12 @@ public abstract class Layer0 implements ModelBlock {
             Layer0 clone = (Layer0) super.clone();
             
             if (weights != null) {
-                clone.weights = weights.clone();
+                clone.weights = weights.copy();
                 if (weights.usesGrad()) clone.weights.withGrad();
             }
             
             if (bias != null) {
-                clone.bias = bias.clone();
+                clone.bias = bias.copy();
                 if (bias.usesGrad()) clone.bias.withGrad();
             }
             
