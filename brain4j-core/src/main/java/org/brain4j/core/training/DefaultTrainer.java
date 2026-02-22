@@ -1,6 +1,8 @@
 package org.brain4j.core.training;
 
 import org.brain4j.core.layer.Layer;
+import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.monitor.Monitor;
@@ -11,7 +13,11 @@ import org.brain4j.math.commons.Batch;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.autograd.AutogradContext;
+import org.brain4j.math.tensor.autograd.Operation;
+import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
 
 import java.util.HashMap;
 import java.util.List;
@@ -272,7 +278,7 @@ public final class DefaultTrainer implements Trainer {
     public Tensor[] forward(StatesCache cache, Tensor[] inputs) {
         return model.predict(cache, inputs);
     }
-    
+
     @Override
     public void backward(StatesCache cache, Batch batch, Tensor[] outputs) {
         List<Layer> layers = model.getLayers();
@@ -284,24 +290,31 @@ public final class DefaultTrainer implements Trainer {
         Optimizer optimizer = config.optimizer();
         LossFunction loss = config.loss();
         
-        // TODO: fix this
         for (int i = 0; i < outputs.length; i++) {
             Tensor y = outputs[i];
             Tensor t = targets[i];
-            
-            Tensor grad = loss.delta(y, t, null); // grad wrt output
-            y.backward(grad);
+
+            AutogradContext context = y.getAutogradContext();
+            Operation operation = context.operation();
+
+            Tensor grad = loss.delta(y, t, null);
+            Tensor target = y;
+
+            if (loss instanceof CrossEntropy
+                && operation instanceof ActivationOperation(Activation activation)
+                && activation instanceof Softmax) {
+                // numerically stable trick for Softmax + CrossEntropy
+                target = context.inputs()[i];
+            }
+
+            target.backward(grad);
         }
         
         layers.forEach(x -> x.backward(cache, updater, optimizer));
-//        layers.getLast().computeLoss(cache, targets, outputs, loss);
-//        layers.forEach(layer -> layer.backward(cache, updater, optimizer));
-        
+
         int elements = 0;
         
-        for (Tensor input : inputs) {
-            elements += input.shapeAt(0);
-        }
+        for (Tensor input : inputs) elements += input.shapeAt(0);
         
         optimizer.postBatch();
         updater.postBatch(optimizer.getLearningRate(), elements);

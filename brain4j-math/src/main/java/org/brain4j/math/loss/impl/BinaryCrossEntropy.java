@@ -3,15 +3,10 @@ package org.brain4j.math.loss.impl;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.tensor.Tensor;
 
-public class BinaryCrossEntropy implements LossFunction {
-
-    private Tensor classWeights;
+public record BinaryCrossEntropy(Tensor classWeights) implements LossFunction {
 
     public BinaryCrossEntropy() {
-    }
-
-    public BinaryCrossEntropy(Tensor classWeights) {
-        this.classWeights = classWeights;
+        this(null);
     }
 
     @Override
@@ -57,13 +52,5 @@ public class BinaryCrossEntropy implements LossFunction {
     @Override
     public boolean isRegression() {
         return false;
-    }
-
-    public Tensor getClassWeights() {
-        return classWeights;
-    }
-
-    public void setClassWeights(Tensor classWeights) {
-        this.classWeights = classWeights;
     }
 }

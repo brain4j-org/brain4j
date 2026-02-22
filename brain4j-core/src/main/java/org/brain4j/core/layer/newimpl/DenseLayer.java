@@ -20,7 +20,7 @@ public class DenseLayer extends Layer {
         this(outDimension, new Linear());
     }
     
-    public DenseLayer(int outDimension, Activation activation) {
+    public  DenseLayer(int outDimension, Activation activation) {
         this.outDimension = outDimension;
         this.activation = activation;
     }
