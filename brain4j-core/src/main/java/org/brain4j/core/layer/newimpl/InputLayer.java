@@ -1,6 +1,7 @@
 package org.brain4j.core.layer.newimpl;
 
 import org.brain4j.core.layer.Layer;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
@@ -17,7 +18,7 @@ public class InputLayer extends Layer {
     }
     
     @Override
-    public void build(List<Shape> inputShapes, RandomGenerator rng) {
+    public void build(List<Shape> inputShapes) {
     }
     
     @Override
@@ -34,12 +35,12 @@ public class InputLayer extends Layer {
         return inputs;
     }
     
-    public Shape shape() {
-        return shape;
-    }
-    
     @Override
     public Layer copy() {
         return new InputLayer(shape.copy());
+    }
+    
+    public Shape shape() {
+        return shape;
     }
 }

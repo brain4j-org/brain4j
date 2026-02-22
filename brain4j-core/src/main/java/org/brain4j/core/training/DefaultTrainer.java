@@ -285,6 +285,15 @@ public final class DefaultTrainer implements Trainer {
         LossFunction loss = config.loss();
         
         // TODO: fix this
+        for (int i = 0; i < outputs.length; i++) {
+            Tensor y = outputs[i];
+            Tensor t = targets[i];
+            
+            Tensor grad = loss.delta(y, t, null); // grad wrt output
+            y.backward(grad);
+        }
+        
+        layers.forEach(x -> x.backward(cache, updater, optimizer));
 //        layers.getLast().computeLoss(cache, targets, outputs, loss);
 //        layers.forEach(layer -> layer.backward(cache, updater, optimizer));
         

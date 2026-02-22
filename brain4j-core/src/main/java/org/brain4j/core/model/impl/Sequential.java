@@ -2,6 +2,7 @@ package org.brain4j.core.model.impl;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
+import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.math.loss.LossFunction;
@@ -115,10 +116,9 @@ public class Sequential implements Model, ModelBlock {
     
     @Override
     public Sequential fork(SiliconDevice device) {
-        return null; // TODO
-//        List<Layer0> copiedLayers = layers.stream().map(Layer::clone).toList();
-//        copiedLayers.forEach(x -> x.toDevice(device));
-//        return new Sequential(specs.clone(), device, new ArrayList<>(copiedLayers), seed);
+        List<Layer> copiedLayers = layers.stream().map(Layer::copy).toList();
+        copiedLayers.forEach(x -> x.to(device));
+        return new Sequential(specs.copy(), device, copiedLayers, dag.seed());
     }
     
     @Override
@@ -133,7 +133,7 @@ public class Sequential implements Model, ModelBlock {
         StringBuilder stats = new StringBuilder();
         DecimalFormat format = new DecimalFormat("#,###");
         
-        String pattern = "%-7s %-20s %-12s %-15s %-15s\n";
+        String pattern = "%-7s %-20s %-15s %-13s %-15s\n";
         String divider = Commons.getHeader(" Architecture ", Commons.HEADER_CHAR);
         
         stats.append(divider);
@@ -152,20 +152,38 @@ public class Sequential implements Model, ModelBlock {
         String sizeOfTotalParams = Commons.formatNumber(totalParams.get() * floatSize);
         String sizeOfTrainableParams = Commons.formatNumber(trainableParams.get() * floatSize);
         
+        String formattedTotal = format.format(totalParameters);
+        String formattedTrainable = format.format(trainableParameters);
+        
         stats.append(Commons.getHeader(" Recap ", Commons.HEADER_CHAR));
-        stats.append("Total parameters: %s (%s)\n".formatted(totalParameters, sizeOfTotalParams));
-        stats.append("Trainable parameters: %s (%s)\n".formatted(trainableParameters, sizeOfTrainableParams));
+        stats.append("Total parameters: %s (%s)\n".formatted(formattedTotal, sizeOfTotalParams));
+        stats.append("Trainable parameters: %s (%s)\n".formatted(formattedTrainable, sizeOfTrainableParams));
         stats.append(Commons.getHeader("", Commons.HEADER_CHAR));
         
         Arrays.stream(stats.toString().split("\n")).forEach(System.out::println);
     }
     
-    public ModelSpecs getSpecs() {
-        return specs;
+    @Override
+    public Sequential copy() {
+        List<Layer> copiedLayers = layers.stream()
+            .map(Layer::copy)
+            .toList();
+        
+        return new Sequential(specs.copy(), device, copiedLayers, dag.seed());
     }
     
+    @Override
+    public void appendTo(List<Layer> layers) {
+        layers.addAll(getLayers());
+    }
+    
+    @Override
     public List<Layer> getLayers() {
         return Collections.unmodifiableList(layers);
+    }
+    
+    public ModelSpecs getSpecs() {
+        return specs;
     }
     
     private void makeEvaluation(
@@ -231,6 +249,8 @@ public class Sequential implements Model, ModelBlock {
             String layerType = layer.getClass().getSimpleName();
             
             int total = layer.calculateTotalParameters();
+            int trainable = layer.calculateTrainableParams();
+
             Tensor weightsTensor = layer.getParam("weights");
             
             String shape = weightsTensor == null ? "N/A" : Arrays.toString(weightsTensor.shape());
@@ -239,21 +259,7 @@ public class Sequential implements Model, ModelBlock {
             builder.append(row);
             
             totalParams.addAndGet(total);
-            if (!layer.frozen()) trainableParams.addAndGet(total);
+            trainableParams.addAndGet(trainable);
         }
-    }
-    
-    @Override
-    public Sequential copy() {
-        List<Layer> copiedLayers = layers.stream()
-            .map(Layer::copy)
-            .toList();
-        
-        return new Sequential(specs.copy(), device, copiedLayers, dag.seed());
-    }
-    
-    @Override
-    public void appendTo(List<Layer> layers) {
-        layers.addAll(getLayers());
     }
 }

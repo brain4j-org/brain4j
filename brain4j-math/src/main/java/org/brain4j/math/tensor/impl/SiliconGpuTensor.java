@@ -527,6 +527,8 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor sum(int dim, boolean keepDim) {
+        dim = Commons.mod(dim, shape.length);
+        
         if (dim < 0 || dim >= shape.length) {
             throw new IllegalArgumentException("Dimension " + dim + " out of bounds for tensor of shape " + Arrays.toString(shape));
         }

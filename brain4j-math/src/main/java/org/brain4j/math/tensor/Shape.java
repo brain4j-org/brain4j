@@ -1,6 +1,7 @@
 package org.brain4j.math.tensor;
 
 import org.brain4j.math.Copyable;
+import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
 
 public class Shape implements Copyable<Shape> {
@@ -40,6 +41,10 @@ public class Shape implements Copyable<Shape> {
         }
 
         return dims[dims.length - 1 - offset];
+    }
+    
+    public int size() {
+        return Tensors.computeSize(dims);
     }
 
     public int rank() {

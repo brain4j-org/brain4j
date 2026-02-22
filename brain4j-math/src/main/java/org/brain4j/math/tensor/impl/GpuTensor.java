@@ -141,13 +141,13 @@ public class GpuTensor extends BaseTensor {
             GpuContext.register(device, kernel, elementaryOpsProgram);
         }
         
-        for (Activations activation : Activations.values()) {
-            Activation function = activation.function();
-            String prefix = function.getKernelPrefix();
-            
-            GpuContext.register(device, prefix + "_forward", activationsProgram);
-            GpuContext.register(device, prefix + "_backward", activationsProgram);
-        }
+//        for (Activations activation : Activations.values()) {
+//            Activation function = activation.function();
+//            String prefix = function.getKernelPrefix();
+//
+//            GpuContext.register(device, prefix + "_forward", activationsProgram);
+//            GpuContext.register(device, prefix + "_backward", activationsProgram);
+//        }
         
         GpuContext.register(device, "hard_clip", gradientClipProgram);
         GpuContext.register(device, "l2_clip", gradientClipProgram);

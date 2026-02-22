@@ -1,17 +1,16 @@
 package org.brain4j.examples.mnist;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.convolutional.ConvLayer;
-import org.brain4j.core.layer.impl.utility.InputLayer;
-import org.brain4j.core.layer.impl.utility.ReshapeLayer;
+import org.brain4j.core.layer.newimpl.ConvLayer;
+import org.brain4j.core.layer.newimpl.DenseLayer;
+import org.brain4j.core.layer.newimpl.InputLayer;
+import org.brain4j.core.layer.newimpl.ReshapeLayer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.activation.impl.LeakyReLU;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.loss.impl.CrossEntropy;
-import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
@@ -20,10 +19,10 @@ import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.activation.Activations;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
 import java.io.IOException;
@@ -42,15 +41,15 @@ public class TestMNIST {
         ListDataSource trainSource = getSource("mnist/mnist-train.csv");
         ListDataSource testSource = getSource("mnist/mnist-test.csv");
         
-        ModelSpecs specs = getCNNSpecs();
+        ModelSpecs specs = getMLPSpecs();
         Sequential model = specs.compile(42);
         model.summary(); // prints a summary of the architecture on the console
 
         SiliconDevice device = Brain4J.firstDevice();
         if (device != null) {
-            model = model.fork(device);
-            trainSource = trainSource.to(device);
-            testSource = testSource.to(device);
+//            model = model.fork(device);
+//            trainSource = trainSource.to(device);
+//            testSource = testSource.to(device);
         }
         
         TrainingConfig config = TrainingConfig.of(
@@ -71,19 +70,19 @@ public class TestMNIST {
     
     private ModelSpecs getCNNSpecs() {
         return ModelSpecs.of(
-            new InputLayer(28 * 28),
-            new ReshapeLayer(1, 28, 28),
-            new ConvLayer(1, 16, 3, 3, 1, new LeakyReLU()), // 16x26x26
-            new ConvLayer(16, 32, 3, 3, 2, new LeakyReLU()), // 32x12x12
-            new ConvLayer(32, 64, 3, 3, 2, new LeakyReLU()), // 64x5x5
-            new ReshapeLayer(64 * 5 * 5),
+            new InputLayer(Shape.of(28 * 28)),
+            new ReshapeLayer(Shape.of(1, 28, 28)),
+            new ConvLayer(16, 3, 3, 1, new LeakyReLU()), // 16x26x26
+            new ConvLayer(32, 3, 3, 2, new LeakyReLU()), // 32x12x12
+            new ConvLayer(64, 3, 3, 2, new LeakyReLU()), // 64x5x5
+            new ReshapeLayer(Shape.of(64 * 5 * 5)),
             new DenseLayer(10, new Softmax())
         );
     }
     
     private ModelSpecs getMLPSpecs() {
         return ModelSpecs.of(
-            new InputLayer(28 * 28),
+            new InputLayer(Shape.of(28 * 28)),
             new DenseLayer(128, new ReLU()),
             new DenseLayer(64, new ReLU()),
             new DenseLayer(10, new Softmax())

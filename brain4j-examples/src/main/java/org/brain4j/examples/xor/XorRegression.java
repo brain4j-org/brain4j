@@ -1,13 +1,12 @@
 package org.brain4j.examples.xor;
 
-import org.brain4j.core.Brain4J;
-import org.brain4j.core.importing.format.impl.BrainAdapter;
-import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.core.layer.newimpl.DenseLayer;
+import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.dashboard.BrainDashboard;
+import org.brain4j.math.activation.impl.ReLU;
+import org.brain4j.math.activation.impl.Sigmoid;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
-import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
@@ -20,6 +19,7 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.ArrayList;
@@ -31,15 +31,17 @@ public class XorRegression {
         
         ListDataSource dataSource = new ListDataSource(samples, false, 1);
         ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(2),
-            new DenseLayer(16, Activations.RELU),
-            new DenseLayer(16, Activations.RELU),
-            new DenseLayer(1, Activations.SIGMOID)
+            new InputLayer(Shape.of(2)),
+            new DenseLayer(16, new ReLU()),
+            new DenseLayer(16, new ReLU()),
+            new DenseLayer(1, new Sigmoid())
         );
         
         Sequential model = specs.compile(42);
         SiliconDevice device = null;
 
+        model.summary();
+        
         if (device != null) {
             System.out.println("Using device " + device.getName());
 //            model = model.fork(device);

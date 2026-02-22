@@ -42,12 +42,12 @@ public class PerfTests {
         SiliconDevice cudaDevice = Brain4J.firstDevice();
         Device openCLDevice = Brain4J.firstLegacyDevice();
         
-        int N = 16;
+        int N = 4096;
         
         Tensor a = Tensors.random(N, N);
         Tensor b = Tensors.random(N, N);
         
-        double cpuTime = evaluate(() -> a.matmul(b));
+        double cpuTime = 0;//evaluate(() -> a.matmul(b));
         
         Tensor cudaA = a.to(cudaDevice);
         Tensor cudaB = b.to(cudaDevice);

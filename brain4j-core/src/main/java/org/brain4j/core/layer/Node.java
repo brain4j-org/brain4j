@@ -30,20 +30,23 @@ public class Node implements Copyable<Node> {
     }
     
     public void build() {
-        List<Shape> inputShapes = inputs.stream()
-            .flatMap(n -> n.getOutputShapes().stream())
-            .toList();
-        
+        List<Shape> inputShapes = inferInputShapes();
         this.outputShapes = layer.inferOutputShapes(inputShapes);
+        layer.build(inputShapes);
     }
     
     public void initWeights(int seed) {
-        List<Shape> inputShapes = inputs.stream()
+        List<Shape> inputShapes = inferInputShapes();
+        RandomGenerator rng = new SplittableRandom(seed);
+        
+        layer.initWeights(inputShapes, rng);
+        layer.initAutoGrad();
+    }
+    
+    public List<Shape> inferInputShapes() {
+        return inputs.stream()
             .flatMap(n -> n.getOutputShapes().stream())
             .toList();
-        
-        RandomGenerator rng = new SplittableRandom(seed);
-        layer.build(inputShapes, rng);
     }
     
     public Tensor[] forward(StatesCache cache, Map<Node, Tensor[]> computed) {

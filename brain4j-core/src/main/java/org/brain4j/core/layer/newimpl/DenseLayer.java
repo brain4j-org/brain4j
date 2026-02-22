@@ -26,11 +26,11 @@ public class DenseLayer extends Layer {
     }
     
     @Override
-    public void build(List<Shape> inputShapes, RandomGenerator rng) {
+    public void build(List<Shape> inputShapes) {
         Shape inputShape = inputShapes.getFirst();
         
-        Tensor weights = Tensors.matrix(inputShape.last(), outDimension);
-        Tensor bias = Tensors.vector(outDimension);
+        Tensor weights = Tensors.zeros(inputShape.last(), outDimension);
+        Tensor bias = Tensors.zeros(outDimension);
         
         parameters.put("weights", weights);
         parameters.put("bias", bias);
@@ -38,7 +38,7 @@ public class DenseLayer extends Layer {
     
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
-        generateWeights(rng, inputShapes.getFirst().last(), outDimension);
+        generateWeightsFor("weights", rng, inputShapes.getFirst().last(), outDimension);
     }
     
     @Override
@@ -66,15 +66,12 @@ public class DenseLayer extends Layer {
             throw Commons.illegalArgument("Dense requires tensors to be rank 2 or higher");
         }
         
-        cache.setStates(this, "input", input);
-        
         Tensor W = getParam("weights");
         Tensor B = getParam("bias");
         
         Tensor proj = input.matmulGrad(W).addGrad(B);
-        cache.setStates(this, "pre_activation", proj);
         
-        return new Tensor[] { proj.activateGrad(activation) };
+        return tensors(proj.activateGrad(activation));
     }
     
     @Override
@@ -82,5 +79,9 @@ public class DenseLayer extends Layer {
         DenseLayer copy = new DenseLayer(outDimension, activation);
         copyParameters(copy);
         return copy;
+    }
+    
+    public int outDimension() {
+        return outDimension;
     }
 }

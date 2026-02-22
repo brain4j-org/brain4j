@@ -86,7 +86,8 @@ public class DAG implements Model {
         Map<Node, Tensor[]> outputs = new HashMap<>();
         
         for (int i = 0; i < input.size(); i++) {
-            outputs.put(input.get(i), new Tensor[] { inputs[i] });
+            Tensor source = inputs[i];
+            outputs.put(input.get(i), new Tensor[] { cache.isTraining() ? source.withGrad() : source });
         }
         
         for (Node node : topology) {
@@ -120,7 +121,7 @@ public class DAG implements Model {
     
     @Override
     public void summary() {
-    
+        throw new UnsupportedOperationException();
     }
     
     @Override
