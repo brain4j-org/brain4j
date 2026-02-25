@@ -63,11 +63,11 @@ public abstract class MiniServer {
                         response.status(),
                         respBody.length
                     );
-                    
-                    if (respBody.length == 0) return;
-                    
+
                     try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(response.body());
+                        if (respBody.length > 0) {
+                            os.write(respBody);
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace(System.err);

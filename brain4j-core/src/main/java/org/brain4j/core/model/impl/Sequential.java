@@ -2,37 +2,28 @@ package org.brain4j.core.model.impl;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.layer.newimpl.InputLayer;
-import org.brain4j.math.loss.LossFunction;
-import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.model.ModelSpecs;
-import org.brain4j.core.training.wrappers.EvaluationResult;
-import org.brain4j.math.Tensors;
-import org.brain4j.math.commons.Batch;
 import org.brain4j.math.commons.Commons;
-import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.commons.Range;
 
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Sequential implements Model, ModelBlock {
     
-    private final DAG dag;
+    private final Graph graph;
     private final ModelSpecs specs;
     private final List<Layer> layers;
     private final SiliconDevice device;
     
-    private Sequential(ModelSpecs specs, SiliconDevice device, List<Layer> layers, int seed) {
+    public Sequential(ModelSpecs specs, SiliconDevice device, List<Layer> layers, int seed) {
         this.specs = specs;
         this.device = device;
         this.layers = layers;
@@ -54,9 +45,9 @@ public class Sequential implements Model, ModelBlock {
             lastNode = current.apply(lastNode);
         }
         
-        this.dag = DAG.of(seed, lastNode);
+        this.graph = Graph.of(seed, lastNode);
     }
-    
+
     public Sequential(ModelSpecs specs, SiliconDevice device, int seed) {
         this(specs, device, specs.buildLayerList(), seed);
     }
@@ -67,7 +58,7 @@ public class Sequential implements Model, ModelBlock {
             device.createResources();
         }
         
-        Tensor[] out = dag.predict(cache, inputs);
+        Tensor[] out = graph.predict(cache, inputs);
         
         if (device != null && !cache.isTraining()) {
             device.closeResources();
@@ -75,50 +66,12 @@ public class Sequential implements Model, ModelBlock {
         
         return out;
     }
-    
-    @Override
-    public EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction) {
-        int classes = Math.max(2, dataSource.getSamples().getFirst().getLabel(0).elements());
-        Map<Integer, Tensor> classifications = new HashMap<>();
 
-        if (!lossFunction.isRegression()) {
-            for (int i = 0; i < classes; i++) {
-                classifications.put(i, Tensors.zeros(classes));
-            }
-        }
-        
-        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
-        
-        dataSource.reset();
-        
-        while (dataSource.hasNext()) {
-            Batch batch = dataSource.nextBatch();
-            makeEvaluation(batch, classifications, totalLoss, lossFunction);
-        }
-        
-        return new EvaluationResult(totalLoss.get() / dataSource.getSize(), classes, classifications);
-    }
-    
-    @Override
-    public double loss(ListDataSource dataSource, LossFunction lossFunction) {
-        Map<Integer, Tensor> classifications = new HashMap<>();
-        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
-        
-        dataSource.reset();
-        
-        while (dataSource.hasNext()) {
-            Batch batch = dataSource.nextBatch();
-            makeEvaluation(batch, classifications, totalLoss, lossFunction);
-        }
-        
-        return totalLoss.get() / dataSource.getSize();
-    }
-    
     @Override
     public Sequential fork(SiliconDevice device) {
         List<Layer> copiedLayers = layers.stream().map(Layer::copy).toList();
         copiedLayers.forEach(x -> x.to(device));
-        return new Sequential(specs.copy(), device, copiedLayers, dag.seed());
+        return new Sequential(specs.copy(), device, copiedLayers, graph.seed());
     }
     
     @Override
@@ -169,7 +122,7 @@ public class Sequential implements Model, ModelBlock {
             .map(Layer::copy)
             .toList();
         
-        return new Sequential(specs.copy(), device, copiedLayers, dag.seed());
+        return new Sequential(specs.copy(), device, copiedLayers, graph.seed());
     }
     
     @Override
@@ -182,61 +135,14 @@ public class Sequential implements Model, ModelBlock {
         return Collections.unmodifiableList(layers);
     }
     
-    public ModelSpecs getSpecs() {
+    public ModelSpecs specs() {
         return specs;
     }
-    
-    private void makeEvaluation(
-        Batch batch,
-        Map<Integer, Tensor> classifications,
-        AtomicReference<Double> totalLoss,
-        LossFunction lossFunction
-    ) {
-        Tensor[] inputs = batch.getFirst();
-        Tensor[] labels = batch.getSecond();
-        
-        if (device != null) device.createResources();
-        
-        StatesCache cache = new StatesCache(false);
-        Tensor[] outputs = predict(cache, inputs);
-        
-        for (Tensor input : inputs) {
-            int batchSize = input.shapeAt(0);
-            
-            for (int i = 0; i < outputs.length; i++) {
-                Tensor output = outputs[i].to(null); // GPU -> CPU
-                Tensor label = labels[i].to(null);   // GPU -> CPU
-                
-                for (int b = 0; b < batchSize; b++) {
-                    Range range = Range.point(b);
-                    
-                    Tensor sampleOutput = output.slice(range).flatten();
-                    Tensor sampleLabel = label.slice(range).flatten();
-                    
-                    int predIndex = sampleOutput.argmax();
-                    int targetIndex = sampleLabel.argmax();
-                    
-                    if (sampleOutput.elements() == 1 && lossFunction instanceof BinaryCrossEntropy) {
-                        predIndex = sampleOutput.get(0) > 0.5 ? 1 : 0;
-                        targetIndex = (int) sampleLabel.get(0);
-                    }
-                    
-                    double loss = lossFunction.calculate(sampleLabel, sampleOutput);
-                    totalLoss.updateAndGet(v -> v + loss);
-                    
-                    Tensor predictions = classifications.get(targetIndex);
-                    
-                    if (predictions != null) {
-                        int pred = (int) predictions.get(predIndex);
-                        predictions.set(pred + 1, predIndex);
-                    }
-                }
-            }
-        }
-        
-        if (device != null) device.closeResources();
+
+    public Graph graph() {
+        return graph;
     }
-    
+
     private void append(
         String pattern,
         StringBuilder builder,

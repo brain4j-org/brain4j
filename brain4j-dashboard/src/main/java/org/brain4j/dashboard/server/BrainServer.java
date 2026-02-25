@@ -1,7 +1,11 @@
 package org.brain4j.dashboard.server;
 
 import com.sun.management.OperatingSystemMXBean;
-import org.brain4j.core.importing.ModelZoo;
+import org.brain4j.core.importing.Format;
+import org.brain4j.core.importing.ModelIO;
+import org.brain4j.core.model.Model;
+import org.brain4j.core.model.impl.Graph;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.monitor.impl.TimingMonitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
 import org.brain4j.core.training.Trainer;
@@ -173,7 +177,16 @@ public class BrainServer extends MiniServer {
         }
 
         try {
-            ModelZoo.saveModel(dashboard.model(), modelFile);
+            Model model = dashboard.model();
+
+            if (model instanceof Sequential sequential) {
+                ModelIO.save(sequential, Format.BRAIN4J, modelFile);
+            } else if (model instanceof Graph graph) {
+                ModelIO.save(graph, Format.ONNX, modelFile);
+            } else {
+                throw new UnsupportedOperationException("Unsupported model type!");
+            }
+
             return Response.json(200, Map.of(
                 "message", "Model saved successfully",
                 "path", modelFile.getAbsolutePath()

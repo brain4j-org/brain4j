@@ -1,8 +1,9 @@
 package org.brain4j.examples.xor;
 
+import org.brain4j.core.layer.Node;
 import org.brain4j.core.layer.newimpl.DenseLayer;
 import org.brain4j.core.layer.newimpl.InputLayer;
-import org.brain4j.core.model.impl.Sequential;
+import org.brain4j.core.model.impl.Graph;
 import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
@@ -15,7 +16,6 @@ import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.activation.Activations;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
@@ -37,7 +37,14 @@ public class XorRegression {
             new DenseLayer(1, new Sigmoid())
         );
         
-        Sequential model = specs.compile(42);
+        // Sequential model = specs.compile(42);
+        Node input = Node.input(Shape.of(2));
+
+        Node d1 = new DenseLayer(16, new ReLU()).apply(input);
+        Node d2 = new DenseLayer(16, new ReLU()).apply(d1);
+        Node out = new DenseLayer(1, new Sigmoid()).apply(d2);
+
+        Graph model = Graph.of(out);
         SiliconDevice device = null;
 
         model.summary();

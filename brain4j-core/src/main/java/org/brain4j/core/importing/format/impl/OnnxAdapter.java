@@ -4,11 +4,8 @@ import org.brain4j.core.Brain4J;
 import org.brain4j.core.importing.format.BinaryAdapter;
 import org.brain4j.core.importing.onnx.ProtoOnnx.*;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.Layer0;
-import org.brain4j.core.layer.Node;
 import org.brain4j.core.layer.newimpl.InputLayer;
-import org.brain4j.core.model.Model;
-import org.brain4j.core.model.impl.DAG;
+import org.brain4j.core.model.impl.Graph;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.*;
@@ -28,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.brain4j.core.importing.Registries.LAYER_REGISTRY;
 import static org.brain4j.core.importing.Registries.ONNX_OPERATIONS_REGISTRY;
 
-public class OnnxAdapter implements BinaryAdapter<DAG> {
+public class OnnxAdapter implements BinaryAdapter<Graph> {
     
     private static final Map<Class<? extends Activation>, String> ACTIVATION_MAP = Map.of(
         ReLU.class, "Relu",
@@ -40,7 +37,7 @@ public class OnnxAdapter implements BinaryAdapter<DAG> {
     );
     
     @Override
-    public DAG deserialize(File file) {
+    public Graph deserialize(File file) {
         try {
             byte[] data = Files.readAllBytes(file.toPath());
             
@@ -78,7 +75,7 @@ public class OnnxAdapter implements BinaryAdapter<DAG> {
     }
     
     @Override
-    public void serialize(DAG model, File file) {
+    public void serialize(Graph model, File file) {
         if (model.getDevice() != null) model = model.fork(null);
         
         GraphProto.Builder graphBuilder = GraphProto.newBuilder();
@@ -126,7 +123,7 @@ public class OnnxAdapter implements BinaryAdapter<DAG> {
         }
     }
     
-    private void addInitializers(DAG model, GraphProto.Builder graphBuilder, Map<Tensor, String> weightsMap) {
+    private void addInitializers(Graph model, GraphProto.Builder graphBuilder, Map<Tensor, String> weightsMap) {
         List<Layer> layers = model.getLayers();
         
         for (int i = 0; i < layers.size(); i++) {

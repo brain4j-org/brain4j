@@ -1,5 +1,10 @@
 package org.brain4j.core.layer;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.brain4j.core.layer.newimpl.ConvLayer;
+import org.brain4j.core.layer.newimpl.DenseLayer;
+import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
@@ -20,6 +25,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;
 
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = InputLayer.class, name = "input"),
+    @JsonSubTypes.Type(value = DenseLayer.class, name = "dense"),
+    @JsonSubTypes.Type(value = ConvLayer.class, name = "conv")
+})
 public abstract class Layer implements Copyable<Layer>, ModelBlock {
     
     protected Map<String, Tensor> parameters;
@@ -84,6 +99,7 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
         
         other.parameters.clear();
         other.parameters.putAll(newParameters);
+
     }
     
     public void to(SiliconDevice device) {

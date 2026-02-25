@@ -2,14 +2,21 @@ package org.brain4j.core.model;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Copyable;
+import org.brain4j.math.Tensors;
+import org.brain4j.math.commons.Batch;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents a generic neural network model.
@@ -67,7 +74,27 @@ public interface Model extends Copyable<Model> {
      * @param lossFunction the loss function to use
      * @return an {@link EvaluationResult} containing evaluation metrics
      */
-    EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction);
+    default EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction) {
+        int classes = Math.max(2, dataSource.getSamples().getFirst().getLabel(0).elements());
+        Map<Integer, Tensor> classifications = new HashMap<>();
+
+        if (!lossFunction.isRegression()) {
+            for (int i = 0; i < classes; i++) {
+                classifications.put(i, Tensors.zeros(classes));
+            }
+        }
+
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Batch batch = dataSource.nextBatch();
+            makeEvaluation(batch, classifications, totalLoss, lossFunction);
+        }
+
+        return new EvaluationResult(totalLoss.get() / dataSource.getSize(), classes, classifications);
+    }
     
     /**
      * Calculates the average loss on the given dataset.
@@ -79,7 +106,19 @@ public interface Model extends Copyable<Model> {
      * @param lossFunction the loss function to use
      * @return a value representing the average loss on the entire dataset
      */
-    double loss(ListDataSource dataSource, LossFunction lossFunction);
+    default double loss(ListDataSource dataSource, LossFunction lossFunction) {
+        Map<Integer, Tensor> classifications = new HashMap<>();
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Batch batch = dataSource.nextBatch();
+            makeEvaluation(batch, classifications, totalLoss, lossFunction);
+        }
+
+        return totalLoss.get() / dataSource.getSize();
+    }
     
     /**
      * Prints a formatted summary of the model architecture to the console.
@@ -110,4 +149,57 @@ public interface Model extends Copyable<Model> {
      * @return an unmodifiable list of layers
      */
     List<Layer> getLayers();
+
+    private void makeEvaluation(
+        Batch batch,
+        Map<Integer, Tensor> classifications,
+        AtomicReference<Double> totalLoss,
+        LossFunction lossFunction
+    ) {
+        Tensor[] inputs = batch.getFirst();
+        Tensor[] labels = batch.getSecond();
+
+        SiliconDevice device = getDevice();
+
+        if (device != null) device.createResources();
+
+        StatesCache cache = new StatesCache(false);
+        Tensor[] outputs = predict(cache, inputs);
+
+        for (Tensor input : inputs) {
+            int batchSize = input.shapeAt(0);
+
+            for (int i = 0; i < outputs.length; i++) {
+                Tensor output = outputs[i].to(null); // GPU -> CPU
+                Tensor label = labels[i].to(null);   // GPU -> CPU
+
+                for (int b = 0; b < batchSize; b++) {
+                    Range range = Range.point(b);
+
+                    Tensor sampleOutput = output.slice(range).flatten();
+                    Tensor sampleLabel = label.slice(range).flatten();
+
+                    int predIndex = sampleOutput.argmax();
+                    int targetIndex = sampleLabel.argmax();
+
+                    if (sampleOutput.elements() == 1 && lossFunction instanceof BinaryCrossEntropy) {
+                        predIndex = sampleOutput.get(0) > 0.5 ? 1 : 0;
+                        targetIndex = (int) sampleLabel.get(0);
+                    }
+
+                    double loss = lossFunction.calculate(sampleLabel, sampleOutput);
+                    totalLoss.updateAndGet(v -> v + loss);
+
+                    Tensor predictions = classifications.get(targetIndex);
+
+                    if (predictions != null) {
+                        int pred = (int) predictions.get(predIndex);
+                        predictions.set(pred + 1, predIndex);
+                    }
+                }
+            }
+        }
+
+        if (device != null) device.closeResources();
+    }
 }

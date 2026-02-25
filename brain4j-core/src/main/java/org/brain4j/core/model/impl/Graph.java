@@ -3,18 +3,15 @@ package org.brain4j.core.model.impl;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.commons.Commons;
-import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
-import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class DAG implements Model {
+public class Graph implements Model {
     
     private final List<Node> input;
     private final List<Node> output;
@@ -22,7 +19,7 @@ public class DAG implements Model {
     private final SiliconDevice device;
     private final int seed;
     
-    protected DAG(List<Node> output, SiliconDevice device, int seed) {
+    protected Graph(List<Node> output, SiliconDevice device, int seed) {
         this.device = device;
         this.output = output;
         this.seed = seed;
@@ -49,16 +46,16 @@ public class DAG implements Model {
         });
     }
     
-    public static DAG of(Node... output) {
-        return new DAG(List.of(output), null, 42);
+    public static Graph of(Node... output) {
+        return new Graph(List.of(output), null, 42);
     }
     
-    public static DAG of(int seed, Node... output) {
-        return new DAG(List.of(output), null, seed);
+    public static Graph of(int seed, Node... output) {
+        return new Graph(List.of(output), null, seed);
     }
     
-    public static DAG of(int seed, SiliconDevice device, Node... output) {
-        return new DAG(List.of(output), device, seed);
+    public static Graph of(int seed, SiliconDevice device, Node... output) {
+        return new Graph(List.of(output), device, seed);
     }
     
     private void dfs(Node node, Set<Node> visited) {
@@ -110,30 +107,19 @@ public class DAG implements Model {
     }
     
     @Override
-    public EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction) {
-        return null;
-    }
-    
-    @Override
-    public double loss(ListDataSource dataSource, LossFunction lossFunction) {
-        return 0;
-    }
-    
-    @Override
     public void summary() {
-        throw new UnsupportedOperationException();
     }
     
     @Override
-    public DAG fork(SiliconDevice device) {
+    public Graph fork(SiliconDevice device) {
         List<Node> copy = output.stream().map(Node::copy).toList();
-        return new DAG(copy, device, seed);
+        return new Graph(copy, device, seed);
     }
     
     @Override
-    public DAG copy() {
+    public Graph copy() {
         List<Node> copy = output.stream().map(Node::copy).toList();
-        return new DAG(copy, device, seed);
+        return new Graph(copy, device, seed);
     }
     
     @Override
