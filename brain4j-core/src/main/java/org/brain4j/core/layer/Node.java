@@ -32,6 +32,9 @@ public class Node implements Copyable<Node> {
     public void build() {
         List<Shape> inputShapes = inferInputShapes();
         this.outputShapes = layer.inferOutputShapes(inputShapes);
+
+        if (layer.frozen()) return;
+
         layer.build(inputShapes);
     }
     

@@ -2,7 +2,7 @@ package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.scaler.FeatureScaler;
@@ -14,7 +14,7 @@ import java.util.Set;
 
 import static org.brain4j.core.importing.Registries.SCALER_REGISTRY;
 
-public class ScalingLayer extends Layer0 {
+public class ScalingLayer extends OldLayer {
 
     private FeatureScaler scaler;
     private Set<Integer> enabledInputs;

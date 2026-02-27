@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl.utility;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.data.StatesCache;
@@ -15,11 +15,11 @@ import org.brain4j.math.tensor.Tensor;
  * shape is identical to the input shape.
  * <p>
  * The layer derives its dimensionality from the previous layer during the
- * {@link Layer0#connect()} phase.
+ * {@link OldLayer#connect()} phase.
  *
  * @author xEcho1337
  */
-public class ActivationLayer extends Layer0 {
+public class ActivationLayer extends OldLayer {
 
     private int dimension;
     

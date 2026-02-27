@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;
 
-public class RecurrentLayer extends Layer0 {
+public class RecurrentLayer extends OldLayer {
 
     private Tensor inputWeights;
     private Tensor hiddenWeights;
@@ -103,7 +103,7 @@ public class RecurrentLayer extends Layer0 {
     }
     
     @Override
-    public Layer0 freeze() {
+    public OldLayer freeze() {
         inputWeights.noGrad();
         hiddenWeights.noGrad();
         hiddenBias.noGrad();
@@ -111,7 +111,7 @@ public class RecurrentLayer extends Layer0 {
     }
     
     @Override
-    public Layer0 unfreeze() {
+    public OldLayer unfreeze() {
         inputWeights.withGrad();
         hiddenWeights.withGrad();
         hiddenBias.withGrad();

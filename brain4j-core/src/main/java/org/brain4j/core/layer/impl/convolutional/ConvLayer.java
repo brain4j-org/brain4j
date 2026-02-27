@@ -1,20 +1,18 @@
 package org.brain4j.core.layer.impl.convolutional;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.activation.impl.Linear;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.random.RandomGenerator;
 
-public class ConvLayer extends Layer0 {
+public class ConvLayer extends OldLayer {
 
     private int channels;
     private int filters;

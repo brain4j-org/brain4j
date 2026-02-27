@@ -1,6 +1,6 @@
 package org.brain4j.core.layer.impl.utility;
 
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 
@@ -14,7 +14,7 @@ import org.brain4j.math.tensor.Tensor;
  *
  * @author xEcho1337
  */
-public class SelectLayer extends Layer0 {
+public class SelectLayer extends OldLayer {
 
     private final int index;
 

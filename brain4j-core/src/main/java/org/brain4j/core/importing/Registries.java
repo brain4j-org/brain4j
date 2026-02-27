@@ -3,14 +3,10 @@ package org.brain4j.core.importing;
 import org.brain4j.core.importing.format.GeneralRegistry;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.Layer0;
-import org.brain4j.core.layer.impl.*;
-import org.brain4j.core.layer.impl.convolutional.ConvLayer;
-import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
-import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
-import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
-import org.brain4j.core.layer.impl.transformer.TransformerEncoder;
-import org.brain4j.core.layer.impl.utility.*;
+import org.brain4j.core.layer.newimpl.ConvLayer;
+import org.brain4j.core.layer.newimpl.DenseLayer;
+import org.brain4j.core.layer.newimpl.InputLayer;
+import org.brain4j.core.layer.newimpl.NormLayer;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.math.loss.impl.CrossEntropy;
@@ -35,6 +31,8 @@ import org.brain4j.math.scaler.impl.MinMaxScaler;
 import org.brain4j.math.scaler.impl.ZScoreScaler;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.*;
+import org.brain4j.math.weightsinit.WeightInit;
+import org.brain4j.math.weightsinit.impl.*;
 
 public class Registries {
     
@@ -46,6 +44,7 @@ public class Registries {
     public static final GeneralRegistry<Activation, Object> ACTIVATION_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<Layer, Object> LAYER_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<FeatureScaler, Object> SCALER_REGISTRY = new GeneralRegistry<>();
+    public static final GeneralRegistry<WeightInit, Object> WEIGHT_INIT_REGISTRY = new GeneralRegistry<>();
 
     static {
         ONNX_OPERATIONS_REGISTRY.register("Add", AddOperation.class);
@@ -111,13 +110,13 @@ public class Registries {
         ACTIVATION_REGISTRY.register("swish", Swish.class);
         ACTIVATION_REGISTRY.register("tanh", Tanh.class);
 
-//        LAYER_REGISTRY.register("input", InputLayer.class);
-//        LAYER_REGISTRY.register("dense", DenseLayer.class);
+        LAYER_REGISTRY.register("input", InputLayer.class);
+        LAYER_REGISTRY.register("dense", DenseLayer.class);
 //        LAYER_REGISTRY.register("dropout", DropoutLayer.class);
 //        LAYER_REGISTRY.register("lstm", LSTMLayer.class);
-//        LAYER_REGISTRY.register("layer_norm", NormLayer.class);
+        LAYER_REGISTRY.register("norm", NormLayer.class);
 //        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
-//        LAYER_REGISTRY.register("conv_2d", ConvLayer.class);
+        LAYER_REGISTRY.register("conv_2d", ConvLayer.class);
 //
 //        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
 //        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
@@ -131,5 +130,13 @@ public class Registries {
 
         SCALER_REGISTRY.register("z_score", ZScoreScaler.class);
         SCALER_REGISTRY.register("min_max", MinMaxScaler.class);
+
+        WEIGHT_INIT_REGISTRY.register("normal", NormalInit.class);
+        WEIGHT_INIT_REGISTRY.register("normal_he", NormalHeInit.class);
+        WEIGHT_INIT_REGISTRY.register("normal_xavier", NormalXavierInit.class);
+        WEIGHT_INIT_REGISTRY.register("uniform_he", UniformHeInit.class);
+        WEIGHT_INIT_REGISTRY.register("uniform_xavier", UniformXavierInit.class);
+        WEIGHT_INIT_REGISTRY.register("lecun", LeCunInit.class);
+
     }
 }

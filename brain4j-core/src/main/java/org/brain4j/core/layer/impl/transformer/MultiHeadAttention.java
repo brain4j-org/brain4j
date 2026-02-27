@@ -1,6 +1,6 @@
 package org.brain4j.core.layer.impl.transformer;
 
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
@@ -37,7 +37,7 @@ import java.util.random.RandomGenerator;
  * @see Optimizer
  * @see Updater
  */
-public class MultiHeadAttention extends Layer0 {
+public class MultiHeadAttention extends OldLayer {
 
     protected Tensor outProj;
     protected Tensor outBias;
@@ -239,14 +239,14 @@ public class MultiHeadAttention extends Layer0 {
     }
 
     @Override
-    public Layer0 freeze() {
+    public OldLayer freeze() {
         outProj.noGrad();
         if (outBias != null) outBias.noGrad();
         return super.freeze();
     }
 
     @Override
-    public Layer0 unfreeze() {
+    public OldLayer unfreeze() {
         outProj.withGrad();
         if (outBias != null) outBias.withGrad();
         return super.unfreeze();

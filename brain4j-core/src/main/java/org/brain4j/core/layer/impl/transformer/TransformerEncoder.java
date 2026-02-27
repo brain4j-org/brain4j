@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl.transformer;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.DropoutLayer;
 import org.brain4j.core.layer.impl.NormLayer;
@@ -38,13 +38,13 @@ import java.util.random.RandomGenerator;
  * @see NormLayer
  * @author xEcho1337
  */
-public class TransformerEncoder extends Layer0 {
+public class TransformerEncoder extends OldLayer {
 
     protected DenseLayer upProjection;
     protected DenseLayer gateProjection;
     protected DenseLayer downProjection;
-    protected Layer0 normalizer1;
-    protected Layer0 normalizer2;
+    protected OldLayer normalizer1;
+    protected OldLayer normalizer2;
     protected DropoutLayer dropout;
     protected MultiHeadAttention attention;
     protected NormType normType;
@@ -115,7 +115,7 @@ public class TransformerEncoder extends Layer0 {
         attention.setAttnOutBias(attnOutHasBias);
     }
 
-    public Layer0 createNormLayer() {
+    public OldLayer createNormLayer() {
         return switch (normType) {
             case LAYER_NORM -> new NormLayer();
             case RMS_NORM -> new RMSNormLayer();
@@ -281,7 +281,7 @@ public class TransformerEncoder extends Layer0 {
     }
     
     @Override
-    public Layer0 freeze() {
+    public OldLayer freeze() {
         upProjection.freeze();
         downProjection.freeze();
         normalizer1.freeze();
@@ -294,7 +294,7 @@ public class TransformerEncoder extends Layer0 {
     }
     
     @Override
-    public Layer0 unfreeze() {
+    public OldLayer unfreeze() {
         upProjection.unfreeze();
         downProjection.unfreeze();
         normalizer1.unfreeze();
@@ -414,20 +414,20 @@ public class TransformerEncoder extends Layer0 {
         return this;
     }
     
-    public Layer0 getNormalizer1() {
+    public OldLayer getNormalizer1() {
         return normalizer1;
     }
     
-    public TransformerEncoder setNormalizer1(Layer0 normalizer1) {
+    public TransformerEncoder setNormalizer1(OldLayer normalizer1) {
         this.normalizer1 = normalizer1;
         return this;
     }
     
-    public Layer0 getNormalizer2() {
+    public OldLayer getNormalizer2() {
         return normalizer2;
     }
     
-    public TransformerEncoder setNormalizer2(Layer0 normalizer2) {
+    public TransformerEncoder setNormalizer2(OldLayer normalizer2) {
         this.normalizer2 = normalizer2;
         return this;
     }

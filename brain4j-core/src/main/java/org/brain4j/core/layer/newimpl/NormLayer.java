@@ -12,7 +12,7 @@ import java.util.random.RandomGenerator;
 
 public class NormLayer extends Layer {
     
-    private double epsilon;
+    private final double epsilon;
     
     public NormLayer() {
         this(1e-5);

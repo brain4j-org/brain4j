@@ -38,7 +38,7 @@ public class DenseLayer extends Layer {
     
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
-        generateWeightsFor("weights", rng, inputShapes.getFirst().last(), outDimension);
+        generateWeights("weights", rng, inputShapes.getFirst().last(), outDimension);
     }
     
     @Override

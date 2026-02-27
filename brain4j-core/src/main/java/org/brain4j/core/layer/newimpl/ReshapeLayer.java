@@ -60,4 +60,8 @@ public class ReshapeLayer extends Layer {
     public Layer copy() {
         return new ReshapeLayer(shape);
     }
+
+    public Shape shape() {
+        return shape;
+    }
 }

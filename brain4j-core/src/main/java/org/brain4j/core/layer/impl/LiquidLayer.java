@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
@@ -11,7 +11,6 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.solver.NumericalSolver;
 import org.brain4j.math.solver.impl.EulerSolver;
-import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
@@ -59,7 +58,7 @@ import java.util.random.RandomGenerator;
  * @implNote this layer expects exactly two input tensors: the signal and its time deltas
  * @author xEcho1337
  */
-public class LiquidLayer extends Layer0 {
+public class LiquidLayer extends OldLayer {
     
     private DenseLayer hiddenParams;
     private DenseLayer tauParams;
@@ -198,7 +197,7 @@ public class LiquidLayer extends Layer0 {
     }
     
     @Override
-    public Layer0 freeze() {
+    public OldLayer freeze() {
         super.freeze();
         hiddenParams.freeze();
         tauParams.freeze();
@@ -206,7 +205,7 @@ public class LiquidLayer extends Layer0 {
     }
     
     @Override
-    public Layer0 unfreeze() {
+    public OldLayer unfreeze() {
         super.unfreeze();
         hiddenParams.unfreeze();
         tauParams.unfreeze();

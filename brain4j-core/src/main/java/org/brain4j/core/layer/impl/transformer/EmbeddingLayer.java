@@ -1,19 +1,17 @@
 package org.brain4j.core.layer.impl.transformer;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
 
@@ -30,7 +28,7 @@ import java.util.stream.IntStream;
  * </p>
  * @author xEcho1337
  */
-public class EmbeddingLayer extends Layer0 {
+public class EmbeddingLayer extends OldLayer {
 
     private int vocabSize;
     private int embeddingDim;

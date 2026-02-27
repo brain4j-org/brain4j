@@ -12,7 +12,6 @@ import org.brain4j.math.clipper.impl.HardClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
-import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 import org.brain4j.math.weightsinit.WeightInit;
@@ -37,12 +36,12 @@ import java.util.random.RandomGenerator;
  *
  * @author xEcho1337
  */
-public abstract class Layer0 implements ModelBlock {
+public abstract class OldLayer implements ModelBlock {
 
     protected Activation activation = new Linear();
     protected GradientClipper clipper = new HardClipper(5);
     protected WeightInit weightInit = activation.defaultWeightInit();
-    protected Layer0 previous;
+    protected OldLayer previous;
     protected Tensor weights;
     protected Tensor bias;
     protected boolean frozen;
@@ -52,7 +51,7 @@ public abstract class Layer0 implements ModelBlock {
         //layers.add(this);
     }
     
-    public void connect(Layer0 previous) {
+    public void connect(OldLayer previous) {
         this.previous = previous;
         connect();
     }
@@ -168,7 +167,7 @@ public abstract class Layer0 implements ModelBlock {
     /**
      * Freezes all the trainable parameters in this layer.
      */
-    public Layer0 freeze() {
+    public OldLayer freeze() {
         frozen = true;
         if (weights != null) weights.noGrad();
         if (bias != null) bias.noGrad();
@@ -178,7 +177,7 @@ public abstract class Layer0 implements ModelBlock {
     /**
      * Unfreezes all the parameters in this layer.
      */
-    public Layer0 unfreeze() {
+    public OldLayer unfreeze() {
         frozen = false;
         if (weights != null) weights.withGrad();
         if (bias != null) bias.withGrad();
@@ -283,9 +282,9 @@ public abstract class Layer0 implements ModelBlock {
     }
     
     @Override
-    public Layer0 clone() {
+    public OldLayer clone() {
         try {
-            Layer0 clone = (Layer0) super.clone();
+            OldLayer clone = (OldLayer) super.clone();
             
             if (weights != null) {
                 clone.weights = weights.copy();

@@ -304,13 +304,13 @@ public final class DefaultTrainer implements Trainer {
                 && operation instanceof ActivationOperation(Activation activation)
                 && activation instanceof Softmax) {
                 // numerically stable trick for Softmax + CrossEntropy
-                target = context.inputs()[i];
+                target = context.inputs()[0];
             }
 
             target.backward(grad);
         }
         
-        layers.forEach(x -> x.backward(cache, updater, optimizer));
+        layers.forEach(x -> x.backward(updater, optimizer));
 
         int elements = 0;
         

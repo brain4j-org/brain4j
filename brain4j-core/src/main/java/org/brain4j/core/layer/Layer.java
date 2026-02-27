@@ -1,10 +1,5 @@
 package org.brain4j.core.layer;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.brain4j.core.layer.newimpl.ConvLayer;
-import org.brain4j.core.layer.newimpl.DenseLayer;
-import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
@@ -25,16 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;
 
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = InputLayer.class, name = "input"),
-    @JsonSubTypes.Type(value = DenseLayer.class, name = "dense"),
-    @JsonSubTypes.Type(value = ConvLayer.class, name = "conv")
-})
 public abstract class Layer implements Copyable<Layer>, ModelBlock {
     
     protected Map<String, Tensor> parameters;
@@ -76,14 +61,8 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
             param.withGrad();
         }
     }
-    
-    public void generateWeights(RandomGenerator rng, int input, int output) {
-        for (Tensor parameter : parameters.values()) {
-            parameter.map(x -> weightInit.generate(rng, input, output));
-        }
-    }
-    
-    public void generateWeightsFor(String id, RandomGenerator rng, int input, int output) {
+
+    public void generateWeights(String id, RandomGenerator rng, int input, int output) {
         Tensor param = parameters.get(id);
         
         if (param == null) {
@@ -160,20 +139,35 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
     public GradientClipper clipper() {
         return clipper;
     }
-    
+
+    public Layer clipper(GradientClipper clipper) {
+        this.clipper = clipper;
+        return this;
+    }
+
     public Activation activation() {
         return activation;
+    }
+
+    public Layer activation(Activation activation) {
+        this.activation = activation;
+        return this;
     }
     
     public WeightInit weightInit() {
         return weightInit;
+    }
+
+    public Layer weightInit(WeightInit weightInit) {
+        this.weightInit = weightInit;
+        return this;
     }
     
     public boolean frozen() {
         return frozen;
     }
     
-    public void backward(StatesCache cache, Updater updater, Optimizer optimizer) {
+    public void backward(Updater updater, Optimizer optimizer) {
         for (Tensor parameter : parameters.values()) {
             Tensor grad = parameter.grad();
             

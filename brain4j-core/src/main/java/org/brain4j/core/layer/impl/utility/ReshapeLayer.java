@@ -2,12 +2,9 @@ package org.brain4j.core.layer.impl.utility;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-
-import java.util.List;
 
 /**
  * A utility layer that reshapes input tensors while preserving the batch dimension.
@@ -23,7 +20,7 @@ import java.util.List;
  *
  * @author xEcho1337
  */
-public class ReshapeLayer extends Layer0 {
+public class ReshapeLayer extends OldLayer {
 
     private int[] shape;
     

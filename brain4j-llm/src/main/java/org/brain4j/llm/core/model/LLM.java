@@ -3,7 +3,7 @@ package org.brain4j.llm.core.model;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import org.brain4j.core.importing.SafeTensorsConverter;
+import org.brain4j.core.importing.SafeTensors;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.transformer.tokenizers.impl.BytePairTokenizer;
 import org.brain4j.core.transformer.tokenizers.model.Tokenizer;
@@ -61,7 +61,7 @@ public class LLM implements InferenceProvider {
         tokenizer.setBosTokenId(config.get("bos_token_id").getAsInt());
         tokenizer.setEosTokenId(config.get("eos_token_id").getAsInt());
         
-        Map<String, Tensor> weights = SafeTensorsConverter.load(weightsFile.path());
+        Map<String, Tensor> weights = SafeTensors.load(weightsFile.path());
         ArchitectureAdapter adapter = ArchitectureRegistry.findAdapter(modelType);
         this.model = adapter.buildModel(config, weights);
 

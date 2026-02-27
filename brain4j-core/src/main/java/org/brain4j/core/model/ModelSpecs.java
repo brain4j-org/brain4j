@@ -1,7 +1,6 @@
 package org.brain4j.core.model;
 
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.Layer0;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.Copyable;
 import org.brain4j.math.commons.Commons;

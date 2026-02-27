@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl.transformer;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PosEncodeLayer extends Layer0 {
+public class PosEncodeLayer extends OldLayer {
 
     private final Map<Integer, Tensor> preGenerated = new HashMap<>();
     private int dimension;

@@ -1,11 +1,11 @@
 package org.brain4j.core.layer.impl.convolutional;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 
-public class MaxPoolLayer extends Layer0 {
+public class MaxPoolLayer extends OldLayer {
 
     private int stride;
     private int windowHeight;

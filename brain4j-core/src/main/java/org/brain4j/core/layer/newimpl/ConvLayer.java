@@ -19,7 +19,8 @@ public class ConvLayer extends Layer {
     private final int kernelHeight;
     private final int padding = 0; // TODO: configurable
     private final int stride;
-    
+    private int channels;
+
     public ConvLayer(int filters, int kernelWidth, int kernelHeight) {
         this(filters, kernelWidth, kernelHeight, new Linear());
     }
@@ -48,7 +49,7 @@ public class ConvLayer extends Layer {
     @Override
     public void build(List<Shape> inputShapes) {
         Shape inputShape = inputShapes.getFirst();
-        int channels = inputShape.dim(0);
+        this.channels = inputShape.dim(0);
         
         Tensor kernel = Tensors.zeros(filters, channels, kernelHeight, kernelWidth);
         Tensor bias = Tensors.zeros(filters);
@@ -59,13 +60,10 @@ public class ConvLayer extends Layer {
     
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
-        Shape inputShape = inputShapes.getFirst();
-        int channels = inputShape.dim(0);
-        
         int input = channels * kernelHeight * kernelWidth;
         int output = filters * kernelHeight * kernelWidth;
         
-        generateWeightsFor("kernel", rng, input, output);
+        generateWeights("kernel", rng, input, output);
     }
     
     @Override
@@ -83,8 +81,8 @@ public class ConvLayer extends Layer {
         int height = inputShape.dim(1);
         int width = inputShape.dim(2);
         
-        int numeratorH = height - kernelHeight + 2 * padding;
-        int numeratorW = width - kernelWidth + 2 * padding;
+        int numeratorH = height - kernelHeight; // + 2 * padding;
+        int numeratorW = width - kernelWidth; // + 2 * padding;
         
         if (numeratorH < 0 || numeratorW < 0) {
             throw Commons.illegalArgument("Kernel is too big for input!.");
@@ -123,5 +121,29 @@ public class ConvLayer extends Layer {
         ConvLayer copy = new ConvLayer(filters, kernelWidth, kernelHeight, stride, activation);
         copyParameters(copy);
         return copy;
+    }
+
+    public int filters() {
+        return filters;
+    }
+
+    public int kernelWidth() {
+        return kernelWidth;
+    }
+
+    public int kernelHeight() {
+        return kernelHeight;
+    }
+
+    public int padding() {
+        return padding;
+    }
+
+    public int stride() {
+        return stride;
+    }
+
+    public int channels() {
+        return channels;
     }
 }

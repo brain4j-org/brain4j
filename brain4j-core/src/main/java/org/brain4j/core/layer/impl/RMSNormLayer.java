@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
@@ -25,7 +25,7 @@ import org.brain4j.math.tensor.Tensor;
  *
  * @author xEcho1337
  */
-public class RMSNormLayer extends Layer0 {
+public class RMSNormLayer extends OldLayer {
 
     private double epsilon;
 

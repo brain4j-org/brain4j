@@ -1,7 +1,7 @@
 package org.brain4j.core.layer.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.Layer0;
+import org.brain4j.core.layer.OldLayer;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
@@ -46,7 +46,7 @@ import java.util.random.RandomGenerator;
  *           for all gates to improve memory locality and performance
  * @author xEcho1337
  */
-public class LSTMLayer extends Layer0 {
+public class LSTMLayer extends OldLayer {
     
     private Tensor hiddenWeights;
     private int hiddenDimension;
@@ -158,13 +158,13 @@ public class LSTMLayer extends Layer0 {
     }
     
     @Override
-    public Layer0 freeze() {
+    public OldLayer freeze() {
         hiddenWeights.noGrad();
         return super.freeze();
     }
     
     @Override
-    public Layer0 unfreeze() {
+    public OldLayer unfreeze() {
         hiddenWeights.withGrad();
         return super.unfreeze();
     }
