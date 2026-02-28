@@ -7,6 +7,7 @@ import org.brain4j.core.layer.newimpl.ConvLayer;
 import org.brain4j.core.layer.newimpl.DenseLayer;
 import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.core.layer.newimpl.NormLayer;
+import org.brain4j.core.layer.newimpl.ReshapeLayer;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.math.loss.impl.CrossEntropy;
@@ -117,6 +118,7 @@ public class Registries {
         LAYER_REGISTRY.register("norm", NormLayer.class);
 //        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
         LAYER_REGISTRY.register("conv_2d", ConvLayer.class);
+        LAYER_REGISTRY.register("reshape", ReshapeLayer.class);
 //
 //        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
 //        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
@@ -124,7 +126,6 @@ public class Registries {
 //        LAYER_REGISTRY.register("transformer_encoder", TransformerEncoder.class);
 //
 //        LAYER_REGISTRY.register("activation", ActivationLayer.class);
-//        LAYER_REGISTRY.register("reshape", ReshapeLayer.class);
 //        LAYER_REGISTRY.register("slice", SliceLayer.class);
 //        LAYER_REGISTRY.register("squeeze", SqueezeLayer.class);
 

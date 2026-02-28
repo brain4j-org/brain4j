@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+// TODO: refactor tokenizers
 public interface Tokenizer {
     
     List<String> splitTokens(String input);

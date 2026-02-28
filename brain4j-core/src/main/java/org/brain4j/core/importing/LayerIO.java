@@ -1,162 +1,247 @@
 package org.brain4j.core.importing;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.brain4j.core.codec.Codec;
+import org.brain4j.core.codec.activation.*;
+import org.brain4j.core.codec.clipper.HardClipperCodec;
+import org.brain4j.core.codec.clipper.L2ClipperCodec;
+import org.brain4j.core.codec.clipper.NoClipperCodec;
+import org.brain4j.core.codec.layer.ConvCodec;
+import org.brain4j.core.codec.layer.DenseCodec;
+import org.brain4j.core.codec.layer.InputCodec;
+import org.brain4j.core.codec.layer.NormCodec;
+import org.brain4j.core.codec.layer.ReshapeCodec;
+import org.brain4j.core.codec.weightinit.*;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.newimpl.*;
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.activation.impl.ELU;
-import org.brain4j.math.activation.impl.LeakyReLU;
-import org.brain4j.math.activation.impl.Softmax;
+import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.commons.Commons;
-import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.weightsinit.WeightInit;
 
-import static org.brain4j.core.importing.Registries.*;
+import static org.brain4j.core.importing.Registries.CLIPPERS_REGISTRY;
+import static org.brain4j.core.importing.Registries.WEIGHT_INIT_REGISTRY;
 import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
 
-// Bigger TODO: Move the logic inside a proper Codec system
 public class LayerIO {
-
+    
+    private static final Registry<Layer> LAYER_CODECS = new Registry<>();
+    private static final Registry<Activation> ACTIVATION_CODECS = new Registry<>();
+    private static final Registry<WeightInit> WEIGHT_INIT_CODECS = new Registry<>();
+    private static final Registry<GradientClipper> CLIPPER_CODECS = new Registry<>();
+    
+    static {
+        LAYER_CODECS.put(new InputCodec());
+        LAYER_CODECS.put(new DenseCodec());
+        LAYER_CODECS.put(new NormCodec());
+        LAYER_CODECS.put(new ReshapeCodec());
+        LAYER_CODECS.put(new ConvCodec());
+        
+        ACTIVATION_CODECS.put(new ELUCodec());
+        ACTIVATION_CODECS.put(new LeakyReLUCodec());
+        ACTIVATION_CODECS.put(new SoftmaxCodec());
+        ACTIVATION_CODECS.put(new GELUCodec());
+        ACTIVATION_CODECS.put(new LinearCodec());
+        ACTIVATION_CODECS.put(new MishCodec());
+        ACTIVATION_CODECS.put(new ReLUCodec());
+        ACTIVATION_CODECS.put(new SigmoidCodec());
+        ACTIVATION_CODECS.put(new SoftPlusCodec());
+        ACTIVATION_CODECS.put(new SwishCodec());
+        ACTIVATION_CODECS.put(new TanhCodec());
+        
+        WEIGHT_INIT_CODECS.put(new NormalInitCodec());
+        WEIGHT_INIT_CODECS.put(new NormalHeInitCodec());
+        WEIGHT_INIT_CODECS.put(new NormalXavierInitCodec());
+        WEIGHT_INIT_CODECS.put(new UniformHeInitCodec());
+        WEIGHT_INIT_CODECS.put(new UniformXavierInitCodec());
+        WEIGHT_INIT_CODECS.put(new LeCunInitCodec());
+        
+        CLIPPER_CODECS.put(new NoClipperCodec());
+        CLIPPER_CODECS.put(new HardClipperCodec());
+        CLIPPER_CODECS.put(new L2ClipperCodec());
+    }
+    
     public static Layer parse(JsonNode node) {
         JsonNode config = node.get("config");
-        JsonNode activation = config.get("activation");
-
-        String type = node.get("type").asText();
-        String weightInit = node.get("weight_init").asText();
-
-        Layer layer = switch (type) {
-            case "dense" -> {
-                int dim = config.get("dimension").asInt();
-                yield new DenseLayer(dim);
-            }
-            case "norm" -> {
-                double epsilon = config.get("epsilon").asDouble();
-                yield new NormLayer(epsilon);
-            }
-            case "input" -> {
-                Shape shape = fromNode(config.get("shape"));
-                yield new InputLayer(shape);
-            }
-            case "reshape" -> {
-                Shape shape = fromNode(config.get("shape"));
-                yield new ReshapeLayer(shape);
-            }
-            case "conv_2d" -> {
-                int filters = config.get("filters").asInt();
-                int kernelWidth = config.get("kernel_width").asInt();
-                int kernelHeight = config.get("kernel_height").asInt();
-                int stride = config.get("stride").asInt();
-
-                yield new ConvLayer(filters, kernelWidth, kernelHeight, stride);
-            }
-
-            default -> throw new IllegalStateException("Unknown layer type: " + type);
-        };
-
-        Activation parsedActivation = parseActivation(activation);
-        WeightInit parsedWeightInit = WEIGHT_INIT_REGISTRY.toInstance(weightInit);
-
-        return layer
-            .activation(parsedActivation)
-            .weightInit(parsedWeightInit);
-    }
-
-    public static void write(Layer layer, ObjectNode container) {
-        String clipper = CLIPPERS_REGISTRY.fromClass(layer.clipper().getClass());
-        String weightInit = WEIGHT_INIT_REGISTRY.fromClass(layer.weightInit().getClass());
-
-        ObjectNode config = MAPPER.createObjectNode();
-        writeActivation(layer, container);
-
-        // TODO: finish layers
-        switch (layer) {
-            case DenseLayer dense -> config.put("dimension", dense.outDimension());
-            case NormLayer norm -> config.put("epsilon", norm.epsilon());
-            case InputLayer input -> config.set("shape", toNode(input.shape()));
-            case ReshapeLayer reshape -> config.set("shape", toNode(reshape.shape()));
-            case ConvLayer conv -> {
-                config.put("filters", conv.filters());
-                config.put("channels", conv.channels());
-                config.put("kernel_width", conv.kernelWidth());
-                config.put("kernel_height", conv.kernelHeight());
-                config.put("padding", conv.padding());
-                config.put("stride", conv.stride());
-            }
-            default -> throw Commons.illegalArgument("Unexpected layer type: %s", layer);
+        
+        if (config == null || !config.isObject()) {
+            throw Commons.illegalArgument("Layer config must be an object");
         }
-
-        container.put("clipper", clipper);
-        container.put("weight_init", weightInit);
+        
+        String type = text(node.get("type"));
+        Codec<? extends Layer> codec = LAYER_CODECS.get(type);
+        
+        if (codec == null) {
+            throw Commons.illegalArgument("Unknown layer type: %s", type);
+        }
+        
+        Layer layer = codec.parse(config);
+        
+        JsonNode activationNode = node.get("activation");
+        JsonNode weightInitNode = node.get("weight_init");
+        JsonNode clipperNode = node.get("clipper");
+        
+        if (activationNode != null && !activationNode.isNull()) {
+            layer.activation(parseActivation(activationNode));
+        }
+        
+        if (weightInitNode != null && !weightInitNode.isNull()) {
+            layer.weightInit(parseWeightInit(weightInitNode));
+        }
+        
+        if (clipperNode != null && !clipperNode.isNull()) {
+            layer.clipper(parseClipper(clipperNode));
+        }
+        
+        return layer;
+    }
+    
+    public static void write(Layer layer, ObjectNode container) {
+        Codec<Layer> codec = layerCodec(layer);
+        if (codec == null) {
+            throw Commons.illegalArgument("Unexpected layer type: %s", layer.getClass().getName());
+        }
+        
+        ObjectNode config = MAPPER.createObjectNode();
+        codec.write(layer, config);
+        
+        writeActivation(layer.activation(), container);
+        writeWeightInit(layer.weightInit(), container);
+        writeClipper(layer.clipper(), container);
+        
         container.set("config", config);
     }
+    
+    private static void writeActivation(Activation activation, ObjectNode container) {
+        Codec<Activation> codec = activationCodec(activation);
 
-    private static void writeActivation(Layer layer, ObjectNode container) {
-        String activation = ACTIVATION_REGISTRY.fromClass(layer.activation().getClass());
-
-        ObjectNode activationNode = MAPPER.createObjectNode();
-        ObjectNode activationConfig = MAPPER.createObjectNode();
-
-        switch (layer.activation()) {
-            case LeakyReLU(double alpha) -> activationConfig.put("alpha", alpha);
-            case ELU(double alpha) -> activationConfig.put("alpha", alpha);
-            case Softmax(double temperature) -> activationConfig.put("temperature", temperature);
-            default -> {}
+        if (codec == null) {
+            throw Commons.illegalArgument("Unknown activation type: %s", activation.getClass().getName());
         }
-
-        activationNode.put("type", activation);
-        activationNode.set("config", activationConfig);
-
-        container.set("activation", activationNode);
+        
+        writeInfo("activation", container, codec, activation);
     }
-
-    private static Activation parseActivation(JsonNode activation) {
-        String type = activation.get("type").asText();
-        JsonNode config = activation.get("config");
-
-        return switch (type) {
-            case "leakyrelu" -> {
-                double alpha = config.get("alpha").asDouble(0.01);
-                yield new LeakyReLU(alpha);
-            }
-            case "elu" -> {
-                double alpha = config.get("alpha").asDouble(1.0);
-                yield new ELU(alpha);
-            }
-            case "softmax" -> {
-                double temperature = config.get("temperature").asDouble(1.0);
-                yield new Softmax(temperature);
-            }
-            default -> ACTIVATION_REGISTRY.toInstance(type);
-        };
+    
+    private static void writeWeightInit(WeightInit weightInit, ObjectNode container) {
+        Codec<WeightInit> codec = weightInitCodec(weightInit);
+        
+        if (codec == null) {
+            throw Commons.illegalArgument("Unknown weight init type: %s", weightInit.getClass().getName());
+        }
+        
+        writeInfo("weight_init", container, codec, weightInit);
     }
-
-    private static Shape fromNode(JsonNode node) {
-        if (node == null || !node.isArray()) {
-            throw Commons.illegalArgument("Shape must be an array");
+    
+    private static void writeClipper(GradientClipper clipper, ObjectNode container) {
+        Codec<GradientClipper> codec = clipperCodec(clipper);
+        
+        if (codec == null) {
+            throw Commons.illegalArgument("Unknown clipper type: %s", clipper.getClass().getName());
         }
-
-        int[] dims = new int[node.size()];
-
-        for (int i = 0; i < node.size(); i++) {
-            JsonNode dim = node.get(i);
-
-            if (!dim.isInt()) {
-                throw Commons.illegalArgument("Shape dimensions must be integers");
-            }
-
-            dims[i] = dim.intValue();
-        }
-
-        return Shape.of(dims);
+        
+        writeInfo("clipper", container, codec, clipper);
     }
-
-    private static ArrayNode toNode(Shape shape) {
-        ArrayNode array = MAPPER.createArrayNode();
-        for (int v : shape.dims()) {
-            array.add(v);
+    
+    private static Activation parseActivation(JsonNode node) {
+        if (node.isTextual()) {
+            return Registries.ACTIVATION_REGISTRY.toInstance(node.asText());
         }
-        return array;
+        
+        String type = normalizeActivationType(text(node.get("type")));
+        JsonNode config = objectOrEmpty(node.get("config"));
+        
+        Codec<? extends Activation> codec = ACTIVATION_CODECS.get(type);
+        
+        if (codec != null) {
+            return codec.parse(config);
+        }
+        
+        return Registries.ACTIVATION_REGISTRY.toInstance(type);
+    }
+    
+    private static WeightInit parseWeightInit(JsonNode node) {
+        if (node.isTextual()) {
+            return WEIGHT_INIT_REGISTRY.toInstance(node.asText());
+        }
+        
+        String type = text(node.get("type"));
+        JsonNode config = objectOrEmpty(node.get("config"));
+        
+        Codec<? extends WeightInit> codec = WEIGHT_INIT_CODECS.get(type);
+        
+        if (codec != null) {
+            return codec.parse(config);
+        }
+        
+        return WEIGHT_INIT_REGISTRY.toInstance(type);
+    }
+    
+    private static GradientClipper parseClipper(JsonNode node) {
+        if (node.isTextual()) {
+            return CLIPPERS_REGISTRY.toInstance(node.asText());
+        }
+        
+        String type = text(node.get("type"));
+        JsonNode config = objectOrEmpty(node.get("config"));
+        
+        Codec<? extends GradientClipper> codec = CLIPPER_CODECS.get(type);
+        
+        if (codec != null) {
+            return codec.parse(config);
+        }
+        
+        return CLIPPERS_REGISTRY.toInstance(type);
+    }
+    
+    private static JsonNode objectOrEmpty(JsonNode node) {
+        return node != null && node.isObject() ? node : MAPPER.createObjectNode();
+    }
+    
+    private static String text(JsonNode node) {
+        if (node == null || !node.isTextual()) {
+            throw Commons.illegalArgument("Missing or invalid type field");
+        }
+        
+        return node.asText();
+    }
+    
+    private static String normalizeActivationType(String type) {
+        return "leakyrelu".equals(type) ? "leaky_relu" : type;
+    }
+    
+    private static <T> void writeInfo(String field, ObjectNode container, Codec<T> codec, T value) {
+        ObjectNode config = MAPPER.createObjectNode();
+        codec.write(value, config);
+        
+        if (config.isEmpty()) {
+            container.put(field, codec.type());
+            return;
+        }
+        
+        ObjectNode node = MAPPER.createObjectNode();
+        node.put("type", codec.type());
+        node.set("config", config);
+        
+        container.set(field, node);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static Codec<Layer> layerCodec(Layer layer) {
+        return (Codec<Layer>) LAYER_CODECS.get((Class<? extends Layer>) layer.getClass());
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static Codec<Activation> activationCodec(Activation activation) {
+        return (Codec<Activation>) ACTIVATION_CODECS.get((Class<? extends Activation>) activation.getClass());
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static Codec<WeightInit> weightInitCodec(WeightInit weightInit) {
+        return (Codec<WeightInit>) WEIGHT_INIT_CODECS.get((Class<? extends WeightInit>) weightInit.getClass());
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static Codec<GradientClipper> clipperCodec(GradientClipper clipper) {
+        return (Codec<GradientClipper>) CLIPPER_CODECS.get((Class<? extends GradientClipper>) clipper.getClass());
     }
 }

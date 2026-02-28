@@ -41,4 +41,8 @@ public class HardClipper implements GradientClipper {
     public String kernelName() {
         return "hard_clip";
     }
+    
+    public double bound() {
+        return bound;
+    }
 }

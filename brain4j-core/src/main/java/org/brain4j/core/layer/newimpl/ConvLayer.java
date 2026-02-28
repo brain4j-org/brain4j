@@ -1,5 +1,6 @@
 package org.brain4j.core.layer.newimpl;
 
+import jdk.jfr.Experimental;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
@@ -12,6 +13,7 @@ import org.brain4j.math.tensor.Tensor;
 import java.util.List;
 import java.util.random.RandomGenerator;
 
+@Experimental
 public class ConvLayer extends Layer {
     
     private final int filters;

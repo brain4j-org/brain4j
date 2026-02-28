@@ -35,9 +35,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
     @Override
     public Sequential deserialize(File file) {
         Map<String, byte[]> files = readZip(file);
-        ModelSpecs specs = deserializeSpecs(files);
-
-        return specs.compile();
+        return deserializeModel(files);
     }
     
     @Override
@@ -55,7 +53,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
         ));
     }
     
-    private ModelSpecs deserializeSpecs(Map<String, byte[]> files) {
+    private Sequential deserializeModel(Map<String, byte[]> files) {
         try {
             byte[] specsData = files.get("config.json");
             byte[] weightsData = files.get("weights.safetensors");
@@ -71,32 +69,55 @@ public class BrainFormat implements BinaryFormat<Sequential> {
 
             JsonNode architecture = root.get("architecture");
             Map<Integer, Layer> architectureMap = new TreeMap<>();
+            Map<Integer, List<String>> layerWeights = new TreeMap<>();
 
             for (JsonNode node : architecture) {
                 int index = node.get("index").asInt();
 
                 Layer layer = LayerIO.parse(node);
-                Map<String, Tensor> params = layer.parameters();
-
                 architectureMap.put(index, layer);
 
                 JsonNode connections = node.get("weights");
+                List<String> ids = new ArrayList<>();
 
                 for (JsonNode element : connections) {
                     if (!element.isTextual()) {
                         throw Commons.illegalArgument("All weights must be strings");
                     }
-
-                    String id = element.asText();
-                    String name = id.split("\\.")[2]; // weight.index.name
-
-                    Tensor param = weights.get(element.textValue());
-                    params.put(name, param);
+                    
+                    ids.add(element.asText());
                 }
+                
+                layerWeights.put(index, ids);
             }
 
             Layer[] layers = architectureMap.values().toArray(new Layer[0]);
-            return ModelSpecs.of(layers);
+            Sequential model = ModelSpecs.of(layers).compile();
+            List<Layer> compiledLayers = model.getLayers();
+            
+            for (int i = 0; i < compiledLayers.size(); i++) {
+                Layer layer = compiledLayers.get(i);
+                Map<String, Tensor> params = layer.parameters();
+                List<String> ids = layerWeights.getOrDefault(i, Collections.emptyList());
+                
+                for (String id : ids) {
+                    String[] parts = id.split("\\.", 3);
+                    if (parts.length != 3) {
+                        throw Commons.illegalArgument("Invalid weight id format: %s", id);
+                    }
+                    
+                    String name = parts[2];
+                    Tensor param = weights.get(id);
+                    
+                    if (param == null) {
+                        throw Commons.illegalArgument("Missing tensor '%s' in safetensors payload", id);
+                    }
+                    
+                    params.put(name, param.withGrad());
+                }
+            }
+            
+            return model;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -124,7 +145,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
                     String fullName = entry.getKey();
                     String id = "%s.%s.%s".formatted(type, i, fullName);
 
-                    globalWeights.put(fullName, entry.getValue());
+                    globalWeights.put(id, entry.getValue());
                     weights.add(id);
                 }
 
@@ -147,7 +168,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
             ObjectNode header = MAPPER.createObjectNode();
 
             int offset = 0;
-            Map<String, byte[]> rawData = new HashMap<>();
+            Map<String, byte[]> rawData = new LinkedHashMap<>();
 
             for (var entry : weights.entrySet()) {
                 String name = entry.getKey();
@@ -194,8 +215,8 @@ public class BrainFormat implements BinaryFormat<Sequential> {
             result.putLong(headerBytes.length);
             result.put(headerBytes);
 
-            for (byte[] data : rawData.values()) {
-                result.put(data);
+            for (Map.Entry<String, byte[]> entry : rawData.entrySet()) {
+                result.put(entry.getValue());
             }
 
             return result.array();

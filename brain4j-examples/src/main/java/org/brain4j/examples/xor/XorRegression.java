@@ -1,10 +1,8 @@
 package org.brain4j.examples.xor;
 
-import org.brain4j.core.layer.Node;
 import org.brain4j.core.layer.newimpl.DenseLayer;
 import org.brain4j.core.layer.newimpl.InputLayer;
-import org.brain4j.core.model.impl.Graph;
-import org.brain4j.dashboard.BrainDashboard;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
@@ -18,7 +16,6 @@ import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
@@ -37,23 +34,8 @@ public class XorRegression {
             new DenseLayer(1, new Sigmoid())
         );
         
-        // Sequential model = specs.compile(42);
-        Node input = Node.input(Shape.of(2));
-
-        Node d1 = new DenseLayer(16, new ReLU()).apply(input);
-        Node d2 = new DenseLayer(16, new ReLU()).apply(d1);
-        Node out = new DenseLayer(1, new Sigmoid()).apply(d2);
-
-        Graph model = Graph.of(out);
-        SiliconDevice device = null;
-
+        Sequential model = specs.compile(42);
         model.summary();
-        
-        if (device != null) {
-            System.out.println("Using device " + device.getName());
-//            model = model.fork(device);
-//            dataSource = dataSource.to(device);
-        }
         
         TrainingConfig config = TrainingConfig.of(
             new BinaryCrossEntropy(),
@@ -65,10 +47,10 @@ public class XorRegression {
         );
 
         Trainer trainer = Trainer.of(model, config, monitors);
-        // trainer.fit(dataSource, 50);
-
-        BrainDashboard dashboard = new BrainDashboard(model, trainer);
-        dashboard.launch(dataSource, dataSource, 50, 8080);
+        trainer.fit(dataSource, 50);
+        
+        var evalResult = model.evaluate(dataSource, config.loss());
+        System.out.println(evalResult.results());
     }
     
     private static List<Sample> getSamples() {

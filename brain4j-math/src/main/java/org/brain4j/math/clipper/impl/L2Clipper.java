@@ -42,4 +42,8 @@ public class L2Clipper implements GradientClipper {
 
         return Math.sqrt(sumOfSquares);
     }
+    
+    public double scale() {
+        return scale;
+    }
 }
