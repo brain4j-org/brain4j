@@ -94,31 +94,10 @@ public class Registries {
         LOSS_FUNCTION_REGISTRY.register("cross_entropy", CrossEntropy.class);
         LOSS_FUNCTION_REGISTRY.register("mean_absolute_error", MeanAbsoluteError.class);
         LOSS_FUNCTION_REGISTRY.register("mean_squared_error", MeanSquaredError.class);
-        
-        CLIPPERS_REGISTRY.register("none", NoClipper.class);
-        CLIPPERS_REGISTRY.register("clamp", HardClipper.class);
-        CLIPPERS_REGISTRY.register("l2", L2Clipper.class);
-        
-        ACTIVATION_REGISTRY.register("elu", ELU.class);
-        ACTIVATION_REGISTRY.register("gelu", GELU.class);
-        ACTIVATION_REGISTRY.register("leaky_relu", LeakyReLU.class);
-        ACTIVATION_REGISTRY.register("linear", Linear.class);
-        ACTIVATION_REGISTRY.register("mish", Mish.class);
-        ACTIVATION_REGISTRY.register("relu", ReLU.class);
-        ACTIVATION_REGISTRY.register("sigmoid", Sigmoid.class);
-        ACTIVATION_REGISTRY.register("softmax", Softmax.class);
-        ACTIVATION_REGISTRY.register("softplus", SoftPlus.class);
-        ACTIVATION_REGISTRY.register("swish", Swish.class);
-        ACTIVATION_REGISTRY.register("tanh", Tanh.class);
 
-        LAYER_REGISTRY.register("input", InputLayer.class);
-        LAYER_REGISTRY.register("dense", DenseLayer.class);
 //        LAYER_REGISTRY.register("dropout", DropoutLayer.class);
 //        LAYER_REGISTRY.register("lstm", LSTMLayer.class);
-        LAYER_REGISTRY.register("norm", NormLayer.class);
 //        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
-        LAYER_REGISTRY.register("conv_2d", ConvLayer.class);
-        LAYER_REGISTRY.register("reshape", ReshapeLayer.class);
 //
 //        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
 //        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
@@ -131,13 +110,5 @@ public class Registries {
 
         SCALER_REGISTRY.register("z_score", ZScoreScaler.class);
         SCALER_REGISTRY.register("min_max", MinMaxScaler.class);
-
-        WEIGHT_INIT_REGISTRY.register("normal", NormalInit.class);
-        WEIGHT_INIT_REGISTRY.register("normal_he", NormalHeInit.class);
-        WEIGHT_INIT_REGISTRY.register("normal_xavier", NormalXavierInit.class);
-        WEIGHT_INIT_REGISTRY.register("uniform_he", UniformHeInit.class);
-        WEIGHT_INIT_REGISTRY.register("uniform_xavier", UniformXavierInit.class);
-        WEIGHT_INIT_REGISTRY.register("lecun", LeCunInit.class);
-
     }
 }

@@ -5,7 +5,7 @@ import org.brain4j.math.tensor.Tensor;
 
 import java.util.List;
 
-public interface FeatureScaler extends JsonAdapter {
+public interface FeatureScaler {
 
     void fit(List<Tensor> tensors);
     Tensor transform(Tensor tensor);

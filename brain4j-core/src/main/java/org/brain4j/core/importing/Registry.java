@@ -19,12 +19,12 @@ public class Registry<T> {
     }
     
     @SuppressWarnings("unchecked")
-    public <S extends T> Codec<S> get(Class<S> clazz) {
-        return (Codec<S>) byClass.get(clazz);
+    public <S extends T> Codec<T> get(Class<S> clazz) {
+        return (Codec<T>) byClass.get(clazz);
     }
     
     @SuppressWarnings("unchecked")
-    public <S extends T> Codec<S> get(String type) {
-        return (Codec<S>) byType.get(type);
+    public Codec<T> get(String type) {
+        return (Codec<T>) byType.get(type);
     }
 }
