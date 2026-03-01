@@ -28,6 +28,10 @@ public class Shape implements Copyable<Shape> {
     }
 
     public int dim(int index) {
+        if (index < 0) {
+            index = Math.floorMod(index, dims.length);
+        }
+        
         return dims[index];
     }
 

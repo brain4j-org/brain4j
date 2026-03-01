@@ -56,8 +56,8 @@ public class ConvLayer extends Layer {
         Tensor kernel = Tensors.zeros(filters, channels, kernelHeight, kernelWidth);
         Tensor bias = Tensors.zeros(filters);
         
-        parameters.put("kernel", kernel);
-        parameters.put("bias", bias);
+        registerParam("kernel", kernel);
+        registerParam("bias", bias);
     }
     
     @Override
@@ -77,7 +77,7 @@ public class ConvLayer extends Layer {
         Shape inputShape = inputShapes.getFirst();
         
         if (inputShape.rank() != 3) {
-            throw Commons.illegalArgument("ConvLayer requires tensors with rank 3 but %s were given!", inputShape.rank());
+            throw Commons.illegalArgument("Conv requires tensors with rank 3 but %s were given!", inputShape.rank());
         }
         
         int height = inputShape.dim(1);

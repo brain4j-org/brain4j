@@ -10,9 +10,12 @@ public class Registry<T> {
     private final Map<String, Codec<? extends T>> byType = new HashMap<>();
     private final Map<Class<?>, Codec<? extends T>> byClass = new HashMap<>();
     
-    public void put(Codec<? extends T> codec) {
-        byType.put(codec.type(), codec);
-        byClass.put(codec.targetClass(), codec);
+    @SafeVarargs
+    public final void put(Codec<? extends T>... codecs) {
+        for (Codec<? extends T> codec : codecs) {
+            byType.put(codec.type(), codec);
+            byClass.put(codec.targetClass(), codec);
+        }
     }
     
     @SuppressWarnings("unchecked")

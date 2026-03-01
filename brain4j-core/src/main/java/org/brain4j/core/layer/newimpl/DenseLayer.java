@@ -32,8 +32,8 @@ public class DenseLayer extends Layer {
         Tensor weights = Tensors.zeros(inputShape.last(), outDimension);
         Tensor bias = Tensors.zeros(outDimension);
         
-        parameters.put("weights", weights);
-        parameters.put("bias", bias);
+        registerParam("weights", weights);
+        registerParam("bias", bias);
     }
     
     @Override

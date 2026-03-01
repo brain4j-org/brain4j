@@ -93,6 +93,10 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
         return new Node(this, List.of(inputs));
     }
     
+    public void registerParam(String name, Tensor param) {
+        parameters.put(name, param);
+    }
+    
     public Tensor getParam(String name) {
         return parameters.get(name);
     }

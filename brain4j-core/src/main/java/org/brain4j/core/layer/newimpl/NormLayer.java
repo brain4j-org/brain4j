@@ -29,8 +29,8 @@ public class NormLayer extends Layer {
         Tensor weights = Tensors.ones(inputShape.last());
         Tensor bias = Tensors.zeros(inputShape.last());
     
-        parameters.put("weights", weights);
-        parameters.put("bias", bias);
+        registerParam("weights", weights);
+        registerParam("bias", bias);
     }
     
     @Override

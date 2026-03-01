@@ -7,11 +7,7 @@ import org.brain4j.core.codec.activation.*;
 import org.brain4j.core.codec.clipper.HardClipperCodec;
 import org.brain4j.core.codec.clipper.L2ClipperCodec;
 import org.brain4j.core.codec.clipper.NoClipperCodec;
-import org.brain4j.core.codec.layer.ConvCodec;
-import org.brain4j.core.codec.layer.DenseCodec;
-import org.brain4j.core.codec.layer.InputCodec;
-import org.brain4j.core.codec.layer.NormCodec;
-import org.brain4j.core.codec.layer.ReshapeCodec;
+import org.brain4j.core.codec.layer.*;
 import org.brain4j.core.codec.weightinit.*;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.activation.Activation;
@@ -31,34 +27,21 @@ public class LayerIO {
     private static final Registry<GradientClipper> CLIPPER_CODECS = new Registry<>();
     
     static {
-        LAYER_CODECS.put(new InputCodec());
-        LAYER_CODECS.put(new DenseCodec());
-        LAYER_CODECS.put(new NormCodec());
-        LAYER_CODECS.put(new ReshapeCodec());
-        LAYER_CODECS.put(new ConvCodec());
+        LAYER_CODECS.put(
+            new InputCodec(), new DenseCodec(), new NormCodec(), new ReshapeCodec(), new ConvCodec(), new LSTMCodec()
+        );
         
-        ACTIVATION_CODECS.put(new ELUCodec());
-        ACTIVATION_CODECS.put(new LeakyReLUCodec());
-        ACTIVATION_CODECS.put(new SoftmaxCodec());
-        ACTIVATION_CODECS.put(new GELUCodec());
-        ACTIVATION_CODECS.put(new LinearCodec());
-        ACTIVATION_CODECS.put(new MishCodec());
-        ACTIVATION_CODECS.put(new ReLUCodec());
-        ACTIVATION_CODECS.put(new SigmoidCodec());
-        ACTIVATION_CODECS.put(new SoftPlusCodec());
-        ACTIVATION_CODECS.put(new SwishCodec());
-        ACTIVATION_CODECS.put(new TanhCodec());
+        ACTIVATION_CODECS.put(
+            new ELUCodec(), new LeakyReLUCodec(), new SoftmaxCodec(), new GELUCodec(), new LinearCodec(),
+            new MishCodec(), new ReLUCodec(), new SigmoidCodec(), new SoftPlusCodec(), new SwishCodec(), new TanhCodec()
+        );
         
-        WEIGHT_INIT_CODECS.put(new NormalInitCodec());
-        WEIGHT_INIT_CODECS.put(new NormalHeInitCodec());
-        WEIGHT_INIT_CODECS.put(new NormalXavierInitCodec());
-        WEIGHT_INIT_CODECS.put(new UniformHeInitCodec());
-        WEIGHT_INIT_CODECS.put(new UniformXavierInitCodec());
-        WEIGHT_INIT_CODECS.put(new LeCunInitCodec());
+        WEIGHT_INIT_CODECS.put(
+            new NormalInitCodec(), new NormalHeInitCodec(), new NormalXavierInitCodec(), new UniformHeInitCodec(),
+            new UniformXavierInitCodec(), new LeCunInitCodec()
+        );
         
-        CLIPPER_CODECS.put(new NoClipperCodec());
-        CLIPPER_CODECS.put(new HardClipperCodec());
-        CLIPPER_CODECS.put(new L2ClipperCodec());
+        CLIPPER_CODECS.put(new NoClipperCodec(), new HardClipperCodec(), new L2ClipperCodec());
     }
     
     public static Layer parse(JsonNode node) {
