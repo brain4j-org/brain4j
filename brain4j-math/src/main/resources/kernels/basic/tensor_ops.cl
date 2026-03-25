@@ -415,6 +415,9 @@ __kernel void softmax_last_dim(
     }
 }
 
+
+
+
 __kernel void slice(
     __global const float* srcData,
     __global float* dstData,
@@ -443,6 +446,33 @@ __kernel void slice(
     }
 
     dstData[dstLinearIdx] = srcData[srcOffset];
+}
+
+__kernel void broadcast(
+    __global const float* in,
+    __global float* out,
+    __global const int* inShape,
+    __global const int* outShape,
+    __global const int* inStrides,
+    const int rank,
+    const int outSize
+) {
+    int dstLinearIdx = get_global_id(0);
+
+    if (dstLinearIdx >= outSize) return;  // ← usa direttamente outSize
+
+    int tmp = dstLinearIdx;
+    int srcOffset = 0;
+
+    for (int i = rank - 1; i >= 0; i--) {
+        int idx = tmp % outShape[i];
+        tmp = tmp / outShape[i];
+
+        int srcIdx = (inShape[i] == 1) ? 0 : idx;
+        srcOffset += srcIdx * inStrides[i];
+    }
+
+    out[dstLinearIdx] = in[srcOffset];
 }
 
 __kernel void concat_last_dim(
