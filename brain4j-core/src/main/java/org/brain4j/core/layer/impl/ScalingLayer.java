@@ -3,6 +3,7 @@ package org.brain4j.core.layer.impl;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.brain4j.core.layer.OldLayer;
+import org.brain4j.math.commons.JsonAdapter;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.scaler.FeatureScaler;
@@ -84,8 +85,10 @@ public class ScalingLayer extends OldLayer {
         
         object.addProperty("scaler", SCALER_REGISTRY.fromClass(scaler.getClass()));
         object.add("enabled_inputs", array);
-        
-        scaler.serialize(object);
+
+        if (scaler instanceof JsonAdapter adapter) {
+            adapter.serialize(object);
+        }
     }
 
     @Override
@@ -100,6 +103,8 @@ public class ScalingLayer extends OldLayer {
             enabledInputs.add(enabled.get(i).getAsInt());
         }
         
-        scaler.deserialize(object);
+        if (scaler instanceof JsonAdapter adapter) {
+            adapter.deserialize(object);
+        }
     }
 }

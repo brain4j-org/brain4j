@@ -67,13 +67,11 @@ public class LSTMLayer extends Layer {
         if (inputShape.rank() != 2) {
             throw Commons.illegalArgument("LSTM requires tensors with rank 2 but %s were given!", inputShape.rank());
         }
+        if (!returnSequences) {
+            return List.of(Shape.of(hiddenDimension));
+        }
         
-        int[] outShape = new int[inputShape.rank()];
-        
-        outShape[0] = returnSequences ? inputShape.last(1) : 1;
-        outShape[1] = hiddenDimension;
-        
-        return List.of(Shape.of(outShape));
+        return List.of(Shape.of(inputShape.last(1), hiddenDimension));
     }
     
     @Override
@@ -81,8 +79,12 @@ public class LSTMLayer extends Layer {
         // [batch, timesteps, dimension]
         Tensor input = inputs[0];
         
-        if (input.rank() != 3) {
-            throw Commons.illegalArgument("Expected input with rank 3 but got %s", input.rank());
+        if (input.rank() > 3) {
+            throw Commons.illegalArgument("Expected input with rank <= 3 but got %s", input.rank());
+        }
+        
+        while (input.rank() < 3) {
+            input = input.unsqueeze();
         }
         
         int batch = input.shapeAt(0);

@@ -22,6 +22,9 @@ public class MeanSquaredError implements LossFunction {
     @Override
     public Tensor delta(Tensor output, Tensor target, Tensor derivative) {
         Tensor error = output.minus(target);
+        if (derivative == null) {
+            return error;
+        }
         return error.mul(derivative);
     }
 
