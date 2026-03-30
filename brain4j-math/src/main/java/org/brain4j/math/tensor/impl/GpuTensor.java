@@ -12,7 +12,6 @@ import org.brain4j.math.gpu.memory.TempBuffer;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.index.Range;
-
 import java.util.Arrays;
 
 import static org.lwjgl.opencl.CL10.*;
@@ -147,9 +146,12 @@ public class GpuTensor extends BaseTensor {
         long activationsProgram = DeviceUtils.createBuildProgram(device, "/kernels/basic/activations.cl");
         long gradientClipProgram = DeviceUtils.createBuildProgram(device, "/kernels/basic/gradient_clippers.cl");
         long attentionProgram = DeviceUtils.createBuildProgram(device, "/kernels/attention/flash_attention.cl");
-        
+
+        long conv2dProgram = DeviceUtils.createBuildProgram(device, "/kernels/convolution/conv2d.cl");
+        GpuContext.register(device, "convolve2d_direct", conv2dProgram);
+
         String[] tensorOpsKernels = { "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b", "matmul_batched",
-            "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim", "layer_norm" };
+            "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim", "layer_norm" , "broadcast"};
 
         for (String kernel : tensorOpsKernels) {
             GpuContext.register(device, kernel, tensorOpsProgram);
@@ -641,13 +643,15 @@ public class GpuTensor extends BaseTensor {
 
         GpuTensor result = new GpuTensor(device, newShape);
 
-        int[] starts = new int[ranges.length];
-        int[] steps = new int[ranges.length];
+        int[] starts = new int[shape.length];
+        int[] steps = new int[shape.length];
+        Arrays.fill(steps, 1);
 
-        for (int i = 0; i < ranges.length; i++) {
-            Range range = ranges[i];
-            starts[i] = range == null ? 0 : range.start();
-            steps[i] = range == null ? 1 : range.step();
+        for (int i = 0; i < shape.length; i++) {
+            if (i < ranges.length && ranges[i] != null) {
+                starts[i] = ranges[i].start();
+                steps[i] = ranges[i].step();
+            }
         }
 
         long flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
@@ -676,6 +680,60 @@ public class GpuTensor extends BaseTensor {
         return result;
     }
 
+
+    @Override
+    public Tensor broadcast(int[] targetShape) {
+
+
+        if (Arrays.equals(shape, targetShape)) {
+            return this;
+        }
+        int outSize= 1;
+        for (int i=0; i<targetShape.length; i++)
+            outSize= outSize * targetShape[i];
+
+
+        int[] paddedSrcShape = new int[targetShape.length];
+        int[] paddedSrcStrides = new int[targetShape.length];
+
+        Arrays.fill(paddedSrcShape, 1);
+        Arrays.fill(paddedSrcStrides, 0);
+
+        int offset = targetShape.length - shape.length;
+        for (int i = 0; i < shape.length; i++) {
+            paddedSrcShape[i + offset] = shape[i];
+            paddedSrcStrides[i + offset] = strides[i];
+        }
+
+        GpuTensor result = new GpuTensor(device, targetShape);
+
+
+        long flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+
+        TempBuffer outShapeBuffer = device.createBuffer(flags, targetShape);
+
+        TempBuffer srcShapeBuf = device.createBuffer(flags, paddedSrcShape);
+        TempBuffer srcStridesBuf = device.createBuffer(flags, paddedSrcStrides);
+
+        try (GpuQueue queue = GpuContext.getOrCreate(device)) {
+            KernelFactory.create(device, "broadcast")
+                    .addMemParam(this.dataBuffer)
+                    .addMemParam(result.dataBuffer)
+                    .addMemParam(srcShapeBuf)
+                    .addMemParam(outShapeBuffer)
+                    .addMemParam(srcStridesBuf)
+                    .addIntParam(targetShape.length)
+                    .addIntParam(outSize)
+                    .launch(queue, 1, outSize);
+        }
+
+        outShapeBuffer.release();
+        srcStridesBuf.release();
+        srcShapeBuf.release();
+        return result;
+    }
+
+
     @Override
     public Tensor layerNorm(double epsilon) {
         GpuTensor result = new GpuTensor(device, shape);
@@ -695,6 +753,69 @@ public class GpuTensor extends BaseTensor {
                 .addIntParam(batchSize)
                 .addFloatParam((float) epsilon)
                 .launch(queue, 1, batchSize);
+        }
+
+        return result;
+    }
+
+    @Override
+    public Tensor convolve(Tensor kernel) {
+        if (!(kernel instanceof GpuTensor gpuKernel)) {
+            return convolve(kernel.to(device));
+        }
+
+        // Porta a 4D: [batch, channels, height, width]
+        GpuTensor input = this;
+        while (input.rank() < 4) input = (GpuTensor) input.unsqueeze();
+
+        GpuTensor kern = gpuKernel;
+        while (kern.rank() < 4) kern = (GpuTensor) kern.unsqueeze();
+
+        int[] inShape = input.shape();  // [batch, inChannels, inH, inW]
+        int[] kShape  = kern.shape();   // [numFilters, inChannels, kH, kW]
+
+        int batch      = inShape[0];
+        int inChannels = inShape[1];
+        int inH        = inShape[2];
+        int inW        = inShape[3];
+        int numFilters = kShape[0];
+        int kH         = kShape[2];
+        int kW         = kShape[3];
+        int outH       = inH - kH + 1;
+        int outW       = inW - kW + 1;
+
+        GpuTensor result = new GpuTensor(device, new int[]{batch, numFilters, outH, outW});
+
+        long[] globalWorkSize = new long[]{outH, outW};
+
+        try (GpuQueue queue = GpuContext.getOrCreate(device)) {
+            for (int b = 0; b < batch; b++) {
+                for (int f = 0; f < numFilters; f++) {
+                    int outOffset = (b * numFilters + f) * outH * outW;
+
+                    for (int c = 0; c < inChannels; c++) {
+                        int inOffset  = (b * inChannels + c) * inH * inW;
+                        int kerOffset = (f * inChannels + c) * kH * kW;
+
+                        KernelFactory.create(device, "convolve2d_direct")
+                                .addMemParam(input.getDataBuffer())
+                                .addMemParam(kern.getDataBuffer())
+                                .addMemParam(result.getDataBuffer())
+                                .addIntParam(inH)
+                                .addIntParam(inW)
+                                .addIntParam(kH)
+                                .addIntParam(kW)
+                                .addIntParam(outH)
+                                .addIntParam(outW)
+                                .addIntParam(0)          // paddingTop
+                                .addIntParam(0)          // paddingLeft
+                                .addIntParam(inOffset)   // ← NUOVO
+                                .addIntParam(kerOffset)  // ← NUOVO
+                                .addIntParam(outOffset)  // ← NUOVO
+                                .launch(queue, 2, globalWorkSize);
+                    }
+                }
+            }
         }
 
         return result;

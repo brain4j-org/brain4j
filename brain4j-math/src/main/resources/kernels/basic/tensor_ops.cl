@@ -468,8 +468,7 @@ __kernel void broadcast(
         int idx = tmp % outShape[i];
         tmp = tmp / outShape[i];
 
-        int srcIdx = (inShape[i] == 1) ? 0 : idx;
-        srcOffset += srcIdx * inStrides[i];
+        if (inShape[i] != 1) {srcOffset += idx * inStrides[i];   }
     }
 
     out[dstLinearIdx] = in[srcOffset];
