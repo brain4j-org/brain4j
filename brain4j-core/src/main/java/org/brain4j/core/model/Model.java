@@ -1,5 +1,6 @@
 package org.brain4j.core.model;
 
+import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Copyable;
 import org.brain4j.math.Tensors;
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author xEcho1337
  */
-public interface Model extends Copyable<Model> {
+public interface Model<T> extends Copyable<Model<T>> {
     
     /**
      * Performs a full forward pass using a temporary {@link StatesCache}
@@ -43,7 +44,7 @@ public interface Model extends Copyable<Model> {
     default Tensor predict(Tensor... inputs) {
         return predict(new StatesCache(), inputs)[0];
     }
-    
+
     /**
      * Performs a full forward pass on the model using the provided cache.
      * <p>
@@ -61,7 +62,13 @@ public interface Model extends Copyable<Model> {
      * Returns the device on which the model parameters are currently stored.
      * @return the device associated with this model
      */
-    SiliconDevice getDevice();
+    SiliconDevice device();
+
+    /**
+     * Returns the default format to use when saving this type of model.
+     * @return the default save format for this model
+     */
+    BinaryFormat<T> saveFormat();
     
     /**
      * Evaluates the model on the given dataset.
@@ -159,7 +166,7 @@ public interface Model extends Copyable<Model> {
         Tensor[] inputs = batch.getFirst();
         Tensor[] labels = batch.getSecond();
 
-        SiliconDevice device = getDevice();
+        SiliconDevice device = device();
 
         if (device != null) device.createResources();
 

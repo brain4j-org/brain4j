@@ -163,17 +163,21 @@ public class Brain4J {
      * @throws IllegalStateException if no GPU devices are found
      */
     public static SiliconDevice firstDevice() {
-        List<String> devices = SiliconDeviceUtils.allDeviceNames();
-        
-        if (devices.isEmpty()) {
-            throw new IllegalStateException("No GPU-acceleration device has been found!");
+        try {
+            List<String> devices = SiliconDeviceUtils.allDeviceNames();
+
+            if (devices.isEmpty()) {
+                return null;
+            }
+
+            SiliconDevice device = SiliconDeviceUtils.findDevice(devices.getFirst());
+
+            if (device != null) Brain4J.initKernels(device);
+
+            return device;
+        } catch (IllegalStateException e) {
+            throw new RuntimeException(e);
         }
-        
-        SiliconDevice device = SiliconDeviceUtils.findDevice(devices.getFirst());
-        
-        if (device != null) Brain4J.initKernels(device);
-        
-        return device;
     }
     
     /**
@@ -187,17 +191,21 @@ public class Brain4J {
      */
     @Deprecated
     public static Device firstLegacyDevice() {
-        List<String> devices = DeviceUtils.allDeviceNames();
-        
-        if (devices.isEmpty()) {
-            throw new IllegalStateException("No GPU-acceleration device has been found!");
+        try {
+            List<String> devices = DeviceUtils.allDeviceNames();
+
+            if (devices == null || devices.isEmpty()) {
+                return null;
+            }
+
+            Device device = DeviceUtils.findDevice(devices.get(0));
+
+            if (device != null) Brain4J.initKernels(device);
+
+            return device;
+        } catch (IllegalStateException e) {
+            return null;
         }
-        
-        Device device = DeviceUtils.findDevice(devices.getFirst());
-        
-        if (device != null) Brain4J.initKernels(device);
-        
-        return device;
     }
 
     /**

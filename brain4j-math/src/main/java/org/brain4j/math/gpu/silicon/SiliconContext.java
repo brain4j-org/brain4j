@@ -1,6 +1,5 @@
 package org.brain4j.math.gpu.silicon;
 
-import org.silicon.api.device.ComputeArena;
 import org.silicon.api.function.ComputeFunction;
 import org.silicon.api.function.ComputeModule;
 import org.silicon.api.kernel.ComputeQueue;

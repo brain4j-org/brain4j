@@ -1,6 +1,8 @@
 package org.brain4j.core.model.impl;
 
 import org.brain4j.core.Brain4J;
+import org.brain4j.core.importing.Format;
+import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.layer.newimpl.InputLayer;
@@ -16,7 +18,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Sequential implements Model, ModelBlock {
+public class Sequential implements Model<Sequential>, ModelBlock {
     
     private final Graph graph;
     private final ModelSpecs specs;
@@ -75,10 +77,15 @@ public class Sequential implements Model, ModelBlock {
     }
     
     @Override
-    public SiliconDevice getDevice() {
+    public SiliconDevice device() {
         return device;
     }
-    
+
+    @Override
+    public BinaryFormat<Sequential> saveFormat() {
+        return Format.BRAIN4J;
+    }
+
     @Override
     public void summary() {
         Brain4J.fixConsole();

@@ -83,21 +83,5 @@ public class SiliconDeviceUtils {
     public static boolean isSimdAvailable() {
         return ModuleLayer.boot().findModule("jdk.incubator.vector").isPresent();
     }
-
-    public static SiliconDevice createAndInitializeDevice() {
-        SiliconDevice device = findDevice();
-        if (device == null) {
-            throw new RuntimeException("No GPU device found");
-        }
-        return device;
-    }
-
-    public static SiliconDevice createAndInitializeDevice(int index) {
-        SiliconDevice device = findDevice(index);
-        if (device == null) {
-            throw new RuntimeException("No GPU device found at index " + index);
-        }
-        return device;
-    }
 }
 

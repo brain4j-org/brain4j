@@ -2,7 +2,6 @@ package org.brain4j.math.clipper;
 
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.CpuTensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 /**

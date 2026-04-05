@@ -8,3 +8,8 @@ dependencies {
     implementation project(':brain4j-math')
     implementation libs.jacksonDatabind
 }
+
+// ensure shadowJar of brain4j-core runs before compiling dashboard
+tasks.named('compileJava') {
+    dependsOn(':brain4j-core:shadowJar')
+}

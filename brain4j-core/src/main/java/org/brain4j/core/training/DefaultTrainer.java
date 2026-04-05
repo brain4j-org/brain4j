@@ -25,7 +25,7 @@ import java.util.Map;
 
 public final class DefaultTrainer implements Trainer {
     
-    private final Model model;
+    private final Model<?> model;
     private final TrainingConfig config;
     private final Map<Class<? extends Monitor>, Monitor> monitors;
     private final Object trainingLock = new Object();
@@ -218,7 +218,7 @@ public final class DefaultTrainer implements Trainer {
             int cursor = dataSource.getCursor();
             currentBatch = cursor;
             
-            Batch batch = dataSource.nextBatch().to(model.getDevice());
+            Batch batch = dataSource.nextBatch().to(model.device());
             
             BatchStart batchStart = new BatchStart(this, cursor, totalBatches);
             monitors.forEach((k, x) -> x.onEvent(batchStart, this));
@@ -258,7 +258,7 @@ public final class DefaultTrainer implements Trainer {
     private void fitBatch(Batch batch) {
         Tensor[] inputs = batch.getFirst();
         
-        SiliconDevice device = model.getDevice();
+        SiliconDevice device = model.device();
         StatesCache cache = new StatesCache(true);
         
         if (device != null) {
@@ -326,7 +326,7 @@ public final class DefaultTrainer implements Trainer {
     }
     
     @Override
-    public Model model() {
+    public Model<?> model() {
         return model;
     }
     

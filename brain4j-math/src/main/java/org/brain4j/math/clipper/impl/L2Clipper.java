@@ -3,7 +3,6 @@ package org.brain4j.math.clipper.impl;
 import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.CpuTensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 public class L2Clipper implements GradientClipper {

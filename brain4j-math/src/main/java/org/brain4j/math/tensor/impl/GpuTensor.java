@@ -126,10 +126,9 @@ public class GpuTensor extends BaseTensor {
         long elementaryOpsProgram = DeviceUtils.createBuildProgram(device, "/kernels/basic/elementary_ops.cl");
         long activationsProgram = DeviceUtils.createBuildProgram(device, "/kernels/basic/activations.cl");
         long gradientClipProgram = DeviceUtils.createBuildProgram(device, "/kernels/basic/gradient_clippers.cl");
-        long attentionProgram = DeviceUtils.createBuildProgram(device, "/kernels/attention/flash_attention.cl");
         
         String[] tensorOpsKernels = { "slice", "concat_last_dim", "concat_copy_a", "concat_copy_b", "matmul_batched",
-            "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim", "layer_norm" };
+            "add", "sub", "mul", "div", "pow", "sum_along_dim", "softmax_last_dim", "layer_norm" };
 
         for (String kernel : tensorOpsKernels) {
             GpuContext.register(device, kernel, tensorOpsProgram);
@@ -151,12 +150,6 @@ public class GpuTensor extends BaseTensor {
         
         GpuContext.register(device, "hard_clip", gradientClipProgram);
         GpuContext.register(device, "l2_clip", gradientClipProgram);
-        GpuContext.register(device, "flash_attention_forward", attentionProgram);
-        GpuContext.register(device, "flash_attention_forward_with_lse", attentionProgram);
-        GpuContext.register(device, "flash_attention_backward", attentionProgram);
-        GpuContext.register(device, "flash_attention_backward_dq", attentionProgram);
-        GpuContext.register(device, "flash_attention_forward_tiled", attentionProgram);
-        GpuContext.register(device, "flash_attention_backward_tiled", attentionProgram);
     }
 
     private long roundUp(int globalSize) {
@@ -282,7 +275,7 @@ public class GpuTensor extends BaseTensor {
     
     @Override
     public Tensor pow(Tensor other) {
-        return null;
+        return launchElementaryKernel("pow", other);
     }
     
     @Override
@@ -691,7 +684,7 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public Tensor set(float value, int... indices) {
-        return null;
+        throw new UnsupportedOperationException("This operation is not supported for the GPU");
     }
 
     @Override

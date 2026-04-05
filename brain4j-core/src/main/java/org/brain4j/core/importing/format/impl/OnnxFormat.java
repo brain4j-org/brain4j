@@ -76,7 +76,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
     
     @Override
     public void serialize(Graph model, File file) {
-        if (model.getDevice() != null) model = model.fork(null);
+        if (model.device() != null) model = model.fork(null);
         
         GraphProto.Builder graphBuilder = GraphProto.newBuilder();
         

@@ -21,6 +21,7 @@ import org.brain4j.core.layer.newimpl.utility.SliceLayer;
 import org.brain4j.core.layer.newimpl.utility.SqueezeLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.math.Tensors;
@@ -50,7 +51,7 @@ public class TrainingSmokeTest {
             new DenseLayer(1)
         );
         
-        Model model = specs.compile(42);
+        Sequential model = specs.compile(42);
         
         List<Sample> samples = new ArrayList<>();
         

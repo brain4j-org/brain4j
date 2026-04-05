@@ -9,10 +9,8 @@ import org.brain4j.math.clipper.impl.HardClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.commons.Range;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.ops.FlashAttention;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
 
 import java.util.List;
 import java.util.random.RandomGenerator;
@@ -24,7 +22,6 @@ public class MultiHeadAttention extends Layer {
     protected int headDimension;
     protected boolean attnQkvHasBias;
     protected boolean attnOutHasBias;
-    protected boolean flashAttention;
     
     public MultiHeadAttention(int headCount, int embeddingDim) {
         this(new HardClipper(5), headCount, embeddingDim);
@@ -96,62 +93,7 @@ public class MultiHeadAttention extends Layer {
         Tensor bias = getParam("bias");
         Tensor outBias = getParam("out_bias");
         
-        if (flashAttention && input instanceof GpuTensor) {
-            int H = headCount;
-            int d = headDimension;
-            
-            boolean training = input.usesGrad();
-            
-            Tensor QKV = training ? input.matmulGrad(weights) : input.matmul(weights);
-            if (attnQkvHasBias) QKV = training ? QKV.addGrad(bias) : QKV.add(bias);
-            
-            Range all = Range.all();
-            Tensor Q, K, V;
-            
-            if (training) {
-                Tensor reshaped = QKV.reshapeGrad(batch, seqLength, H, 3, d)
-                    .transposeGrad(1, 2);
-                Q = reshaped.sliceGrad(all, all, all, Range.point(0), all).squeezeGrad(3);
-                K = reshaped.sliceGrad(all, all, all, Range.point(1), all).squeezeGrad(3);
-                V = reshaped.sliceGrad(all, all, all, Range.point(2), all).squeezeGrad(3);
-            } else {
-                Tensor reshaped = QKV.reshape(batch, seqLength, H, 3, d)
-                    .transpose(1, 2);
-                Q = reshaped.slice(all, all, all, Range.point(0), all).squeezeGrad(3);
-                K = reshaped.slice(all, all, all, Range.point(1), all).squeezeGrad(3);
-                V = reshaped.slice(all, all, all, Range.point(2), all).squeezeGrad(3);
-            }
-            
-            float scale = (float) (1.0 / Math.sqrt(d));
-            
-            Tensor context;
-            if (training) {
-                Tensor[] flashResult = FlashAttention.forwardWithLse(Q, K, V, scale, false);
-                if (flashResult != null) {
-                    context = flashResult[0];
-                    cache.set(this, flashResult[1]);
-                } else {
-                    context = null;
-                }
-            } else {
-                context = FlashAttention.forward(Q, K, V, scale, false);
-            }
-            
-            if (context != null) {
-                Tensor output = training
-                    ? context.transposeGrad(1, 2).reshapeGrad(batch, seqLength, embeddingDim)
-                    : context.transpose(1, 2).reshape(batch, seqLength, embeddingDim);
-                
-                Tensor result = training
-                    ? output.matmulGrad(outProj)
-                    : output.matmul(outProj);
-                
-                if (attnOutHasBias) {
-                    result = training ? result.addGrad(outBias) : result.add(outBias);
-                }
-                return new Tensor[]{result};
-            }
-        }
+        
         
         Tensor QKV = input.matmulGrad(weights);
         
@@ -191,7 +133,6 @@ public class MultiHeadAttention extends Layer {
         MultiHeadAttention copy = new MultiHeadAttention(clipper, headCount, embeddingDim);
         copy.attnQkvHasBias = attnQkvHasBias;
         copy.attnOutHasBias = attnOutHasBias;
-        copy.flashAttention = flashAttention;
         copyParameters(copy);
         return copy;
     }
@@ -207,22 +148,12 @@ public class MultiHeadAttention extends Layer {
     public int headDimension() {
         return headDimension;
     }
-    
-    public boolean flashAttention() {
-        return flashAttention;
-    }
-    
     public boolean attnQkvHasBias() {
         return attnQkvHasBias;
     }
     
     public boolean attnOutHasBias() {
         return attnOutHasBias;
-    }
-    
-    public MultiHeadAttention flashAttention(boolean flashAttention) {
-        this.flashAttention = flashAttention;
-        return this;
     }
     
     public MultiHeadAttention attnQkvHasBias(boolean attnQkvHasBias) {
@@ -234,4 +165,5 @@ public class MultiHeadAttention extends Layer {
         this.attnOutHasBias = attnOutHasBias;
         return this;
     }
+
 }

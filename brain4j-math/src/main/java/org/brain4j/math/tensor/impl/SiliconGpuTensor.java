@@ -144,15 +144,16 @@ public class SiliconGpuTensor extends BaseTensor {
             ComputeModule activationsModule = compiler.compileFromResource("slang/activations.slang");
             ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
             ComputeModule convolutionModule = compiler.compileFromResource("slang/convolution.slang");
+            ComputeModule poolingModule = compiler.compileFromResource("slang/pooling.slang");
             
             SiliconContext.storeModule(device, "matmul", matmul);
             SiliconContext.storeModule(device, "concat", concat);
-
             SiliconContext.storeModule(device, "tensor_ops_1", tensorOps1Module);
             SiliconContext.storeModule(device, "tensor_ops_2", tensorOps2Module);
             SiliconContext.storeModule(device, "elementary_ops", elementaryOpsModule);
             SiliconContext.storeModule(device, "activations", activationsModule);
             SiliconContext.storeModule(device, "gradient_clippers", gradientClipModule);
+            SiliconContext.storeModule(device, "pooling", poolingModule);
 
             SiliconContext.register(device, "activation_forward", activationsModule);
             SiliconContext.register(device, "activation_backward", activationsModule);
@@ -164,7 +165,7 @@ public class SiliconGpuTensor extends BaseTensor {
             SiliconContext.registerAll(device, concat, concatKernels);
 
             String[] tensorOps1Kernels = { "slice", "layer_norm", "broadcast_to" };
-            String[] tensorOps2Kernels = { "add", "sub", "mul", "div", "sum_along_dim", "softmax_last_dim" };
+            String[] tensorOps2Kernels = { "add", "sub", "mul", "div", "pow", "sum_along_dim", "softmax_last_dim" };
             SiliconContext.registerAll(device, tensorOps1Module, tensorOps1Kernels);
             SiliconContext.registerAll(device, tensorOps2Module, tensorOps2Kernels);
 
@@ -182,6 +183,9 @@ public class SiliconGpuTensor extends BaseTensor {
 
             String[] convolutionKernels = { "conv2d_nchw", "conv2d_nchw_shared", "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw" };
             SiliconContext.registerAll(device, convolutionModule, convolutionKernels);
+
+            String[] poolingKernels = { "max_pool_forward", "max_pool_backward" };
+            SiliconContext.registerAll(device, poolingModule, poolingKernels);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to initialize GPU kernels", e);
         }
@@ -348,8 +352,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor pow(Tensor other) {
-        // TODO
-        return null;
+        return launchElementaryKernel("pow", other);
     }
 
     @Override

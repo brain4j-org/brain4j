@@ -4,12 +4,6 @@ import org.brain4j.math.tensor.Tensor;
 
 import java.lang.reflect.Constructor;
 import java.time.Duration;
-import java.util.Map;
-
-import static org.brain4j.math.Constants.*;
-import static org.brain4j.math.Constants.GRAY;
-import static org.brain4j.math.Constants.LIGHT_GREEN;
-import static org.brain4j.math.Constants.RESET;
 
 /**
  * General utility methods used across the math module.

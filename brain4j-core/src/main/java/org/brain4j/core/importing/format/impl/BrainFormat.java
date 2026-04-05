@@ -40,7 +40,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
     
     @Override
     public void serialize(Sequential model, File file) {
-        if (model.getDevice() != null) model = model.fork(null);
+        if (model.device() != null) model = model.fork(null);
         
         Map<String, Tensor> weights = new HashMap<>();
         

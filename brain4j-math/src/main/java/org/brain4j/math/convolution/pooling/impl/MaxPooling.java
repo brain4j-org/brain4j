@@ -3,7 +3,14 @@ package org.brain4j.math.convolution.pooling.impl;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.convolution.pooling.PoolingProvider;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.TensorKey;
+import org.brain4j.math.tensor.Usage;
 import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.brain4j.math.gpu.silicon.SiliconContext;
+import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.silicon.SiliconKernel;
+import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.kernel.ComputeSize;
 
 import java.util.stream.IntStream;
 
@@ -11,6 +18,8 @@ public class MaxPooling extends PoolingProvider {
 
     private int[] xCoords;
     private int[] yCoords;
+    private ComputeBuffer xCoordsBuffer;
+    private ComputeBuffer yCoordsBuffer;
     private int outHeight;
     private int outWidth;
 
@@ -56,7 +65,58 @@ public class MaxPooling extends PoolingProvider {
     
     @Override
     public Tensor poolGPU(Tensor input) {
-        return null; // TODO
+        if (!(input instanceof SiliconGpuTensor A)) {
+            return poolCPU(input);
+        }
+
+        int[] shape = A.shape();
+        int rank = shape.length;
+
+        int inHeight = shape[rank - 2];
+        int inWidth = shape[rank - 1];
+        this.outHeight = (inHeight - windowHeight) / stride + 1;
+        this.outWidth = (inWidth - windowWidth) / stride + 1;
+
+        int outerSize = 1;
+        for (int i = 0; i < rank - 2; i++) outerSize *= shape[i];
+
+        SiliconDevice device = A.getDevice();
+
+        SiliconGpuTensor result = new SiliconGpuTensor(device, composeOutShape(shape, outHeight, outWidth));
+        result.setAutogradContext(A.getAutogradContext());
+
+        int totalOut = outerSize * outHeight * outWidth;
+
+        int[] xArr = new int[totalOut];
+        int[] yArr = new int[totalOut];
+
+        this.xCoords = xArr;
+        this.yCoords = yArr;
+        
+        TensorKey xKey = new TensorKey(Usage.OTHER, xArr);
+        TensorKey yKey = new TensorKey(Usage.OTHER, yArr);
+
+        this.xCoordsBuffer = device.acquire(xKey, () -> device.createBuffer(xArr));
+        this.yCoordsBuffer = device.acquire(yKey, () -> device.createBuffer(yArr));
+
+        try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
+            SiliconKernel.create(device, "max_pool_forward")
+                .buffer(A.getDataBuffer())
+                .buffer(result.getDataBuffer())
+                .buffer(xCoordsBuffer)
+                .buffer(yCoordsBuffer)
+                .intVal(outerSize)
+                .intVal(inHeight)
+                .intVal(inWidth)
+                .intVal(windowHeight)
+                .intVal(windowWidth)
+                .intVal(stride)
+                .intVal(outHeight)
+                .intVal(outWidth)
+                .launch(qh.queue(), new ComputeSize(outWidth, outHeight, outerSize));
+        }
+
+        return result;
     }
     
     @Override
@@ -84,7 +144,45 @@ public class MaxPooling extends PoolingProvider {
     
     @Override
     public Tensor backwardGPU(SiliconGpuTensor gradient, SiliconGpuTensor input) {
-        return null; // TODO
+        SiliconDevice device = input.getDevice();
+
+        int[] shape = input.shape();
+        int rank = shape.length;
+
+        int inHeight = shape[rank - 2];
+        int inWidth = shape[rank - 1];
+        int outH = (inHeight - windowHeight) / stride + 1;
+        int outW = (inWidth - windowWidth) / stride + 1;
+
+        int outerSize = 1;
+        for (int i = 0; i < rank - 2; i++) outerSize *= shape[i];
+
+        SiliconGpuTensor gradInput = new SiliconGpuTensor(device, shape);
+
+        try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
+            SiliconKernel.create(device, "max_pool_backward")
+                .buffer(gradient.getDataBuffer())
+                .buffer(gradInput.getDataBuffer())
+                .buffer(xCoordsBuffer)
+                .buffer(yCoordsBuffer)
+                .intVal(outerSize)
+                .intVal(inHeight)
+                .intVal(inWidth)
+                .intVal(outH)
+                .intVal(outW)
+                .launch(qh.queue(), new ComputeSize(outW, outH, outerSize));
+        }
+
+        return gradInput;
+    }
+
+    private int[] composeOutShape(int[] inShape, int outH, int outW) {
+        int rank = inShape.length;
+        int[] outShape = new int[rank];
+        System.arraycopy(inShape, 0, outShape, 0, rank - 2);
+        outShape[rank - 2] = outH;
+        outShape[rank - 1] = outW;
+        return outShape;
     }
     
     private void pool2D(float[] in, float[] out, int offsetIn, int offsetOut, int inW) {

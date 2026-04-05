@@ -91,7 +91,7 @@ public class LLM implements InferenceProvider {
         int generatedTokens = 0;
 
         if (bosToken != eosToken) input = input.concat(Tensors.scalar(bosToken));
-        if (model.getDevice() != null) input = input.to(model.getDevice());
+        if (model.device() != null) input = input.to(model.device());
 
         Random random = config.random();
         Softmax activation = new Softmax(config.temperature());
