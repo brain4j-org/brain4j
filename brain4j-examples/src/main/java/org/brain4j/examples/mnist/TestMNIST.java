@@ -47,9 +47,9 @@ public class TestMNIST {
 
         SiliconDevice device = Brain4J.firstDevice();
         if (device != null) {
-//            model = model.fork(device);
-//            trainSource = trainSource.to(device);
-//            testSource = testSource.to(device);
+            model = model.fork(device);
+            trainSource = trainSource.to(device);
+            testSource = testSource.to(device);
         }
         
         TrainingConfig config = TrainingConfig.of(

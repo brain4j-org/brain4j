@@ -165,7 +165,7 @@ public class SiliconGpuTensor extends BaseTensor {
             SiliconContext.registerAll(device, concat, concatKernels);
 
             String[] tensorOps1Kernels = { "slice", "layer_norm", "broadcast_to" };
-            String[] tensorOps2Kernels = { "add", "sub", "mul", "div", "pow", "sum_along_dim", "softmax_last_dim" };
+            String[] tensorOps2Kernels = { "add_op", "sub_op", "mul_op", "div_op", "pow_op", "sum_along_dim", "softmax_last_dim" };
             SiliconContext.registerAll(device, tensorOps1Module, tensorOps1Kernels);
             SiliconContext.registerAll(device, tensorOps2Module, tensorOps2Kernels);
 
@@ -307,7 +307,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor add(Tensor other) {
-        return launchElementaryKernel("add", other);
+        return launchElementaryKernel("add_op", other);
     }
 
     @Override
@@ -317,7 +317,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor sub(Tensor other) {
-        return launchElementaryKernel("sub", other);
+        return launchElementaryKernel("sub_op", other);
     }
 
     @Override
@@ -327,7 +327,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor mul(Tensor other) {
-        return launchElementaryKernel("mul", other);
+        return launchElementaryKernel("mul_op", other);
     }
 
     @Override
@@ -337,7 +337,7 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor div(Tensor other) {
-        return launchElementaryKernel("div", other);
+        return launchElementaryKernel("div_op", other);
     }
 
     @Override
@@ -346,13 +346,13 @@ public class SiliconGpuTensor extends BaseTensor {
     }
 
     @Override
+    public Tensor pow(Tensor other) {
+        return launchElementaryKernel("pow_op", other);
+    }
+    
+    @Override
     public Tensor pow(double value) {
         return launchScalarKernel("pow_scalar", (float) value);
-    }
-
-    @Override
-    public Tensor pow(Tensor other) {
-        return launchElementaryKernel("pow", other);
     }
 
     @Override

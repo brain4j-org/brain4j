@@ -1,5 +1,5 @@
 [shader("compute")]
-void add(
+void add_op(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
@@ -28,7 +28,7 @@ void add(
 }
 
 [shader("compute")]
-void sub(
+void sub_op(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
@@ -56,7 +56,7 @@ void sub(
 }
 
 [shader("compute")]
-void mul(
+void mul_op(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
@@ -84,7 +84,7 @@ void mul(
 }
 
 [shader("compute")]
-void div(
+void div_op(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
@@ -112,7 +112,7 @@ void div(
 }
 
 [shader("compute")]
-void pow(
+void pow_op(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform RWStructuredBuffer<float> a,
     uniform StructuredBuffer<float> b,
