@@ -143,13 +143,7 @@ public interface Model<T> extends Copyable<Model<T>> {
      */
     void summary();
     
-    /**
-     * Copies all model parameters to the specified device.
-     *
-     * @param device the target device
-     * @return a copy of this model instance
-     */
-    Model fork(SiliconDevice device);
+    Model<T> fork(SiliconDevice device);
     
     /**
      * Returns an immutable view of the layers composing this object, in order.
