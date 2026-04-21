@@ -18,7 +18,7 @@ public record Softmax(double temperature) implements Activation {
 
     @Override
     public double activate(double input) {
-        throw new UnsupportedOperationException("Softmax is a vector-based activation");
+        return 1.0;
     }
 
     @Override
@@ -28,7 +28,7 @@ public record Softmax(double temperature) implements Activation {
 
     @Override
     public double derivative(double input) {
-        throw new UnsupportedOperationException("Softmax is a vector-based activation");
+        return 0.0;
     }
 
     @Override

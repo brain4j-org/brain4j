@@ -794,7 +794,23 @@ public abstract class BaseTensor implements Tensor {
 
     @Override
     public Tensor select(int dim, int index) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        dim = Commons.mod(dim, shape.length);
+
+        if (dim >= rank()) {
+            throw Commons.illegalArgument("Dimension must be less than the rank!");
+        }
+
+        int size = shape[dim];
+        int normalizedIndex = index < 0 ? index + size : index;
+
+        if (normalizedIndex < 0 || normalizedIndex >= size) {
+            throw Commons.indexOOB("Index %s for dimension %s is out of bounds [0, %s)", normalizedIndex, dim, size);
+        }
+
+        Range[] ranges = new Range[shape.length];
+        ranges[dim] = Range.point(normalizedIndex);
+
+        return slice(ranges).squeeze(dim);
     }
 
     @Override

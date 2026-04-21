@@ -785,7 +785,12 @@ public class SiliconGpuTensor extends BaseTensor {
 
     @Override
     public Tensor set(float value, int... indices) {
-        throw new UnsupportedOperationException("This operation is not supported for the GPU");
+        int offset = linearIndex(indices);
+        float[] buffer = new float[size];
+        dataBuffer.get(buffer);
+        buffer[offset] = value;
+        dataBuffer.write(buffer);
+        return this;
     }
 
     @Override
@@ -1029,4 +1034,3 @@ public class SiliconGpuTensor extends BaseTensor {
         return new SiliconGpuTensor(device, shape, dataBuffer);
     }
 }
-
