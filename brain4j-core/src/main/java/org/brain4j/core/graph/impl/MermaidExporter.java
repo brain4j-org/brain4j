@@ -4,11 +4,15 @@ import org.brain4j.core.graph.GraphExporter;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.impl.Graph;
 import org.brain4j.core.utils.CodeWriter;
+import org.brain4j.math.activation.Activation;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Shape;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MermaidExporter implements GraphExporter {
     
@@ -29,52 +33,55 @@ public class MermaidExporter implements GraphExporter {
         writer.writeLine("flowchart " + direction.id());
         writer.indent();
         
+        Map<Node, String> ids = new HashMap<>();
+        int counter = 0;
         
-        List<Node> inputNodes = model.input();
-        List<Node> outputNodes = model.output();
-        
-        for (int i = 0; i < inputNodes.size(); i++) {
-            String uid = String.valueOf(inputNodes.get(i).hashCode());
-            
-            writer.writeLine("%s[%s]".formatted(uid, "Input " + i));
+        for (Node in : model.input()) {
+            ids.put(in, "n" + counter++);
         }
         
         for (Node node : model.topology()) {
-            String uid = String.valueOf(node.hashCode());
-            String name = Commons.capitalize(node.name()) + "\\n" + node.layer().activation().name();
+            ids.put(node, "n" + counter++);
+        }
+        
+        List<Node> inputNodes = model.input();
+        
+        for (int i = 0; i < inputNodes.size(); i++) {
+            String uid = ids.get(inputNodes.get(i));
+            writer.writeLine("%s[%s]".formatted(uid, "Input " + (i + 1)));
+        }
+        
+        for (Node node : model.topology()) {
+            String uid = ids.get(node);
+            Activation activation = node.layer().activation();
+            
+            String name = Commons.capitalize(node.name()) + "\\n"
+                + (activation != null ? activation.name() : "");
             
             writer.writeLine("%s[%s]".formatted(uid, name));
         }
         
         for (Node node : model.topology()) {
-            String nodeUid = String.valueOf(node.hashCode());
+            String nodeUid = ids.get(node);
             
             for (Node input : node.inputs()) {
-                String inputUid = String.valueOf(input.hashCode());
+                String inputUid = ids.get(input);
                 
-                List<Shape> inputOutShapes = input.outputShapes();
-                List<Shape> nodeOutShapes = node.outputShapes();
-                
-                for (Shape inShape : inputOutShapes) {
-                    String inShapeDims = Arrays.toString(inShape.dims())
-                        .replace("[", "")
-                        .replace("]", "");
-                    
-                    for (Shape outShape : nodeOutShapes) {
-                        String outShapeDims = Arrays.toString(outShape.dims())
-                            .replace("[", "")
-                            .replace("]", "");
-                        
-                        String label = "In: (%s) > Out: (%s)".formatted(inShapeDims, outShapeDims);
-                        
-                        writer.writeLine("%s -->|\"%s\"| %s".formatted(inputUid, label, nodeUid));
-                        
-                    }
+                for (Shape inShape : input.outputShapes()) {
+                    String label = format(inShape);
+                    writer.writeLine("%s -->|\"%s\"| %s".formatted(inputUid, label, nodeUid));
                 }
             }
         }
         
         return writer.toString();
+    }
+    
+    private String format(Shape shape) {
+        String tmp = Arrays.stream(shape.dims())
+            .mapToObj(String::valueOf)
+            .collect(Collectors.joining("x"));
+        return "(Bx%s)".formatted(tmp);
     }
     
     public enum Direction {

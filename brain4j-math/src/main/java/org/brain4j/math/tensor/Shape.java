@@ -4,6 +4,8 @@ import org.brain4j.math.Copyable;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
 
+import java.util.Arrays;
+
 public class Shape implements Copyable<Shape> {
 
     private final int[] dims;
@@ -22,11 +24,46 @@ public class Shape implements Copyable<Shape> {
         return new Shape(dims);
     }
     
+    public static Shape concat(Shape... all) {
+        Shape base = all[0];
+        
+        for (int i = 1; i < all.length; i++) {
+            base = base.concat(all[i], -1);
+        }
+        
+        return base;
+    }
+    
     @Override
     public Shape copy() {
         return new Shape(dims);
     }
-
+    
+    public Shape concat(Shape other, int dim) {
+        if (rank() != other.rank()) {
+            throw Commons.illegalArgument("Shapes must have the same rank");
+        }
+        
+        int rank = rank();
+        int dimension = Math.floorMod(dim, rank);
+        
+        if (dimension < 0 || dimension >= rank) {
+            throw Commons.illegalArgument("Invalid dimension: " + dimension);
+        }
+        
+        for (int i = 0; i < rank; i++) {
+            if (i != dimension && dims[i] != other.dims()[i]) {
+                throw Commons.illegalArgument("Shapes must match in all dims except the concatenation one. " +
+                    "Current: %s, Other: %s", Arrays.toString(dims), Arrays.toString(other.dims()));
+            }
+        }
+        
+        int[] newShape = Arrays.copyOf(dims, rank);
+        newShape[dimension] += other.dims()[dimension];
+        
+        return new Shape(newShape);
+    }
+    
     public int dim(int index) {
         if (index < 0) {
             index = Math.floorMod(index, dims.length);

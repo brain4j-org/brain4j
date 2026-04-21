@@ -14,7 +14,7 @@ import java.util.random.RandomGenerator;
 
 public class DenseLayer extends Layer {
     
-    private int outDimension;
+    private final int outDimension;
     
     public DenseLayer(int outDimension) {
         this(outDimension, new Linear());

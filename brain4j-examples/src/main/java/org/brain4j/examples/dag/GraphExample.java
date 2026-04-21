@@ -2,6 +2,7 @@ package org.brain4j.examples.dag;
 
 import org.brain4j.core.graph.impl.MermaidExporter;
 import org.brain4j.core.layer.Node;
+import org.brain4j.core.layer.impl.ConcatLayer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.utility.SelectLayer;
 import org.brain4j.core.model.impl.Graph;
@@ -24,7 +25,7 @@ public class GraphExample {
         
         Node d21 = new DenseLayer(12, new ReLU()).apply(input2);
         
-        Node result = new SelectLayer(0).apply(d12, d21);
+        Node result = new ConcatLayer().apply(d12, d21);
         Node out = new DenseLayer(1, new Sigmoid()).apply(result);
         
         Graph model = Graph.of(out);
