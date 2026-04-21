@@ -55,8 +55,11 @@ public class MermaidExporter implements GraphExporter {
             String uid = ids.get(node);
             Activation activation = node.layer().activation();
             
-            String name = Commons.capitalize(node.name()) + "\\n"
-                + (activation != null ? activation.name() : "");
+            String name = Commons.capitalize(node.name());
+            
+            if (activation != null) {
+                name += "\\n" + activation.name();
+            }
             
             writer.writeLine("%s[%s]".formatted(uid, name));
         }
