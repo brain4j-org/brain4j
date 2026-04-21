@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.brain4j.core.importing.LayerIO;
+import org.brain4j.core.importing.io.LayerIO;
 import org.brain4j.core.importing.SafeTensors;
 import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.layer.Layer;

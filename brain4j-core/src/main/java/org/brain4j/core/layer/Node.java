@@ -1,5 +1,6 @@
 package org.brain4j.core.layer;
 
+import org.brain4j.core.importing.io.LayerIO;
 import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.math.Copyable;
 import org.brain4j.math.data.StatesCache;
@@ -48,7 +49,7 @@ public class Node implements Copyable<Node> {
     
     public List<Shape> inferInputShapes() {
         return inputs.stream()
-            .flatMap(n -> n.getOutputShapes().stream())
+            .flatMap(n -> n.outputShapes().stream())
             .toList();
     }
     
@@ -67,15 +68,19 @@ public class Node implements Copyable<Node> {
         return out;
     }
     
-    public Layer getLayer() {
+    public Layer layer() {
         return layer;
     }
     
-    public List<Node> getInputs() {
+    public List<Node> inputs() {
         return inputs;
     }
     
-    public List<Shape> getOutputShapes() {
+    public List<Shape> outputShapes() {
         return outputShapes;
+    }
+    
+    public String name() {
+        return LayerIO.LAYER_CODECS.get(layer.getClass()).type();
     }
 }

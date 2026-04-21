@@ -1,5 +1,6 @@
 package org.brain4j.core.model.impl;
 
+import org.brain4j.core.graph.GraphExporter;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.Model;
@@ -63,11 +64,11 @@ public class Graph implements Model {
 
         visited.add(node);
 
-        for (Node input : node.getInputs()) {
+        for (Node input : node.inputs()) {
             dfs(input, visited);
         }
 
-        if (node.getInputs().isEmpty()) {
+        if (node.inputs().isEmpty()) {
             input.add(node);
         } else {
             topology.add(node);
@@ -108,8 +109,9 @@ public class Graph implements Model {
 
     @Override
     public void summary() {
+        throw Commons.illegalState("summary() is not supported in Graph impl. Use export(GraphExporter) instead.");
     }
-
+    
     @Override
     public Graph fork(SiliconDevice device) {
         List<Node> copy = output.stream().map(Node::copy).toList();
@@ -124,9 +126,25 @@ public class Graph implements Model {
 
     @Override
     public List<Layer> getLayers() {
-        return topology.stream().map(Node::getLayer).toList();
+        return topology.stream().map(Node::layer).toList();
     }
-
+    
+    public String export(GraphExporter exporter) {
+        return exporter.export(this);
+    }
+    
+    public List<Node> input() {
+        return input;
+    }
+    
+    public List<Node> output() {
+        return output;
+    }
+    
+    public List<Node> topology() {
+        return topology;
+    }
+    
     public int seed() {
         return seed;
     }

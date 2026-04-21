@@ -5,6 +5,8 @@ import org.brain4j.math.tensor.Tensor;
 import java.lang.reflect.Constructor;
 import java.time.Duration;
 
+import static java.util.Locale.ENGLISH;
+
 /**
  * General utility methods used across the math module.
  *
@@ -403,5 +405,12 @@ public class Commons {
      */
     public static IndexOutOfBoundsException indexOOB(String message, Object... args) {
         return new IndexOutOfBoundsException(String.format(message, args));
+    }
+    
+    public static String capitalize(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return text.substring(0, 1).toUpperCase(ENGLISH) + text.substring(1);
     }
 }

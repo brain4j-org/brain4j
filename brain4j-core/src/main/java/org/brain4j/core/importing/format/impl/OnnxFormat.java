@@ -35,8 +35,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             ModelProto modelProto = ModelProto.parseFrom(data);
             GraphProto graphProto = modelProto.getGraph();
             
-            Graph.of()
-            
+            // TODO
             return null;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -49,6 +48,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         
         GraphProto.Builder graphBuilder = GraphProto.newBuilder();
         
+        // TODO
         
         graphBuilder.setName(file.getName());
         OperatorSetIdProto opset = OperatorSetIdProto.newBuilder()

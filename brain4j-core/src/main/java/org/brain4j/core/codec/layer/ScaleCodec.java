@@ -11,7 +11,7 @@ import org.brain4j.math.scaler.FeatureScaler;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.brain4j.core.importing.LayerIO.SCALER_CODECS;
+import static org.brain4j.core.importing.io.LayerIO.SCALER_CODECS;
 import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
 
 public class ScaleCodec implements Codec<ScaleLayer> {

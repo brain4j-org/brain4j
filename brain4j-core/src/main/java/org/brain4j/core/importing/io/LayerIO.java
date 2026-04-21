@@ -1,4 +1,4 @@
-package org.brain4j.core.importing;
+package org.brain4j.core.importing.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,6 +11,8 @@ import org.brain4j.core.codec.layer.*;
 import org.brain4j.core.codec.scaler.MinMaxScalerCodec;
 import org.brain4j.core.codec.scaler.ZScoreScalerCodec;
 import org.brain4j.core.codec.weightinit.*;
+import org.brain4j.core.importing.Registries;
+import org.brain4j.core.importing.Registry;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.clipper.GradientClipper;
