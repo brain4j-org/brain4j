@@ -1,7 +1,7 @@
 package org.brain4j.examples.dag;
 
 import org.brain4j.core.layer.Node;
-import org.brain4j.core.layer.newimpl.DenseLayer;
+import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.model.impl.Graph;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.impl.ReLU;

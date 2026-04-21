@@ -1,50 +1,53 @@
 package org.brain4j.core.layer.impl.utility;
 
-import org.brain4j.core.layer.OldLayer;
+import org.brain4j.core.layer.Layer;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-/**
- * A utility layer that selects a single tensor from multiple inputs.
- *
- * <p>This layer is useful in models that have multiple input branches
- * and need to select one of the tensors for further processing. It
- * acts as a multiplexer, forwarding only the tensor at the specified
- * index position.
- *
- * @author xEcho1337
- */
-public class SelectLayer extends OldLayer {
+import java.util.List;
+import java.util.random.RandomGenerator;
 
+public class SelectLayer extends Layer {
+    
     private final int index;
-
-    /**
-     * Creates a new select layer.
-     *
-     * @param index the index of the input tensor to forward
-     */
+    
     public SelectLayer(int index) {
         this.index = index;
     }
 
     @Override
-    public void connect() {
+    public void build(List<Shape> inputShapes) {
+    }
+
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+    }
+
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        if (inputShapes.isEmpty()) {
+            throw Commons.illegalArgument("Layer requires at least 1 input but 0 were given!");
+        }
+        
+        if (index < 0 || index >= inputShapes.size()) {
+            throw Commons.illegalArgument("Selection index %s is out of range (size=%s)", index, inputShapes.size());
+        }
+        
+        return List.of(inputShapes.get(index));
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        return new Tensor[] { inputs[index] };
+        return tensors(inputs[index]);
     }
 
     @Override
-    public int size() {
-        return 0;
+    public Layer copy() {
+        return new SelectLayer(index);
     }
-
-    /**
-     * Gets the selection index used by this layer.
-     * @return the index of the input tensor being selected
-     */
+    
     public int index() {
         return index;
     }

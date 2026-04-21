@@ -1,7 +1,5 @@
 package org.brain4j.core.model.impl;
 
-import org.brain4j.core.importing.Format;
-import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.Model;

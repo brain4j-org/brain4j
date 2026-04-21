@@ -1,7 +1,7 @@
 package org.brain4j.examples.emotion;
 
-import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.core.layer.old.impl.DenseLayer;
+import org.brain4j.core.layer.old.impl.utility.InputLayer;
 import org.brain4j.math.loss.impl.MeanSquaredError;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
@@ -14,7 +14,6 @@ import org.brain4j.math.activation.Activations;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 
 import java.util.ArrayList;
 import java.util.List;

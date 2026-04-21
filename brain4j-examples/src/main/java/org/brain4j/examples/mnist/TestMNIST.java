@@ -1,10 +1,10 @@
 package org.brain4j.examples.mnist;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.layer.newimpl.ConvLayer;
-import org.brain4j.core.layer.newimpl.DenseLayer;
-import org.brain4j.core.layer.newimpl.InputLayer;
-import org.brain4j.core.layer.newimpl.ReshapeLayer;
+import org.brain4j.core.layer.impl.ConvLayer;
+import org.brain4j.core.layer.impl.DenseLayer;
+import org.brain4j.core.layer.impl.InputLayer;
+import org.brain4j.core.layer.impl.ReshapeLayer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.dashboard.BrainDashboard;
 import org.brain4j.math.activation.impl.LeakyReLU;

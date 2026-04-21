@@ -1,14 +1,14 @@
 package org.brain4j.llm.core.architecture.impl;
 
 import com.google.gson.JsonObject;
-import org.brain4j.core.layer.OldLayer;
-import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.NormLayer;
-import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
-import org.brain4j.core.layer.impl.transformer.MultiHeadAttention;
-import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
-import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
-import org.brain4j.core.layer.impl.utility.InputLayer;
+import org.brain4j.core.layer.old.OldLayer;
+import org.brain4j.core.layer.old.impl.DenseLayer;
+import org.brain4j.core.layer.old.impl.NormLayer;
+import org.brain4j.core.layer.old.impl.transformer.EmbeddingLayer;
+import org.brain4j.core.layer.old.impl.transformer.MultiHeadAttention;
+import org.brain4j.core.layer.old.impl.transformer.PosEncodeLayer;
+import org.brain4j.core.layer.old.impl.transformer.TransformerDecoder;
+import org.brain4j.core.layer.old.impl.utility.InputLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.llm.core.architecture.ArchitectureAdapter;

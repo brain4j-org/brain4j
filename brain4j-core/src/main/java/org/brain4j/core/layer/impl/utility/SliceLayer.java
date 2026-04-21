@@ -1,72 +1,82 @@
 package org.brain4j.core.layer.impl.utility;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import org.brain4j.core.layer.OldLayer;
-import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.core.layer.Layer;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.commons.Range;
+import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
+import org.brain4j.math.tensor.Tensor;
 
-public class SliceLayer extends OldLayer {
+import java.util.List;
+import java.util.random.RandomGenerator;
+
+public class SliceLayer extends Layer {
     
-    private Range[] ranges;
-    private int size;
-
-    protected SliceLayer() {
-    }
-
+    private final Range[] ranges;
+    
     public SliceLayer(Range... ranges) {
         this.ranges = ranges;
     }
-    
+
     @Override
-    public void connect() {
-        this.size = previous.size();
+    public void build(List<Shape> inputShapes) {
     }
-    
+
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+    }
+
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        if (inputShapes.isEmpty()) {
+            throw Commons.illegalArgument("Layer requires at least 1 input but 0 were given!");
+        }
+        
+        return inputShapes.stream().map(this::sliceShape).toList();
+    }
+
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor[] result = new Tensor[inputs.length];
-
+        
         for (int i = 0; i < inputs.length; i++) {
-            result[i] = inputs[i].sliceGrad(ranges);
+            Tensor input = inputs[i];
+            int rank = input.rank();
+            
+            if (rank == ranges.length + 1) {
+                Range[] expanded = new Range[ranges.length + 1];
+                expanded[0] = Range.all();
+                System.arraycopy(ranges, 0, expanded, 1, ranges.length);
+                result[i] = input.sliceGrad(expanded);
+            } else if (rank == ranges.length) {
+                result[i] = input.sliceGrad(ranges);
+            } else {
+                throw Commons.illegalArgument("Slice requires rank %s or %s but %s was given!",
+                    ranges.length, ranges.length + 1, rank);
+            }
         }
-
+        
         return result;
     }
-    
-    @Override
-    public int size() {
-        return size;
-    }
-    
-    @Override
-    public void serialize(JsonObject object) {
-        JsonArray rangesArray = new JsonArray();
-        
-        for (Range range : ranges) {
-            JsonArray array = new JsonArray();
-            array.add(range.start());
-            array.add(range.end());
-            array.add(range.step());
-            rangesArray.add(array);
-        }
-        
-        object.add("ranges", rangesArray);
-    }
-    
-    @Override
-    public void deserialize(JsonObject object) {
-        JsonArray rangesArray = object.get("ranges").getAsJsonArray();
 
-        this.ranges = new Range[rangesArray.size()];
-        
-        for (int i = 0; i < ranges.length; i++) {
-            JsonArray range = rangesArray.get(i).getAsJsonArray();
-            int start = range.get(0).getAsInt();
-            int end = range.get(1).getAsInt();
-            int step = range.get(2).getAsInt();
-            this.ranges[i] = new Range(start, end, step);
+    @Override
+    public Layer copy() {
+        return new SliceLayer(ranges);
+    }
+    
+    private Shape sliceShape(Shape inputShape) {
+        if (ranges.length != inputShape.rank()) {
+            throw Commons.illegalArgument("Slice requires %s ranges but %s were given!",
+                inputShape.rank(), ranges.length);
         }
+        
+        int[] dims = inputShape.dims();
+        int[] out = new int[dims.length];
+        
+        for (int i = 0; i < dims.length; i++) {
+            out[i] = ranges[i].size(dims[i]);
+        }
+        
+        return Shape.of(out);
     }
 }

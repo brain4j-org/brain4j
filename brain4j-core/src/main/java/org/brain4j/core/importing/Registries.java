@@ -3,11 +3,6 @@ package org.brain4j.core.importing;
 import org.brain4j.core.importing.format.GeneralRegistry;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.newimpl.ConvLayer;
-import org.brain4j.core.layer.newimpl.DenseLayer;
-import org.brain4j.core.layer.newimpl.InputLayer;
-import org.brain4j.core.layer.newimpl.NormLayer;
-import org.brain4j.core.layer.newimpl.ReshapeLayer;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.math.loss.impl.CrossEntropy;
@@ -24,16 +19,12 @@ import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.*;
 import org.brain4j.math.clipper.GradientClipper;
-import org.brain4j.math.clipper.impl.HardClipper;
-import org.brain4j.math.clipper.impl.L2Clipper;
-import org.brain4j.math.clipper.impl.NoClipper;
 import org.brain4j.math.scaler.FeatureScaler;
 import org.brain4j.math.scaler.impl.MinMaxScaler;
 import org.brain4j.math.scaler.impl.ZScoreScaler;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.*;
 import org.brain4j.math.weightsinit.WeightInit;
-import org.brain4j.math.weightsinit.impl.*;
 
 public class Registries {
     

@@ -3,17 +3,11 @@ package org.brain4j.core.importing.format.impl;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.importing.onnx.ProtoOnnx.*;
-import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.newimpl.InputLayer;
 import org.brain4j.core.model.impl.Graph;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.*;
-import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.autograd.AutogradContext;
-import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,9 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.brain4j.core.importing.Registries.LAYER_REGISTRY;
-import static org.brain4j.core.importing.Registries.ONNX_OPERATIONS_REGISTRY;
 
 public class OnnxFormat implements BinaryFormat<Graph> {
     
@@ -44,33 +35,11 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             ModelProto modelProto = ModelProto.parseFrom(data);
             GraphProto graphProto = modelProto.getGraph();
             
-            for (TensorProto tensor : graphProto.getInitializerList()) {
-//                model.initializer(tensor.getName(), deserializeTensor(tensor));
-            }
+            Graph.of()
             
-            for (NodeProto node : graphProto.getNodeList()) {
-                Operation op = ONNX_OPERATIONS_REGISTRY.toInstance(node.getOpType(), node);
-                
-                if (op == null) {
-                    throw Commons.illegalArgument("Unknown operation: %s", node.getOpType());
-                }
-                
-                if (node.getInputCount() != op.requiredInputs()) {
-                    throw new IllegalArgumentException("Node " + node.getOpType() + " requires "
-                        + node.getInputCount() + " inputs but operation requires " + op.requiredInputs());
-                }
-                
-//                model.addNode(new GraphModel.GraphNode(node.getName(), op, node.getInputList(), node.getOutputList()));
-            }
-            
-            List<String> inputs = graphProto.getInputList().stream().map(ValueInfoProto::getName).toList();
-            List<String> outputs = graphProto.getOutputList().stream().map(ValueInfoProto::getName).toList();
-            
-            return null; // TODO: fix
-//            return model.inputs(inputs).outputs(outputs).compile();
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
             return null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
     
@@ -80,27 +49,6 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         
         GraphProto.Builder graphBuilder = GraphProto.newBuilder();
         
-        Map<Tensor, String> weightsMap = new HashMap<>();
-        Map<Tensor, String> tensorNames = new HashMap<>();
-        AtomicInteger counter = new AtomicInteger(0);
-        
-        addInitializers(model, graphBuilder, weightsMap);
-        
-        Layer inputLayer = model.getLayers().getFirst();
-        
-        if (!(inputLayer instanceof InputLayer wrapped)) {
-            throw Commons.illegalArgument("First layer is not an InputLayer instance!");
-        }
-        
-        Tensor input = Tensors.zeros(wrapped.shape()).unsqueeze();
-        Tensor output = model.predict(input.withGrad());
-        
-        extractInput(input, graphBuilder, counter, tensorNames, weightsMap);
-        extractOutput(output, graphBuilder, counter, tensorNames, weightsMap);
-        
-        List<NodeProto> nodes = buildNodesFromTensor(output, counter, tensorNames, weightsMap);
-        Collections.reverse(nodes);
-        graphBuilder.addAllNode(nodes);
         
         graphBuilder.setName(file.getName());
         OperatorSetIdProto opset = OperatorSetIdProto.newBuilder()
@@ -119,69 +67,8 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         try (FileOutputStream out = new FileOutputStream(file)) {
             out.write(modelProto.toByteArray());
         } catch (IOException e) {
-            e.printStackTrace(System.err);
+            throw new RuntimeException(e);
         }
-    }
-    
-    private void addInitializers(Graph model, GraphProto.Builder graphBuilder, Map<Tensor, String> weightsMap) {
-        List<Layer> layers = model.getLayers();
-        
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
-            String layerId = LAYER_REGISTRY.fromClass(layer.getClass());
-            
-            for (Map.Entry<String, Tensor> weight : layer.parameters().entrySet()) {
-                String name = String.format("%s.%d.%s", layerId, i, weight.getKey());
-                
-                weightsMap.put(weight.getValue(), name);
-                graphBuilder.addInitializer(serializeTensor(name, weight.getValue()));
-            }
-        }
-    }
-    
-    private List<NodeProto> buildNodesFromTensor(Tensor output, AtomicInteger counter,
-                                                 Map<Tensor, String> tensorNames, Map<Tensor, String> weightsMap) {
-        Queue<Tensor> queue = new LinkedList<>();
-        Set<Tensor> visited = new HashSet<>();
-        List<NodeProto> nodes = new ArrayList<>();
-        
-        queue.add(output);
-        
-        while (!queue.isEmpty()) {
-            Tensor tensor = queue.poll();
-            AutogradContext context = tensor.getAutogradContext();
-            
-            if (context == null || context.operation() == null) continue;
-            
-            Operation op = context.operation();
-            String opType = op instanceof ActivationOperation act ? extractActivation(act) :
-                ONNX_OPERATIONS_REGISTRY.fromClass(op.getClass());
-            
-            if (opType == null) {
-                throw Commons.illegalState("No operation for for %s!", op);
-            }
-            
-            NodeProto.Builder node = NodeProto.newBuilder()
-                .setName(opType + "_" + Math.abs(UUID.randomUUID().hashCode()))
-                .setOpType(opType);
-
-            // TODO: Serialize for squeezing/layernorm, etc
-            
-            for (Tensor in : context.inputs()) {
-                node.addInput(generateName(counter, in, tensorNames, weightsMap));
-                
-                if (visited.add(in)) queue.add(in);
-            }
-            
-            node.addOutput(generateName(counter, tensor, tensorNames, weightsMap));
-            nodes.add(node.build());
-        }
-        
-        return nodes;
-    }
-    
-    private String extractActivation(ActivationOperation op) {
-        return ACTIVATION_MAP.getOrDefault(op.activation().getClass(), "unknown");
     }
     
     private String generateName(AtomicInteger counter, Tensor tensor,

@@ -1,6 +1,6 @@
 package org.brain4j.core.transformer.attention;
 
-import org.brain4j.core.layer.impl.transformer.MultiHeadAttention;
+import org.brain4j.core.layer.old.impl.transformer.MultiHeadAttention;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.clipper.GradientClipper;

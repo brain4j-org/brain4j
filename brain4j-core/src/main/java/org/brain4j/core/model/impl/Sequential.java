@@ -1,11 +1,9 @@
 package org.brain4j.core.model.impl;
 
 import org.brain4j.core.Brain4J;
-import org.brain4j.core.importing.Format;
-import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
-import org.brain4j.core.layer.newimpl.InputLayer;
+import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.model.ModelSpecs;

@@ -3,7 +3,7 @@ package org.brain4j.core.codec.layer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.brain4j.core.codec.Codec;
-import org.brain4j.core.layer.newimpl.ConvLayer;
+import org.brain4j.core.layer.impl.ConvLayer;
 
 public class ConvCodec implements Codec<ConvLayer> {
     

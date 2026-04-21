@@ -1,6 +1,6 @@
 package org.brain4j.core.layer;
 
-import org.brain4j.core.layer.newimpl.InputLayer;
+import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.math.Copyable;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;

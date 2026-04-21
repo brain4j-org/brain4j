@@ -1,7 +1,7 @@
 package org.brain4j.examples.xor;
 
-import org.brain4j.core.layer.newimpl.DenseLayer;
-import org.brain4j.core.layer.newimpl.InputLayer;
+import org.brain4j.core.layer.impl.DenseLayer;
+import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;

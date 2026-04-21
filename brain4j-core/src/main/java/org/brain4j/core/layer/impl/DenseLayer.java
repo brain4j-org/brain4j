@@ -1,113 +1,87 @@
 package org.brain4j.core.layer.impl;
 
-import com.google.gson.JsonObject;
-import org.brain4j.core.layer.OldLayer;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.activation.Activations;
+import org.brain4j.math.activation.impl.Linear;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.List;
 import java.util.random.RandomGenerator;
 
-/**
- * Implementation of a fully connected (dense) neural network layer.
- * <p>
- * This layer performs a linear transformation on the input tensor,
- * followed by the application of a specified activation function.
- * </p>
- * <h2>Shape conventions:</h2>
- * <ul>
- *   <li>Input: {@code [batch, ..., input_dim]}</li>
- *   <li>Output: {@code [batch, ..., output_dim]}</li>
- *   <li>Weights: {@code [input_dim, output_dim]}</li>
- *   <li>Bias: {@code [output_dim]}</li>
- * </ul>
- * @implNote this layer supports multiple input tensors; assuming each one has the correct shape,
- *           each input tensor gets processed in the same way
- *
- * @author xEcho1337
- */
-public class DenseLayer extends OldLayer {
-
-    private int dimension;
-
-    private DenseLayer() {
+public class DenseLayer extends Layer {
+    
+    private int outDimension;
+    
+    public DenseLayer(int outDimension) {
+        this(outDimension, new Linear());
     }
-
-    /**
-     * Constructs a new instance of a dense layer with a linear activation.
-     * @param dimension the dimension of the output
-     */
-    public DenseLayer(int dimension) {
-        this(dimension, Activations.LINEAR);
-    }
-
-    /**
-     * Constructs a new instance of a dense layer.
-     * @param dimension the dimension of the output
-     * @param activation the activation function
-     */
-    public DenseLayer(int dimension, Activations activation) {
-        this.dimension = dimension;
-        this.activation = activation.function();
-    }
-
-    /**
-     * Constructs a new instance of a dense layer.
-     * @param dimension the dimension of the output
-     * @param activation the activation function
-     */
-    public DenseLayer(int dimension, Activation activation) {
-        this.dimension = dimension;
+    
+    public  DenseLayer(int outDimension, Activation activation) {
+        this.outDimension = outDimension;
         this.activation = activation;
     }
-
+    
     @Override
-    public void connect() {
-        // Shape: [input_size, output_size]
-        this.weights = Tensors.zeros(previous.size(), dimension).withGrad();
-        this.bias = Tensors.zeros(dimension).withGrad();
+    public void build(List<Shape> inputShapes) {
+        Shape inputShape = inputShapes.getFirst();
+        
+        Tensor weights = Tensors.zeros(inputShape.last(), outDimension);
+        Tensor bias = Tensors.zeros(outDimension);
+        
+        registerParam("weights", weights);
+        registerParam("bias", bias);
     }
-
+    
     @Override
-    public void initWeights(RandomGenerator generator, int input, int output) {
-        this.weights.map(x -> weightInit.generate(generator, input, output));
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+        generateWeights("weights", rng, inputShapes.getFirst().last(), outDimension);
+    }
+    
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        if (inputShapes.size() != 1) {
+            throw Commons.illegalArgument("Layer requires 1 input but %s were given!", inputShapes.size());
+        }
+        
+        Shape inputShape = inputShapes.getFirst();
+        Shape inputBatch = inputShape.slice(0, -2);
+        
+        int[] outShape = new int[inputShape.rank()];
+        
+        inputBatch.copy(outShape);
+        outShape[outShape.length - 1] = outDimension;
+        
+        return List.of(Shape.of(outShape));
     }
     
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        validateInputLength(inputs);
-        
         Tensor input = inputs[0];
-        Tensor output = input.matmulGrad(weights);
         
-        cache.setStates(this, "input", input);
+        if (input.rank() < 2) {
+            throw Commons.illegalArgument("Dense requires tensors to be rank 2 or higher");
+        }
         
-        if (bias != null) output = output.addGrad(bias);
-
-        Tensor beforeActivation = output;
-        cache.setStates(this, "pre_activation", beforeActivation);
+        Tensor W = getParam("weights");
+        Tensor B = getParam("bias");
         
-        return new Tensor[] { output.activateGrad(activation) };
+        Tensor proj = input.matmulGrad(W).addGrad(B);
+        
+        return tensors(proj.activateGrad(activation));
     }
-
+    
     @Override
-    public int size() {
-        return dimension;
+    public DenseLayer copy() {
+        DenseLayer copy = new DenseLayer(outDimension, activation);
+        copyParameters(copy);
+        return copy;
     }
-
-    @Override
-    public void serialize(JsonObject object) {
-        object.addProperty("dimension", dimension);
-    }
-
-    @Override
-    public void deserialize(JsonObject object) {
-        this.dimension = object.get("dimension").getAsInt();
-    }
-
-    public int getDimension() {
-        return dimension;
+    
+    public int outDimension() {
+        return outDimension;
     }
 }

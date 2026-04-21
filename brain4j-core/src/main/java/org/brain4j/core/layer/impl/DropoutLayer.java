@@ -1,49 +1,41 @@
 package org.brain4j.core.layer.impl;
 
-import com.google.gson.JsonObject;
-import org.brain4j.core.layer.OldLayer;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.List;
 import java.util.SplittableRandom;
 import java.util.random.RandomGenerator;
 
-/**
- * Implementation of a dropout layer, used to mitigate overfitting.
- * During training, it randomly turns to zero a fraction of the values in the input tensor.
- * During inference, the input doesn't change.
- *
- * @author xEcho1337
- */
-public class DropoutLayer extends OldLayer {
-
+public class DropoutLayer extends Layer {
+    
     private final RandomGenerator random;
-    private double dropoutRate;
-    private int size;
+    private final double dropoutRate;
     
-    private DropoutLayer() {
-        this.random = new SplittableRandom();
-    }
-    
-    /**
-     * Constructs a new dropout layer instance.
-     * @param dropoutRate the dropout rate (0 < dropout < 1), specifying the probability of deactivating each neuron
-     * @throws IllegalArgumentException if dropout is outside the range 0-1
-     */
     public DropoutLayer(double dropoutRate) {
         if (dropoutRate < 0 || dropoutRate >= 1) {
             throw Commons.illegalArgument("Dropout must be greater or equal to 0 and less than 1!");
         }
-
+        
         this.random = new SplittableRandom();
         this.dropoutRate = dropoutRate;
     }
 
     @Override
-    public void connect() {
-        this.size = previous.size();
+    public void build(List<Shape> inputShapes) {
+    }
+
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+    }
+
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        return inputShapes;
     }
 
     @Override
@@ -72,39 +64,15 @@ public class DropoutLayer extends OldLayer {
     }
 
     @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public void deserialize(JsonObject object) {
-        this.dropoutRate = object.get("dropout").getAsDouble();
-    }
-
-    @Override
-    public void serialize(JsonObject object) {
-        object.addProperty("dropout", dropoutRate);
+    public Layer copy() {
+        return new DropoutLayer(dropoutRate);
     }
     
-    public RandomGenerator getRandom() {
-        return random;
-    }
-
-    public double getDropoutRate() {
+    public double dropoutRate() {
         return dropoutRate;
     }
-
-    public DropoutLayer setDropoutRate(double dropoutRate) {
-        this.dropoutRate = dropoutRate;
-        return this;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public DropoutLayer setSize(int size) {
-        this.size = size;
-        return this;
+    
+    public RandomGenerator random() {
+        return random;
     }
 }

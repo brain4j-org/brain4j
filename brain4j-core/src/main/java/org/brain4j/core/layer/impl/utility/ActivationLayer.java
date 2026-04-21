@@ -1,81 +1,56 @@
 package org.brain4j.core.layer.impl.utility;
 
-import com.google.gson.JsonObject;
-import org.brain4j.core.layer.OldLayer;
+import org.brain4j.core.layer.Layer;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.Activations;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-/**
- * A utility layer that applies an element-wise activation function.
- * <p>
- * This layer does not introduce trainable parameters and simply transforms
- * its input tensors by applying the configured activation function. The output
- * shape is identical to the input shape.
- * <p>
- * The layer derives its dimensionality from the previous layer during the
- * {@link OldLayer#connect()} phase.
- *
- * @author xEcho1337
- */
-public class ActivationLayer extends OldLayer {
+import java.util.List;
+import java.util.random.RandomGenerator;
 
-    private int dimension;
-    
-    /**
-     * DO NOT TOUCH: used for instancing when deserializing a model.
-     */
-    protected ActivationLayer() {
-    }
-    
-    /**
-     * Creates an activation layer using a predefined activation function.
-     *
-     * @param activation the activation enum specifying the function to apply
-     */
+public class ActivationLayer extends Layer {
+
     public ActivationLayer(Activations activation) {
-        this.activation = activation.function();
+        this(activation.function());
     }
     
-    /**
-     * Creates an activation layer with a custom activation function.
-     *
-     * @param activation the activation function to apply
-     */
     public ActivationLayer(Activation activation) {
-        this.activation = activation;
+        super(activation);
     }
 
     @Override
-    public void connect() {
-        this.dimension = previous.size();
+    public void build(List<Shape> inputShapes) {
     }
-    
+
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+    }
+
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        if (inputShapes.isEmpty()) {
+            throw Commons.illegalArgument("Layer requires at least 1 input but 0 were given!");
+        }
+        
+        return inputShapes;
+    }
+
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor[] result = new Tensor[inputs.length];
-
-        for (int i = 0; i < result.length; i++) {
+        
+        for (int i = 0; i < inputs.length; i++) {
             result[i] = inputs[i].activateGrad(activation);
         }
-
-        cache.setStates(this, "pre_activation", result);
+        
         return result;
     }
 
     @Override
-    public int size() {
-        return dimension;
-    }
-    
-    @Override
-    public void serialize(JsonObject object) {
-        object.addProperty("dimension", dimension);
-    }
-    
-    @Override
-    public void deserialize(JsonObject object) {
-        this.dimension = object.get("dimension").getAsInt();
+    public Layer copy() {
+        return new ActivationLayer(activation);
     }
 }
