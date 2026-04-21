@@ -8,7 +8,7 @@ import org.brain4j.math.data.ListDataSource;
 
 import java.util.function.Supplier;
 
-public record BrainDashboard(Model<?> model, Trainer trainer) {
+public record BrainDashboard(Model model, Trainer trainer) {
     
     public <T extends Monitor> T attach(Class<T> clazz, Supplier<T> constructor) {
         T monitor = trainer.getMonitor(clazz);

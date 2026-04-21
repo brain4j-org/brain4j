@@ -25,7 +25,7 @@ import java.util.Map;
 
 public final class DefaultTrainer implements Trainer {
     
-    private final Model<?> model;
+    private final Model model;
     private final TrainingConfig config;
     private final Map<Class<? extends Monitor>, Monitor> monitors;
     private final Object trainingLock = new Object();
@@ -326,7 +326,7 @@ public final class DefaultTrainer implements Trainer {
     }
     
     @Override
-    public Model<?> model() {
+    public Model model() {
         return model;
     }
     

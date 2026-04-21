@@ -18,7 +18,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Sequential implements Model<Sequential>, ModelBlock {
+public class Sequential implements Model, ModelBlock {
     
     private final Graph graph;
     private final ModelSpecs specs;
@@ -79,11 +79,6 @@ public class Sequential implements Model<Sequential>, ModelBlock {
     @Override
     public SiliconDevice device() {
         return device;
-    }
-
-    @Override
-    public BinaryFormat<Sequential> saveFormat() {
-        return Format.BRAIN4J;
     }
 
     @Override

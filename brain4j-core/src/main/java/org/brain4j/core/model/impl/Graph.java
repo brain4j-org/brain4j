@@ -13,7 +13,7 @@ import org.brain4j.math.tensor.Tensor;
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class Graph implements Model<Graph> {
+public class Graph implements Model {
 
     private final List<Node> input;
     private final List<Node> output;
@@ -106,11 +106,6 @@ public class Graph implements Model<Graph> {
     @Override
     public SiliconDevice device() {
         return device;
-    }
-
-    @Override
-    public BinaryFormat<Graph> saveFormat() {
-        return Format.ONNX;
     }
 
     @Override

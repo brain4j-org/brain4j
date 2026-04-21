@@ -7,12 +7,12 @@ import java.io.File;
 
 public class ModelIO {
 
-    public static <T extends Model<T>> void save(T model, BinaryFormat<T> adapter, File path) {
+    public static <T extends Model> void save(T model, BinaryFormat<T> adapter, File path) {
         adapter.serialize(model, path);
     }
 
 
-    public static <T extends Model<T>> T load(BinaryFormat<T> adapter, File path) {
+    public static <T extends Model> T load(BinaryFormat<T> adapter, File path) {
         return adapter.deserialize(path);
     }
 }

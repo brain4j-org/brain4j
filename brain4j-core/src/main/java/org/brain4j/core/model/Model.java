@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author xEcho1337
  */
-public interface Model<T> extends Copyable<Model<T>> {
+public interface Model extends Copyable<Model> {
     
     /**
      * Performs a full forward pass using a temporary {@link StatesCache}
@@ -64,12 +64,6 @@ public interface Model<T> extends Copyable<Model<T>> {
      */
     SiliconDevice device();
 
-    /**
-     * Returns the default format to use when saving this type of model.
-     * @return the default save format for this model
-     */
-    BinaryFormat<T> saveFormat();
-    
     /**
      * Evaluates the model on the given dataset.
      * <p>
@@ -143,7 +137,7 @@ public interface Model<T> extends Copyable<Model<T>> {
      */
     void summary();
     
-    Model<T> fork(SiliconDevice device);
+    Model fork(SiliconDevice device);
     
     /**
      * Returns an immutable view of the layers composing this object, in order.
