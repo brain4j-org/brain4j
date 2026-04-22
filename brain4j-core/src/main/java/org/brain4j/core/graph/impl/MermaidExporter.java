@@ -19,7 +19,7 @@ public class MermaidExporter implements GraphExporter {
     private final Direction direction;
     
     public MermaidExporter() {
-        this.direction = Direction.TOP_DOWN;
+        this(Direction.TOP_DOWN);
     }
     
     public MermaidExporter(Direction direction) {
@@ -84,6 +84,7 @@ public class MermaidExporter implements GraphExporter {
         String tmp = Arrays.stream(shape.dims())
             .mapToObj(String::valueOf)
             .collect(Collectors.joining("x"));
+        
         return "(Bx%s)".formatted(tmp);
     }
     

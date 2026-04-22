@@ -137,11 +137,7 @@ public class DatasetLoader implements AutoCloseable {
     private String determineFileFormat(String filename) {
         String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
         return switch (extension) {
-            case "json", "jsonl" -> "json"; // TODO: fix for jsonl
-            case "csv" -> "csv";
-            case "parquet" -> "parquet";
-            case "txt" -> "text";
-            case "arrow" -> "arrow";
+            case "json", "jsonl", "csv", "parquet", "txt", "arrow" -> extension;
             default -> "unknown";
         };
     }
