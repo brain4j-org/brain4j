@@ -271,4 +271,52 @@ public class TransformerEncoder extends Layer {
     public double dropoutRate() {
         return dropoutRate;
     }
+
+    public DenseLayer upProjection() {
+        return upProjection;
+    }
+
+    public DenseLayer gateProjection() {
+        return gateProjection;
+    }
+
+    public DenseLayer downProjection() {
+        return downProjection;
+    }
+
+    public Layer normalizer1() {
+        return normalizer1;
+    }
+
+    public Layer normalizer2() {
+        return normalizer2;
+    }
+
+    public DropoutLayer dropout() {
+        return dropout;
+    }
+
+    public MultiHeadAttention attention() {
+        return attention;
+    }
+
+    public NormType normType() {
+        return normType;
+    }
+
+    public int projDim() {
+        return projDim;
+    }
+
+    public boolean useGating() {
+        return useGating;
+    }
+
+    public boolean attnQkvHasBias() {
+        return attnQkvHasBias;
+    }
+
+    public boolean attnOutHasBias() {
+        return attnOutHasBias;
+    }
 }

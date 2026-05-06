@@ -1,15 +1,13 @@
-import org.brain4j.core.Brain4J;
-import org.brain4j.llm.Models;
+import org.brain4j.llm.LLMs;
 import org.brain4j.llm.core.model.LLM;
 import org.brain4j.llm.core.model.SamplingConfig;
-import org.brain4j.math.gpu.device.Device;
 
 import java.util.function.Consumer;
 
 public class TestLLM {
 
     public static void main(String[] args) throws Exception {
-        LLM llm = Models.loadModel("gpt2");
+        LLM llm = LLMs.loadModel("gpt2");
 
         SamplingConfig config = SamplingConfig.builder().maxLength(256).build();
         TokenHandler handler = new TokenHandler();

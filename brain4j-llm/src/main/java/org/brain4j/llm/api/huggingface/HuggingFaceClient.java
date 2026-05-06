@@ -37,8 +37,7 @@ public class HuggingFaceClient implements AutoCloseable {
     public ModelInfo getModelInfo(String modelId) throws HuggingFaceException {
         validateId(modelId);
 
-        String encoded = URLEncoder.encode(modelId, StandardCharsets.UTF_8);
-        String url = API_BASE_URL + encoded;
+        String url = API_BASE_URL + modelId;
 
         HttpGet request = new HttpGet(URI.create(url));
         request.setHeader("User-Agent", userAgent);

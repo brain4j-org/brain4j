@@ -91,6 +91,7 @@ public class PosEncodeLayer extends Layer {
     @Override
     public Layer copy() {
         PosEncodeLayer copy = new PosEncodeLayer(length, dimension);
+        // TODO
         return copy;
     }
     

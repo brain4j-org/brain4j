@@ -83,7 +83,7 @@ public class LLM implements InferenceProvider {
         List<String> tokens = tokenizer.splitTokens(prompt);
         Tensor input = tokenizer.encode(tokens);
 
-        StatesCache cache = StatesCache.withTraining();
+        StatesCache cache = new StatesCache();
         StringBuilder response = new StringBuilder(prompt);
 
         int bosToken = tokenizer.bosTokenId();
@@ -97,7 +97,10 @@ public class LLM implements InferenceProvider {
         Softmax activation = new Softmax(config.temperature());
         
         while (generatedTokens < config.maxLength()) {
-            Tensor logits = model.predict(cache, input)[0].squeeze().cpu(); // [vocab_size]
+            Tensor batchInput = input.unsqueeze(0);
+            Tensor[] outs = model.predict(cache, batchInput);
+
+            Tensor logits = outs[0].squeeze().cpu(); // [vocab_size]
             Tensor distribution = logits.activate(activation);
             
             float[] data = distribution.data();

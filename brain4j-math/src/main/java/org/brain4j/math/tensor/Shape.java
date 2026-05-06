@@ -11,11 +11,13 @@ public class Shape implements Copyable<Shape> {
     private final int[] dims;
 
     protected Shape(int[] dims) {
+        /*
         for (int dim : dims) {
             if (dim < 0) {
                 throw Commons.illegalArgument("Dimension at %s is negative!", dim);
             }
         }
+         */
 
         this.dims = dims.clone();
     }

@@ -1,24 +1,24 @@
 package org.brain4j.core;
 
-import org.brain4j.core.layer.newimpl.DenseLayer;
-import org.brain4j.core.layer.newimpl.DropoutLayer;
-import org.brain4j.core.layer.newimpl.InputLayer;
-import org.brain4j.core.layer.newimpl.LSTMLayer;
-import org.brain4j.core.layer.newimpl.MaxPoolLayer;
-import org.brain4j.core.layer.newimpl.NormLayer;
-import org.brain4j.core.layer.newimpl.RMSNormLayer;
-import org.brain4j.core.layer.newimpl.ReshapeLayer;
-import org.brain4j.core.layer.newimpl.ConvLayer;
-import org.brain4j.core.layer.newimpl.transformer.MaskedMultiHeadAttention;
-import org.brain4j.core.layer.newimpl.transformer.EmbeddingLayer;
-import org.brain4j.core.layer.newimpl.transformer.PosEncodeLayer;
-import org.brain4j.core.layer.newimpl.transformer.TransformerDecoder;
-import org.brain4j.core.layer.newimpl.transformer.TransformerEncoder;
-import org.brain4j.core.layer.newimpl.transformer.MultiHeadAttention;
-import org.brain4j.core.layer.newimpl.utility.ActivationLayer;
-import org.brain4j.core.layer.newimpl.utility.SelectLayer;
-import org.brain4j.core.layer.newimpl.utility.SliceLayer;
-import org.brain4j.core.layer.newimpl.utility.SqueezeLayer;
+import org.brain4j.core.layer.impl.DenseLayer;
+import org.brain4j.core.layer.impl.DropoutLayer;
+import org.brain4j.core.layer.impl.InputLayer;
+import org.brain4j.core.layer.impl.LSTMLayer;
+import org.brain4j.core.layer.impl.MaxPoolLayer;
+import org.brain4j.core.layer.impl.NormLayer;
+import org.brain4j.core.layer.impl.RMSNormLayer;
+import org.brain4j.core.layer.impl.ReshapeLayer;
+import org.brain4j.core.layer.impl.ConvLayer;
+import org.brain4j.core.layer.impl.transformer.MaskedMultiHeadAttention;
+import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
+import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
+import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
+import org.brain4j.core.layer.impl.transformer.TransformerEncoder;
+import org.brain4j.core.layer.impl.transformer.MultiHeadAttention;
+import org.brain4j.core.layer.impl.utility.ActivationLayer;
+import org.brain4j.core.layer.impl.utility.SelectLayer;
+import org.brain4j.core.layer.impl.utility.SliceLayer;
+import org.brain4j.core.layer.impl.utility.SqueezeLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.model.impl.Sequential;
@@ -42,7 +42,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-public class TrainingSmokeTest {
+public class TrainingTests {
     
     @Test
     void trainingRunsOnSimpleRegression() {

@@ -11,6 +11,7 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
@@ -66,9 +67,9 @@ public class EmbeddingLayer extends Layer {
         
         int batchSize = shape[0];
         int seqLength = shape[1];
-        
+
         Tensor output = Tensors.zeros(batchSize, seqLength, embeddingDim);
-        
+
         if (input.usesGrad()) output = output.withGrad();
         
         float[] outData = output.data();
@@ -85,7 +86,7 @@ public class EmbeddingLayer extends Layer {
                 System.arraycopy(weightData, weightOffset, outData, outOffset, embeddingDim);
             }
         });
-        
+
         if (input instanceof GpuTensor gpuInput) {
             output = output.to(gpuInput.device());
         }

@@ -1,13 +1,10 @@
 import org.brain4j.core.Brain4J;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -216,7 +213,7 @@ public class TensorTest {
         );
 
         Tensor A_T = A.transpose();
-        Tensor A_T_clone = A_T.clone();
+        Tensor A_T_clone = A_T.copy();
 
         int[] expectedStrides = Tensors.computeStrides(A_T_clone.shape());
         assertArrayEquals(expectedStrides, A_T_clone.strides(),

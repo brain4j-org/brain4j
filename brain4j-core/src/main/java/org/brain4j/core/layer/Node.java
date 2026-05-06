@@ -42,6 +42,8 @@ public class Node implements Copyable<Node> {
     public void initWeights(int seed) {
         List<Shape> inputShapes = inferInputShapes();
         RandomGenerator rng = new SplittableRandom(seed);
+
+        if (layer.frozen()) return;
         
         layer.initWeights(inputShapes, rng);
         layer.initAutoGrad();

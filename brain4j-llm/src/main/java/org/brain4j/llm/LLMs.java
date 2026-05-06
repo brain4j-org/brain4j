@@ -15,11 +15,11 @@ import org.brain4j.llm.core.model.LLM;
  *
  * <p>Example:
  * <pre>{@code
- * LLM model = Models.loadModel("gpt-small");
- * Tokenizer tok = Models.loadTokenizer("gpt-tokenizer");
+ * LLM model = LLMs.loadModel("gpt-small");
+ * Tokenizer tok = LLMs.loadTokenizer("gpt-tokenizer");
  * }</pre>
  */
-public class Models {
+public class LLMs {
 
     /**
      * Load and compile a language model by its identifier.
