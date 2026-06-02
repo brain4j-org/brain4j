@@ -38,8 +38,7 @@ public class HuggingFaceClient implements AutoCloseable {
     public Optional<DatasetInfo> getDatasetInfo(String datasetId) throws Exception {
         validateDatasetId(datasetId);
 
-        String encodedId = URLEncoder.encode(datasetId, StandardCharsets.UTF_8);
-        String url = API_BASE_URL + "/datasets/" + encodedId;
+        String url = API_BASE_URL + "/datasets/" + datasetId;
 
         try {
             HttpGet request = new HttpGet(URI.create(url));
@@ -59,9 +58,7 @@ public class HuggingFaceClient implements AutoCloseable {
         validateDatasetId(datasetId);
         validateFilename(filename);
 
-        String encodedId = URLEncoder.encode(datasetId, StandardCharsets.UTF_8);
-        String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8);
-        String url = BASE_URL + "/datasets/" + encodedId + "/resolve/main/" + encodedFilename;
+        String url = BASE_URL + "/datasets/" + datasetId + "/resolve/main/" + filename;
 
         try {
             HttpGet request = new HttpGet(URI.create(url));

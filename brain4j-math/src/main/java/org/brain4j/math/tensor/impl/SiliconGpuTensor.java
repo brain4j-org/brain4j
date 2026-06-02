@@ -137,9 +137,10 @@ public class SiliconGpuTensor extends BaseTensor {
 
             ComputeModule matmul = compiler.compileFromResource("slang/matmul.slang");
             ComputeModule concat = compiler.compileFromResource("slang/concat.slang");
-            // we need 2 tensor ops modules because of a Metal compile bug on Slang
+            // we need 3 tensor ops modules because of a Metal compile bug on Slang
             ComputeModule tensorOps1Module = compiler.compileFromResource("slang/tensor_ops_1.slang");
             ComputeModule tensorOps2Module = compiler.compileFromResource("slang/tensor_ops_2.slang");
+            ComputeModule tensorOps3Module = compiler.compileFromResource("slang/tensor_ops_3.slang");
             ComputeModule elementaryOpsModule = compiler.compileFromResource("slang/elementary_ops.slang");
             ComputeModule activationsModule = compiler.compileFromResource("slang/activations.slang");
             ComputeModule gradientClipModule = compiler.compileFromResource("slang/gradient_clippers.slang");
@@ -150,6 +151,7 @@ public class SiliconGpuTensor extends BaseTensor {
             SiliconContext.storeModule(device, "concat", concat);
             SiliconContext.storeModule(device, "tensor_ops_1", tensorOps1Module);
             SiliconContext.storeModule(device, "tensor_ops_2", tensorOps2Module);
+            SiliconContext.storeModule(device, "tensor_ops_3", tensorOps3Module);
             SiliconContext.storeModule(device, "elementary_ops", elementaryOpsModule);
             SiliconContext.storeModule(device, "activations", activationsModule);
             SiliconContext.storeModule(device, "gradient_clippers", gradientClipModule);
@@ -165,9 +167,11 @@ public class SiliconGpuTensor extends BaseTensor {
             SiliconContext.registerAll(device, concat, concatKernels);
 
             String[] tensorOps1Kernels = { "slice", "layer_norm", "broadcast_to" };
-            String[] tensorOps2Kernels = { "add_op", "sub_op", "mul_op", "div_op", "pow_op", "sum_along_dim", "softmax_last_dim" };
+            String[] tensorOps2Kernels = { "add_op", "sub_op", "mul_op", "div_op", "pow_op" };
+            String[] tensorOps3Kernels = { "sum_along_dim", "softmax_last_dim" };
             SiliconContext.registerAll(device, tensorOps1Module, tensorOps1Kernels);
             SiliconContext.registerAll(device, tensorOps2Module, tensorOps2Kernels);
+            SiliconContext.registerAll(device, tensorOps3Module, tensorOps3Kernels);
 
             String[] scalarKernels = {
                 "mask", "add_scalar", "sub_scalar", "mul_scalar",

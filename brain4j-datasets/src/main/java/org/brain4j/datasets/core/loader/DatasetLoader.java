@@ -3,7 +3,7 @@ package org.brain4j.datasets.core.loader;
 import org.brain4j.datasets.api.DatasetInfo;
 import org.brain4j.datasets.api.HuggingFaceClient;
 import org.brain4j.datasets.cache.manager.CacheManager;
-import org.brain4j.datasets.core.dataset.Dataset;
+import org.brain4j.datasets.core.dataset.HFDataset;
 import org.brain4j.datasets.core.dataset.DatasetFile;
 import org.brain4j.datasets.core.loader.config.LoadConfig;
 import org.brain4j.datasets.download.callback.ProgressCallback;
@@ -39,11 +39,11 @@ public class DatasetLoader implements AutoCloseable {
                 progressCallback);
     }
 
-    public Dataset loadDataset(String datasetId) throws Exception {
+    public HFDataset loadDataset(String datasetId) throws Exception {
         return loadDataset(datasetId, LoadConfig.defaultConfig());
     }
 
-    public Dataset loadDataset(String datasetId, LoadConfig config) throws Exception {
+    public HFDataset loadDataset(String datasetId, LoadConfig config) throws Exception {
         logger.info("Loading dataset: {}", datasetId);
 
         Optional<DatasetInfo> infoOpt = client.getDatasetInfo(datasetId);
@@ -85,17 +85,17 @@ public class DatasetLoader implements AutoCloseable {
         datasetConfig.put("split", config.split());
         datasetConfig.put("streaming", config.streaming());
 
-        Dataset dataset = new Dataset(resolvedDatasetId, info, files, datasetConfig);
+        HFDataset dataset = new HFDataset(resolvedDatasetId, info, files, datasetConfig);
         logger.info("Successfully loaded dataset: {} with {} files", resolvedDatasetId, files.size());
 
         return dataset;
     }
 
-    public CompletableFuture<Dataset> loadDatasetAsync(String datasetId) {
+    public CompletableFuture<HFDataset> loadDatasetAsync(String datasetId) {
         return loadDatasetAsync(datasetId, LoadConfig.defaultConfig());
     }
 
-    public CompletableFuture<Dataset> loadDatasetAsync(String datasetId, LoadConfig config) {
+    public CompletableFuture<HFDataset> loadDatasetAsync(String datasetId, LoadConfig config) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return loadDataset(datasetId, config);
