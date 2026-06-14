@@ -1,11 +1,11 @@
 package org.brain4j.math.activation;
 
 import org.brain4j.math.Tensors;
-import org.brain4j.math.gpu.silicon.SiliconContext;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
-import org.brain4j.math.gpu.silicon.SiliconKernel;
+import org.brain4j.math.gpu.GpuContext;
+import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.WeightInit;
 import org.silicon.api.function.ComputeFunction;
 import org.silicon.api.kernel.ComputeSize;
@@ -50,19 +50,19 @@ public interface Activation {
         return getClass().getSimpleName().replaceAll("Activation", "");
     }
 
-    /**
+     /**
      * Creates the kernel to execute.
-     * @param kernel the OpenCL kernel instance
+     * @param kernel the Silicon compute function
      * @param input the current tensor
      * @param output the resulting tensor
      * @return a kernel factory ready to be launched
      */
-    default SiliconKernel createKernel(
+    default KernelFactory createKernel(
         ComputeFunction kernel,
-        SiliconGpuTensor input,
-        SiliconGpuTensor output
+        GpuTensor input,
+        GpuTensor output
     ) {
-        return SiliconKernel
+        return KernelFactory
             .create(kernel)
             .intVal(getActivationId()) // activation type
             .floatVal(0f) // alpha
@@ -78,7 +78,7 @@ public interface Activation {
     default Tensor activate(Tensor input) {
         int[] shape = input.shape();
         
-        if (input instanceof SiliconGpuTensor gpuInput) {
+        if (input instanceof GpuTensor gpuInput) {
             return computeGpu(gpuInput, "forward");
         }
         
@@ -98,7 +98,7 @@ public interface Activation {
     default Tensor derivative(Tensor input, Tensor output, Tensor gradOut) {
         int[] shape = input.shape();
         
-        if (input instanceof SiliconGpuTensor gpuInput) {
+        if (input instanceof GpuTensor gpuInput) {
             Tensor derivative = computeGpu(gpuInput, "backward");
             return gradOut == null ? derivative : derivative.mul(gradOut);
         }
@@ -114,13 +114,13 @@ public interface Activation {
         return gradOut == null ? derivative : gradOut.times(derivative);
     }
 
-    private SiliconGpuTensor computeGpu(SiliconGpuTensor input, String suffix) {
-        SiliconDevice device = input.getDevice();
-        SiliconGpuTensor result = new SiliconGpuTensor(device, input.shape());
+    private GpuTensor computeGpu(GpuTensor input, String suffix) {
+        Device device = input.getDevice();
+        GpuTensor result = new GpuTensor(device, input.shape());
 
-        try (SiliconContext.QueueHandle queue = SiliconContext.getOrCreateQueue(device)) {
-            ComputeFunction kernel = SiliconContext.findFunction(device, "activation_" + suffix);
-            SiliconKernel factory = createKernel(kernel, input, result);
+        try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
+            ComputeFunction kernel = GpuContext.findFunction(device, "activation_" + suffix);
+            KernelFactory factory = createKernel(kernel, input, result);
 
             ComputeSize size = new ComputeSize(input.size(), 1, 1);
             factory.launch(queue.queue(), size);

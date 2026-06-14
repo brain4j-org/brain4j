@@ -101,4 +101,3 @@ void sqrt_op(
 
     data[gid] = sqrt(data[gid]);
 }
-

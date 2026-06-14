@@ -23,6 +23,10 @@ tasks.named("compileJava") {
     dependsOn(":brain4j-core:shadowJar")
 }
 
+test {
+    failOnNoDiscoveredTests = false
+}
+
 tasks.register("cleanModelsCache") {
     description = "Cleans the local Brain4J models cache"
     group = "development"

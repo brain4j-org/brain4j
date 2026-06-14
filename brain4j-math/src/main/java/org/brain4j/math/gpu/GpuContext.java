@@ -1,69 +1,139 @@
 package org.brain4j.math.gpu;
 
 import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.device.DeviceUtils;
 import org.brain4j.math.gpu.memory.GpuQueue;
-import org.lwjgl.opencl.CL10;
+import org.silicon.api.function.ComputeFunction;
+import org.silicon.api.function.ComputeModule;
+import org.silicon.api.kernel.ComputeQueue;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Kernel and module registry for Brain4J GPU execution.
+ */
 public class GpuContext {
 
-    private static final Map<Device, Map<String, Long>> kernelCache = new HashMap<>();
+    private static final Map<Device, Map<String, ComputeFunction>> KERNEL_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Device, Map<String, ComputeModule>> MODULE_CACHE = new ConcurrentHashMap<>();
 
-    public static void register(Device device, String kernelName, long program) {
-        kernelCache.computeIfAbsent(device, d -> new HashMap<>())
-            .compute(kernelName, (name, existingKernel) -> {
-                if (existingKernel != null) return existingKernel;
+    private GpuContext() {}
 
-                int[] err = new int[1];
-                long result = CL10.clCreateKernel(program, name, err);
-                
-                DeviceUtils.checkError("create_kernel", err[0]);
-                return result;
-            });
+    public static void register(Device device, String kernelName, ComputeFunction function) {
+        KERNEL_CACHE.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
+            .put(kernelName, function);
     }
 
-    public static long findKernel(Device device, String kernelName) {
-        Map<String, Long> deviceKernels = kernelCache.get(device);
+    public static void register(Device device, String kernelName, ComputeModule module) {
+        try {
+            ComputeFunction function = module.getFunction(kernelName);
+            register(device, kernelName, function);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to register kernel " + kernelName, e);
+        }
+    }
+
+    public static void registerAll(Device device, ComputeModule module, String... kernelNames) {
+        for (String kernelName : kernelNames) {
+            register(device, kernelName, module);
+        }
+    }
+
+    public static void storeModule(Device device, String moduleName, ComputeModule module) {
+        MODULE_CACHE.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
+            .put(moduleName, module);
+    }
+
+    public static ComputeModule getModule(Device device, String moduleName) {
+        Map<String, ComputeModule> deviceModules = MODULE_CACHE.get(device);
+        return deviceModules != null ? deviceModules.get(moduleName) : null;
+    }
+
+    public static ComputeFunction findFunction(Device device, String kernelName) {
+        Map<String, ComputeFunction> deviceKernels = KERNEL_CACHE.get(device);
 
         if (deviceKernels == null) {
             throw new IllegalStateException("No kernels registered for device: " + device);
         }
 
-        long kernel = deviceKernels.getOrDefault(kernelName, -1L);
+        ComputeFunction function = deviceKernels.get(kernelName);
 
-        if (kernel == -1) {
-            throw new IllegalStateException("Kernel " + kernelName + " not registered for device: " + device.name());
+        if (function == null) {
+            throw new IllegalStateException("Kernel " + kernelName + " not registered for device: " + device.getName());
         }
 
-        return kernel;
+        return function;
+    }
+
+    @Deprecated
+    public static long findKernel(Device device, String kernelName) {
+        throw new UnsupportedOperationException(
+            "Raw native kernels are not available in the Silicon GPU backend"
+        );
+    }
+
+    public static QueueHandle getOrCreateQueue(Device device) {
+        ComputeQueue queue = device.queue();
+        if (queue != null) {
+            return new QueueHandle(queue, false);
+        }
+
+        return new QueueHandle(device.context().createQueue(), true);
     }
 
     public static GpuQueue getOrCreate(Device device) {
         GpuQueue queue = device.getQueue();
-        
-        if (queue == null) {
-            long clQueue = device.newCommandQueue();
-            queue = new GpuQueue(clQueue, true);
+        if (queue != null) {
+            return queue;
         }
 
-        return queue;
+        return new GpuQueue(device.context().createQueue(), true);
     }
 
+    public static void finishAndRelease(GpuQueue queue) {
+        if (queue == null) return;
+        queue.close();
+    }
+
+    @Deprecated
     public static void finishAndRelease(long commandQueue) {
-        DeviceUtils.checkError("finish", CL10.clFinish(commandQueue));
-        DeviceUtils.checkError("release_command_queue", CL10.clReleaseCommandQueue(commandQueue));
+        throw new UnsupportedOperationException(
+            "Raw native command queues are not available in the Silicon GPU backend"
+        );
     }
 
     public static void finishAndRelease(Device device) {
         GpuQueue queue = device.getQueue();
-        
-        if (queue != null && queue.pointer() != 0) {
-            finishAndRelease(queue.pointer());
+        if (queue != null) {
+            queue.close();
         }
-        
-        device.setQueue(null);
+        device.setQueue((GpuQueue) null);
+    }
+
+    @Deprecated
+    public static void register(Device device, String kernelName, long program) {
+        throw new UnsupportedOperationException(
+            "Native program registration has been removed. Register Silicon ComputeFunction instances instead."
+        );
+    }
+
+    public static void clearCache(Device device) {
+        KERNEL_CACHE.remove(device);
+        MODULE_CACHE.remove(device);
+    }
+
+    public static void clearAllCaches() {
+        KERNEL_CACHE.clear();
+        MODULE_CACHE.clear();
+    }
+
+    public record QueueHandle(ComputeQueue queue, boolean temporary) implements AutoCloseable {
+        @Override
+        public void close() {
+            if (temporary) {
+                queue.await();
+                queue.free();
+            }
+        }
     }
 }

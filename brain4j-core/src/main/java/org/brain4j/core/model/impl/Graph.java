@@ -6,7 +6,7 @@ import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.Model;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.*;
@@ -17,10 +17,10 @@ public class Graph implements Model {
     private final List<Node> input;
     private final List<Node> output;
     private final List<Node> topology;
-    private final SiliconDevice device;
+    private final Device device;
     private final int seed;
 
-    protected Graph(List<Node> output, SiliconDevice device, int seed) {
+    protected Graph(List<Node> output, Device device, int seed) {
         this.device = device;
         this.output = output;
         this.seed = seed;
@@ -55,7 +55,7 @@ public class Graph implements Model {
         return new Graph(List.of(output), null, seed);
     }
 
-    public static Graph of(int seed, SiliconDevice device, Node... output) {
+    public static Graph of(int seed, Device device, Node... output) {
         return new Graph(List.of(output), device, seed);
     }
 
@@ -103,7 +103,7 @@ public class Graph implements Model {
     }
 
     @Override
-    public SiliconDevice device() {
+    public Device device() {
         return device;
     }
 
@@ -113,7 +113,7 @@ public class Graph implements Model {
     }
     
     @Override
-    public Graph fork(SiliconDevice device) {
+    public Graph fork(Device device) {
         List<Node> copy = output.stream().map(Node::copy).toList();
         return new Graph(copy, device, seed);
     }

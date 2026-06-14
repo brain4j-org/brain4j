@@ -9,7 +9,7 @@ import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 
 import java.text.DecimalFormat;
@@ -21,9 +21,9 @@ public class Sequential implements Model, ModelBlock {
     private final Graph graph;
     private final ModelSpecs specs;
     private final List<Layer> layers;
-    private final SiliconDevice device;
+    private final Device device;
     
-    public Sequential(ModelSpecs specs, SiliconDevice device, List<Layer> layers, int seed) {
+    public Sequential(ModelSpecs specs, Device device, List<Layer> layers, int seed) {
         this.specs = specs;
         this.device = device;
         this.layers = layers;
@@ -48,7 +48,7 @@ public class Sequential implements Model, ModelBlock {
         this.graph = Graph.of(seed, lastNode);
     }
 
-    public Sequential(ModelSpecs specs, SiliconDevice device, int seed) {
+    public Sequential(ModelSpecs specs, Device device, int seed) {
         this(specs, device, specs.buildLayerList(), seed);
     }
     
@@ -68,14 +68,14 @@ public class Sequential implements Model, ModelBlock {
     }
 
     @Override
-    public Sequential fork(SiliconDevice device) {
+    public Sequential fork(Device device) {
         List<Layer> copiedLayers = layers.stream().map(Layer::copy).toList();
         copiedLayers.forEach(x -> x.to(device));
         return new Sequential(specs.copy(), device, copiedLayers, graph.seed());
     }
     
     @Override
-    public SiliconDevice device() {
+    public Device device() {
         return device;
     }
 

@@ -10,7 +10,7 @@ import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.math.tensor.Tensor;
 
@@ -62,7 +62,7 @@ public interface Model extends Copyable<Model> {
      * Returns the device on which the model parameters are currently stored.
      * @return the device associated with this model
      */
-    SiliconDevice device();
+    Device device();
 
     /**
      * Evaluates the model on the given dataset.
@@ -137,7 +137,7 @@ public interface Model extends Copyable<Model> {
      */
     void summary();
     
-    Model fork(SiliconDevice device);
+    Model fork(Device device);
     
     /**
      * Returns an immutable view of the layers composing this object, in order.
@@ -154,7 +154,7 @@ public interface Model extends Copyable<Model> {
         Tensor[] inputs = batch.getFirst();
         Tensor[] labels = batch.getSecond();
 
-        SiliconDevice device = device();
+        Device device = device();
 
         if (device != null) device.createResources();
 

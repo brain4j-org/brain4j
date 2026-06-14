@@ -8,7 +8,7 @@ import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
 
@@ -167,7 +167,7 @@ public class MultiHeadAttention extends OldLayer {
     }
 
     @Override
-    public void toDevice(SiliconDevice device) {
+    public void toDevice(Device device) {
         this.weights = toPersistentTensor(weights, device);
         this.outProj = toPersistentTensor(outProj, device);
         if (attnQkvHasBias) this.bias = toPersistentTensor(bias, device);

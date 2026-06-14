@@ -1,6 +1,6 @@
 import org.brain4j.core.Brain4J;
 import org.brain4j.math.Tensors;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TensorTest {
     
-    private final SiliconDevice device;
+    private final Device device;
 
     public TensorTest() {
         this.device = Brain4J.firstDevice();

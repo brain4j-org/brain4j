@@ -12,9 +12,9 @@ import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.clipper.impl.HardClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.WeightInit;
 
 import java.util.*;
@@ -209,19 +209,19 @@ public abstract class OldLayer implements ModelBlock {
      * Ports the weights of this layer to the specified device memory.
      * @param device the device to port the weights on
      */
-    public void toDevice(SiliconDevice device) {
+    public void toDevice(Device device) {
         if (weights != null) this.weights = toPersistentTensor(weights, device);
         if (bias != null) this.bias = toPersistentTensor(bias, device);
     }
 
-    protected Tensor toPersistentTensor(Tensor tensor, SiliconDevice device) {
-        if (tensor instanceof SiliconGpuTensor gpuTensor && gpuTensor.getDevice().equals(device)) {
+    protected Tensor toPersistentTensor(Tensor tensor, Device device) {
+        if (tensor instanceof GpuTensor gpuTensor && gpuTensor.getDevice().equals(device)) {
             return gpuTensor;
         }
         
         Tensor result = device == null
             ? tensor.to(null)
-            : SiliconGpuTensor.persistent(tensor, device);
+            : GpuTensor.persistent(tensor, device);
 
         result.setAutogradContext(tensor.getAutogradContext());
         return result;

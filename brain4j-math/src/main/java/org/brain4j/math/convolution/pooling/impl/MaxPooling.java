@@ -5,10 +5,10 @@ import org.brain4j.math.convolution.pooling.PoolingProvider;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.TensorKey;
 import org.brain4j.math.tensor.Usage;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
-import org.brain4j.math.gpu.silicon.SiliconContext;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
-import org.brain4j.math.gpu.silicon.SiliconKernel;
+import org.brain4j.math.tensor.impl.GpuTensor;
+import org.brain4j.math.gpu.GpuContext;
+import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.silicon.api.device.ComputeBuffer;
 import org.silicon.api.kernel.ComputeSize;
 
@@ -65,7 +65,7 @@ public class MaxPooling extends PoolingProvider {
     
     @Override
     public Tensor poolGPU(Tensor input) {
-        if (!(input instanceof SiliconGpuTensor A)) {
+        if (!(input instanceof GpuTensor A)) {
             return poolCPU(input);
         }
 
@@ -80,9 +80,9 @@ public class MaxPooling extends PoolingProvider {
         int outerSize = 1;
         for (int i = 0; i < rank - 2; i++) outerSize *= shape[i];
 
-        SiliconDevice device = A.getDevice();
+        Device device = A.getDevice();
 
-        SiliconGpuTensor result = new SiliconGpuTensor(device, composeOutShape(shape, outHeight, outWidth));
+        GpuTensor result = new GpuTensor(device, composeOutShape(shape, outHeight, outWidth));
         result.setAutogradContext(A.getAutogradContext());
 
         int totalOut = outerSize * outHeight * outWidth;
@@ -99,8 +99,8 @@ public class MaxPooling extends PoolingProvider {
         this.xCoordsBuffer = device.acquire(xKey, () -> device.createBuffer(xArr));
         this.yCoordsBuffer = device.acquire(yKey, () -> device.createBuffer(yArr));
 
-        try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
-            SiliconKernel.create(device, "max_pool_forward")
+        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, "max_pool_forward")
                 .buffer(A.getDataBuffer())
                 .buffer(result.getDataBuffer())
                 .buffer(xCoordsBuffer)
@@ -143,8 +143,8 @@ public class MaxPooling extends PoolingProvider {
     }
     
     @Override
-    public Tensor backwardGPU(SiliconGpuTensor gradient, SiliconGpuTensor input) {
-        SiliconDevice device = input.getDevice();
+    public Tensor backwardGPU(GpuTensor gradient, GpuTensor input) {
+        Device device = input.getDevice();
 
         int[] shape = input.shape();
         int rank = shape.length;
@@ -157,10 +157,10 @@ public class MaxPooling extends PoolingProvider {
         int outerSize = 1;
         for (int i = 0; i < rank - 2; i++) outerSize *= shape[i];
 
-        SiliconGpuTensor gradInput = new SiliconGpuTensor(device, shape);
+        GpuTensor gradInput = new GpuTensor(device, shape);
 
-        try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
-            SiliconKernel.create(device, "max_pool_backward")
+        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, "max_pool_backward")
                 .buffer(gradient.getDataBuffer())
                 .buffer(gradInput.getDataBuffer())
                 .buffer(xCoordsBuffer)
@@ -170,7 +170,7 @@ public class MaxPooling extends PoolingProvider {
                 .intVal(inWidth)
                 .intVal(outH)
                 .intVal(outW)
-                .launch(qh.queue(), new ComputeSize(outW, outH, outerSize));
+                .launch(qh.queue(), new ComputeSize(inWidth, inHeight, outerSize));
         }
 
         return gradInput;

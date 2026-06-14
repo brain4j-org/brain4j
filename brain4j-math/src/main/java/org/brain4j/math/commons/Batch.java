@@ -1,6 +1,6 @@
 package org.brain4j.math.commons;
 
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 
 public class Batch extends Pair<Tensor[], Tensor[]> {
@@ -9,7 +9,7 @@ public class Batch extends Pair<Tensor[], Tensor[]> {
         super(key, second);
     }
     
-    public Batch to(SiliconDevice device) {
+    public Batch to(Device device) {
         Tensor[] newInputs = new Tensor[first.length];
         Tensor[] newLabels = new Tensor[second.length];
         

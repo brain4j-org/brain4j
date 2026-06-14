@@ -18,24 +18,12 @@ dependencies {
     implementation project(":brain4j-datasets")
     implementation project(":brain4j-dashboard")
 
-    implementation(libs.siliconCuda) {
+    runtimeOnly(libs.siliconCuda) {
         changing = true
     }
-    implementation(libs.siliconMetal) {
+    runtimeOnly(libs.siliconMetal) {
         changing = true
     }
-    implementation(libs.siliconOpenCL) {
-        changing = true
-    }
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(22))
-    }
-
-    sourceCompatibility = JavaVersion.VERSION_22
-    targetCompatibility = JavaVersion.VERSION_22
 }
 
 test {

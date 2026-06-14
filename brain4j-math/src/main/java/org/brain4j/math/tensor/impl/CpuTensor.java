@@ -3,7 +3,6 @@ package org.brain4j.math.tensor.impl;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.broadcast.TensorBroadcast;
@@ -139,12 +138,7 @@ public class CpuTensor extends BaseTensor {
                 return this;
             }
             case Device legacyDevice -> {
-                GpuTensor result = new GpuTensor(legacyDevice, shape, data);
-                result.setAutogradContext(autogradContext);
-                return result;
-            }
-            case SiliconDevice siliconDevice -> {
-                SiliconGpuTensor result = new SiliconGpuTensor(siliconDevice, shape, data);
+                GpuTensor result = new GpuTensor(legacyDevice, shape, contiguousData());
                 result.setAutogradContext(autogradContext);
                 return result;
             }
@@ -306,6 +300,18 @@ public class CpuTensor extends BaseTensor {
     
     @Override
     public Tensor copy() {
-        return new CpuTensor(Shape.of(shape), strides.clone(), data.clone());
+        return new CpuTensor(Shape.of(shape), contiguousData());
+    }
+
+    private float[] contiguousData() {
+        int size = elements();
+        float[] contiguous = new float[size];
+
+        for (int linear = 0; linear < size; linear++) {
+            int[] indices = Tensors.unravelIndex(linear, shape);
+            contiguous[linear] = get(indices);
+        }
+
+        return contiguous;
     }
 }

@@ -17,7 +17,7 @@ import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.core.training.optimizer.impl.AdamW;
 import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Shape;
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class TestMNIST {
         Sequential model = specs.compile(42);
         model.summary(); // prints a summary of the architecture on the console
 
-        SiliconDevice device = Brain4J.firstDevice();
+        Device device = Brain4J.firstDevice();
         if (device != null) {
             model = model.fork(device);
             trainSource = trainSource.to(device);

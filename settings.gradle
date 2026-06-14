@@ -1,5 +1,20 @@
 rootProject.name = 'brain4j'
 
+def localSilicon = file('../silicon')
+def useLocalSilicon = gradle.startParameter.projectProperties
+        .getOrDefault('brain4j.useLocalSilicon', 'false')
+        .toBoolean()
+
+if (useLocalSilicon && localSilicon.isDirectory()) {
+    includeBuild(localSilicon) {
+        dependencySubstitution {
+            substitute module('org.silicon:silicon-api') using project(':silicon-api')
+            substitute module('org.silicon:silicon-cuda') using project(':silicon-cuda')
+            substitute module('org.silicon:silicon-metal') using project(':silicon-metal')
+        }
+    }
+}
+
 include 'brain4j-core'
 include 'brain4j-datasets'
 include 'brain4j-llm'

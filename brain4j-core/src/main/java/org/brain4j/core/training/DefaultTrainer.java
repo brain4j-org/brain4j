@@ -12,7 +12,7 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.commons.Batch;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.AutogradContext;
@@ -258,7 +258,7 @@ public final class DefaultTrainer implements Trainer {
     private void fitBatch(Batch batch) {
         Tensor[] inputs = batch.getFirst();
         
-        SiliconDevice device = model.device();
+        Device device = model.device();
         StatesCache cache = new StatesCache(true);
         
         if (device != null) {

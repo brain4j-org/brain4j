@@ -1,5 +1,5 @@
 [shader("compute")]
-[numthreads(16,16,1)]
+[numthreads(16, 16, 1)]
 void max_pool_forward(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> input,
@@ -19,16 +19,13 @@ void max_pool_forward(
     int outX = dispatchThreadID.x;
     int outY = dispatchThreadID.y;
     int outer = dispatchThreadID.z;
-
     if (outX >= outWidth || outY >= outHeight || outer >= outerSize) return;
 
     int offsetIn = outer * inHeight * inWidth;
     int offsetOut = outer * outHeight * outWidth;
-
     int inBaseY = outY * stride;
     int inBaseX = outX * stride;
-
-    float maxVal = -3.402823e38; // -FLT_MAX
+    float maxVal = -3.402823e38f;
     int maxAbs = 0;
 
     for (int ky = 0; ky < windowHeight; ky++) {
@@ -52,9 +49,8 @@ void max_pool_forward(
     xCoords[outIdx] = rel % inWidth;
 }
 
-
 [shader("compute")]
-[numthreads(16,16,1)]
+[numthreads(16, 16, 1)]
 void max_pool_backward(
     uint3 dispatchThreadID : SV_DispatchThreadID,
     uniform StructuredBuffer<float> gradOutput,
@@ -68,22 +64,23 @@ void max_pool_backward(
     uniform int outWidth
 )
 {
-    int outX = dispatchThreadID.x;
-    int outY = dispatchThreadID.y;
+    int inX = dispatchThreadID.x;
+    int inY = dispatchThreadID.y;
     int outer = dispatchThreadID.z;
-
-    if (outX >= outWidth || outY >= outHeight || outer >= outerSize) return;
+    if (inX >= inWidth || inY >= inHeight || outer >= outerSize) return;
 
     int offsetIn = outer * inHeight * inWidth;
     int offsetOut = outer * outHeight * outWidth;
+    float sum = 0.0f;
 
-    int outIdx = offsetOut + outY * outWidth + outX;
-    float g = gradOutput[outIdx];
+    for (int outY = 0; outY < outHeight; outY++) {
+        for (int outX = 0; outX < outWidth; outX++) {
+            int outIdx = offsetOut + outY * outWidth + outX;
+            if (yCoords[outIdx] == inY && xCoords[outIdx] == inX) {
+                sum += gradOutput[outIdx];
+            }
+        }
+    }
 
-    int y = yCoords[outIdx];
-    int x = xCoords[outIdx];
-    int inIdx = offsetIn + y * inWidth + x;
-
-    // Atomic add to support overlapping windows
-    InterlockedAdd(gradInput[inIdx], g);
+    gradInput[offsetIn + inY * inWidth + inX] = sum;
 }

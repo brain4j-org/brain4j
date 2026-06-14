@@ -9,6 +9,7 @@ public class TempObject<T> {
     public static final Cleaner CLEANER = Cleaner.create();
     
     private final AtomicInteger refCount = new AtomicInteger(1);
+    private final AtomicBoolean released = new AtomicBoolean(false);
 
     private T value;
     private final Runnable cleanerTask;
@@ -16,7 +17,7 @@ public class TempObject<T> {
     public TempObject(T value, Runnable cleanerTask) {
         this.value = value;
         this.cleanerTask = cleanerTask;
-        CLEANER.register(this, new CleanerTask(cleanerTask, refCount));
+        CLEANER.register(this, new CleanerTask(cleanerTask, refCount, released));
     }
     
     public AtomicInteger refCount() {
@@ -37,29 +38,28 @@ public class TempObject<T> {
     }
     
     public void release() {
-        if (refCount.get() == 0) {
+        int count = refCount.decrementAndGet();
+        if (count <= 0 && released.compareAndSet(false, true)) {
             cleanerTask.run();
-            return;
         }
-        
-        refCount.decrementAndGet();
     }
 
     static class CleanerTask implements Runnable {
 
-        private final AtomicBoolean released = new AtomicBoolean(false);
+        private final AtomicBoolean released;
         private final AtomicInteger refCount;
         private final Runnable cleanerTask;
 
-        public CleanerTask(Runnable cleanerTask, AtomicInteger refCount) {
+        public CleanerTask(Runnable cleanerTask, AtomicInteger refCount, AtomicBoolean released) {
             this.cleanerTask = cleanerTask;
             this.refCount = refCount;
+            this.released = released;
         }
 
         @Override
         public void run() {
             int count = refCount.decrementAndGet();
-            if (count == 0 && released.compareAndSet(false, true)) {
+            if (count <= 0 && released.compareAndSet(false, true)) {
                 cleanerTask.run();
             }
         }

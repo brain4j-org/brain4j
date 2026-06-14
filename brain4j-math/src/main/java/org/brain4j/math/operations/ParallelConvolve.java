@@ -10,8 +10,9 @@ import org.brain4j.math.commons.Range;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveAction;
 
 public class ParallelConvolve {
 
@@ -68,7 +69,7 @@ public class ParallelConvolve {
             Tensor patchMatrix = Tensors.im2col(inputBatch, filterHeight, filterWidth, stride);
             float[] patchData = patchMatrix.data(); // [patch_size, total_patches]
             
-            List<Callable<Void>> tasks = new ArrayList<>();
+            List<RecursiveAction> tasks = new ArrayList<>();
             
             for (int f = 0; f < numFilters; f++) {
                 int filterOffset = f * patchSize;
@@ -83,16 +84,18 @@ public class ParallelConvolve {
                 
                 for (int block = 0; block < blocks; block++) {
                     int finalBlock = block;
-                    tasks.add(() -> {
-                        int start = finalBlock * blockSize;
-                        int end = Math.min(start + blockSize, totalPatches);
-                        provider.dotBlock(start, end, data);
-                        return null;
+                    tasks.add(new RecursiveAction() {
+                        @Override
+                        protected void compute() {
+                            int start = finalBlock * blockSize;
+                            int end = Math.min(start + blockSize, totalPatches);
+                            provider.dotBlock(start, end, data);
+                        }
                     });
                 }
             }
             
-            POOL.invokeAll(tasks);
+            POOL.submit(() -> ForkJoinTask.invokeAll(tasks)).join();
         }
 
         return out;

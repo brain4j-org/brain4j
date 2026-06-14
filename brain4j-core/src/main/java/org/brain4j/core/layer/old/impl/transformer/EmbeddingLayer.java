@@ -93,7 +93,7 @@ public class EmbeddingLayer extends OldLayer {
         });
 
         if (input instanceof GpuTensor gpuInput) {
-            output = output.to(gpuInput.device());
+            output = output.to(gpuInput.getDevice());
         }
 
         cache.setStates(this, "input", inputs);

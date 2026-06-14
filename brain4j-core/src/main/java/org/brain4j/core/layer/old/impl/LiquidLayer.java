@@ -8,12 +8,12 @@ import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.solver.NumericalSolver;
 import org.brain4j.math.solver.impl.EulerSolver;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,7 +156,7 @@ public class LiquidLayer extends OldLayer {
         
         Tensor hidden = Tensors.zeros(batch, dimension).withGrad();
         
-        if (input instanceof SiliconGpuTensor gpu) {
+        if (input instanceof GpuTensor gpu) {
             hidden = hidden.to(gpu.getDevice()).withGrad();
         }
         
@@ -236,7 +236,7 @@ public class LiquidLayer extends OldLayer {
     }
     
     @Override
-    public void toDevice(SiliconDevice device) {
+    public void toDevice(Device device) {
         super.toDevice(device);
         hiddenParams.toDevice(device);
         tauParams.toDevice(device);

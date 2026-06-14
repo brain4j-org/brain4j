@@ -15,9 +15,10 @@ import org.brain4j.math.tensor.Tensor;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveAction;
 
 import static org.brain4j.math.Constants.*;
 
@@ -237,23 +238,23 @@ public class BytePairTokenizer implements Tokenizer {
             long start = System.nanoTime();
 
             Map<String, Integer> pairCounts = new ConcurrentHashMap<>();
-            List<Callable<Void>> tasks = new ArrayList<>();
+            List<RecursiveAction> tasks = new ArrayList<>();
 
             for (String[] symbols : merges.values()) {
-                Callable<Void> task = () -> {
-                    for (int i = 0; i < symbols.length - 1; i++) {
-                        String pair = symbols[i] + symbols[i + 1];
-                        pairCounts.merge(pair, 1, Integer::sum);
+                RecursiveAction task = new RecursiveAction() {
+                    @Override
+                    protected void compute() {
+                        for (int i = 0; i < symbols.length - 1; i++) {
+                            String pair = symbols[i] + symbols[i + 1];
+                            pairCounts.merge(pair, 1, Integer::sum);
+                        }
                     }
-                    return null;
                 };
 
                 tasks.add(task);
             }
             
-            try (ForkJoinPool pool = ForkJoinPool.commonPool()) {
-                pool.invokeAll(tasks);
-            }
+            ForkJoinPool.commonPool().submit(() -> ForkJoinTask.invokeAll(tasks)).join();
 
             if (pairCounts.isEmpty()) break;
 

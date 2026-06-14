@@ -1,8 +1,8 @@
 package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.gpu.silicon.SiliconKernel;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.brain4j.math.gpu.kernel.KernelFactory;
+import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.impl.NormalHeInit;
 import org.brain4j.math.weightsinit.WeightInit;
 import org.silicon.api.function.ComputeFunction;
@@ -39,8 +39,8 @@ public record LeakyReLU(double alpha) implements Activation {
     }
 
     @Override
-    public SiliconKernel createKernel(ComputeFunction kernel, SiliconGpuTensor input, SiliconGpuTensor output) {
-        return SiliconKernel.create(kernel)
+    public KernelFactory createKernel(ComputeFunction kernel, GpuTensor input, GpuTensor output) {
+        return KernelFactory.create(kernel)
             .intVal(getActivationId())
             .floatVal((float) alpha)
             .intVal(input.size())

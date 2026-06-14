@@ -63,12 +63,10 @@ Complex twiddle_factor(int k, int n, int direction)
 
 float safe_exp(float x)
 {
-    x = clamp(x, -88.0f, 88.0f);
-    return exp(x);
+    return exp(clamp(x, -88.0f, 88.0f));
 }
 
 float safe_log(float x)
 {
     return log(max(x, 1e-10f));
 }
-

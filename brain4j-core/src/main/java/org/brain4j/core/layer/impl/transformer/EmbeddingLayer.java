@@ -88,7 +88,7 @@ public class EmbeddingLayer extends Layer {
         });
 
         if (input instanceof GpuTensor gpuInput) {
-            output = output.to(gpuInput.device());
+            output = output.to(gpuInput.getDevice());
         }
         
         if (cache.isTraining()) {

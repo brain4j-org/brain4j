@@ -1,13 +1,15 @@
 package org.brain4j.math.gpu.memory;
 
 import org.brain4j.math.gpu.TempObject;
-import org.lwjgl.opencl.CL10;
+import org.silicon.api.device.ComputeBuffer;
 
-public class TempBuffer extends TempObject<Long> {
-    
-    public TempBuffer(long value) {
-        super(value, () -> {
-            CL10.clReleaseMemObject(value);
-        });
+public class TempBuffer extends TempObject<ComputeBuffer> {
+
+    public TempBuffer(ComputeBuffer value) {
+        super(value, value::free);
+    }
+
+    public ComputeBuffer buffer() {
+        return value();
     }
 }

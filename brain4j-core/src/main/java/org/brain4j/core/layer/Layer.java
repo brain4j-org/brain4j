@@ -10,7 +10,7 @@ import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.clipper.impl.HardClipper;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.weightsinit.WeightInit;
@@ -81,7 +81,7 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
 
     }
     
-    public void to(SiliconDevice device) {
+    public void to(Device device) {
         Map<String, Tensor> newParameters = new HashMap<>();
         parameters.forEach((k, v) -> newParameters.put(k, v.to(device)));
         

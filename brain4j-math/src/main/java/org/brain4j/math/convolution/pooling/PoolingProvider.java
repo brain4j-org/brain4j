@@ -1,7 +1,7 @@
 package org.brain4j.math.convolution.pooling;
 
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 
 public abstract class PoolingProvider {
 
@@ -16,7 +16,7 @@ public abstract class PoolingProvider {
     }
     
     public Tensor pool(Tensor input) {
-        if (input instanceof SiliconGpuTensor gpuInput) {
+        if (input instanceof GpuTensor gpuInput) {
             return poolGPU(gpuInput);
         } else return poolCPU(input);
     }
@@ -26,14 +26,14 @@ public abstract class PoolingProvider {
     public abstract Tensor poolGPU(Tensor input);
     
     public Tensor backward(Tensor gradient, Tensor input) {
-        if (gradient instanceof SiliconGpuTensor gpuGrad
-            && input instanceof SiliconGpuTensor gpuInput) {
+        if (gradient instanceof GpuTensor gpuGrad
+            && input instanceof GpuTensor gpuInput) {
             return backwardGPU(gpuGrad, gpuInput);
         } else return backwardCPU(gradient, input);
     }
     
     public abstract Tensor backwardCPU(Tensor gradient, Tensor input);
     
-    public abstract Tensor backwardGPU(SiliconGpuTensor gradient, SiliconGpuTensor input);
+    public abstract Tensor backwardGPU(GpuTensor gradient, GpuTensor input);
     
 }

@@ -61,7 +61,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         
         Tensor mask = Tensors.triangularMask(seqLength, seqLength);
         
-        if (input instanceof GpuTensor gpu) mask = mask.to(gpu.device());
+        if (input instanceof GpuTensor gpu) mask = mask.to(gpu.getDevice());
         
         Tensor K_T = K.transposeGrad();
         Tensor scores = Q.matmulGrad(K_T).div(normalizer);

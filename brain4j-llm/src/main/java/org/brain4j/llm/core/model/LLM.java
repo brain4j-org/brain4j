@@ -14,7 +14,7 @@ import org.brain4j.llm.core.architecture.ArchitectureRegistry;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 
 import java.io.FileNotFoundException;
@@ -123,7 +123,7 @@ public class LLM implements InferenceProvider {
     }
 
     @Override
-    public LLM fork(SiliconDevice device) {
+    public LLM fork(Device device) {
         if (model == null) throw new NullPointerException("Model has not been compiled!");
         if (device == null) throw new NullPointerException("Device cannot be null!");
 

@@ -2,12 +2,12 @@ package org.brain4j.math.tensor.autograd.impl;
 
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Range;
-import org.brain4j.math.gpu.silicon.SiliconContext;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
-import org.brain4j.math.gpu.silicon.SiliconKernel;
+import org.brain4j.math.gpu.GpuContext;
+import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 import org.silicon.api.kernel.ComputeSize;
 
 public record ConvolveOperation(int stride) implements Operation {
@@ -26,7 +26,7 @@ public record ConvolveOperation(int stride) implements Operation {
         Tensor input = inputs[0];
         Tensor filter = inputs[1];
 
-        SiliconDevice device = resolveDevice(input, filter, gradOutput);
+        Device device = resolveDevice(input, filter, gradOutput);
 
         if (device == null) {
             return backwardCpu(gradOutput, input, filter);
@@ -40,11 +40,11 @@ public record ConvolveOperation(int stride) implements Operation {
         );
     }
 
-    private Tensor[] backwardGpu(Tensor input, Tensor filter, Tensor gradOutput, SiliconDevice device) {
-        if (!(input instanceof SiliconGpuTensor gpuInput)
-            || !(filter instanceof SiliconGpuTensor gpuFilter)
-            || !(gradOutput instanceof SiliconGpuTensor gpuGradOutput)) {
-            throw new IllegalStateException("GPU backward expected Silicon tensors");
+    private Tensor[] backwardGpu(Tensor input, Tensor filter, Tensor gradOutput, Device device) {
+        if (!(input instanceof GpuTensor gpuInput)
+            || !(filter instanceof GpuTensor gpuFilter)
+            || !(gradOutput instanceof GpuTensor gpuGradOutput)) {
+            throw new IllegalStateException("GPU backward expected GPU tensors");
         }
 
         int[] inputShape = gpuInput.shape();
@@ -67,8 +67,8 @@ public record ConvolveOperation(int stride) implements Operation {
         int outHeight = gradOutputShape[2];
         int outWidth = gradOutputShape[3];
 
-        SiliconGpuTensor gradInput = new SiliconGpuTensor(device, inputShape);
-        SiliconGpuTensor gradFilter = new SiliconGpuTensor(device, filterShape);
+        GpuTensor gradInput = new GpuTensor(device, inputShape);
+        GpuTensor gradFilter = new GpuTensor(device, filterShape);
 
         int tile = 8;
         ComputeSize local = new ComputeSize(tile, tile, 1);
@@ -85,8 +85,8 @@ public record ConvolveOperation(int stride) implements Operation {
             Math.max(1, numFilters)
         );
 
-        try (SiliconContext.QueueHandle qh = SiliconContext.getOrCreateQueue(device)) {
-            SiliconKernel.create(device, "conv2d_backward_input_nchw")
+        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, "conv2d_backward_input_nchw")
                 .buffer(gpuGradOutput.getDataBuffer())
                 .buffer(gpuFilter.getDataBuffer())
                 .buffer(gradInput.getDataBuffer())
@@ -102,7 +102,7 @@ public record ConvolveOperation(int stride) implements Operation {
                 .intVal(outWidth)
                 .launch(qh.queue(), gradInputGlobal, local);
 
-            SiliconKernel.create(device, "conv2d_backward_filter_nchw")
+            KernelFactory.create(device, "conv2d_backward_filter_nchw")
                 .buffer(gpuInput.getDataBuffer())
                 .buffer(gpuGradOutput.getDataBuffer())
                 .buffer(gradFilter.getDataBuffer())
@@ -167,9 +167,9 @@ public record ConvolveOperation(int stride) implements Operation {
         return new Tensor[] { gradInput, gradFilter };
     }
 
-    private SiliconDevice resolveDevice(Tensor... tensors) {
+    private Device resolveDevice(Tensor... tensors) {
         for (Tensor tensor : tensors) {
-            if (tensor instanceof SiliconGpuTensor gpu) {
+            if (tensor instanceof GpuTensor gpu) {
                 return gpu.getDevice();
             }
         }

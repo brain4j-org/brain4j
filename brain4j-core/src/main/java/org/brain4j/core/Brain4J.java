@@ -2,10 +2,7 @@ package org.brain4j.core;
 
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.gpu.silicon.SiliconDevice;
-import org.brain4j.math.gpu.silicon.SiliconDeviceUtils;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.tensor.impl.SiliconGpuTensor;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -115,7 +112,7 @@ public class Brain4J {
 
     /**
      * Returns a comma-separated list of all available GPU devices
-     * detected by the OpenCL backend.
+     * detected by the Silicon backend.
      * <p>
      * If no devices are available, an empty string is returned.
      *
@@ -134,21 +131,6 @@ public class Brain4J {
      *
      * @param device the target GPU device to initialize
      */
-    public static void initKernels(SiliconDevice device) {
-        SiliconGpuTensor.initKernels(device);
-    }
-    
-    /**
-     * Initializes GPU kernels on the specified device.
-     * <p>
-     * This method compiles and loads all GPU-side kernels used
-     * by {@link GpuTensor} operations. It should be called before
-     * performing any GPU computation if not done automatically.
-     *
-     * @param device the target GPU device to initialize
-     * @deprecated use {@link SiliconDevice} for GPU support
-     */
-    @Deprecated
     public static void initKernels(Device device) {
         GpuTensor.initKernels(device);
     }
@@ -162,15 +144,15 @@ public class Brain4J {
      * @return the first detected {@link Device}
      * @throws IllegalStateException if no GPU devices are found
      */
-    public static SiliconDevice firstDevice() {
+    public static Device firstDevice() {
         try {
-            List<String> devices = SiliconDeviceUtils.allDeviceNames();
+            List<String> devices = DeviceUtils.allDeviceNames();
 
             if (devices.isEmpty()) {
                 return null;
             }
 
-            SiliconDevice device = SiliconDeviceUtils.findDevice(devices.getFirst());
+            Device device = DeviceUtils.findDevice(devices.getFirst());
 
             if (device != null) Brain4J.initKernels(device);
 
@@ -212,7 +194,7 @@ public class Brain4J {
      * Returns a list of all GPU devices available to the framework.
      * <p>
      * Each {@link Device} object represents a physical or logical
-     * compute device accessible via OpenCL.
+     * compute device accessible through Silicon.
      *
      * @return a list of all available {@link Device} instances
      */

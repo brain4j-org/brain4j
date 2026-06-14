@@ -9,6 +9,7 @@ import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public class PosEncodeLayer extends Layer {
         
         if (shape.length != 3) {
             throw Commons.illegalArgument("Input must have shape [batch, seq_length, dimension]! Got: %s",
-                java.util.Arrays.toString(shape));
+                Arrays.toString(shape));
         }
         
         int seqLength = shape[1];
@@ -82,7 +83,7 @@ public class PosEncodeLayer extends Layer {
         
         Tensor output = input.add(positional);
         
-        if (input instanceof GpuTensor gpuTensor) output = output.to(gpuTensor.device());
+        if (input instanceof GpuTensor gpuTensor) output = output.to(gpuTensor.getDevice());
         if (input.usesGrad()) output = output.withGrad();
         
         return new Tensor[] { output };
