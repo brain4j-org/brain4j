@@ -38,7 +38,7 @@ public class Sequential implements Model, ModelBlock {
             throw Commons.illegalArgument("First layer is not an input layer!");
         }
         
-        Node lastNode = Node.input(inputLayer.shape());
+        Node lastNode = Node.input(inputLayer.config().shape());
         
         for (int i = 1; i < layers.size(); i++) {
             Layer current = layers.get(i);

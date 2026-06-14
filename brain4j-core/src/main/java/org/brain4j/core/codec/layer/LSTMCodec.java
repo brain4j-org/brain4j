@@ -19,8 +19,8 @@ public class LSTMCodec implements Codec<LSTMLayer> {
     
     @Override
     public void write(LSTMLayer lstmLayer, ObjectNode out) {
-        out.put("hidden_dimension", lstmLayer.hiddenDimension());
-        out.put("return_sequences", lstmLayer.returnSequences());
+        out.put("hidden_dimension", lstmLayer.config().hiddenDimension());
+        out.put("return_sequences", lstmLayer.config().returnSequences());
     }
     
     @Override

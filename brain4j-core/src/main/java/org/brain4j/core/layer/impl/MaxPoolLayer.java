@@ -10,15 +10,17 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 public class MaxPoolLayer extends Layer {
-    
-    private final int stride;
-    private final int windowHeight;
-    private final int windowWidth;
+
+    public record Config(int stride, int windowHeight, int windowWidth) {}
+
+    protected Config config;
 
     public MaxPoolLayer(int stride, int windowHeight, int windowWidth) {
-        this.stride = stride;
-        this.windowHeight = windowHeight;
-        this.windowWidth = windowWidth;
+        this(new Config(stride, windowHeight, windowWidth));
+    }
+
+    public MaxPoolLayer(Config config) {
+        this.config = config;
     }
 
     @Override
@@ -34,46 +36,38 @@ public class MaxPoolLayer extends Layer {
         if (inputShapes.size() != 1) {
             throw Commons.illegalArgument("Layer requires 1 input but %s were given!", inputShapes.size());
         }
-        
+
         Shape input = inputShapes.getFirst();
-        
+
         if (input.rank() != 3) {
             throw Commons.illegalArgument("MaxPool requires tensors with rank 3 but %s were given!", input.rank());
         }
-        
+
         int channels = input.dim(0);
         int height = input.dim(1);
         int width = input.dim(2);
-        
-        int outHeight = (height - windowHeight) / stride + 1;
-        int outWidth = (width - windowWidth) / stride + 1;
-        
+
+        int outHeight = (height - config.windowHeight) / config.stride + 1;
+        int outWidth = (width - config.windowWidth) / config.stride + 1;
+
         if (outHeight <= 0 || outWidth <= 0) {
             throw Commons.illegalArgument("Negative output dims: outHeight=%s outWidth=%s", outHeight, outWidth);
         }
-        
+
         return List.of(Shape.of(channels, outHeight, outWidth));
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        return tensors(inputs[0].maxPoolGrad(stride, windowHeight, windowWidth));
+        return tensors(inputs[0].maxPoolGrad(config.stride, config.windowHeight, config.windowWidth));
     }
 
     @Override
     public Layer copy() {
-        return new MaxPoolLayer(stride, windowHeight, windowWidth);
+        return new MaxPoolLayer(config);
     }
-    
-    public int stride() {
-        return stride;
-    }
-    
-    public int windowHeight() {
-        return windowHeight;
-    }
-    
-    public int windowWidth() {
-        return windowWidth;
+
+    public Config config() {
+        return config;
     }
 }

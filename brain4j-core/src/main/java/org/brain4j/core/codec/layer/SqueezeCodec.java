@@ -19,7 +19,7 @@ public class SqueezeCodec implements Codec<SqueezeLayer> {
 
     @Override
     public void write(SqueezeLayer layer, ObjectNode out) {
-        out.put("dimension", layer.dimension());
+        out.put("dimension", layer.config().dimension());
     }
 
     @Override

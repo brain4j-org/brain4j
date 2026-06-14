@@ -1,9 +1,9 @@
-package org.brain4j.core.transformer.tokenizers.impl;
+package org.brain4j.core.tokenizers.impl;
 
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import org.brain4j.core.transformer.tokenizers.model.AddedToken;
-import org.brain4j.core.transformer.tokenizers.model.Normalizer;
+import org.brain4j.core.tokenizers.model.AddedToken;
+import org.brain4j.core.tokenizers.model.Normalizer;
 
 import java.io.*;
 import java.lang.reflect.Type;

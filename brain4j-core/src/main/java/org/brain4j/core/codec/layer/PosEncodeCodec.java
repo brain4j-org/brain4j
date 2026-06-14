@@ -19,8 +19,8 @@ public class PosEncodeCodec implements Codec<PosEncodeLayer> {
 
     @Override
     public void write(PosEncodeLayer layer, ObjectNode out) {
-        out.put("length", layer.length());
-        out.put("dimension", layer.dimension());
+        out.put("length", layer.config().length());
+        out.put("dimension", layer.config().dimension());
     }
 
     @Override

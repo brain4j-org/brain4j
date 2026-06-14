@@ -10,11 +10,17 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 public class SelectLayer extends Layer {
-    
-    private final int index;
-    
+
+    public record Config(int index) {}
+
+    protected Config config;
+
     public SelectLayer(int index) {
-        this.index = index;
+        this(new Config(index));
+    }
+
+    public SelectLayer(Config config) {
+        this.config = config;
     }
 
     @Override
@@ -30,25 +36,25 @@ public class SelectLayer extends Layer {
         if (inputShapes.isEmpty()) {
             throw Commons.illegalArgument("Layer requires at least 1 input but 0 were given!");
         }
-        
-        if (index < 0 || index >= inputShapes.size()) {
-            throw Commons.illegalArgument("Selection index %s is out of range (size=%s)", index, inputShapes.size());
+
+        if (config.index < 0 || config.index >= inputShapes.size()) {
+            throw Commons.illegalArgument("Selection index %s is out of range (size=%s)", config.index, inputShapes.size());
         }
-        
-        return List.of(inputShapes.get(index));
+
+        return List.of(inputShapes.get(config.index));
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        return tensors(inputs[index]);
+        return tensors(inputs[config.index]);
     }
 
     @Override
     public Layer copy() {
-        return new SelectLayer(index);
+        return new SelectLayer(config);
     }
-    
-    public int index() {
-        return index;
+
+    public Config config() {
+        return config;
     }
 }

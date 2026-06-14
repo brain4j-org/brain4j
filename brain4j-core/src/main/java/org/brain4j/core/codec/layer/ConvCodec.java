@@ -19,12 +19,12 @@ public class ConvCodec implements Codec<ConvLayer> {
     
     @Override
     public void write(ConvLayer conv, ObjectNode out) {
-        out.put("filters", conv.filters());
+        out.put("filters", conv.config().filters());
         out.put("channels", conv.channels());
-        out.put("kernel_width", conv.kernelWidth());
-        out.put("kernel_height", conv.kernelHeight());
+        out.put("kernel_width", conv.config().kernelWidth());
+        out.put("kernel_height", conv.config().kernelHeight());
         out.put("padding", conv.padding());
-        out.put("stride", conv.stride());
+        out.put("stride", conv.config().stride());
     }
     
     @Override

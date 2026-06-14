@@ -14,16 +14,20 @@ import java.util.random.RandomGenerator;
 
 public class ScaleLayer extends Layer {
 
-    private final FeatureScaler scaler;
-    private Set<Integer> enabledInputs;
+    public record Config(FeatureScaler scaler, Set<Integer> enabledInputs) {}
+
+    protected Config config;
 
     public ScaleLayer(FeatureScaler scaler) {
-        this.scaler = scaler;
+        this(new Config(scaler, null));
     }
 
     public ScaleLayer(FeatureScaler scaler, Set<Integer> enabledInputs) {
-        this.scaler = scaler;
-        this.enabledInputs = enabledInputs;
+        this(new Config(scaler, enabledInputs));
+    }
+
+    public ScaleLayer(Config config) {
+        this.config = config;
     }
 
     @Override
@@ -41,10 +45,10 @@ public class ScaleLayer extends Layer {
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        boolean scaleAll = enabledInputs == null;
+        boolean scaleAll = config.enabledInputs == null;
 
         if (!scaleAll) {
-            for (int i : enabledInputs) {
+            for (int i : config.enabledInputs) {
                 if (i < 0 || i >= inputs.length) {
                     throw Commons.illegalState("Enabled input index out of range: %s", i);
                 }
@@ -56,12 +60,12 @@ public class ScaleLayer extends Layer {
         for (int i = 0; i < outputs.length; i++) {
             Tensor input = inputs[i];
 
-            if (!scaleAll && !enabledInputs.contains(i)) {
+            if (!scaleAll && !config.enabledInputs.contains(i)) {
                 outputs[i] = input;
                 continue;
             }
 
-            Tensor result = scaler.transform(input);
+            Tensor result = config.scaler.transform(input);
 
             AutogradContext context = input.getAutogradContext();
             result.setAutogradContext(context);
@@ -74,14 +78,10 @@ public class ScaleLayer extends Layer {
 
     @Override
     public Layer copy() {
-        return new ScaleLayer(scaler, enabledInputs);
+        return new ScaleLayer(config);
     }
 
-    public FeatureScaler scaler() {
-        return scaler;
-    }
-
-    public Set<Integer> enabledInputs() {
-        return enabledInputs;
+    public Config config() {
+        return config;
     }
 }

@@ -19,7 +19,7 @@ public class SelectCodec implements Codec<SelectLayer> {
 
     @Override
     public void write(SelectLayer layer, ObjectNode out) {
-        out.put("index", layer.index());
+        out.put("index", layer.config().index());
     }
 
     @Override

@@ -1,6 +1,6 @@
 package org.brain4j.llm;
 
-import org.brain4j.core.transformer.tokenizers.model.Tokenizer;
+import org.brain4j.core.tokenizers.model.Tokenizer;
 import org.brain4j.llm.core.loader.ModelLoader;
 import org.brain4j.llm.core.loader.config.LoadConfig;
 import org.brain4j.llm.core.model.LLM;

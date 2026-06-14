@@ -9,12 +9,11 @@ import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.layer.impl.RMSNormLayer;
 import org.brain4j.core.layer.impl.ReshapeLayer;
 import org.brain4j.core.layer.impl.ConvLayer;
-import org.brain4j.core.layer.impl.transformer.MaskedMultiHeadAttention;
+import org.brain4j.core.layer.impl.transformer.Transformer;
+import org.brain4j.core.layer.impl.transformer.attention.MaskedMultiHeadAttention;
 import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
 import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
-import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
-import org.brain4j.core.layer.impl.transformer.TransformerEncoder;
-import org.brain4j.core.layer.impl.transformer.MultiHeadAttention;
+import org.brain4j.core.layer.impl.transformer.attention.MultiHeadAttention;
 import org.brain4j.core.layer.impl.utility.ActivationLayer;
 import org.brain4j.core.layer.impl.utility.SelectLayer;
 import org.brain4j.core.layer.impl.utility.SliceLayer;
@@ -209,7 +208,7 @@ public class TrainingTests {
     void trainingRunsOnTransformerEncoder() {
         ModelSpecs specs = ModelSpecs.of(
             new InputLayer(Shape.of(3, 4)),
-            new TransformerEncoder(2, 4, 0.0),
+            new Transformer.Encoder(4, 2, 0.0),
             new DenseLayer(2)
         );
         
@@ -239,7 +238,7 @@ public class TrainingTests {
     void trainingRunsOnTransformerDecoder() {
         ModelSpecs specs = ModelSpecs.of(
             new InputLayer(Shape.of(3, 4)),
-            new TransformerDecoder(2, 4, 0.0),
+            new Transformer.Decoder(4, 2, 0.0),
             new DenseLayer(2)
         );
         
@@ -360,7 +359,7 @@ public class TrainingTests {
     void trainingRunsOnMaskedAttentionBlock() {
         ModelSpecs specs = ModelSpecs.of(
             new InputLayer(Shape.of(3, 4)),
-            new MaskedMultiHeadAttention(new HardClipper(5), 2, 4),
+            new MaskedMultiHeadAttention(2, 4),
             new DenseLayer(2)
         );
         

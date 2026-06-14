@@ -23,7 +23,7 @@ public class InputCodec implements Codec<InputLayer> {
     @Override
     public void write(InputLayer inputLayer, ObjectNode out) {
         ArrayNode shape = out.putArray("shape");
-        for (int dim : inputLayer.shape().dims()) {
+        for (int dim : inputLayer.config().shape().dims()) {
             shape.add(dim);
         }
     }

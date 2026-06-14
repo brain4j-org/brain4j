@@ -49,7 +49,11 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
     public abstract void initWeights(List<Shape> inputShapes, RandomGenerator rng);
     
     public abstract List<Shape> inferOutputShapes(List<Shape> inputShapes);
-    
+
+    public Tensor forward(StatesCache cache, Tensor input) {
+        return forward(cache, new Tensor[] { input })[0];
+    }
+
     public abstract Tensor[] forward(StatesCache cache, Tensor... inputs);
     
     protected Tensor[] tensors(Tensor... values) {
