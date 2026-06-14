@@ -1,12 +1,12 @@
-package org.brain4j.core.transformer.tokenizers.impl;
+package org.brain4j.core.tokenizers.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import org.brain4j.core.transformer.tokenizers.model.AddedToken;
-import org.brain4j.core.transformer.tokenizers.model.Normalizer;
-import org.brain4j.core.transformer.tokenizers.model.Tokenizer;
+import org.brain4j.core.tokenizers.model.AddedToken;
+import org.brain4j.core.tokenizers.model.Normalizer;
+import org.brain4j.core.tokenizers.model.Tokenizer;
 import org.brain4j.core.utils.Colored;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
@@ -18,8 +18,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
-
-import static org.brain4j.math.Constants.*;
 
 /**
  * Implementation of Byte Pair Encoding (BPE) tokenization algorithm.

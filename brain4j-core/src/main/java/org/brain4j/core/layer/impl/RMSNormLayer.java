@@ -11,15 +11,21 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 public class RMSNormLayer extends Layer {
-    
-    private final double epsilon;
-    
+
+    public record Config(double epsilon) {}
+
+    protected Config config;
+
     public RMSNormLayer() {
-        this(1e-6);
+        this(new Config(1e-6));
     }
-    
+
     public RMSNormLayer(double epsilon) {
-        this.epsilon = epsilon;
+        this(new Config(epsilon));
+    }
+
+    public RMSNormLayer(Config config) {
+        this.config = config;
     }
 
     @Override
@@ -38,14 +44,14 @@ public class RMSNormLayer extends Layer {
         if (inputShapes.size() != 1) {
             throw Commons.illegalArgument("Layer requires 1 input but %s were given!", inputShapes.size());
         }
-        
+
         return List.of(inputShapes.getFirst());
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
-        Tensor rms = input.pow(2).mean(-1, true).add(epsilon).sqrt();
+        Tensor rms = input.pow(2).mean(-1, true).add(config.epsilon).sqrt();
         Tensor weights = getParam("weights");
         Tensor norm = input.div(rms).mulGrad(weights);
         return tensors(norm);
@@ -53,12 +59,12 @@ public class RMSNormLayer extends Layer {
 
     @Override
     public Layer copy() {
-        RMSNormLayer copy = new RMSNormLayer(epsilon);
+        RMSNormLayer copy = new RMSNormLayer(config);
         copyParameters(copy);
         return copy;
     }
-    
-    public double epsilon() {
-        return epsilon;
+
+    public Config config() {
+        return config;
     }
 }

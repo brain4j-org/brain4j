@@ -8,6 +8,8 @@ import org.brain4j.core.codec.clipper.HardClipperCodec;
 import org.brain4j.core.codec.clipper.L2ClipperCodec;
 import org.brain4j.core.codec.clipper.NoClipperCodec;
 import org.brain4j.core.codec.layer.*;
+import org.brain4j.core.codec.layer.transformer.TransformerDecoderCodec;
+import org.brain4j.core.codec.layer.transformer.TransformerEncoderCodec;
 import org.brain4j.core.codec.scaler.MinMaxScalerCodec;
 import org.brain4j.core.codec.scaler.ZScoreScalerCodec;
 import org.brain4j.core.codec.weightinit.*;

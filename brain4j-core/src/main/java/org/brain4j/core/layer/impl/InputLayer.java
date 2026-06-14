@@ -10,57 +10,63 @@ import java.util.random.RandomGenerator;
 import org.brain4j.math.commons.Commons;
 
 public class InputLayer extends Layer {
-    
-    private final Shape shape;
-    
+
+    public record Config(Shape shape) {}
+
+    protected Config config;
+
     public InputLayer(Shape shape) {
-        this.shape = shape;
+        this(new Config(shape));
     }
-    
+
+    public InputLayer(Config config) {
+        this.config = config;
+    }
+
     @Override
     public void build(List<Shape> inputShapes) {
     }
-    
+
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
     }
-    
+
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
-        return List.of(shape);
+        return List.of(config.shape);
     }
-    
+
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         for (Tensor input : inputs) {
             if (validInput(input)) continue;
 
             throw Commons.illegalArgument("Input must have shape %s! Got: %s",
-                java.util.Arrays.toString(shape.dims()), java.util.Arrays.toString(input.shape()));
+                java.util.Arrays.toString(config.shape.dims()), java.util.Arrays.toString(input.shape()));
         }
 
         return inputs;
     }
-    
+
     @Override
     public Layer copy() {
-        return new InputLayer(shape.copy());
+        return new InputLayer(config.shape.copy());
     }
-    
-    public Shape shape() {
-        return shape;
+
+    public Config config() {
+        return config;
     }
-    
+
     private boolean validInput(Tensor input) {
         if (input == null) return false;
-        
+
         int[] inputShape = input.shape();
-        int[] targetShape = shape.dims();
-        
+        int[] targetShape = config.shape.dims();
+
         if (inputShape.length - 1 > targetShape.length) return false;
-        
+
         int offset = inputShape.length - targetShape.length;
-        
+
         for (int i = 0; i < targetShape.length; i++) {
             if (inputShape[i + offset] != targetShape[i]) return false;
         }

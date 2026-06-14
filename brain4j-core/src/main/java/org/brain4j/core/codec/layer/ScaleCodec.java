@@ -31,10 +31,10 @@ public class ScaleCodec implements Codec<ScaleLayer> {
         ObjectNode config = MAPPER.createObjectNode();
         ArrayNode enabled = MAPPER.createArrayNode();
 
-        FeatureScaler scaler = scaleLayer.scaler();
+        FeatureScaler scaler = scaleLayer.config().scaler();
         Codec<FeatureScaler> codec = SCALER_CODECS.get(scaler.getClass());
 
-        Set<Integer> ints = scaleLayer.enabledInputs();
+        Set<Integer> ints = scaleLayer.config().enabledInputs();
 
         for (int i : ints) enabled.add(i);
 

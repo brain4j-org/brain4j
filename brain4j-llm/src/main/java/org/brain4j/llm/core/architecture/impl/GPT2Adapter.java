@@ -5,11 +5,10 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.NormLayer;
 import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
-import org.brain4j.core.layer.impl.transformer.MultiHeadAttention;
+import org.brain4j.core.layer.impl.transformer.Transformer;
+import org.brain4j.core.layer.impl.transformer.attention.MultiHeadAttention;
 import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
-import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
 import org.brain4j.core.layer.impl.InputLayer;
-import org.brain4j.core.layer.old.OldLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.llm.core.architecture.ArchitectureAdapter;
@@ -21,7 +20,6 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;
@@ -78,9 +76,9 @@ public class GPT2Adapter implements ArchitectureAdapter {
         
         for (int i = 0; i < layers; i++) {
             String prefix = String.format("h.%s.", i);
-            TransformerDecoder decoder = new TransformerDecoder(heads, embeddingDim, 0.0);
+            Transformer.Decoder decoder = new Transformer.Decoder(heads, embeddingDim, 0.0);
             
-            NormLayer norm1 = (NormLayer) decoder.normalizer1();
+            NormLayer norm1 = (NormLayer) decoder.norm1();
             NormLayer norm2 = (NormLayer) decoder.normalizer2();
             DenseLayer upProj = decoder.upProjection();
             DenseLayer downProj = decoder.downProjection();
@@ -139,6 +137,11 @@ public class GPT2Adapter implements ArchitectureAdapter {
     }
     
     private static class TokenSelectionLayer extends Layer {
+
+        public record Config() {}
+
+        protected Config config = new Config();
+
         @Override
         public void build(List<Shape> inputShapes) {
         }
@@ -171,6 +174,10 @@ public class GPT2Adapter implements ArchitectureAdapter {
         @Override
         public Layer copy() {
             return new TokenSelectionLayer();
+        }
+
+        public Config config() {
+            return config;
         }
     }
 }

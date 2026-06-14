@@ -12,17 +12,23 @@ import java.util.SplittableRandom;
 import java.util.random.RandomGenerator;
 
 public class DropoutLayer extends Layer {
-    
+
+    public record Config(double dropoutRate) {}
+
     private final RandomGenerator random;
-    private final double dropoutRate;
-    
+    protected Config config;
+
     public DropoutLayer(double dropoutRate) {
-        if (dropoutRate < 0 || dropoutRate >= 1) {
+        this(new Config(dropoutRate));
+    }
+
+    public DropoutLayer(Config config) {
+        if (config.dropoutRate < 0 || config.dropoutRate >= 1) {
             throw Commons.illegalArgument("Dropout must be greater or equal to 0 and less than 1!");
         }
-        
+
         this.random = new SplittableRandom();
-        this.dropoutRate = dropoutRate;
+        this.config = config;
     }
 
     @Override
@@ -41,38 +47,38 @@ public class DropoutLayer extends Layer {
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         if (!cache.isTraining()) return inputs;
-        
+
         Tensor[] result = new Tensor[inputs.length];
-        
+
         for (int i = 0; i < inputs.length; i++) {
             Tensor input = inputs[i];
             float[] mask = new float[input.elements()];
-            
+
             for (int j = 0; j < mask.length; j++) {
-                mask[j] = random.nextFloat() > dropoutRate ? 1 : 0;
+                mask[j] = random.nextFloat() > config.dropoutRate ? 1 : 0;
             }
-            
+
             Tensor tensorMask = Tensors.vector(mask);
             Tensor reshaped = input.reshapeGrad(input.elements());
-            
+
             result[i] = reshaped.mulGrad(tensorMask)
-                .div(1 - dropoutRate)
+                .div(1 - config.dropoutRate)
                 .reshapeGrad(input.shape());
         }
-        
+
         return result;
     }
 
     @Override
-    public Layer copy() {
-        return new DropoutLayer(dropoutRate);
+    public DropoutLayer copy() {
+        return new DropoutLayer(config);
     }
-    
-    public double dropoutRate() {
-        return dropoutRate;
-    }
-    
+
     public RandomGenerator random() {
         return random;
+    }
+
+    public Config config() {
+        return config;
     }
 }

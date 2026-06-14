@@ -13,12 +13,21 @@ import java.util.random.RandomGenerator;
 
 public class ActivationLayer extends Layer {
 
+    public record Config(Activation activation) {}
+
+    protected Config config;
+
     public ActivationLayer(Activations activation) {
         this(activation.function());
     }
-    
+
     public ActivationLayer(Activation activation) {
-        super(activation);
+        this(new Config(activation));
+    }
+
+    public ActivationLayer(Config config) {
+        super(config.activation);
+        this.config = config;
     }
 
     @Override
@@ -34,23 +43,27 @@ public class ActivationLayer extends Layer {
         if (inputShapes.isEmpty()) {
             throw Commons.illegalArgument("Layer requires at least 1 input but 0 were given!");
         }
-        
+
         return inputShapes;
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor[] result = new Tensor[inputs.length];
-        
+
         for (int i = 0; i < inputs.length; i++) {
             result[i] = inputs[i].activateGrad(activation);
         }
-        
+
         return result;
     }
 
     @Override
     public Layer copy() {
-        return new ActivationLayer(activation);
+        return new ActivationLayer(config);
+    }
+
+    public Config config() {
+        return config;
     }
 }

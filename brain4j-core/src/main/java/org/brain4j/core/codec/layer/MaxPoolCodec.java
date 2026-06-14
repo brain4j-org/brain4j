@@ -19,9 +19,9 @@ public class MaxPoolCodec implements Codec<MaxPoolLayer> {
 
     @Override
     public void write(MaxPoolLayer layer, ObjectNode out) {
-        out.put("stride", layer.stride());
-        out.put("window_height", layer.windowHeight());
-        out.put("window_width", layer.windowWidth());
+        out.put("stride", layer.config().stride());
+        out.put("window_height", layer.config().windowHeight());
+        out.put("window_width", layer.config().windowWidth());
     }
 
     @Override

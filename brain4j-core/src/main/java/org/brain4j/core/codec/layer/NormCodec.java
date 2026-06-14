@@ -19,7 +19,7 @@ public class NormCodec implements Codec<NormLayer> {
     
     @Override
     public void write(NormLayer normLayer, ObjectNode out) {
-        out.put("epsilon", normLayer.epsilon());
+        out.put("epsilon", normLayer.config().epsilon());
     }
     
     @Override

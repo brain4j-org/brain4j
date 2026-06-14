@@ -19,7 +19,7 @@ public class RMSNormCodec implements Codec<RMSNormLayer> {
 
     @Override
     public void write(RMSNormLayer layer, ObjectNode out) {
-        out.put("epsilon", layer.epsilon());
+        out.put("epsilon", layer.config().epsilon());
     }
 
     @Override

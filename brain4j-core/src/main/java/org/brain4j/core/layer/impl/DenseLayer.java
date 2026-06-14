@@ -13,75 +13,81 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 public class DenseLayer extends Layer {
-    
-    private final int outDimension;
-    
+
+    public record Config(int outDimension, Activation activation) {}
+
+    protected Config config;
+
     public DenseLayer(int outDimension) {
-        this(outDimension, new Linear());
+        this(new Config(outDimension, new Linear()));
     }
-    
-    public  DenseLayer(int outDimension, Activation activation) {
-        this.outDimension = outDimension;
-        this.activation = activation;
+
+    public DenseLayer(int outDimension, Activation activation) {
+        this(new Config(outDimension, activation));
     }
-    
+
+    public DenseLayer(Config config) {
+        super(config.activation);
+        this.config = config;
+    }
+
     @Override
     public void build(List<Shape> inputShapes) {
         Shape inputShape = inputShapes.getFirst();
-        
-        Tensor weights = Tensors.zeros(inputShape.last(), outDimension);
-        Tensor bias = Tensors.zeros(outDimension);
-        
+
+        Tensor weights = Tensors.zeros(inputShape.last(), config.outDimension);
+        Tensor bias = Tensors.zeros(config.outDimension);
+
         registerParam("weights", weights);
         registerParam("bias", bias);
     }
-    
+
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
-        generateWeights("weights", rng, inputShapes.getFirst().last(), outDimension);
+        generateWeights("weights", rng, inputShapes.getFirst().last(), config.outDimension);
     }
-    
+
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.size() != 1) {
             throw Commons.illegalArgument("Layer requires 1 input but %s were given!", inputShapes.size());
         }
-        
+
         Shape inputShape = inputShapes.getFirst();
         Shape inputBatch = inputShape.slice(0, -2);
-        
+
         int[] outShape = new int[inputShape.rank()];
-        
+
         inputBatch.copy(outShape);
-        outShape[outShape.length - 1] = outDimension;
-        
+        outShape[outShape.length - 1] = config.outDimension;
+
         return List.of(Shape.of(outShape));
     }
-    
+
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
-        
+
         if (input.rank() < 2) {
             throw Commons.illegalArgument("Dense requires tensors to be rank 2 or higher");
         }
-        
+
         Tensor W = getParam("weights");
         Tensor B = getParam("bias");
-        
+
         Tensor proj = input.matmulGrad(W).addGrad(B);
-        
+
         return tensors(proj.activateGrad(activation));
     }
-    
+
     @Override
     public DenseLayer copy() {
-        DenseLayer copy = new DenseLayer(outDimension, activation);
+        DenseLayer copy = new DenseLayer(config);
         copyParameters(copy);
         return copy;
     }
-    
-    public int outDimension() {
-        return outDimension;
+
+    public Config config() {
+        return config;
     }
 }

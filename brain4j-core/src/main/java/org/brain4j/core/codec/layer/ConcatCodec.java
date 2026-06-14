@@ -20,7 +20,7 @@ public class ConcatCodec implements Codec<ConcatLayer> {
 
     @Override
     public void write(ConcatLayer concatLayer, ObjectNode out) {
-        out.put("dimension", concatLayer.dimension());
+        out.put("dimension", concatLayer.config().dimension());
     }
 
     @Override

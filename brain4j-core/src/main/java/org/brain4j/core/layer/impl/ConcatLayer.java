@@ -10,41 +10,47 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 public class ConcatLayer extends Layer {
-    
-    private final int dimension;
-    
+
+    public record Config(int dimension) {}
+
+    protected Config config;
+
     public ConcatLayer() {
-        this(-1);
+        this(new Config(-1));
     }
-    
+
     public ConcatLayer(int dimension) {
-        this.dimension = dimension;
+        this(new Config(dimension));
     }
-    
+
+    public ConcatLayer(Config config) {
+        this.config = config;
+    }
+
     @Override
     public void build(List<Shape> inputShapes) {
     }
-    
+
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
     }
-    
+
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         return List.of(Shape.concat(inputShapes.toArray(new Shape[0])));
     }
-    
+
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        return new Tensor[] { Tensors.concatGrad(List.of(inputs), dimension) };
+        return new Tensor[] { Tensors.concatGrad(List.of(inputs), config.dimension) };
     }
-    
+
     @Override
     public Layer copy() {
-        return new ConcatLayer(dimension);
+        return new ConcatLayer(config);
     }
-    
-    public int dimension() {
-        return dimension;
+
+    public Config config() {
+        return config;
     }
 }

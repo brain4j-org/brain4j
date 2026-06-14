@@ -19,7 +19,7 @@ public class DropoutCodec implements Codec<DropoutLayer> {
 
     @Override
     public void write(DropoutLayer dropoutLayer, ObjectNode out) {
-        out.put("rate", dropoutLayer.dropoutRate());
+        out.put("rate", dropoutLayer.config().dropoutRate());
     }
 
     @Override

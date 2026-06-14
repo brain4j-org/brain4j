@@ -19,7 +19,7 @@ public class DenseCodec implements Codec<DenseLayer> {
     
     @Override
     public void write(DenseLayer denseLayer, ObjectNode out) {
-        out.put("dimension", denseLayer.outDimension());
+        out.put("dimension", denseLayer.config().outDimension());
     }
     
     @Override

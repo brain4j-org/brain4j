@@ -19,8 +19,8 @@ public class EmbeddingCodec implements Codec<EmbeddingLayer> {
 
     @Override
     public void write(EmbeddingLayer layer, ObjectNode out) {
-        out.put("vocab_size", layer.vocabSize());
-        out.put("embedding_dim", layer.embeddingDim());
+        out.put("vocab_size", layer.config().vocabSize());
+        out.put("embedding_dim", layer.config().embeddingDim());
     }
 
     @Override

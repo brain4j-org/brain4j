@@ -23,7 +23,7 @@ public class ReshapeCodec implements Codec<ReshapeLayer> {
     @Override
     public void write(ReshapeLayer reshapeLayer, ObjectNode out) {
         ArrayNode shape = out.putArray("shape");
-        for (int dim : reshapeLayer.shape().dims()) {
+        for (int dim : reshapeLayer.config().shape().dims()) {
             shape.add(dim);
         }
     }
