@@ -1,8 +1,5 @@
 package org.brain4j.core.training;
 
-import me.tongfei.progressbar.ConsoleProgressBarConsumer;
-import me.tongfei.progressbar.ProgressBarBuilder;
-import me.tongfei.progressbar.ProgressBarStyle;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.utils.Colored;
 import org.brain4j.core.utils.ProgressBar;
@@ -25,7 +22,6 @@ import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -213,11 +209,6 @@ public final class DefaultTrainer implements Trainer {
 
         EpochStart epochStart = new EpochStart(index, total);
         monitors.forEach((k, x) -> x.onEvent(epochStart, this));
-
-        ProgressBarBuilder pbb = new ProgressBarBuilder()
-            .setUpdateIntervalMillis(50)
-            .setConsumer(new ConsoleProgressBarConsumer(System.out))
-            .setTaskName("Epoch %d/%d".formatted(index, total));
 
         Iterable<Batch> batchIterator = dataSource.batchIterator();
         int cursor = 0;
