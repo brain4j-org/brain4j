@@ -17,7 +17,11 @@ public class MultiHeadAttention extends Layer {
     protected int headDim;
     protected Config config;
 
-    public record Config(int embedDim, int heads, boolean qkvBias, boolean outBias) {}
+    public record Config(int embedDim, int heads, boolean qkvBias, boolean outBias) {
+        public int headDim() {
+            return embedDim / heads;
+        }
+    }
 
     public MultiHeadAttention(int heads, int embedDim) {
         this(new Config(embedDim, heads, false, false));
@@ -123,10 +127,6 @@ public class MultiHeadAttention extends Layer {
         MultiHeadAttention copy = new MultiHeadAttention(config);
         copyParameters(copy);
         return copy;
-    }
-
-    public int headDim() {
-        return headDim;
     }
 
     public Config config() {

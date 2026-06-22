@@ -167,6 +167,10 @@ public class Commons {
      * @return a formatted string representing the duration
      */
     public static String formatDuration(double seconds) {
+        if (seconds < 0) {
+            return "N/A";
+        }
+
         double millis = seconds * 1000;
         Duration duration = Duration.ofMillis((long) millis);
 

@@ -343,4 +343,20 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     public Iterator<Sample> iterator() {
         return samples.iterator();
     }
+
+    public Iterable<Batch> batchIterator() {
+        List<Batch> result = new ArrayList<>();
+        int cursor = 0;
+
+        while (cursor < batches) {
+            Tensor[] input = batchedInputs.get(cursor);
+            Tensor[] label = batchedLabels.get(cursor);
+
+            cursor++;
+
+            result.add(new Batch(input, label));
+        }
+
+        return result;
+    }
 }

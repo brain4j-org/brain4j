@@ -1,6 +1,11 @@
 package org.brain4j.core.training;
 
+import me.tongfei.progressbar.ConsoleProgressBarConsumer;
+import me.tongfei.progressbar.ProgressBarBuilder;
+import me.tongfei.progressbar.ProgressBarStyle;
 import org.brain4j.core.layer.Layer;
+import org.brain4j.core.utils.Colored;
+import org.brain4j.core.utils.ProgressBar;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.loss.LossFunction;
@@ -20,6 +25,7 @@ import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -207,28 +213,31 @@ public final class DefaultTrainer implements Trainer {
 
         EpochStart epochStart = new EpochStart(index, total);
         monitors.forEach((k, x) -> x.onEvent(epochStart, this));
-        
-        dataSource.reset();
-        int totalBatches = dataSource.getBatches();
-        this.totalBatches = totalBatches;
-        
-        while (dataSource.hasNext()) {
+
+        ProgressBarBuilder pbb = new ProgressBarBuilder()
+            .setUpdateIntervalMillis(50)
+            .setConsumer(new ConsoleProgressBarConsumer(System.out))
+            .setTaskName("Epoch %d/%d".formatted(index, total));
+
+        Iterable<Batch> batchIterator = dataSource.batchIterator();
+        int cursor = 0;
+
+        String taskName = Colored.renderText("Epoch <yellow>%s<white>/<yellow>%s ", index, total);
+
+        for (Batch batch : new ProgressBar<>(batchIterator, taskName)) {
             if (shouldStop()) break;
 
-            int cursor = dataSource.getCursor();
-            currentBatch = cursor;
-            
-            Batch batch = dataSource.nextBatch().to(model.device());
-            
+            cursor++;
+
             BatchStart batchStart = new BatchStart(this, cursor, totalBatches);
             monitors.forEach((k, x) -> x.onEvent(batchStart, this));
-            
-            fitBatch(batch);
-            
+
+            fitBatch(batch.to(model.device()));
+
             BatchEnd end = new BatchEnd(cursor, totalBatches);
             monitors.forEach((k, x) -> x.onEvent(end, this));
         }
-        
+
         Optimizer optimizer = config.optimizer();
         Updater updater = config.updater();
         

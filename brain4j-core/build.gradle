@@ -32,8 +32,8 @@ test {
 }
 
 shadowJar {
+    minimize()
     archiveFileName = "brain4j-core-${parent.version}.jar"
-    exclude "org/brain4j/math/**"
 }
 
 tasks.withType(JavaExec).configureEach {

@@ -14,7 +14,7 @@ dependencies {
 
     implementation project(":brain4j-core")
     implementation project(":brain4j-math")
-    implementation project(":brain4j-llm")
+    implementation project(":brain4j-transformers")
     implementation project(":brain4j-datasets")
     implementation project(":brain4j-dashboard")
 

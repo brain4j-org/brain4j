@@ -17,7 +17,7 @@ if (useLocalSilicon && localSilicon.isDirectory()) {
 
 include 'brain4j-core'
 include 'brain4j-datasets'
-include 'brain4j-llm'
+include 'brain4j-transformers'
 include 'brain4j-math'
 include 'brain4j-examples'
 include 'brain4j-dashboard'

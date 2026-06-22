@@ -80,8 +80,7 @@ subprojects {
 tasks.register('buildAll') {
     dependsOn ':brain4j-datasets:shadowJar',
               ':brain4j-math:shadowJar',
-              ':brain4j-core:shadowJar',
-              ':brain4j-llm:shadowJar'
+              ':brain4j-core:shadowJar'
 
     doLast {
         println 'Completed build for all modules.'
@@ -91,8 +90,7 @@ tasks.register('buildAll') {
 tasks.register('publishAll') {
     dependsOn ':brain4j-datasets:publish',
               ':brain4j-math:publish',
-              ':brain4j-core:publish',
-              ':brain4j-llm:publish'
+              ':brain4j-core:publish'
 
     doLast {
         println 'Published all modules to the main repository.'

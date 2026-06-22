@@ -1,8 +1,8 @@
 package org.brain4j.examples.llm;
 
-import org.brain4j.llm.LLMs;
-import org.brain4j.llm.core.model.LLM;
-import org.brain4j.llm.core.model.SamplingConfig;
+import org.brain4j.transformers.LLMs;
+import org.brain4j.transformers.core.model.LanguageModel;
+import org.brain4j.transformers.core.model.SamplingConfig;
 
 import java.util.Scanner;
 
@@ -12,7 +12,7 @@ public class InteractiveGPT2 {
     }
 
     public void start() throws Exception {
-        LLM llm = LLMs.loadModel("Locutusque/gpt2-xl-conversational");
+        LanguageModel languageModel = LLMs.loadModel("Locutusque/gpt2-xl-conversational");
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
@@ -23,7 +23,7 @@ public class InteractiveGPT2 {
 
             SamplingConfig config = SamplingConfig.defaultConfig();
 
-            llm.chat("<|USER|> " + prompt + " <|ASSISTANT|> ", config, System.out::print);
+            languageModel.chat("<|USER|> " + prompt + " <|ASSISTANT|> ", config, System.out::print);
             System.out.println();
         }
     }
