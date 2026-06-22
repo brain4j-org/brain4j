@@ -9,7 +9,6 @@ import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
-import org.brain4j.core.monitor.impl.ProgressMonitor;
 import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.core.training.optimizer.impl.AdamW;
@@ -42,7 +41,6 @@ public class XorRegression {
             new AdamW(0.1)
         );
         List<Monitor> monitors = List.of(
-            new ProgressMonitor(),
             new EvalMonitor(dataSource, 10)
         );
 
