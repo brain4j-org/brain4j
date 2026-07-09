@@ -19,7 +19,7 @@ commonsCompress = "1.28.0"
 pngj = "2.1.0"
 parquetAvro = "1.15.2"
 hadoop = "3.4.2"
-silicon = "1.0.1-SNAPSHOT"
+silicon = "0.1.0"
 
 [plugins]
 shadowJar = { id = "com.gradleup.shadow", version.ref = "shadowJar" }
