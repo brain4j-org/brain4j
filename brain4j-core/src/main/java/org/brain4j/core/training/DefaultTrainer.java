@@ -181,6 +181,7 @@ public final class DefaultTrainer implements Trainer {
 
     private void runTraining(ListDataSource dataSource, int epochs) {
         totalEpochs = epochs;
+        totalBatches = dataSource.getBatches();
 
         for (int i = 0; i < epochs; i++) {
             if (shouldStop()) break;
@@ -205,27 +206,25 @@ public final class DefaultTrainer implements Trainer {
     
     private void fitEpoch(ListDataSource dataSource, int index, int total) {
         currentEpoch = index;
-        currentBatch = -1;
+        currentBatch = 0;
 
         EpochStart epochStart = new EpochStart(index, total);
         monitors.forEach((k, x) -> x.onEvent(epochStart, this));
 
         Iterable<Batch> batchIterator = dataSource.batchIterator();
-        int cursor = 0;
-
         String taskName = Colored.renderText("Epoch <yellow>%s<white>/<yellow>%s ", index, total);
 
         for (Batch batch : new ProgressBar<>(batchIterator, taskName)) {
             if (shouldStop()) break;
 
-            cursor++;
+            currentBatch++;
 
-            BatchStart batchStart = new BatchStart(this, cursor, totalBatches);
+            BatchStart batchStart = new BatchStart(this, currentBatch, totalBatches);
             monitors.forEach((k, x) -> x.onEvent(batchStart, this));
 
             fitBatch(batch.to(model.device()));
 
-            BatchEnd end = new BatchEnd(cursor, totalBatches);
+            BatchEnd end = new BatchEnd(currentBatch, totalBatches);
             monitors.forEach((k, x) -> x.onEvent(end, this));
         }
 
