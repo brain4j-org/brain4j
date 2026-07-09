@@ -39,7 +39,8 @@ public class LayerIO {
             new InputCodec(), new DenseCodec(), new NormCodec(), new ReshapeCodec(), new ConvCodec(), new LSTMCodec(),
             new DropoutCodec(), new MaxPoolCodec(), new RMSNormCodec(), new SqueezeCodec(), new SliceCodec(), new SelectCodec(),
             new ConcatCodec(), new EmbeddingCodec(), new PosEncodeCodec(), new MultiHeadAttentionCodec(),
-            new MaskedMultiHeadAttentionCodec(), new TransformerEncoderCodec(), new TransformerDecoderCodec()
+            new MaskedMultiHeadAttentionCodec(), new TransformerEncoderCodec(), new TransformerDecoderCodec(),
+            new ScaleCodec(), new ActivationCodec()
         );
         
         ACTIVATION_CODECS.put(

@@ -29,41 +29,48 @@ public class ScaleCodec implements Codec<ScaleLayer> {
     @Override
     public void write(ScaleLayer scaleLayer, ObjectNode out) {
         ObjectNode config = MAPPER.createObjectNode();
-        ArrayNode enabled = MAPPER.createArrayNode();
 
         FeatureScaler scaler = scaleLayer.config().scaler();
         Codec<FeatureScaler> codec = SCALER_CODECS.get(scaler.getClass());
 
         Set<Integer> ints = scaleLayer.config().enabledInputs();
 
-        for (int i : ints) enabled.add(i);
-
         codec.write(scaler, config);
 
         out.put("scaler", codec.type());
-        out.set("enabled", enabled);
+
+        if (ints != null) {
+            ArrayNode enabled = MAPPER.createArrayNode();
+            for (int i : ints) enabled.add(i);
+            out.set("enabled", enabled);
+        }
+
         out.set("config", config);
     }
 
     @Override
     public ScaleLayer parse(JsonNode in) {
-        JsonNode enabled = in.get("enabled");
-
-        if (enabled == null || !enabled.isArray()) {
-            throw Commons.illegalArgument("Enabled must be an array");
-        }
-
         String scalerType = in.get("scaler").asText();
         JsonNode config = in.get("config");
+
+        Codec<FeatureScaler> codec = SCALER_CODECS.get(scalerType);
+        FeatureScaler scaler = codec.parse(config);
+
+        JsonNode enabled = in.get("enabled");
+
+        if (enabled == null || enabled.isNull()) {
+            return new ScaleLayer(scaler);
+        }
+
+        if (!enabled.isArray()) {
+            throw Commons.illegalArgument("Enabled must be an array");
+        }
 
         Set<Integer> enabledSet = new HashSet<>();
 
         for (int i = 0; i < enabled.size(); i++) {
             enabledSet.add(enabled.get(i).asInt());
         }
-
-        Codec<FeatureScaler> codec = SCALER_CODECS.get(scalerType);
-        FeatureScaler scaler = codec.parse(config);
 
         return new ScaleLayer(scaler, enabledSet);
     }
