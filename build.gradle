@@ -7,12 +7,10 @@ plugins {
 group = 'org.brain4j'
 version = '3.0.0-SNAPSHOT'
 
-def brain4jJavaTargetVersion = providers.gradleProperty("brain4j.javaTargetVersion")
-        .map(Integer::parseInt)
-        .orElse(22)
+def targetJavaVersion = 21
 def currentJavaLanguageVersion = JavaVersion.current().majorVersion as Integer
-def brain4jJavaToolchainVersion = Math.max(brain4jJavaTargetVersion.get(), currentJavaLanguageVersion)
-def brain4jJavaVersion = JavaVersion.toVersion(brain4jJavaTargetVersion.get())
+def brain4jJavaToolchainVersion = Math.max(targetJavaVersion, currentJavaLanguageVersion)
+def brain4jJavaVersion = JavaVersion.toVersion(targetJavaVersion)
 
 subprojects {
     version = rootProject.version
@@ -44,8 +42,8 @@ subprojects {
                 url = version.endsWith("SNAPSHOT") ? snapshotsRepo : releasesRepo
 
                 credentials {
-                    username = findProperty("BRAIN4J_USERNAME")
-                    password = findProperty("BRAIN4J_TOKEN")
+                    username = findProperty("BRAIN4J_USERNAME") ?: System.getenv("BRAIN4J_USERNAME")
+                    password = findProperty("BRAIN4J_TOKEN") ?: System.getenv("BRAIN4J_TOKEN")
                 }
 
                 authentication {
