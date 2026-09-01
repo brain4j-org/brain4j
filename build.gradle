@@ -7,10 +7,7 @@ plugins {
 group = 'org.brain4j'
 version = '3.0.0-SNAPSHOT'
 
-def targetJavaVersion = 21
-def currentJavaLanguageVersion = JavaVersion.current().majorVersion as Integer
-def brain4jJavaToolchainVersion = Math.max(targetJavaVersion, currentJavaLanguageVersion)
-def brain4jJavaVersion = JavaVersion.toVersion(targetJavaVersion)
+def javaVersion = 21
 
 subprojects {
     version = rootProject.version
@@ -67,11 +64,12 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(brain4jJavaToolchainVersion))
+            languageVersion = JavaLanguageVersion.of(javaVersion)
         }
+    }
 
-        sourceCompatibility = brain4jJavaVersion
-        targetCompatibility = brain4jJavaVersion
+    tasks.withType(JavaCompile).configureEach {
+        options.release = javaVersion
     }
 }
 
