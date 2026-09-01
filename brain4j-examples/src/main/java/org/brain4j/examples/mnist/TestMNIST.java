@@ -1,12 +1,15 @@
 package org.brain4j.examples.mnist;
 
+import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.impl.Sequential;
+import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.datasets.Datasets;
 import org.brain4j.datasets.api.Dataset;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Softmax;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.monitor.Monitor;
@@ -22,31 +25,36 @@ import java.util.List;
 
 public class TestMNIST {
     
-    public static void main(String[] args) throws IOException {
+    static void main() throws IOException {
         new TestMNIST().start();
     }
     
     private void start() throws IOException {
         Dataset dataset = Datasets.mnist(true, 128, 0.8);
 
-        ListDataSource trainSource = dataset.train();
-        ListDataSource testSource = dataset.test();
+        Device device = Brain4J.firstDevice();
+
+        ListDataSource trainSource = dataset.train().to(device);
+        ListDataSource testSource = dataset.test().to(device);
 
         ModelSpecs specs = getMLPSpecs();
-        Sequential model = specs.compile(42);
+        Sequential model = specs.compile(42).fork(device);
         model.summary(); // prints a summary of the architecture on the console
-        
+
         TrainingConfig config = TrainingConfig.of(
             new CrossEntropy(),
             new AdamW(0.01)
         );
-        
+
         List<Monitor> monitors = List.of(
-            new EvalMonitor(testSource, 5)
+            new EvalMonitor(testSource, 10)
         );
-        
+
         Trainer trainer = Trainer.of(model, config, monitors);
         trainer.fit(trainSource, 50);
+
+        EvaluationResult result = model.evaluate(testSource, new CrossEntropy());
+        System.out.println(result.results());
     }
 
     private ModelSpecs getMLPSpecs() {
