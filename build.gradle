@@ -7,7 +7,7 @@ plugins {
 group = 'org.brain4j'
 version = '3.0.0-SNAPSHOT'
 
-def javaVersion = 21
+def javaVersion = 22
 
 subprojects {
     version = rootProject.version
@@ -60,6 +60,7 @@ subprojects {
 
     compileJava {
         options.encoding = "UTF-8"
+        options.compilerArgs.addAll(["--enable-preview"])
     }
 
     java {
@@ -70,6 +71,15 @@ subprojects {
 
     tasks.withType(JavaCompile).configureEach {
         options.release = javaVersion
+        options.compilerArgs.addAll(["--enable-preview"])
+    }
+
+    tasks.withType(Test).configureEach {
+        jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+    }
+
+    tasks.withType(JavaExec).configureEach {
+        jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
     }
 }
 
