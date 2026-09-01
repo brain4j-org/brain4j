@@ -1,6 +1,6 @@
 package org.brain4j.transformers.core.architecture;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.brain4j.core.model.Model;
 import org.brain4j.math.tensor.Tensor;
 
@@ -8,5 +8,5 @@ import java.util.Map;
 
 public interface ArchitectureAdapter {
     boolean supports(String modelType);
-    Model buildModel(JsonObject config, Map<String, Tensor> weights);
+    Model buildModel(JsonNode config, Map<String, Tensor> weights);
 }

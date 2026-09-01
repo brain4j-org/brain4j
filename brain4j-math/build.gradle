@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation libs.gson
+    implementation libs.jacksonDatabind
 
     implementation(libs.siliconApi) {
         changing = true

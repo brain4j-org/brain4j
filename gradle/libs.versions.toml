@@ -4,18 +4,15 @@ shadowJar = "9.1.0"
 protobuf = "0.9.4"
 
 # Library versions
-gson = "2.13.1"
 protobufJava = "4.31.1"
 guava = "32.1.2-jre"
 commonsCsv = "1.10.0"
 junitBom = "6.0.0"
 junitPlatform = "1.10.2"
 slf4j = "2.0.12"
-logback = "1.5.15"
+logback = "1.6.3"
 httpclient5 = "5.3.1"
-jackson = "2.17.0"
-typesafeConfig = "1.4.3"
-commonsCompress = "1.28.0"
+jackson = "2.22.2"
 pngj = "2.1.0"
 parquetAvro = "1.15.2"
 hadoop = "3.4.2"
@@ -27,14 +24,12 @@ protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
 
 [libraries]
 # Google libraries
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 protobufJava = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobufJava" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 
 # Apache libraries
 commonsCsv = { group = "org.apache.commons", name = "commons-csv", version.ref = "commonsCsv" }
 httpclient5 = { group = "org.apache.httpcomponents.client5", name = "httpclient5", version.ref = "httpclient5" }
-commonsCompress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress" }
 parquetAvro = { group = "org.apache.parquet", name = "parquet-avro", version.ref = "parquetAvro" }
 hadoopCommon = { group = "org.apache.hadoop", name = "hadoop-common", version.ref = "hadoop" }
 hadoopMapreduce = { group = "org.apache.hadoop", name = "hadoop-mapreduce-client-core", version.ref = "hadoop" }
@@ -52,7 +47,6 @@ junitJupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
 junitPlatform = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }
 
 # Other libraries
-typesafeConfig = { group = "com.typesafe", name = "config", version.ref = "typesafeConfig" }
 pngj = { group = "ar.com.hjg", name = "pngj", version.ref = "pngj" }
 
 siliconApi = { group = "org.silicon", name = "silicon-api", version.ref = "silicon" }

@@ -1,6 +1,6 @@
 package org.brain4j.transformers.core.architecture.impl;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.NormLayer;
@@ -45,12 +45,12 @@ public class GPT2Adapter implements ArchitectureAdapter {
     }
     
     @Override
-    public Model buildModel(JsonObject config, Map<String, Tensor> weights) {
-        int layers = config.get("n_layer").getAsInt();
-        int heads = config.get("n_head").getAsInt();
-        int embeddingDim = config.get("n_embd").getAsInt();
-        int context = config.get("n_ctx").getAsInt();
-        int vocabSize = config.get("vocab_size").getAsInt();
+    public Model buildModel(JsonNode config, Map<String, Tensor> weights) {
+        int layers = config.get("n_layer").asInt();
+        int heads = config.get("n_head").asInt();
+        int embeddingDim = config.get("n_embd").asInt();
+        int context = config.get("n_ctx").asInt();
+        int vocabSize = config.get("vocab_size").asInt();
         
         ModelSpecs specs = ModelSpecs.of();
 

@@ -1,9 +1,10 @@
 package org.brain4j.transformers.tokenizers.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.brain4j.core.utils.Colored;
 import org.brain4j.transformers.tokenizers.model.AddedToken;
 import org.brain4j.transformers.tokenizers.model.Normalizer;
@@ -13,7 +14,6 @@ import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Tensor;
 
 import java.io.*;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
@@ -43,7 +43,7 @@ import java.util.concurrent.RecursiveAction;
  */
 public class BytePairTokenizer implements Tokenizer {
     
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final ObjectMapper MAPPER = new ObjectMapper();
     
     protected Normalizer normalizer;
     protected List<AddedToken> addedTokens;
@@ -69,7 +69,7 @@ public class BytePairTokenizer implements Tokenizer {
     @Override
     public List<String> splitTokens(String input) {
         if (normalizer != null) {
-            if (normalizer.isLowercase()) input = input.toLowerCase();
+            if (normalizer.lowercase()) input = input.toLowerCase();
         }
         
         List<String> output = new ArrayList<>();
@@ -137,31 +137,31 @@ public class BytePairTokenizer implements Tokenizer {
             throw new IOException("Cannot create directory: " + file);
         }
         
-        JsonObject root = new JsonObject();
-        root.addProperty("version", "1.0");
-        root.add("truncation", null);
-        root.add("padding", null);
-        root.add("added_tokens", GSON.toJsonTree(addedTokens));
-        root.add("normalizer", normalizer == null ? null : GSON.toJsonTree(normalizer));
+        ObjectNode root = MAPPER.createObjectNode();
+        root.put("version", "1.0");
+        root.set("truncation", MAPPER.nullNode());
+        root.set("padding", MAPPER.nullNode());
+        root.set("added_tokens", MAPPER.valueToTree(addedTokens));
+        root.set("normalizer", normalizer == null ? MAPPER.nullNode() : MAPPER.valueToTree(normalizer));
         
-        JsonObject preTokenizer = new JsonObject();
-        preTokenizer.addProperty("type", "ByteLevel");
-        preTokenizer.addProperty("add_prefix_space", false);
-        root.add("pre_tokenizer", preTokenizer);
+        ObjectNode preTokenizer = MAPPER.createObjectNode();
+        preTokenizer.put("type", "ByteLevel");
+        preTokenizer.put("add_prefix_space", false);
+        root.set("pre_tokenizer", preTokenizer);
         
-        JsonObject postProcessor = new JsonObject();
-        postProcessor.addProperty("type", "ByteLevel");
-        postProcessor.addProperty("trim_offsets", true);
-        root.add("post_processor", postProcessor);
+        ObjectNode postProcessor = MAPPER.createObjectNode();
+        postProcessor.put("type", "ByteLevel");
+        postProcessor.put("trim_offsets", true);
+        root.set("post_processor", postProcessor);
         
-        JsonObject decoder = new JsonObject();
-        decoder.addProperty("type", "ByteLevel");
-        decoder.addProperty("add_prefix_space", false);
-        root.add("decoder", decoder);
+        ObjectNode decoder = MAPPER.createObjectNode();
+        decoder.put("type", "ByteLevel");
+        decoder.put("add_prefix_space", false);
+        root.set("decoder", decoder);
         
-        JsonObject model = new JsonObject();
-        model.addProperty("type", "BPE");
-        model.add("vocab", GSON.toJsonTree(vocab)); // Map<String, Integer>
+        ObjectNode model = MAPPER.createObjectNode();
+        model.put("type", "BPE");
+        model.set("vocab", MAPPER.valueToTree(vocab)); // Map<String, Integer>
         
         List<String> mergeStrings = new ArrayList<>();
         
@@ -171,13 +171,13 @@ public class BytePairTokenizer implements Tokenizer {
             mergeStrings.add(pair[0] + " " + pair[1]);
         }
         
-        model.addProperty("unk_token", unkToken);
-        model.add("merges", GSON.toJsonTree(mergeStrings));
-        model.add("dropout", null);
-        root.add("model", model);
+        model.put("unk_token", unkToken);
+        model.set("merges", MAPPER.valueToTree(mergeStrings));
+        model.set("dropout", MAPPER.nullNode());
+        root.set("model", model);
         
         try (Writer writer = new FileWriter(file)) {
-            GSON.toJson(root, writer);
+            MAPPER.writerWithDefaultPrettyPrinter().writeValue(writer, root);
         }
     }
 
@@ -186,27 +186,39 @@ public class BytePairTokenizer implements Tokenizer {
         if (!file.exists()) throw new FileNotFoundException(file.getPath());
         
         try (Reader reader = new FileReader(file)) {
-            JsonObject root = GSON.fromJson(reader, JsonObject.class);
-            JsonObject model = root.getAsJsonObject("model");
+            JsonNode root = MAPPER.readTree(reader);
+            JsonNode model = root.get("model");
 
-            if (model.has("unk_token") && model.get("unk_token").isJsonObject()) {
-                this.unkToken = model.get("unk_token").getAsString();
+            if (model != null && model.has("unk_token")) {
+                JsonNode unkNode = model.get("unk_token");
+                if (unkNode != null && unkNode.isTextual()) {
+                    this.unkToken = unkNode.asText();
+                }
             }
 
-            if (root.has("normalizer") && root.get("normalizer").isJsonObject()) {
-                this.normalizer = GSON.fromJson(root.getAsJsonObject("normalizer"), Normalizer.class);
+            if (root.has("normalizer") && root.get("normalizer").isObject()) {
+                this.normalizer = MAPPER.treeToValue(root.get("normalizer"), Normalizer.class);
             }
             
-            Type tokenListType = new TypeToken<List<AddedToken>>() {}.getType();
-            this.addedTokens = GSON.fromJson(root.getAsJsonArray("added_tokens"), tokenListType);
+            JsonNode addedTokensNode = root.get("added_tokens");
+            if (addedTokensNode != null && !addedTokensNode.isNull()) {
+                this.addedTokens = MAPPER.convertValue(addedTokensNode, new TypeReference<>() {
+                });
+            } else {
+                this.addedTokens = new ArrayList<>();
+            }
             
-            Type vocabType = new TypeToken<LinkedHashMap<String, Integer>>() {}.getType();
-            this.vocab = GSON.fromJson(model.getAsJsonObject("vocab"), vocabType);
+            JsonNode vocabNode = model != null ? model.get("vocab") : null;
+            if (vocabNode != null && !vocabNode.isNull()) {
+                this.vocab = MAPPER.convertValue(vocabNode, new TypeReference<LinkedHashMap<String, Integer>>() {});
+            }
             
-            List<String> mergeStrings = GSON.fromJson(
-                model.getAsJsonArray("merges"),
-                new TypeToken<List<String>>() {}.getType()
-            );
+            JsonNode mergesNode = model != null ? model.get("merges") : null;
+            List<String> mergeStrings = Collections.emptyList();
+            if (mergesNode != null && mergesNode.isArray()) {
+                mergeStrings = MAPPER.convertValue(mergesNode, new TypeReference<>() {
+                });
+            }
             
             LinkedHashMap<String, String[]> loaded = new LinkedHashMap<>();
             

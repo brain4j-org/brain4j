@@ -14,7 +14,6 @@ configurations.configureEach {
 dependencies {
     implementation project(":brain4j-math")
 
-    implementation libs.gson
     implementation libs.jacksonDatabind
     implementation libs.protobufJava
 

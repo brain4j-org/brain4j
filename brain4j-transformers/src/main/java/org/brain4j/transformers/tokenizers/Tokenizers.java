@@ -1,7 +1,7 @@
 package org.brain4j.transformers.tokenizers;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.brain4j.transformers.tokenizers.impl.BertPreTokenizer;
 import org.brain4j.transformers.tokenizers.impl.BytePairTokenizer;
 import org.brain4j.transformers.tokenizers.model.Tokenizer;
@@ -10,25 +10,25 @@ import java.io.*;
 
 public class Tokenizers {
     
-    public static final Gson GSON = new Gson();
+    public static final ObjectMapper MAPPER = new ObjectMapper();
     
     public static Tokenizer load(File file) throws IOException {
         if (!file.exists()) {
             throw new FileNotFoundException(file.getPath());
         }
         
-        JsonObject root;
+        JsonNode root;
         
         try (Reader reader = new FileReader(file)) {
-            root = GSON.fromJson(reader, JsonObject.class);
+            root = MAPPER.readTree(reader);
         }
         
         if (root == null || !root.has("model")) {
             throw new IOException("Invalid tokenizer file: missing 'model' field");
         }
         
-        JsonObject preTokenizer = root.getAsJsonObject("pre_tokenizer");
-        String tokenizerType = preTokenizer.get("type").getAsString();
+        JsonNode preTokenizer = root.get("pre_tokenizer");
+        String tokenizerType = preTokenizer.get("type").asText();
         
         Tokenizer tokenizer = switch (tokenizerType) {
             case "ByteLevel" -> new BytePairTokenizer();

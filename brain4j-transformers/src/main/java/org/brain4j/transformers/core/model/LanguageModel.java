@@ -1,8 +1,7 @@
 package org.brain4j.transformers.core.model;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.brain4j.core.importing.SafeTensors;
 import org.brain4j.core.model.Model;
 import org.brain4j.transformers.tokenizers.impl.BytePairTokenizer;
@@ -19,7 +18,6 @@ import org.brain4j.math.tensor.Tensor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,7 +26,7 @@ import java.util.function.Consumer;
 
 public class LanguageModel implements InferenceProvider {
     
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final ObjectMapper MAPPER = new ObjectMapper();
     
     private final String id;
     private final ModelInfo info;
@@ -53,13 +51,12 @@ public class LanguageModel implements InferenceProvider {
         ModelFile weightsFile = findOrThrow("model.safetensors", "model.safetensors was not found!");
         ModelFile tokenizerFile = findOrThrow("tokenizer.json", "tokenizer.json was not found!");
         
-        String configText = new String(Files.readAllBytes(configFile.path()));
-        JsonObject config = GSON.fromJson(configText, JsonObject.class);
-        String modelType = config.get("model_type").getAsString();
+        JsonNode config = MAPPER.readTree(configFile.path().toFile());
+        String modelType = config.get("model_type").asText();
         
         tokenizer.load(tokenizerFile.path().toFile());
-        tokenizer.setBosTokenId(config.get("bos_token_id").getAsInt());
-        tokenizer.setEosTokenId(config.get("eos_token_id").getAsInt());
+        tokenizer.setBosTokenId(config.get("bos_token_id").asInt());
+        tokenizer.setEosTokenId(config.get("eos_token_id").asInt());
         
         Map<String, Tensor> weights = SafeTensors.load(weightsFile.path());
         ArchitectureAdapter adapter = ArchitectureRegistry.findAdapter(modelType);

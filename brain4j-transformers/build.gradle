@@ -9,7 +9,6 @@ dependencies {
     implementation libs.httpclient5
     implementation libs.jacksonDatabind
 
-    implementation libs.gson
     implementation libs.slf4jApi
     implementation libs.logbackClassic
 }

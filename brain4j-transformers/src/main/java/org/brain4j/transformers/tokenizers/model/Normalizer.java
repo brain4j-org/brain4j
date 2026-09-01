@@ -1,31 +1,10 @@
 package org.brain4j.transformers.tokenizers.model;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Normalizer {
-    
-    @SerializedName("type")
-    private String type;
-    @SerializedName("clean_text")
-    private boolean cleanText;
-    @SerializedName("handle_chinese_chars")
-    private boolean handleChineseChars;
-    @SerializedName("lowercase")
-    private boolean lowercase;
-    
-    public String getType() {
-        return type;
-    }
-    
-    public boolean isCleanText() {
-        return cleanText;
-    }
-    
-    public boolean isHandleChineseChars() {
-        return handleChineseChars;
-    }
-    
-    public boolean isLowercase() {
-        return lowercase;
-    }
-}
+public record Normalizer(
+        @JsonProperty("type") String type,
+        @JsonProperty("clean_text") boolean cleanText,
+        @JsonProperty("handle_chinese_chars") boolean handleChineseChars,
+        @JsonProperty("lowercase") boolean lowercase
+) {}
