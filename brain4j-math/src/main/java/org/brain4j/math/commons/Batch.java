@@ -3,11 +3,7 @@ package org.brain4j.math.commons;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 
-public class Batch extends Pair<Tensor[], Tensor[]> {
-
-    public Batch(Tensor[] key, Tensor[] second) {
-        super(key, second);
-    }
+public record Batch(Tensor[] first, Tensor[] second) {
     
     public Batch to(Device device) {
         Tensor[] newInputs = new Tensor[first.length];

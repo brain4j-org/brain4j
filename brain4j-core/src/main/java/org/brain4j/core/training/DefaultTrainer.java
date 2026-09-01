@@ -255,7 +255,7 @@ public final class DefaultTrainer implements Trainer {
     }
     
     private void fitBatch(Batch batch) {
-        Tensor[] inputs = batch.getFirst();
+        Tensor[] inputs = batch.first();
         
         Device device = model.device();
         StatesCache cache = new StatesCache(true);
@@ -282,8 +282,8 @@ public final class DefaultTrainer implements Trainer {
     public void backward(StatesCache cache, Batch batch, Tensor[] outputs) {
         List<Layer> layers = model.getLayers();
         
-        Tensor[] inputs = batch.getFirst();
-        Tensor[] targets = batch.getSecond();
+        Tensor[] inputs = batch.first();
+        Tensor[] targets = batch.second();
         
         Updater updater = config.updater();
         Optimizer optimizer = config.optimizer();

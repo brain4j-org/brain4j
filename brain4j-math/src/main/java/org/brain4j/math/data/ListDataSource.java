@@ -200,8 +200,8 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
             int end = Math.min(index + batchSize, size);
             Batch batch = createBatch(index, end);
 
-            batchedInputs.add(batch.getFirst());
-            batchedLabels.add(batch.getSecond());
+            batchedInputs.add(batch.first());
+            batchedLabels.add(batch.second());
 
             index += batchSize;
         }

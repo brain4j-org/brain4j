@@ -122,7 +122,7 @@ public final class Datasets {
                     
                     if (pair == null) continue;
                     
-                    samples.add(new Sample(pair.getFirst(), pair.getSecond()));
+                    samples.add(new Sample(pair.first(), pair.second()));
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                     break;

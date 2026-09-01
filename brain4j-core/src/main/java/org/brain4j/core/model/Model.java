@@ -151,8 +151,8 @@ public interface Model extends Copyable<Model> {
         AtomicReference<Double> totalLoss,
         LossFunction lossFunction
     ) {
-        Tensor[] inputs = batch.getFirst();
-        Tensor[] labels = batch.getSecond();
+        Tensor[] inputs = batch.first();
+        Tensor[] labels = batch.second();
 
         Device device = device();
 
