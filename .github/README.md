@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img height="180" src="assets/brain4j-logo.svg" alt="Brain4J Logo">
+  <img height="180" src="../assets/brain4j-logo.svg" alt="Brain4J Logo">
 </h1>
 
 <h4 align="center">A lightweight, performant & open-source machine learning framework for Java.</h4>
@@ -52,8 +52,8 @@ All the documentation can be found on the [GitHub Wiki](https://github.com/brain
 Screenshots taken from the MNIST example.
 
 <p align="center">
-  <img height="440" src="assets/preview-1.png" alt="Training" />
-  <img height="440" src="assets/preview-2.png" alt="Confusion Matrix" />
+  <img height="440" src="../assets/preview-1.png" alt="Training" />
+  <img height="440" src="../assets/preview-2.png" alt="Confusion Matrix" />
 </p>
 
 ## Contact
