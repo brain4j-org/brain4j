@@ -31,12 +31,13 @@ Brain4J is available on [JitPack](https://jitpack.io) and [GitHub Packages](http
 ```groovy
 repositories {
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.brain4j.org/releases' }
+    maven { url 'https://repo.brain4j.org/snapshots' }
 }
 
 dependencies {
-    implementation 'com.github.brain4j-org.brain4j:brain4j-core:2.9.1'
-    implementation 'com.github.brain4j-org.brain4j:brain4j-math:2.9.1'
+    implementation 'org.brain4j:brain4j-core:3.0.0-SNAPSHOT'
+    implementation 'org.brain4j:brain4j-math:3.0.0-SNAPSHOT'
 }
 ```
 
@@ -45,7 +46,9 @@ See the [installation guide](https://github.com/brain4j-org/brain4j/wiki/Install
 
 ## Documentation
 
-All the documentation can be found on the [GitHub Wiki](https://github.com/brain4j-org/brain4j/wiki).
+The updated documentation for 3.0 can be found [here](https://docs.brain4j.org).
+
+The GitHub wiki **will be deprecated with the release of 3.0**
 
 ## Preview
 
