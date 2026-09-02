@@ -350,6 +350,17 @@ public class GpuTensor extends BaseTensor {
         int rankA = shape.length;
         int rankB = B.shape.length;
 
+        for (int d = 0; d < rankA; d++) {
+            int db = d - (rankA - rankB);
+            int bDim = db >= 0 ? B.shape[db] : 1;
+
+            if (shape[d] != bDim && bDim != 1) {
+                throw new IllegalArgumentException(
+                    "Incompatible shapes for broadcasting: " + Arrays.toString(shape) + " vs " + Arrays.toString(B.shape)
+                );
+            }
+        }
+
         int[] aFlatStrides = Tensors.computeStrides(shape);
         int[] bEffStrides = new int[rankA];
         int dimOffset = rankA - rankB;
