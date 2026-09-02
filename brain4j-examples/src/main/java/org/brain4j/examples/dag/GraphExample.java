@@ -29,6 +29,7 @@ public class GraphExample {
         Node out = new DenseLayer(1, new Sigmoid()).apply(result);
         
         Graph model = Graph.of(out);
-        System.out.println(model.export(new MermaidExporter()));
+        MermaidExporter exporter = new MermaidExporter();
+        System.out.println(exporter.export(model));
     }
 }

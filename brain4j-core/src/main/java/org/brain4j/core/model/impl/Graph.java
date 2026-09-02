@@ -129,10 +129,6 @@ public class Graph implements Model {
         return topology.stream().map(Node::layer).toList();
     }
     
-    public String export(GraphExporter exporter) {
-        return exporter.export(this);
-    }
-    
     public List<Node> input() {
         return input;
     }
