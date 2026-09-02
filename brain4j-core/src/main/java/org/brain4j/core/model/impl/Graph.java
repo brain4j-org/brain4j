@@ -21,6 +21,10 @@ public class Graph implements Model {
     private final int seed;
 
     protected Graph(List<Node> output, Device device, int seed) {
+        this(output, device, seed, false);
+    }
+
+    private Graph(List<Node> output, Device device, int seed, boolean isCopy) {
         this.device = device;
         this.output = output;
         this.seed = seed;
@@ -31,6 +35,10 @@ public class Graph implements Model {
 
         for (Node outNode : output) {
             dfs(outNode, visited);
+        }
+
+        if (isCopy) {
+            return;
         }
 
         for (Node in : input) {
@@ -114,14 +122,20 @@ public class Graph implements Model {
     
     @Override
     public Graph fork(Device device) {
-        List<Node> copy = output.stream().map(Node::copy).toList();
-        return new Graph(copy, device, seed);
+        Map<Node, Node> cache = new HashMap<>();
+        List<Node> copy = output.stream().map(n -> n.copy(cache)).toList();
+        // Move all copied layers to the new device
+        for (Node n : cache.values()) {
+            n.layer().to(device);
+        }
+        return new Graph(copy, device, seed, true);
     }
 
     @Override
     public Graph copy() {
-        List<Node> copy = output.stream().map(Node::copy).toList();
-        return new Graph(copy, device, seed);
+        Map<Node, Node> cache = new HashMap<>();
+        List<Node> copy = output.stream().map(n -> n.copy(cache)).toList();
+        return new Graph(copy, device, seed, true);
     }
 
     @Override

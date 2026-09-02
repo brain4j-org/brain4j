@@ -13,6 +13,7 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.WeightInit;
 
 import java.util.HashMap;
@@ -79,19 +80,54 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
     
     public void copyParameters(Layer other) {
         Map<String, Tensor> newParameters = new HashMap<>();
-        parameters.forEach((k, v) -> newParameters.put(k, v.copy()));
-        
+        parameters.forEach((k, v) -> {
+            Tensor copy = copyStable(v);
+            if (v.usesGrad()) {
+                copy.withGrad();
+            } else {
+                copy.noGrad();
+            }
+            newParameters.put(k, copy);
+        });
+
         other.parameters.clear();
         other.parameters.putAll(newParameters);
+        other.frozen = this.frozen;
 
     }
-    
+
     public void to(Device device) {
         Map<String, Tensor> newParameters = new HashMap<>();
-        parameters.forEach((k, v) -> newParameters.put(k, v.to(device)));
-        
+        parameters.forEach((k, v) -> {
+            Tensor moved = device == null ? v.to(null) : copyStable(v, device);
+            if (v.usesGrad()) {
+                moved.withGrad();
+            } else {
+                moved.noGrad();
+            }
+            newParameters.put(k, moved);
+        });
+
         parameters.clear();
         parameters.putAll(newParameters);
+    }
+
+    private static Tensor copyStable(Tensor tensor) {
+        if (tensor instanceof GpuTensor gpuTensor) {
+            return GpuTensor.persistent(tensor, gpuTensor.getDevice());
+        }
+
+        return tensor.copy();
+    }
+
+    private static Tensor copyStable(Tensor tensor, Device device) {
+        if (tensor instanceof GpuTensor gpuTensor
+            && gpuTensor.getDevice() == device
+            && gpuTensor.isPersistent()) {
+            return tensor;
+        }
+
+        return GpuTensor.persistent(tensor, device);
     }
     
     public Node apply(Node... inputs) {

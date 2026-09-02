@@ -3,6 +3,7 @@ package org.brain4j.core.training.updater;
 import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,12 +54,25 @@ public abstract class Updater {
      * If a gradient is already scheduled for the specified weight tensor,
      * the new gradient is added to the existing one.
      * This allows accumulation of gradients across mini-batches or iterations.
+     * <p>
+     * Accumulated gradients may outlive the batch they were produced in, so on GPU
+     * they are always stored in persistent (non-pooled) buffers: pooled buffers are
+     * recycled by the device memory pool at the end of each batch, which would
+     * otherwise corrupt the accumulated value.
      *
      * @param weights the weight tensor to be updated
      * @param gradient the gradient corresponding to the weight tensor
      */
     public void change(Tensor weights, Tensor gradient) {
-        weightsGradients.merge(weights, gradient, Tensor::add);
+        weightsGradients.compute(weights, (w, stored) -> {
+            Tensor sum = stored == null ? gradient : stored.add(gradient);
+
+            if (sum instanceof GpuTensor gpuTensor && !gpuTensor.isPersistent()) {
+                return GpuTensor.persistent(sum, gpuTensor.getDevice());
+            }
+
+            return sum;
+        });
     }
 
     /**

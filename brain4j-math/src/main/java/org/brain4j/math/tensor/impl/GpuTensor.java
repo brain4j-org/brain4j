@@ -28,6 +28,7 @@ public class GpuTensor extends BaseTensor {
     private final Device device;
     private final ComputeBuffer stridesBuffer;
     private final ComputeBuffer dataBuffer;
+    private final boolean persistent;
     private final int size;
 
     public GpuTensor(Device device, int[] shape, float... data) {
@@ -43,6 +44,7 @@ public class GpuTensor extends BaseTensor {
 
     public GpuTensor(Device device, boolean persistent, int[] shape, float... data) {
         this.device = device;
+        this.persistent = persistent;
         this.size = Tensors.computeSize(shape);
         this.shape = shape;
         this.strides = Tensors.computeStrides(shape);
@@ -67,6 +69,7 @@ public class GpuTensor extends BaseTensor {
 
     public GpuTensor(Device device, int[] shape, ComputeBuffer otherBuffer) {
         this.device = device;
+        this.persistent = false;
         this.size = Tensors.computeSize(shape);
         this.shape = shape;
         this.strides = Tensors.computeStrides(shape);
@@ -81,6 +84,7 @@ public class GpuTensor extends BaseTensor {
 
     public GpuTensor(Device device, int[] shape, int[] strides) {
         this.device = device;
+        this.persistent = false;
         this.size = Tensors.computeSize(shape);
         this.shape = shape;
         this.strides = strides;
@@ -96,6 +100,7 @@ public class GpuTensor extends BaseTensor {
 
     public GpuTensor(GpuTensor reference, int[] newShape) {
         this.device = reference.device;
+        this.persistent = false;
         this.size = Tensors.computeSize(newShape);
         this.shape = newShape;
         this.strides = Tensors.computeStrides(newShape);
@@ -108,6 +113,7 @@ public class GpuTensor extends BaseTensor {
 
     private GpuTensor(GpuTensor reference, int[] newShape, int[] newStrides) {
         this.device = reference.device;
+        this.persistent = false;
         this.size = Tensors.computeSize(newShape);
         this.shape = newShape;
         this.strides = newStrides;
@@ -120,6 +126,10 @@ public class GpuTensor extends BaseTensor {
 
     public static GpuTensor persistent(Tensor first, Device device) {
         return new GpuTensor(device, true, first.shape(), first.data());
+    }
+
+    public boolean isPersistent() {
+        return persistent;
     }
 
     public Device getDevice() {
@@ -1145,16 +1155,40 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public Tensor copy() {
+        if (Arrays.equals(strides, Tensors.computeStrides(shape))) {
+            return new GpuTensor(device, shape, dataBuffer);
+        }
+
         return new GpuTensor(device, shape, contiguousData());
     }
 
     private float[] contiguousData() {
         int size = elements();
+        float[] raw = new float[size];
+        dataBuffer.get(raw);
+
         float[] contiguous = new float[size];
 
+        if (Arrays.equals(strides, Tensors.computeStrides(shape))) {
+            System.arraycopy(raw, 0, contiguous, 0, size);
+            return contiguous;
+        }
+
+        int rank = shape.length;
+        int[] indices = new int[rank];
+
         for (int linear = 0; linear < size; linear++) {
-            int[] indices = Tensors.unravelIndex(linear, shape);
-            contiguous[linear] = get(indices);
+            int offset = 0;
+            for (int d = 0; d < rank; d++) {
+                offset += indices[d] * strides[d];
+            }
+
+            contiguous[linear] = raw[offset];
+
+            for (int d = rank - 1; d >= 0; d--) {
+                if (++indices[d] < shape[d]) break;
+                indices[d] = 0;
+            }
         }
 
         return contiguous;

@@ -65,9 +65,11 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
 
     @Override
     public Sequential fork(Device device) {
-        List<Layer> copiedLayers = layers.stream().map(Layer::copy).toList();
-        copiedLayers.forEach(x -> x.to(device));
-        return new Sequential(graph.copy(), specs.copy(), device, copiedLayers, graph.seed());
+        Graph newGraph = graph.fork(device);
+        List<Layer> newLayers = new ArrayList<>();
+        newLayers.addAll(newGraph.input().stream().map(Node::layer).toList());
+        newLayers.addAll(newGraph.getLayers());
+        return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
     }
 
     @Override
@@ -114,11 +116,11 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
 
     @Override
     public Sequential copy() {
-        List<Layer> copiedLayers = layers.stream()
-            .map(Layer::copy)
-            .toList();
-
-        return new Sequential(graph.copy(), specs.copy(), device, copiedLayers, graph.seed());
+        Graph newGraph = graph.copy();
+        List<Layer> newLayers = new ArrayList<>();
+        newLayers.addAll(newGraph.input().stream().map(Node::layer).toList());
+        newLayers.addAll(newGraph.getLayers());
+        return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
     }
 
     @Override

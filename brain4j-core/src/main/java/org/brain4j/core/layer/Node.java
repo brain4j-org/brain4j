@@ -27,7 +27,20 @@ public class Node implements Copyable<Node> {
     
     @Override
     public Node copy() {
-        return new Node(layer.copy(), inputs);
+        return copy(new HashMap<>());
+    }
+
+    public Node copy(Map<Node, Node> cache) {
+        if (cache.containsKey(this)) {
+            return cache.get(this);
+        }
+        Node copy = new Node(layer.copy(), new ArrayList<>());
+        cache.put(this, copy);
+        for (Node in : inputs) {
+            copy.inputs.add(in.copy(cache));
+        }
+        copy.outputShapes = this.outputShapes == null ? null : new ArrayList<>(this.outputShapes);
+        return copy;
     }
     
     public void build() {
