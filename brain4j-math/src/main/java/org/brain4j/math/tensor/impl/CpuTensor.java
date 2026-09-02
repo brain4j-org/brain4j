@@ -80,7 +80,6 @@ public class CpuTensor extends BaseTensor {
 
         int bound = 1 << 10;
 
-        // TODO: fix parallel transpose?
         if (elements() >= bound) {
             ParallelTranspose.transpose(this, result, dim1, dim2);
             return result;
