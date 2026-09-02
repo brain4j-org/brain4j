@@ -1,11 +1,11 @@
 package org.brain4j.core.codec;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
+/**
+ * Base codec contract.
+ * All codecs expose a stable {@code type} discriminator and the target class.
+ * JSON and ONNX specializations extend this interface.
+ */
 public interface Codec<T> {
     String type();
     Class<T> targetClass();
-    void write(T t, ObjectNode out);
-    T parse(JsonNode in);
 }

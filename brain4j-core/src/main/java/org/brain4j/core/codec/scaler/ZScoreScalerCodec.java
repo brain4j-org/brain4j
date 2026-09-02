@@ -2,10 +2,10 @@ package org.brain4j.core.codec.scaler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.brain4j.core.codec.Codec;
+import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.math.scaler.impl.ZScoreScaler;
 
-public class ZScoreScalerCodec implements Codec<ZScoreScaler> {
+public class ZScoreScalerCodec implements JsonCodec<ZScoreScaler> {
 
     @Override
     public String type() {

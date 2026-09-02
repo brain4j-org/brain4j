@@ -15,6 +15,10 @@ public class SqueezeOperation implements Operation {
         this.dim = dim;
     }
 
+    public int dim() {
+        return dim;
+    }
+
     @Override
     public int requiredInputs() {
         return 1;

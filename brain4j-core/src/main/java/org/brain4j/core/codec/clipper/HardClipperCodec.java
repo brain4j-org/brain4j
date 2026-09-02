@@ -2,10 +2,10 @@ package org.brain4j.core.codec.clipper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.brain4j.core.codec.Codec;
+import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.math.clipper.impl.HardClipper;
 
-public class HardClipperCodec implements Codec<HardClipper> {
+public class HardClipperCodec implements JsonCodec<HardClipper> {
     
     @Override
     public String type() {

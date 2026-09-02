@@ -2,7 +2,7 @@ package org.brain4j.core.importing.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.brain4j.core.codec.Codec;
+import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.codec.activation.*;
 import org.brain4j.core.codec.clipper.HardClipperCodec;
 import org.brain4j.core.codec.clipper.L2ClipperCodec;
@@ -65,7 +65,7 @@ public class LayerIO {
         }
         
         String type = text(node.get("type"));
-        Codec<? extends Layer> codec = LAYER_CODECS.get(type);
+        JsonCodec<? extends Layer> codec = (JsonCodec<? extends Layer>) LAYER_CODECS.get(type);
 
         if (codec == null) {
             throw Commons.illegalArgument("Unknown layer type: %s", type);
@@ -93,7 +93,7 @@ public class LayerIO {
     }
 
     public static void write(Layer layer, ObjectNode container) {
-        Codec<Layer> codec = layerCodec(layer);
+        JsonCodec<Layer> codec = (JsonCodec<Layer>) layerCodec(layer);
         if (codec == null) {
             throw Commons.illegalArgument("Unexpected layer type: %s", layer.getClass().getName());
         }
@@ -109,7 +109,7 @@ public class LayerIO {
     }
 
     private static void writeActivation(Activation activation, ObjectNode container) {
-        Codec<Activation> codec = activationCodec(activation);
+        JsonCodec<Activation> codec = activationCodec(activation);
 
         if (codec == null) {
             throw Commons.illegalArgument("Unknown activation type: %s", activation.getClass().getName());
@@ -119,7 +119,7 @@ public class LayerIO {
     }
 
     private static void writeWeightInit(WeightInit weightInit, ObjectNode container) {
-        Codec<WeightInit> codec = weightInitCodec(weightInit);
+        JsonCodec<WeightInit> codec = weightInitCodec(weightInit);
 
         if (codec == null) {
             throw Commons.illegalArgument("Unknown weight init type: %s", weightInit.getClass().getName());
@@ -129,7 +129,7 @@ public class LayerIO {
     }
 
     private static void writeClipper(GradientClipper clipper, ObjectNode container) {
-        Codec<GradientClipper> codec = clipperCodec(clipper);
+        JsonCodec<GradientClipper> codec = clipperCodec(clipper);
 
         if (codec == null) {
             throw Commons.illegalArgument("Unknown clipper type: %s", clipper.getClass().getName());
@@ -146,7 +146,7 @@ public class LayerIO {
         String type = text(node.get("type"));
         JsonNode config = objectOrEmpty(node.get("config"));
 
-        Codec<? extends Activation> codec = ACTIVATION_CODECS.get(type);
+        JsonCodec<? extends Activation> codec = (JsonCodec<? extends Activation>) ACTIVATION_CODECS.get(type);
 
         if (codec != null) {
             return codec.parse(config);
@@ -163,7 +163,7 @@ public class LayerIO {
         String type = text(node.get("type"));
         JsonNode config = objectOrEmpty(node.get("config"));
 
-        Codec<? extends WeightInit> codec = WEIGHT_INIT_CODECS.get(type);
+        JsonCodec<? extends WeightInit> codec = (JsonCodec<? extends WeightInit>) WEIGHT_INIT_CODECS.get(type);
 
         if (codec != null) {
             return codec.parse(config);
@@ -180,7 +180,7 @@ public class LayerIO {
         String type = text(node.get("type"));
         JsonNode config = objectOrEmpty(node.get("config"));
 
-        Codec<? extends GradientClipper> codec = CLIPPER_CODECS.get(type);
+        JsonCodec<? extends GradientClipper> codec = (JsonCodec<? extends GradientClipper>) CLIPPER_CODECS.get(type);
 
         if (codec != null) {
             return codec.parse(config);
@@ -201,7 +201,7 @@ public class LayerIO {
         return node.asText();
     }
 
-    private static <T> void writeInfo(String field, ObjectNode container, Codec<T> codec, T value) {
+    private static <T> void writeInfo(String field, ObjectNode container, JsonCodec<T> codec, T value) {
         ObjectNode config = MAPPER.createObjectNode();
         codec.write(value, config);
         
@@ -217,19 +217,19 @@ public class LayerIO {
         container.set(field, node);
     }
     
-    private static Codec<Layer> layerCodec(Layer layer) {
-        return LAYER_CODECS.get(layer.getClass());
+    private static JsonCodec<Layer> layerCodec(Layer layer) {
+        return (JsonCodec<Layer>) LAYER_CODECS.get(layer.getClass());
     }
     
-    private static Codec<Activation> activationCodec(Activation activation) {
-        return ACTIVATION_CODECS.get(activation.getClass());
+    private static JsonCodec<Activation> activationCodec(Activation activation) {
+        return (JsonCodec<Activation>) ACTIVATION_CODECS.get(activation.getClass());
     }
     
-    private static Codec<WeightInit> weightInitCodec(WeightInit weightInit) {
-        return WEIGHT_INIT_CODECS.get(weightInit.getClass());
+    private static JsonCodec<WeightInit> weightInitCodec(WeightInit weightInit) {
+        return (JsonCodec<WeightInit>) WEIGHT_INIT_CODECS.get(weightInit.getClass());
     }
     
-    private static Codec<GradientClipper> clipperCodec(GradientClipper clipper) {
-        return CLIPPER_CODECS.get(clipper.getClass());
+    private static JsonCodec<GradientClipper> clipperCodec(GradientClipper clipper) {
+        return (JsonCodec<GradientClipper>) CLIPPER_CODECS.get(clipper.getClass());
     }
 }
