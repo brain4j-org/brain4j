@@ -2,10 +2,10 @@ package org.brain4j.core.codec.layer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.brain4j.core.codec.Codec;
+import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.layer.impl.ConvLayer;
 
-public class ConvCodec implements Codec<ConvLayer> {
+public class ConvCodec implements JsonCodec<ConvLayer> {
     
     @Override
     public String type() {
@@ -23,7 +23,7 @@ public class ConvCodec implements Codec<ConvLayer> {
         out.put("channels", conv.channels());
         out.put("kernel_width", conv.config().kernelWidth());
         out.put("kernel_height", conv.config().kernelHeight());
-        out.put("padding", conv.padding());
+        out.put("padding", conv.config().padding());
         out.put("stride", conv.config().stride());
     }
     

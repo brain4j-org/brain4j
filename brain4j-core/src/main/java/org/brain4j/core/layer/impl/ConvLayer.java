@@ -16,10 +16,9 @@ import java.util.random.RandomGenerator;
 @Experimental
 public class ConvLayer extends Layer {
 
-    public record Config(int filters, int kernelWidth, int kernelHeight, int stride, Activation activation) {}
+    public record Config(int filters, int kernelWidth, int kernelHeight, int stride, int padding, Activation activation) {}
 
     protected Config config;
-    private final int padding = 0; // TODO: configurable
     private int channels;
 
     public ConvLayer(int filters, int kernelWidth, int kernelHeight) {
@@ -35,7 +34,11 @@ public class ConvLayer extends Layer {
     }
 
     public ConvLayer(int filters, int kernelWidth, int kernelHeight, int stride, Activation activation) {
-        this(new Config(filters, kernelWidth, kernelHeight, stride, activation));
+        this(filters, kernelWidth, kernelHeight, stride, 0, activation);
+    }
+
+    public ConvLayer(int filters, int kernelWidth, int kernelHeight, int stride, int padding, Activation activation) {
+        this(new Config(filters, kernelWidth, kernelHeight, stride, padding, activation));
     }
 
     public ConvLayer(Config config) {
@@ -124,10 +127,6 @@ public class ConvLayer extends Layer {
         ConvLayer copy = new ConvLayer(config);
         copyParameters(copy);
         return copy;
-    }
-
-    public int padding() {
-        return padding;
     }
 
     public int channels() {
