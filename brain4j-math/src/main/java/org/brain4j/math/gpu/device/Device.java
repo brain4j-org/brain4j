@@ -1,6 +1,5 @@
 package org.brain4j.math.gpu.device;
 
-import org.brain4j.math.gpu.memory.TempBuffer;
 import org.brain4j.math.tensor.TensorKey;
 import org.silicon.api.Silicon;
 import org.silicon.api.cache.MemoryPool;
@@ -24,12 +23,11 @@ public class Device {
 
     private final ComputeDevice device;
     private final ComputeContext context;
-    private final int deviceIndex;
-    private final String name;
     private final MemoryPool<TensorKey> memoryPool;
     private final List<Pooled> pooledQueue;
-
-    private ComputeQueue queue;
+    private final ComputeQueue queue;
+    private final String name;
+    private final int deviceIndex;
     private Thread threadContext;
 
     public Device() {
@@ -107,22 +105,6 @@ public class Device {
         }
     }
 
-    public TempBuffer createBuffer(long flags, float[] data) {
-        return new TempBuffer(createBuffer(data));
-    }
-
-    public TempBuffer createBuffer(long flags, int[] data) {
-        return new TempBuffer(createBuffer(data));
-    }
-
-    public TempBuffer createBuffer(long flags, long dataSize) {
-        return new TempBuffer(createBuffer(dataSize));
-    }
-
-    public void createQueue() {
-        setQueue(context.createQueue());
-    }
-
     public MemoryPool<TensorKey> memoryPool() {
         return memoryPool;
     }
@@ -131,11 +113,11 @@ public class Device {
         return name;
     }
 
-    public int getDeviceIndex() {
+    public int deviceIndex() {
         return deviceIndex;
     }
 
-    public ComputeDevice computeDevice() {
+    public ComputeDevice device() {
         return device;
     }
 
@@ -147,17 +129,12 @@ public class Device {
         return queue;
     }
 
-    public void setQueue(ComputeQueue queue) {
-        this.queue = queue;
-    }
-
     public synchronized void free() {
         ensureSameThread();
 
         if (queue != null) {
             queue.await();
             queue.free();
-            queue = null;
         }
 
         memoryPool.free();
@@ -172,12 +149,6 @@ public class Device {
 
         pooledQueue.forEach(Pooled::close);
         pooledQueue.clear();
-    }
-
-    private static UnsupportedOperationException unsupportedRawHandle(String handle) {
-        return new UnsupportedOperationException(
-            "Raw native " + handle + " handles are not available in the Silicon GPU backend"
-        );
     }
 
     @Override
