@@ -32,19 +32,19 @@ public class PADEmotionalModeler {
     public static List<Tensor> createPADLabels() {
         List<Tensor> labels = new ArrayList<>();
         labels.add(Tensors.vector(
-            (float) EmotionRegistry.getEmotion("Joy").getPleasure(),
-            (float) EmotionRegistry.getEmotion("Joy").getArousal(),
-            (float) EmotionRegistry.getEmotion("Joy").getDominance()
+            (float) EmotionRegistry.getEmotion("Joy").pleasure(),
+            (float) EmotionRegistry.getEmotion("Joy").arousal(),
+            (float) EmotionRegistry.getEmotion("Joy").dominance()
         ));
         labels.add(Tensors.vector(
-            (float) EmotionRegistry.getEmotion("Anger").getPleasure(),
-            (float) EmotionRegistry.getEmotion("Anger").getArousal(),
-            (float) EmotionRegistry.getEmotion("Anger").getDominance()
+            (float) EmotionRegistry.getEmotion("Anger").pleasure(),
+            (float) EmotionRegistry.getEmotion("Anger").arousal(),
+            (float) EmotionRegistry.getEmotion("Anger").dominance()
         ));
         labels.add(Tensors.vector(
-            (float) EmotionRegistry.getEmotion("Sadness").getPleasure(),
-            (float) EmotionRegistry.getEmotion("Sadness").getArousal(),
-            (float) EmotionRegistry.getEmotion("Sadness").getDominance()
+            (float) EmotionRegistry.getEmotion("Sadness").pleasure(),
+            (float) EmotionRegistry.getEmotion("Sadness").arousal(),
+            (float) EmotionRegistry.getEmotion("Sadness").dominance()
         ));
         return labels;
     }

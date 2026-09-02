@@ -66,18 +66,7 @@ public final class DefaultTrainer implements Trainer {
 
     @Override
     public Thread start(ListDataSource dataSource, int epochs) {
-        if (dataSource == null) throw new IllegalArgumentException("Data source cannot be null!");
-        if (epochs <= 0) throw new IllegalArgumentException("Epochs must be greater than 0. Got: " + epochs);
-
-        synchronized (trainingLock) {
-            if (training) {
-                throw new IllegalStateException("The model is already being trained!");
-            }
-
-            training = true;
-            paused = false;
-            stopRequested = false;
-        }
+        checkAndSync(dataSource, epochs);
 
         Thread thread = new Thread(() -> {
             try {
@@ -93,6 +82,16 @@ public final class DefaultTrainer implements Trainer {
 
     @Override
     public void fit(ListDataSource dataSource, int epochs) {
+        checkAndSync(dataSource, epochs);
+
+        try {
+            runTraining(dataSource, epochs);
+        } finally {
+            finishTraining();
+        }
+    }
+
+    private void checkAndSync(ListDataSource dataSource, int epochs) {
         if (dataSource == null) throw new IllegalArgumentException("Data source cannot be null!");
         if (epochs <= 0) throw new IllegalArgumentException("Epochs must be greater than 0. Got: " + epochs);
 
@@ -104,12 +103,6 @@ public final class DefaultTrainer implements Trainer {
             training = true;
             paused = false;
             stopRequested = false;
-        }
-
-        try {
-            runTraining(dataSource, epochs);
-        } finally {
-            finishTraining();
         }
     }
 

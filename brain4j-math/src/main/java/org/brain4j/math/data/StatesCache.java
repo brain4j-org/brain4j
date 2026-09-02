@@ -9,7 +9,6 @@ public class StatesCache {
 
     private final Map<Object, Tensor> tensorCache;
     private final Map<String, Tensor[]> states;
-    
     private final boolean training;
 
     public static StatesCache withTraining() {
