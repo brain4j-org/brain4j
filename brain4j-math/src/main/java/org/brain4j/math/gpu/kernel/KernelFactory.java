@@ -2,7 +2,6 @@ package org.brain4j.math.gpu.kernel;
 
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.memory.TempBuffer;
 import org.silicon.api.device.ComputeBuffer;
 import org.silicon.api.function.ComputeFunction;
 import org.silicon.api.kernel.ComputeArgs;
@@ -12,14 +11,10 @@ import org.silicon.api.kernel.ComputeSize;
 /**
  * Kernel argument builder and dispatch helper backed by Silicon.
  */
-public class KernelFactory {
+public record KernelFactory(ComputeFunction function, ComputeArgs args) {
 
-    private final ComputeFunction function;
-    private final ComputeArgs args;
-
-    protected KernelFactory(ComputeFunction function) {
-        this.function = function;
-        this.args = ComputeArgs.of();
+    public KernelFactory(ComputeFunction function) {
+        this(function, ComputeArgs.of());
     }
 
     public static KernelFactory create(Device device, String kernelName) {
@@ -45,26 +40,14 @@ public class KernelFactory {
         return this;
     }
 
-    public KernelFactory addLong(long value) {
+    public KernelFactory longVal(long value) {
         args.longVal(value);
         return this;
     }
 
-    public KernelFactory addDouble(double value) {
+    public KernelFactory doubleVal(double value) {
         args.doubleVal(value);
         return this;
-    }
-
-    public KernelFactory addIntParam(int variable) {
-        return intVal(variable);
-    }
-
-    public KernelFactory addFloatParam(float variable) {
-        return floatVal(variable);
-    }
-
-    public KernelFactory addMemParam(TempBuffer memory) {
-        return buffer(memory.buffer());
     }
 
     public void launch(ComputeQueue queue, ComputeSize globalSize, ComputeSize localSize) {
@@ -118,11 +101,11 @@ public class KernelFactory {
         }
     }
 
-    public ComputeArgs getArgs() {
+    public ComputeArgs args() {
         return args;
     }
 
-    public ComputeFunction getFunction() {
+    public ComputeFunction function() {
         return function;
     }
 
