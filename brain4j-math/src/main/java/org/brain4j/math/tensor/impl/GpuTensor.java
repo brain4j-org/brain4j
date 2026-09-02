@@ -12,6 +12,7 @@ import org.brain4j.math.commons.Range;
 import org.brain4j.math.tensor.TensorKey;
 import org.brain4j.math.tensor.Usage;
 import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.backend.BackendType;
 import org.silicon.api.function.ComputeModule;
 import org.silicon.api.kernel.ComputeSize;
 import org.silicon.api.slang.SlangCompiler;
@@ -143,9 +144,97 @@ public class GpuTensor extends BaseTensor {
 
     public static void initKernels(Device device) {
         try {
-            // JIT compiles the kernels
             SlangCompiler compiler = new SlangCompiler(device.context());
 
+            // TODO: hope that Slang devs wake the fuck up and fix this
+            if (device.context().backendType() == BackendType.METAL) {
+                // Metal: per-kernel compilation avoids global buffer(>30) overflow
+                // Each file contains exactly one entry point -> bindings start at 0
+                String[] activationKernels = {
+                    "activation_forward", "activation_backward",
+                    "elu_forward", "elu_backward", "gelu_forward", "gelu_backward",
+                    "leakyrelu_forward", "leakyrelu_backward", "linear_forward", "linear_backward",
+                    "mish_forward", "mish_backward", "relu_forward", "relu_backward",
+                    "sigmoid_forward", "sigmoid_backward", "softmax_forward", "softmax_backward",
+                    "softplus_forward", "softplus_backward", "swish_forward", "swish_backward",
+                    "tanh_forward", "tanh_backward"
+                };
+                for (String k : activationKernels) {
+                    ComputeModule m = compiler.compileFromResource("shaders/activations/" + k + ".slang");
+                    GpuContext.storeModule(device, "activations_" + k, m);
+                    GpuContext.register(device, k, m);
+                }
+
+                String[] tensorOpsKernels = {
+                    "matmul", "matmul_batched", "matmul_legacy",
+                    "slice", "slice_backward_scatter", "layer_norm", "broadcast_to",
+                    "add_op", "sub_op", "mul_op", "div_op", "pow_op",
+                    "add", "sub", "mul", "div",
+                    "sum_along_dim", "softmax_last_dim",
+                    "concat_last_dim", "concat_copy_a", "concat_copy_b"
+                };
+                for (String k : tensorOpsKernels) {
+                    ComputeModule m = compiler.compileFromResource("shaders/tensor_ops/" + k + ".slang");
+                    GpuContext.storeModule(device, "tensor_ops_" + k, m);
+                    GpuContext.register(device, k, m);
+                }
+
+                String[] scalarKernels = {
+                    "mask", "add_scalar", "sub_scalar", "mul_scalar",
+                    "div_scalar", "pow_scalar", "sqrt_op"
+                };
+                for (String k : scalarKernels) {
+                    ComputeModule m = compiler.compileFromResource("shaders/elementary_ops/" + k + ".slang");
+                    GpuContext.storeModule(device, "elementary_ops_" + k, m);
+                    GpuContext.register(device, k, m);
+                }
+
+                String[] gradientClipKernels = {
+                    "hard_clip", "l2_clip", "l2_clip_from_scale",
+                    "l2_norm_squared_reduce", "l2_sum_reduce", "l2_norm_squared_final",
+                    "l2_norm_squared_single_block", "l2_norm_sqrt", "compute_l2_clip_scale"
+                };
+                for (String k : gradientClipKernels) {
+                    ComputeModule m = compiler.compileFromResource("shaders/gradient_clippers/" + k + ".slang");
+                    GpuContext.storeModule(device, "gradient_clippers_" + k, m);
+                    GpuContext.register(device, k, m);
+                }
+
+                String[] convolutionKernels = {
+                    "conv2d_nchw", "conv2d_nchw_shared", "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw",
+                    "convolve1d_direct", "convolve1d_fft", "convolve2d_direct", "convolve2d_fft_extract"
+                };
+                for (String k : convolutionKernels) {
+                    ComputeModule m = compiler.compileFromResource("shaders/convolution/" + k + ".slang");
+                    GpuContext.storeModule(device, "convolution_" + k, m);
+                    GpuContext.register(device, k, m);
+                }
+
+                ComputeModule complexM = compiler.compileFromResource("shaders/complex_ops/complex_pointwise_mul.slang");
+                GpuContext.storeModule(device, "complex_ops", complexM);
+                GpuContext.register(device, "complex_pointwise_mul", complexM);
+
+                String[] flashAttentionKernels = {
+                    "flash_attention_forward", "flash_attention_forward_with_lse",
+                    "flash_attention_backward", "flash_attention_backward_dq",
+                    "flash_attention_forward_tiled", "flash_attention_backward_tiled"
+                };
+                for (String k : flashAttentionKernels) {
+                    ComputeModule m = compiler.compileFromResource("shaders/flash_attention/" + k + ".slang");
+                    GpuContext.storeModule(device, "flash_attention_" + k, m);
+                    GpuContext.register(device, k, m);
+                }
+
+                String[] poolingKernels = { "max_pool_forward", "max_pool_backward" };
+                for (String k : poolingKernels) {
+                    ComputeModule m = compiler.compileFromResource("shaders/pooling/" + k + ".slang");
+                    GpuContext.storeModule(device, "pooling_" + k, m);
+                    GpuContext.register(device, k, m);
+                }
+                return;
+            }
+
+            // CUDA / OpenCL: single-module compilation (fast, no buffer limit)
             ComputeModule tensorOpsModule = compiler.compileFromResource("shaders/tensor_ops.slang");
             ComputeModule elementaryOpsModule = compiler.compileFromResource("shaders/elementary_ops.slang");
             ComputeModule activationsModule = compiler.compileFromResource("shaders/activations.slang");

@@ -60,13 +60,17 @@ public class Device {
     public synchronized void createResources() {
         ensureSameThread();
 
+        if (queue != null) {
+            queue.await();
+        }
+
         if (!pooledQueue.isEmpty()) {
             pooledQueue.forEach(Pooled::close);
             pooledQueue.clear();
         }
     }
 
-    public ComputeBuffer acquire(TensorKey key, Supplier<ComputeBuffer> allocator) {
+    public synchronized ComputeBuffer acquire(TensorKey key, Supplier<ComputeBuffer> allocator) {
         ensureSameThread();
 
         Pooled pooled = memoryPool.acquire(key, allocator);
