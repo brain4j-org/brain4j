@@ -25,13 +25,18 @@ public final class OnnxIO {
     private static final Map<String, OnnxCodec<? extends Operation>> BY_TYPE = new HashMap<>();
     private static final List<OnnxCodec<? extends Operation>> ALL = new ArrayList<>();
 
-    private static final Map<Class<? extends Activation>, String> ACTIVATION_TO_ONNX = Map.of(
-        ReLU.class, "Relu",
-        GELU.class, "Gelu",
-        Softmax.class, "Softmax",
-        Sigmoid.class, "Sigmoid",
-        Tanh.class, "Tanh",
-        LeakyReLU.class, "LeakyRelu"
+    private static final Map<Class<? extends Activation>, String> ACTIVATION_TO_ONNX = Map.ofEntries(
+        Map.entry(ReLU.class, "Relu"),
+        Map.entry(GELU.class, "Gelu"),
+        Map.entry(Softmax.class, "Softmax"),
+        Map.entry(Sigmoid.class, "Sigmoid"),
+        Map.entry(Tanh.class, "Tanh"),
+        Map.entry(LeakyReLU.class, "LeakyRelu"),
+        Map.entry(ELU.class, "Elu"),
+        Map.entry(SoftPlus.class, "Softplus"),
+        Map.entry(Mish.class, "Mish"),
+        Map.entry(Swish.class, "SiLU"),
+        Map.entry(Linear.class, "Identity")
     );
 
     static {
@@ -55,6 +60,11 @@ public final class OnnxIO {
         register(new LeakyReluOnnxCodec());
         register(new GeluOnnxCodec());
         register(new SoftmaxOnnxCodec());
+        register(new EluOnnxCodec());
+        register(new SoftPlusOnnxCodec());
+        register(new MishOnnxCodec());
+        register(new SwishOnnxCodec());
+        register(new LinearOnnxCodec());
     }
 
     private OnnxIO() {}
