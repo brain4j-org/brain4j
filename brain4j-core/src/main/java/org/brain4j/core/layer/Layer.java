@@ -22,7 +22,8 @@ import java.util.random.RandomGenerator;
 
 public abstract class Layer implements Copyable<Layer>, ModelBlock {
     
-    protected Map<String, Tensor> parameters;
+    protected final Map<String, Tensor> parameters;
+
     protected GradientClipper clipper;
     protected Activation activation;
     protected WeightInit weightInit;

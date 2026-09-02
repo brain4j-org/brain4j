@@ -1,6 +1,5 @@
 package org.brain4j.math.gpu.device;
 
-import org.brain4j.math.gpu.memory.GpuQueue;
 import org.brain4j.math.gpu.memory.TempBuffer;
 import org.brain4j.math.tensor.TensorKey;
 import org.silicon.api.Silicon;
@@ -31,7 +30,6 @@ public class Device {
     private final List<Pooled> pooledQueue;
 
     private ComputeQueue queue;
-    private GpuQueue legacyQueue;
     private Thread threadContext;
 
     public Device() {
@@ -45,24 +43,12 @@ public class Device {
             this.context = device.createContext();
             this.threadContext = Thread.currentThread();
             this.queue = context.createQueue();
-            this.legacyQueue = new GpuQueue(queue, false);
             this.name = device.name();
             this.memoryPool = context.createPool();
             this.pooledQueue = new ArrayList<>();
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create GPU device at index " + deviceIndex, e);
         }
-    }
-
-    /**
-     * Legacy raw-handle constructor retained for source compatibility.
-     *
-     * <p>Raw native handles are not part of the Silicon backend. The values are
-     * ignored and the default device is selected.
-     */
-    @Deprecated
-    public Device(long platformAddr, long deviceAddr) {
-        this(0);
     }
 
     private void ensureSameThread() {
@@ -137,12 +123,8 @@ public class Device {
         setQueue(context.createQueue());
     }
 
-    public MemoryPool<TensorKey> getMemoryPool() {
+    public MemoryPool<TensorKey> memoryPool() {
         return memoryPool;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String name() {
@@ -167,22 +149,6 @@ public class Device {
 
     public void setQueue(ComputeQueue queue) {
         this.queue = queue;
-        this.legacyQueue = queue == null ? null : new GpuQueue(queue, false);
-    }
-
-    public GpuQueue getQueue() {
-        return legacyQueue;
-    }
-
-    public void setQueue(GpuQueue queue) {
-        this.legacyQueue = queue;
-        this.queue = queue == null ? null : queue.queue();
-    }
-
-    public void printLimits() {
-        System.out.println("Device = " + device.name());
-        System.out.println("Vendor = " + device.vendor());
-        System.out.println("Memory = " + device.memorySize());
     }
 
     public synchronized void free() {
@@ -192,7 +158,6 @@ public class Device {
             queue.await();
             queue.free();
             queue = null;
-            legacyQueue = null;
         }
 
         memoryPool.free();
@@ -207,31 +172,6 @@ public class Device {
 
         pooledQueue.forEach(Pooled::close);
         pooledQueue.clear();
-    }
-
-    @Deprecated
-    public long getPlatform() {
-        throw unsupportedRawHandle("platform");
-    }
-
-    @Deprecated
-    public long getDevice() {
-        throw unsupportedRawHandle("device");
-    }
-
-    @Deprecated
-    public long getContext() {
-        throw unsupportedRawHandle("context");
-    }
-
-    @Deprecated
-    public long newContext() {
-        throw unsupportedRawHandle("context");
-    }
-
-    @Deprecated
-    public long newCommandQueue() {
-        throw unsupportedRawHandle("command queue");
     }
 
     private static UnsupportedOperationException unsupportedRawHandle(String handle) {

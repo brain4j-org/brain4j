@@ -13,7 +13,7 @@ public class InputLayer extends Layer {
 
     public record Config(Shape shape) {}
 
-    protected Config config;
+    protected final Config config;
 
     public InputLayer(Shape shape) {
         this(new Config(shape));

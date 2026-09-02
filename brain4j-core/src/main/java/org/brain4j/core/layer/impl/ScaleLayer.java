@@ -16,7 +16,7 @@ public class ScaleLayer extends Layer {
 
     public record Config(FeatureScaler scaler, Set<Integer> enabledInputs) {}
 
-    protected Config config;
+    protected final Config config;
 
     public ScaleLayer(FeatureScaler scaler) {
         this(new Config(scaler, null));

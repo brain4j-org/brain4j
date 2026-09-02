@@ -59,7 +59,7 @@ public abstract class BaseTensor implements Tensor {
 
                 if (i < shape[dim] - 1) {
                     result.append(",\n");
-                    result.append(" ".repeat(dim + 1));
+                    result.repeat(" ", dim + 1);
                 }
             }
 

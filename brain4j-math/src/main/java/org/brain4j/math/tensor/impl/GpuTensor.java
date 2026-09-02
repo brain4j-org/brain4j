@@ -40,11 +40,6 @@ public class GpuTensor extends BaseTensor {
         }
     }
 
-    @Deprecated
-    public GpuTensor(Device device, int[] shape, long otherBuffer) {
-        this(device, shape, unsupportedRawBuffer());
-    }
-
     public GpuTensor(Device device, boolean persistent, int[] shape, float... data) {
         this.device = device;
         this.size = Tensors.computeSize(shape);
@@ -957,23 +952,15 @@ public class GpuTensor extends BaseTensor {
             ComputeSize localSize = new ComputeSize(tile, tile, 1);
             ComputeSize globalSize;
 
-            if (kernel == "conv2d_nchw_shared") {
-                int groupsX = (outWidth + tile - 1) / tile;
-                int groupsY = (outHeight + tile - 1) / tile;
-                int groupsZ = batch * numFilters;
+            int groupsX = (outWidth + tile - 1) / tile;
+            int groupsY = (outHeight + tile - 1) / tile;
+            int groupsZ = batch * numFilters;
 
-                globalSize = new ComputeSize(
-                    groupsX * tile,
-                    groupsY * tile,
-                    groupsZ
-                );
-            } else {
-                globalSize = new ComputeSize(
-                    roundUp(outWidth),
-                    roundUp(outHeight * numFilters),
-                    Math.max(1, batch)
-                );
-            }
+            globalSize = new ComputeSize(
+                groupsX * tile,
+                groupsY * tile,
+                groupsZ
+            );
 
             KernelFactory.create(device, kernel)
                 .buffer(A.dataBuffer)

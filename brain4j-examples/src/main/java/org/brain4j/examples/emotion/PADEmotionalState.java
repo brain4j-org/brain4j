@@ -1,7 +1,5 @@
 package org.brain4j.examples.emotion;
 
-import org.jetbrains.annotations.NotNull;
-
 public record PADEmotionalState(double pleasure, double arousal, double dominance) {
     public PADEmotionalState(double pleasure, double arousal, double dominance) {
         this.pleasure = clamp(pleasure, -1.0, 1.0);
@@ -14,7 +12,6 @@ public record PADEmotionalState(double pleasure, double arousal, double dominanc
     }
 
     @Override
-    @NotNull
     public String toString() {
         return String.format("PAD(P: %.2f, A: %.2f, D: %.2f)", pleasure, arousal, dominance);
     }

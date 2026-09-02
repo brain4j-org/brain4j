@@ -26,7 +26,7 @@ public class TimingMonitor implements Monitor {
         switch (event) {
             case BatchStart ignored -> this.batchStartTime = System.nanoTime();
             case BatchEnd(int batch, int totalBatches) -> batchCompleted();
-            case EpochStart(int epoch, int totalEpochs) -> epochStarted(epoch, totalEpochs);
+            case EpochStart(int epoch, int targetEpochs) -> epochStarted(epoch, targetEpochs);
             default -> {}
         }
     }

@@ -19,18 +19,23 @@ public class PosEncodeLayer extends Layer {
 
     public record Config(int length, int dimension) {}
 
-    protected Config config;
-    private final Map<Integer, Tensor> preGenerated = new HashMap<>();
+    private final Map<Integer, Tensor> embeddings = new HashMap<>();
+    protected final Config config;
+
+    public PosEncodeLayer(Config config) {
+        this.config = config;
+    }
 
     public PosEncodeLayer(int length, int dimension) {
         this(new Config(length, dimension));
     }
 
-    public PosEncodeLayer(Config config) {
-        this.config = config;
+    public PosEncodeLayer(int length, int dimension, Tensor weights) {
+        this.config = new Config(length, dimension);
 
         for (int i = 0; i < config.length; i++) {
-            preGenerated.put(i, generate(i, config.dimension));
+            Tensor slice = weights.slice(Range.point(i), Range.all());
+            embeddings.put(i, slice.squeeze());
         }
     }
 
@@ -40,6 +45,9 @@ public class PosEncodeLayer extends Layer {
 
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+        for (int i = 0; i < config.length; i++) {
+            embeddings.put(i, generate(i, config.dimension));
+        }
     }
 
     @Override
@@ -79,7 +87,7 @@ public class PosEncodeLayer extends Layer {
         float[] posData = positional.data();
 
         for (int i = 0; i < seqLength; i++) {
-            Tensor add = preGenerated.computeIfAbsent(i, index -> generate(index, dimension));
+            Tensor add = embeddings.computeIfAbsent(i, index -> generate(index, dimension));
             float[] addData = add.data();
             int index = i * dimension;
             System.arraycopy(addData, 0, posData, index, addData.length);
@@ -96,17 +104,8 @@ public class PosEncodeLayer extends Layer {
     @Override
     public Layer copy() {
         PosEncodeLayer copy = new PosEncodeLayer(config);
-        // TODO
+        copy.embeddings.putAll(embeddings);
         return copy;
-    }
-
-    public void setWeights(Tensor weights) {
-        this.config = new Config(weights.shapeAt(0), config.dimension);
-
-        for (int i = 0; i < config.length; i++) {
-            Tensor slice = weights.slice(Range.point(i), Range.all());
-            preGenerated.put(i, slice.squeeze());
-        }
     }
 
     public Tensor generate(int position, int embeddingDim) {
@@ -126,5 +125,9 @@ public class PosEncodeLayer extends Layer {
 
     public Config config() {
         return config;
+    }
+
+    public Map<Integer, Tensor> embeddings() {
+        return embeddings;
     }
 }

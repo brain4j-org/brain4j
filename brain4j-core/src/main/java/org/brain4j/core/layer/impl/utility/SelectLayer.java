@@ -13,7 +13,7 @@ public class SelectLayer extends Layer {
 
     public record Config(int index) {}
 
-    protected Config config;
+    protected final Config config;
 
     public SelectLayer(int index) {
         this(new Config(index));

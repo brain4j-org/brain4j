@@ -5,9 +5,9 @@ import org.brain4j.math.tensor.impl.GpuTensor;
 
 public abstract class PoolingProvider {
 
-    protected int stride;
-    protected int windowHeight;
-    protected int windowWidth;
+    protected final int stride;
+    protected final int windowHeight;
+    protected final int windowWidth;
 
     public PoolingProvider(int stride, int windowHeight, int windowWidth) {
         this.stride = stride;

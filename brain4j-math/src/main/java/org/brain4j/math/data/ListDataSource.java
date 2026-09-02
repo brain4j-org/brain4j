@@ -31,11 +31,12 @@ import java.util.List;
  * @author Adversing
  */
 public class ListDataSource implements Cloneable, Iterable<Sample> {
-    
+
+    protected final List<Tensor[]> batchedInputs;
+    protected final List<Tensor[]> batchedLabels;
     protected final int batches;
+
     protected List<Sample> samples;
-    protected List<Tensor[]> batchedInputs;
-    protected List<Tensor[]> batchedLabels;
     protected Device device;
     protected int cursor;
     protected int batchSize;

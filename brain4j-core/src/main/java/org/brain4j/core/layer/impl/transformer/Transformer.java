@@ -23,6 +23,7 @@ import java.util.random.RandomGenerator;
 
 public abstract class Transformer<T extends Transformer<T>> extends Layer {
 
+    protected final Config config;
     protected DenseLayer upProj;
     protected DenseLayer gateProj;
     protected DenseLayer downProj;
@@ -30,7 +31,6 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
     protected Layer norm1;
     protected Layer norm2;
     protected Layer attention;
-    protected Config config;
 
     public record Config(
         int embedDim,

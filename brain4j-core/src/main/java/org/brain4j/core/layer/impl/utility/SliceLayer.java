@@ -14,7 +14,7 @@ public class SliceLayer extends Layer {
 
     public record Config(Range[] ranges) {}
 
-    protected Config config;
+    protected final Config config;
 
     public SliceLayer(Range... ranges) {
         this(new Config(ranges));

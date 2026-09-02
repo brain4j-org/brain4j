@@ -34,17 +34,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         Tensor cachedOutput = cache.get(outProj);
         Tensor cachedQKV = cache.get(weights);
 
-        Tensor QKV;
-
-        if (cachedQKV != null && !cache.isTraining()) {
-            Tensor newTokens = input.slice(slicingRanges);
-            Tensor proj = newTokens.matmul(weights);
-            QKV = cachedQKV.concat(proj, 1);
-        } else {
-            QKV = input.matmulGrad(weights);
-        }
-
-        cache.set(weights, QKV);
+        Tensor QKV = cachedProjection(cache, weights, slicingRanges, cachedQKV, input);
 
         if (config.qkvBias()) QKV = QKV.addGrad(bias);
         
@@ -75,21 +65,26 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         context = context.transposeGrad(1, 2);
         
         Tensor output = context.reshapeGrad(batch, seqLength, config.embedDim());
-        Tensor result;
-
-        if (cachedOutput != null && !cache.isTraining()) {
-            Tensor newOutput = output.slice(slicingRanges);
-            Tensor proj = newOutput.matmul(outProj);
-
-            result = cachedOutput.concat(proj, 1);
-        } else {
-            result = output.matmulGrad(outProj);
-        }
-
-        cache.set(outProj, result);
+        Tensor result = cachedProjection(cache, outProj, slicingRanges, cachedOutput, output);
 
         if (config.outBias()) result = result.addGrad(outBias);
         
         return new Tensor[]{result};
+    }
+
+    private Tensor cachedProjection(StatesCache cache, Tensor weights, Range[] range, Tensor cachedOutput, Tensor output) {
+        Tensor result;
+
+        if (cachedOutput != null && !cache.isTraining()) {
+            Tensor newOutput = output.slice(range);
+            Tensor proj = newOutput.matmul(weights);
+
+            result = cachedOutput.concat(proj, 1);
+        } else {
+            result = output.matmulGrad(weights);
+        }
+
+        cache.set(weights, result);
+        return result;
     }
 }

@@ -18,7 +18,7 @@ public class LSTMLayer extends Layer {
 
     public record Config(int hiddenDimension, boolean returnSequences) {}
 
-    protected Config config;
+    protected final Config config;
 
     public LSTMLayer(int hiddenDimension, boolean returnSequences) {
         this(new Config(hiddenDimension, returnSequences));

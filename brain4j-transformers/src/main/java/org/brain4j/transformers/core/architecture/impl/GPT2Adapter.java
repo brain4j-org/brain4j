@@ -62,15 +62,13 @@ public class GPT2Adapter implements ArchitectureAdapter {
 
         EmbeddingLayer embeddingLayer = new EmbeddingLayer(vocabSize, embeddingDim);
         DenseLayer vocabLayer = new DenseLayer(0);
-        PosEncodeLayer posEncodeLayer = new PosEncodeLayer(context, embeddingDim);
+        PosEncodeLayer posEncodeLayer = new PosEncodeLayer(context, embeddingDim, posEncode);
 
         embeddingLayer.registerParam("weights", embedding);
         embeddingLayer.registerParam("bias", Tensors.zeros(embedding.elements()));
 
         vocabLayer.registerParam("weights", embedding.transpose());
         vocabLayer.registerParam("bias", Tensors.zeros(embedding.elements()));
-
-        posEncodeLayer.setWeights(posEncode);
 
         specs.add(new InputLayer(Shape.of(-1)).freeze());
         specs.add(embeddingLayer.freeze());
@@ -153,7 +151,7 @@ public class GPT2Adapter implements ArchitectureAdapter {
 
         public record Config() {}
 
-        protected Config config = new Config();
+        protected final Config config = new Config();
 
         @Override
         public void build(List<Shape> inputShapes) {

@@ -10,14 +10,10 @@ import org.brain4j.math.tensor.impl.GpuTensor;
 import org.silicon.api.device.ComputeBuffer;
 import org.silicon.api.kernel.ComputeSize;
 
-public class L2Clipper implements GradientClipper {
+public record L2Clipper(double scale) implements GradientClipper {
 
     private static final int REDUCTION_BLOCK_SIZE = 256;
 
-    private final double scale;
-
-    public L2Clipper(double scale) { this.scale = scale; }
-    
     @Override
     public void clipCpu(CpuTensor grad) {
         double threshold = scale * Math.sqrt(grad.elements());
@@ -79,10 +75,6 @@ public class L2Clipper implements GradientClipper {
         }
 
         return Math.sqrt(sumOfSquares);
-    }
-    
-    public double scale() {
-        return scale;
     }
 
     private ComputeBuffer computeNormSquared(

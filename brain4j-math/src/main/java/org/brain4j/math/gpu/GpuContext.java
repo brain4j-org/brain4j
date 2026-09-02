@@ -1,7 +1,6 @@
 package org.brain4j.math.gpu;
 
 import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.memory.GpuQueue;
 import org.silicon.api.function.ComputeFunction;
 import org.silicon.api.function.ComputeModule;
 import org.silicon.api.kernel.ComputeQueue;
@@ -59,17 +58,10 @@ public class GpuContext {
         ComputeFunction function = deviceKernels.get(kernelName);
 
         if (function == null) {
-            throw new IllegalStateException("Kernel " + kernelName + " not registered for device: " + device.getName());
+            throw new IllegalStateException("Kernel " + kernelName + " not registered for device: " + device.name());
         }
 
         return function;
-    }
-
-    @Deprecated
-    public static long findKernel(Device device, String kernelName) {
-        throw new UnsupportedOperationException(
-            "Raw native kernels are not available in the Silicon GPU backend"
-        );
     }
 
     public static QueueHandle getOrCreateQueue(Device device) {
@@ -79,42 +71,6 @@ public class GpuContext {
         }
 
         return new QueueHandle(device.context().createQueue(), true);
-    }
-
-    public static GpuQueue getOrCreate(Device device) {
-        GpuQueue queue = device.getQueue();
-        if (queue != null) {
-            return queue;
-        }
-
-        return new GpuQueue(device.context().createQueue(), true);
-    }
-
-    public static void finishAndRelease(GpuQueue queue) {
-        if (queue == null) return;
-        queue.close();
-    }
-
-    @Deprecated
-    public static void finishAndRelease(long commandQueue) {
-        throw new UnsupportedOperationException(
-            "Raw native command queues are not available in the Silicon GPU backend"
-        );
-    }
-
-    public static void finishAndRelease(Device device) {
-        GpuQueue queue = device.getQueue();
-        if (queue != null) {
-            queue.close();
-        }
-        device.setQueue((GpuQueue) null);
-    }
-
-    @Deprecated
-    public static void register(Device device, String kernelName, long program) {
-        throw new UnsupportedOperationException(
-            "Native program registration has been removed. Register Silicon ComputeFunction instances instead."
-        );
     }
 
     public static void clearCache(Device device) {

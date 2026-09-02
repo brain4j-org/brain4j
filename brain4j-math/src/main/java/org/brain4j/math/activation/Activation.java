@@ -47,7 +47,7 @@ public interface Activation {
      * @return The name of the activation function.
      */
     default String name() {
-        return getClass().getSimpleName().replaceAll("Activation", "");
+        return getClass().getSimpleName().replace("Activation", "");
     }
 
      /**

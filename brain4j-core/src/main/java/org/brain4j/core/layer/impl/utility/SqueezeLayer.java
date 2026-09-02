@@ -14,7 +14,7 @@ public class SqueezeLayer extends Layer {
 
     public record Config(int dimension) {}
 
-    protected Config config;
+    protected final Config config;
 
     public SqueezeLayer(int dimension) {
         this(new Config(dimension));

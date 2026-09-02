@@ -13,7 +13,7 @@ public class ReshapeLayer extends Layer {
 
     public record Config(Shape shape) {}
 
-    protected Config config;
+    protected final Config config;
 
     public ReshapeLayer(Shape shape) {
         this(new Config(shape));

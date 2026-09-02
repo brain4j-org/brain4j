@@ -44,12 +44,12 @@ subprojects {
                 }
 
                 authentication {
-                    basic(BasicAuthentication)
+                    create("basic", BasicAuthentication)
                 }
             }
         }
         publications {
-            gpr(MavenPublication) {
+            create("gpr", MavenPublication) {
                 from components.java
                 groupId = project.group
                 artifactId = project.name

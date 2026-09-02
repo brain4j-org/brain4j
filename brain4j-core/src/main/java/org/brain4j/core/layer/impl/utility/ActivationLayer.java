@@ -15,7 +15,7 @@ public class ActivationLayer extends Layer {
 
     public record Config(Activation activation) {}
 
-    protected Config config;
+    protected final Config config;
 
     public ActivationLayer(Activations activation) {
         this(activation.function());

@@ -13,7 +13,7 @@ public class ConcatLayer extends Layer {
 
     public record Config(int dimension) {}
 
-    protected Config config;
+    protected final Config config;
 
     public ConcatLayer() {
         this(new Config(-1));

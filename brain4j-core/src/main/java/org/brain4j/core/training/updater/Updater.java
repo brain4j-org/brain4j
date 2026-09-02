@@ -12,7 +12,7 @@ import java.util.Map;
  * <p>
  * This class provides a common interface and core logic for accumulating gradients 
  * and applying weight updates to a model.
- *
+ * <p>
  * Subclasses should override {@link #postBatch} or {@link #postFit} as needed to update the weights.
  *
  * @see StochasticUpdater
@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public abstract class Updater {
 
-    protected Map<Tensor, Tensor> weightsGradients = new HashMap<>();
+    protected final Map<Tensor, Tensor> weightsGradients = new HashMap<>();
     
     /**
      * Applies the accumulated gradients to the model's weights.

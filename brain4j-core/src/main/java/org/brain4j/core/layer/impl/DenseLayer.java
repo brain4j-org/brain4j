@@ -16,7 +16,7 @@ public class DenseLayer extends Layer {
 
     public record Config(int outDimension, Activation activation) {}
 
-    protected Config config;
+    protected final Config config;
 
     public DenseLayer(int outDimension) {
         this(new Config(outDimension, new Linear()));

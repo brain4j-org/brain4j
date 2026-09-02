@@ -43,7 +43,7 @@ public class DeviceUtils {
             try {
                 device = new Device(i);
 
-                if (device.getName().toLowerCase().contains(name.toLowerCase())) {
+                if (device.name().toLowerCase().contains(name.toLowerCase())) {
                     return device;
                 }
 
@@ -100,19 +100,6 @@ public class DeviceUtils {
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read kernel source from: " + resourcePath, e);
         }
-    }
-
-    @Deprecated
-    public static String deviceName(long device) {
-        throw unsupportedRawGpuHandle();
-    }
-
-    @Deprecated
-    public static long createBuildProgram(Device device, String path) {
-        throw new UnsupportedOperationException(
-            "Native program compilation has been removed. Use GpuTensor.initKernels(Device), " +
-            "which compiles SLANG kernels through Silicon."
-        );
     }
 
     public static boolean isSimdAvailable() {

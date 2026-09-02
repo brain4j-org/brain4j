@@ -18,7 +18,6 @@ import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
 import org.brain4j.math.tensor.Tensor;
 
-import javax.xml.crypto.Data;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,8 +28,8 @@ import java.util.concurrent.CompletableFuture;
  * High-level helpers for loading and converting datasets into framework-friendly
  * data sources.
  *
- * <p>This class contains convenience methods to obtain commonly used datasets (for
- * example MNIST) and utility methods to transform dataset files into the
+ * <p>This class contains convenience methods to get commonly used datasets (for
+ * example, MNIST) and utility methods to transform dataset files into the
  * library's {@link ListDataSource} implementations.
  */
 public final class Datasets {
@@ -52,7 +51,7 @@ public final class Datasets {
 
         try {
             HFDataset dataset = loadDataset("ylecun/mnist");
-            RecordParser<Group> parser = (record, index) -> {
+            RecordParser<Group> parser = (record, _) -> {
                 int label = (int) record.getLong("label", 0);
                 Group imageGroup = record.getGroup("image", 0);
                 byte[] pngBytes = imageGroup.getBinary("bytes", 0).getBytes();
@@ -144,7 +143,7 @@ public final class Datasets {
     /**
      * Load a dataset by id using the default loader configuration.
      *
-     * @param datasetId the dataset identifier (for example "mnist")
+     * @param datasetId the dataset identifier (for example, "mnist")
      * @return a {@link HFDataset} handle
      * @throws Exception if loading fails
      */

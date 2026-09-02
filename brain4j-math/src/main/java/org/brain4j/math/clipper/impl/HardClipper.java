@@ -20,7 +20,7 @@ public class HardClipper implements GradientClipper {
     
     @Override
     public void clipCpu(CpuTensor grad) {
-        grad.map(x -> Commons.clamp(x, -bound, bound));
+        grad.map(x -> Math.clamp(x, -bound, bound));
     }
 
     @Override

@@ -20,7 +20,7 @@ public class EmbeddingLayer extends Layer {
 
     public record Config(int vocabSize, int embeddingDim) {}
 
-    protected Config config;
+    protected final Config config;
 
     private Tensor lastInput;
     private Tensor lastOutput;

@@ -14,7 +14,7 @@ public class RMSNormLayer extends Layer {
 
     public record Config(double epsilon) {}
 
-    protected Config config;
+    protected final Config config;
 
     public RMSNormLayer() {
         this(new Config(1e-6));

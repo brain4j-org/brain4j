@@ -325,30 +325,6 @@ public class Commons {
     }
     
     /**
-     * Clamps a floating-point value to the specified range.
-     *
-     * @param value the value to clamp
-     * @param minimum the lower bound
-     * @param maximum the upper bound
-     * @return {@code value} constrained to the interval {@code [minimum, maximum]}
-     */
-    public static double clamp(float value, double minimum, double maximum) {
-        return Math.min(Math.max(value, minimum), maximum);
-    }
-    
-    /**
-     * Clamps a double-precision value to the specified range.
-     *
-     * @param value the value to clamp
-     * @param minimum the lower bound
-     * @param maximum the upper bound
-     * @return {@code value} constrained to the interval {@code [minimum, maximum]}
-     */
-    public static double clamp(double value, double minimum, double maximum) {
-        return Math.min(Math.max(value, minimum), maximum);
-    }
-    
-    /**
      * Converts an integer array to a float array by widening each element.
      *
      * @param array the input integer array

@@ -2,7 +2,6 @@ package org.brain4j.math.gpu.kernel;
 
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.memory.GpuQueue;
 import org.brain4j.math.gpu.memory.TempBuffer;
 import org.silicon.api.device.ComputeBuffer;
 import org.silicon.api.function.ComputeFunction;
@@ -29,13 +28,6 @@ public class KernelFactory {
 
     public static KernelFactory create(ComputeFunction function) {
         return new KernelFactory(function);
-    }
-
-    @Deprecated
-    public static KernelFactory create(long kernel) {
-        throw new UnsupportedOperationException(
-            "Raw native kernels are not available in the Silicon GPU backend"
-        );
     }
 
     public KernelFactory buffer(ComputeBuffer buffer) {
@@ -73,13 +65,6 @@ public class KernelFactory {
 
     public KernelFactory addMemParam(TempBuffer memory) {
         return buffer(memory.buffer());
-    }
-
-    @Deprecated
-    public KernelFactory addMemParam(long memory) {
-        throw new UnsupportedOperationException(
-            "Raw native memory handles are not available in the Silicon GPU backend"
-        );
     }
 
     public void launch(ComputeQueue queue, ComputeSize globalSize, ComputeSize localSize) {
@@ -131,28 +116,6 @@ public class KernelFactory {
         } catch (Throwable e) {
             throw new RuntimeException("Failed to launch kernel and wait", e);
         }
-    }
-
-    public void launch(GpuQueue queue, int workDim, long... globalWorkSize) {
-        launch(queue.queue(), toSize(workDim, globalWorkSize));
-    }
-
-    public void launch(GpuQueue queue, int workDim, long[] globalWorkSize, long... localWorkSize) {
-        launch(queue.queue(), toSize(workDim, globalWorkSize), toSize(workDim, localWorkSize));
-    }
-
-    @Deprecated
-    public void launch(long queue, int workDim, long... globalWorkSize) {
-        throw new UnsupportedOperationException(
-            "Raw native command queues are not available in the Silicon GPU backend"
-        );
-    }
-
-    @Deprecated
-    public void launch(long queue, int workDim, long[] globalWorkSize, long... localWorkSize) {
-        throw new UnsupportedOperationException(
-            "Raw native command queues are not available in the Silicon GPU backend"
-        );
     }
 
     public ComputeArgs getArgs() {

@@ -161,34 +161,6 @@ public class Brain4J {
             throw new RuntimeException(e);
         }
     }
-    
-    /**
-     * Returns the first available GPU device detected on the system.
-     * <p>
-     * This method is useful when the system contains a single GPU
-     * or when the default device is sufficient for computation.
-     *
-     * @return the first detected {@link Device}
-     * @throws IllegalStateException if no GPU devices are found
-     */
-    @Deprecated
-    public static Device firstLegacyDevice() {
-        try {
-            List<String> devices = DeviceUtils.allDeviceNames();
-
-            if (devices == null || devices.isEmpty()) {
-                return null;
-            }
-
-            Device device = DeviceUtils.findDevice(devices.get(0));
-
-            if (device != null) Brain4J.initKernels(device);
-
-            return device;
-        } catch (IllegalStateException e) {
-            return null;
-        }
-    }
 
     /**
      * Returns a list of all GPU devices available to the framework.

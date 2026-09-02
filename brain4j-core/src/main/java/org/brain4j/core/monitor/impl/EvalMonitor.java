@@ -15,9 +15,9 @@ public class EvalMonitor implements Monitor {
     
     protected final ListDataSource dataSource;
     protected final int evaluationDelay;
+    protected final boolean logging;
 
     protected EvaluationResult lastRecordedEvaluation;
-    protected boolean logging;
 
     public EvalMonitor(ListDataSource dataSource, int evaluationDelay) {
         this(dataSource, evaluationDelay, Brain4J.isLogging());

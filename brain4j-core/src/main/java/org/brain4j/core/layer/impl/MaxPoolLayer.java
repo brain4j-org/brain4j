@@ -13,7 +13,7 @@ public class MaxPoolLayer extends Layer {
 
     public record Config(int stride, int windowHeight, int windowWidth) {}
 
-    protected Config config;
+    protected final Config config;
 
     public MaxPoolLayer(int stride, int windowHeight, int windowWidth) {
         this(new Config(stride, windowHeight, windowWidth));

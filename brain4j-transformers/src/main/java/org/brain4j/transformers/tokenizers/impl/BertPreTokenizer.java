@@ -26,7 +26,7 @@ public class BertPreTokenizer extends BytePairTokenizer {
         List<String> output = new ArrayList<>();
         
         for (String word : input.split("(?=\\p{Punct})|(?<=\\p{Punct})|\\s+")) {
-            word = word.replaceAll(" ", "");
+            word = word.replace(" ", "");
             output.addAll(encodeWordPiece(word));
         }
         
@@ -54,7 +54,8 @@ public class BertPreTokenizer extends BytePairTokenizer {
             
             JsonNode addedTokensNode = root.get("added_tokens");
             if (addedTokensNode != null && !addedTokensNode.isNull()) {
-                this.addedTokens = MAPPER.convertValue(addedTokensNode, new TypeReference<List<AddedToken>>() {});
+                this.addedTokens = MAPPER.convertValue(addedTokensNode, new TypeReference<>() {
+                });
             } else {
                 this.addedTokens = new ArrayList<>();
             }

@@ -49,7 +49,7 @@ public class BytePairTokenizer implements Tokenizer {
     protected List<AddedToken> addedTokens;
     protected Map<String, Integer> vocab;
     protected Map<String, String[]> merges;
-    protected String tokenStarter;
+    protected final String tokenStarter;
     protected String unkToken;
     protected int bosTokenId;
     protected int eosTokenId;

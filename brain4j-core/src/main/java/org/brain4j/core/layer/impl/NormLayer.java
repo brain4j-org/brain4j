@@ -14,7 +14,7 @@ public class NormLayer extends Layer {
 
     public record Config(double epsilon) {}
 
-    protected Config config;
+    protected final Config config;
 
     public NormLayer() {
         this(new Config(1e-5));
