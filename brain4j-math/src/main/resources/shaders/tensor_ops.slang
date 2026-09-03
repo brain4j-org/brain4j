@@ -12,17 +12,22 @@ void matmul(
     uniform StructuredBuffer<float> A,
     uniform StructuredBuffer<float> B,
     uniform RWStructuredBuffer<float> C,
+    uniform StructuredBuffer<int> stridesA,
+    uniform StructuredBuffer<int> stridesB,
     uniform int M,
     uniform int N,
-    uniform int P,
-    uniform int transA,
-    uniform int transB
+    uniform int P
 )
 {
     int row = dispatchThreadID.x;
     int col = dispatchThreadID.y;
     int localRow = groupThreadID.x;
     int localCol = groupThreadID.y;
+
+    int aRowStride = stridesA[0];
+    int aColStride = stridesA[1];
+    int bRowStride = stridesB[0];
+    int bColStride = stridesB[1];
 
     float sum = 0.0f;
     int numTiles = (N + TILE_SIZE - 1) / TILE_SIZE;
@@ -31,17 +36,8 @@ void matmul(
         int aCol = t * TILE_SIZE + localCol;
         int bRow = t * TILE_SIZE + localRow;
 
-        if (transA == 0) {
-            Asub[localRow][localCol] = (row < M && aCol < N) ? A[row * N + aCol] : 0.0f;
-        } else {
-            Asub[localRow][localCol] = (aCol < N && row < M) ? A[aCol * M + row] : 0.0f;
-        }
-
-        if (transB == 0) {
-            Bsub[localRow][localCol] = (bRow < N && col < P) ? B[bRow * P + col] : 0.0f;
-        } else {
-            Bsub[localRow][localCol] = (col < P && bRow < N) ? B[col * N + bRow] : 0.0f;
-        }
+        Asub[localRow][localCol] = (row < M && aCol < N) ? A[row * aRowStride + aCol * aColStride] : 0.0f;
+        Bsub[localRow][localCol] = (bRow < N && col < P) ? B[bRow * bRowStride + col * bColStride] : 0.0f;
 
         GroupMemoryBarrierWithGroupSync();
 

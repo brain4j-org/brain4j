@@ -64,7 +64,8 @@ public class SIMDMatMulProvider implements MatmulProvider {
         int mp = m * p;
         
         if (!isOverParallelThreshold(work, np)) {
-            matmulBlock(A, B, C, 0, work, m, n, p, mn, np, mp, batchA, batchB);
+            matmulBlock(A, B, C, 0, work, m, n, p, mn, np, mp, batchA, batchB,
+                parameters.transposedA(), parameters.transposedB());
             return;
         }
 
@@ -88,20 +89,22 @@ public class SIMDMatMulProvider implements MatmulProvider {
         int start, int end,
         int m, int n, int p,
         int mn, int np, int mp,
-        int batchA, int batchB
+        int batchA, int batchB,
+        boolean transA, boolean transB
     ) {
         if (batchA == 1 && batchB == 1) {
-            matmulSimple(a, b, c, start, end, m, n, p, mn, np, mp);
+            matmulSimple(a, b, c, start, end, m, n, p, mn, np, mp, transA, transB);
         } else {
-            matmulGeneric(a, b, c, start, end, m, n, p, mn, np, mp, batchA, batchB);
+            matmulGeneric(a, b, c, start, end, m, n, p, mn, np, mp, batchA, batchB, transA, transB);
         }
     }
-    
+
     private void matmulSimple(
         float[] a, float[] b, float[] c,
         int start, int end,
         int m, int n, int p,
-        int mn, int np, int mp
+        int mn, int np, int mp,
+        boolean transA, boolean transB
     ) {
         for (int r = start; r < end; r++) {
             int batch = r / m;
@@ -109,23 +112,31 @@ public class SIMDMatMulProvider implements MatmulProvider {
             int offsetA = batch * mn;
             int offsetB = batch * np;
             int offsetC = batch * mp;
-            int rowA = offsetA + i * n;
             int rowC = offsetC + i * p;
-            
-            for (int t = 0; t < n; t++) {
-                float aVal = a[rowA + t];
-                int colB = offsetB + t * p;
-                
-                int j = 0;
 
-                for (; j < SPECIES.loopBound(p); j += SPECIES.length()) {
-                    FloatVector vb = FloatVector.fromArray(SPECIES, b, colB + j);
-                    FloatVector vc = FloatVector.fromArray(SPECIES, c, rowC + j);
-                    vc.add(vb.mul(aVal)).intoArray(c, rowC + j);
-                }
-                
-                for (; j < p; j++) {
-                    c[rowC + j] += aVal * b[colB + j];
+            for (int t = 0; t < n; t++) {
+                // a[row][t]: row-major A is a[row * n + t], its transpose is a[t * m + i]
+                float aVal = transA ? a[offsetA + t * m + i] : a[offsetA + i * n + t];
+
+                if (transB) {
+                    // B is a transposed view: B[t][j] lives at raw index j * n + t
+                    for (int j = 0; j < p; j++) {
+                        c[rowC + j] += aVal * b[offsetB + j * n + t];
+                    }
+                } else {
+                    int colB = offsetB + t * p;
+
+                    int j = 0;
+
+                    for (; j < SPECIES.loopBound(p); j += SPECIES.length()) {
+                        FloatVector vb = FloatVector.fromArray(SPECIES, b, colB + j);
+                        FloatVector vc = FloatVector.fromArray(SPECIES, c, rowC + j);
+                        vc.add(vb.mul(aVal)).intoArray(c, rowC + j);
+                    }
+
+                    for (; j < p; j++) {
+                        c[rowC + j] += aVal * b[colB + j];
+                    }
                 }
             }
         }
@@ -136,30 +147,37 @@ public class SIMDMatMulProvider implements MatmulProvider {
         int start, int end,
         int m, int n, int p,
         int mn, int np, int mp,
-        int batchA, int batchB
+        int batchA, int batchB,
+        boolean transA, boolean transB
     ) {
         for (int r = start; r < end; r++) {
             int bi = (batchA == 1 ? 0 : r / m) * mn;
             int bj = (batchB == 1 ? 0 : r / m) * np;
             int ci = (r / m) * mp;
             int i = r % m;
-            int rowA = bi + i * n;
             int rowC = ci + i * p;
-            
+
             for (int t = 0; t < n; t++) {
-                float aVal = a[rowA + t];
-                int colB = bj + t * p;
-                
-                int j = 0;
-                
-                for (; j < SPECIES.loopBound(p); j += SPECIES.length()) {
-                    FloatVector vb = FloatVector.fromArray(SPECIES, b, colB + j);
-                    FloatVector vc = FloatVector.fromArray(SPECIES, c, rowC + j);
-                    vc.add(vb.mul(aVal)).intoArray(c, rowC + j);
-                }
-                
-                for (; j < p; j++) {
-                    c[rowC + j] += aVal * b[colB + j];
+                float aVal = transA ? a[bi + t * m + i] : a[bi + i * n + t];
+
+                if (transB) {
+                    for (int j = 0; j < p; j++) {
+                        c[rowC + j] += aVal * b[bj + j * n + t];
+                    }
+                } else {
+                    int colB = bj + t * p;
+
+                    int j = 0;
+
+                    for (; j < SPECIES.loopBound(p); j += SPECIES.length()) {
+                        FloatVector vb = FloatVector.fromArray(SPECIES, b, colB + j);
+                        FloatVector vc = FloatVector.fromArray(SPECIES, c, rowC + j);
+                        vc.add(vb.mul(aVal)).intoArray(c, rowC + j);
+                    }
+
+                    for (; j < p; j++) {
+                        c[rowC + j] += aVal * b[colB + j];
+                    }
                 }
             }
         }
@@ -194,7 +212,8 @@ public class SIMDMatMulProvider implements MatmulProvider {
                     start, end,
                     parameters.m(), parameters.n(), parameters.p(),
                     parameters.mn(), parameters.np(), parameters.mp(),
-                    parameters.batchA(), parameters.batchB()
+                    parameters.batchA(), parameters.batchB(),
+                    parameters.transposedA(), parameters.transposedB()
                 );
             }
         }

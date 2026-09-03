@@ -524,19 +524,10 @@ public class GpuTensor extends BaseTensor {
             return matmul(other.to(device));
         }
 
-        GpuTensor A = this;
-
-        // The matmul kernel indexes raw row-major memory and cannot honor view
-        // strides: transposed views share the ORIGINAL buffer layout, so they
-        // must be materialized into contiguous copies before dispatch.
-        if (A.transposed) {
-            A = (GpuTensor) A.copy();
-        }
-        if (B.transposed) {
-            B = (GpuTensor) B.copy();
-        }
-
-        int[] shapeA = A.shape;
+        // Stride-aware matmul: the kernel resolves the real layout of A and B,
+        // so views (transposed, sliced) are read directly from their buffers —
+        // no materialization, no copies, identical semantics on every backend.
+        int[] shapeA = shape;
         int[] shapeB = B.shape;
 
         if (shapeA.length < 2 || shapeB.length < 2) {
@@ -642,17 +633,21 @@ public class GpuTensor extends BaseTensor {
             ComputeSize localSize = new ComputeSize(TILE_SIZE, TILE_SIZE, 1);
 
             if (batchCount == 1 && maxBatchRank == 0) {
+                TensorKey stridesAKey = new TensorKey(Usage.OTHER, strides);
+                TensorKey stridesBKey = new TensorKey(Usage.OTHER, B.strides);
+
+                ComputeBuffer stridesA = device.acquire(stridesAKey, () -> device.createBuffer(strides));
+                ComputeBuffer stridesB = device.acquire(stridesBKey, () -> device.createBuffer(B.strides));
+
                 KernelFactory.create(device, "matmul")
-                    .buffer(A.dataBuffer)
+                    .buffer(dataBuffer)
                     .buffer(B.dataBuffer)
                     .buffer(result.dataBuffer)
+                    .buffer(stridesA)
+                    .buffer(stridesB)
                     .intVal(M)
                     .intVal(K)
                     .intVal(P)
-                    .intVal(transposed ? 1 : 0)
-                    .intVal(other.transposed() ? 1 : 0)
-//                    .intVal(0)
-//                    .intVal(0)
                     .launch(qh.queue(), globalSize, localSize);
             } else {
                 TensorKey memoryAKey = new TensorKey(Usage.OTHER, offsetsA);
@@ -664,7 +659,7 @@ public class GpuTensor extends BaseTensor {
                 ComputeBuffer memoryC = device.acquire(memoryCKey, () -> device.createBuffer(offsetsC));
 
                 KernelFactory.create(device, "matmul_batched")
-                    .buffer(A.dataBuffer)
+                    .buffer(dataBuffer)
                     .buffer(B.dataBuffer)
                     .buffer(result.dataBuffer)
                     .buffer(memoryA)
@@ -1187,39 +1182,35 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public Tensor copy() {
-        return new GpuTensor(device, shape, dataBuffer);
-//        // Device-side copy only: no host reads, no synchronization with the CPU.
-//        // Contiguous tensors use a queue-ordered blit; views (transposed, sliced)
-//        // go through the strided copy kernel which resolves their strides.
-//        boolean contiguous = Arrays.equals(strides, Tensors.computeStrides(shape));
-//
-//        GpuTensor result = new GpuTensor(device, shape);
-//
-//        if (contiguous) {
-//            dataBuffer.copyInto(result.dataBuffer, device.queue());
-//            return result;
-//        }
-//
-//        TensorKey stridesKey = new TensorKey(Usage.OTHER, strides);
-//        TensorKey shapeKey = new TensorKey(Usage.OTHER, shape);
-//
-//        ComputeBuffer stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
-//        ComputeBuffer shapeBuffer = device.acquire(shapeKey, () -> device.createBuffer(shape));
-//
-//        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
-//            KernelFactory.create(device, "copy_strided")
-//                .buffer(dataBuffer)
-//                .buffer(result.dataBuffer)
-//                .buffer(stridesBuffer)
-//                .buffer(shapeBuffer)
-//                .intVal(shape.length)
-//                .intVal(size)
-//                .launch(qh.queue(), Math.max(1, size));
-//        } catch (Throwable e) {
-//            throw new RuntimeException("Failed to copy tensor on the device", e);
-//        }
-//
-//        return result;
+        boolean contiguous = Arrays.equals(strides, Tensors.computeStrides(shape));
+
+        GpuTensor result = new GpuTensor(device, shape);
+
+        if (contiguous) {
+            dataBuffer.copyInto(result.dataBuffer, device.queue());
+            return result;
+        }
+
+        TensorKey stridesKey = new TensorKey(Usage.OTHER, strides);
+        TensorKey shapeKey = new TensorKey(Usage.OTHER, shape);
+
+        ComputeBuffer stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
+        ComputeBuffer shapeBuffer = device.acquire(shapeKey, () -> device.createBuffer(shape));
+
+        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, "copy_strided")
+                .buffer(dataBuffer)
+                .buffer(result.dataBuffer)
+                .buffer(stridesBuffer)
+                .buffer(shapeBuffer)
+                .intVal(shape.length)
+                .intVal(size)
+                .launch(qh.queue(), Math.max(1, size));
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to copy tensor on the device", e);
+        }
+
+        return result;
     }
 
     private float[] contiguousData() {
