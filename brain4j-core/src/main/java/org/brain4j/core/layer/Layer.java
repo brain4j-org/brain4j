@@ -70,12 +70,16 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
 
     public void generateWeights(String id, RandomGenerator rng, int input, int output) {
         Tensor param = parameters.get(id);
-        
+
         if (param == null) {
             throw Commons.illegalArgument("No parameter with id '%s' was found!", id);
         }
-        
-        param.map(x -> weightInit.generate(rng, input, output));
+
+        // TODO: proper deterministic & parallel initialization
+        float[] data = param.data();
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (float) weightInit.generate(rng, input, output);
+        }
     }
     
     public void copyParameters(Layer other) {
