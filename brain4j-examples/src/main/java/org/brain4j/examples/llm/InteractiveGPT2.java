@@ -12,7 +12,7 @@ public class InteractiveGPT2 {
     }
 
     public void start() throws Exception {
-        LanguageModel languageModel = LLMs.loadModel("Locutusque/gpt2-xl-conversational");
+        LanguageModel languageModel = LLMs.loadModel("openai-community/gpt2-large");
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
@@ -21,9 +21,12 @@ public class InteractiveGPT2 {
 
             if (prompt.equals("/exit")) break;
 
-            SamplingConfig config = SamplingConfig.defaultConfig();
+            SamplingConfig config = SamplingConfig.builder()
+                .maxLength(10)
+                .setTemperature(0.0)
+                .build();
 
-            languageModel.chat("<|USER|> " + prompt + " <|ASSISTANT|> ", config, System.out::print);
+            languageModel.chat(prompt, config, System.out::print);
             System.out.println();
         }
     }
