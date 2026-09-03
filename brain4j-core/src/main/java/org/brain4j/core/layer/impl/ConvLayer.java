@@ -116,7 +116,7 @@ public class ConvLayer extends Layer {
         Tensor B = getParam("bias");
 
         Tensor result = input.convolveGrad(W, config.stride)
-            .addGrad(B.reshape(1, config.filters, 1, 1))
+            .addGrad(B.reshapeGrad(1, config.filters, 1, 1))
             .activateGrad(activation);
 
         return tensors(result);
