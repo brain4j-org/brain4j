@@ -299,11 +299,17 @@ public class CpuTensor extends BaseTensor {
     
     @Override
     public Tensor copy() {
-        return new CpuTensor(Shape.of(shape), contiguousData());
+        return new CpuTensor(Shape.of(shape), strides.clone(), data.clone());
+//        return new CpuTensor(Shape.of(shape), contiguousData());
     }
 
     private float[] contiguousData() {
         int size = elements();
+
+        if (!transposed) {
+            return Arrays.copyOf(data, size);
+        }
+
         float[] contiguous = new float[size];
 
         for (int linear = 0; linear < size; linear++) {

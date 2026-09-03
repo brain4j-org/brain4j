@@ -649,8 +649,10 @@ public class GpuTensor extends BaseTensor {
                     .intVal(M)
                     .intVal(K)
                     .intVal(P)
-                    .intVal(0)
-                    .intVal(0)
+                    .intVal(transposed ? 1 : 0)
+                    .intVal(other.transposed() ? 1 : 0)
+//                    .intVal(0)
+//                    .intVal(0)
                     .launch(qh.queue(), globalSize, localSize);
             } else {
                 TensorKey memoryAKey = new TensorKey(Usage.OTHER, offsetsA);
@@ -672,8 +674,10 @@ public class GpuTensor extends BaseTensor {
                     .intVal(K)
                     .intVal(P)
                     .intVal(batchCount)
-                    .intVal(0)
-                    .intVal(0)
+//                    .intVal(0)
+//                    .intVal(0)
+                    .intVal(transposed ? 1 : 0)
+                    .intVal(other.transposed() ? 1 : 0)
                     .launch(qh.queue(), globalSize, localSize);
             }
         } catch (Throwable e) {
@@ -1183,38 +1187,39 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public Tensor copy() {
-        // Device-side copy only: no host reads, no synchronization with the CPU.
-        // Contiguous tensors use a queue-ordered blit; views (transposed, sliced)
-        // go through the strided copy kernel which resolves their strides.
-        boolean contiguous = Arrays.equals(strides, Tensors.computeStrides(shape));
-
-        GpuTensor result = new GpuTensor(device, shape);
-
-        if (contiguous) {
-            dataBuffer.copyInto(result.dataBuffer, device.queue());
-            return result;
-        }
-
-        TensorKey stridesKey = new TensorKey(Usage.OTHER, strides);
-        TensorKey shapeKey = new TensorKey(Usage.OTHER, shape);
-
-        ComputeBuffer stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
-        ComputeBuffer shapeBuffer = device.acquire(shapeKey, () -> device.createBuffer(shape));
-
-        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
-            KernelFactory.create(device, "copy_strided")
-                .buffer(dataBuffer)
-                .buffer(result.dataBuffer)
-                .buffer(stridesBuffer)
-                .buffer(shapeBuffer)
-                .intVal(shape.length)
-                .intVal(size)
-                .launch(qh.queue(), Math.max(1, size));
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to copy tensor on the device", e);
-        }
-
-        return result;
+        return new GpuTensor(device, shape, dataBuffer);
+//        // Device-side copy only: no host reads, no synchronization with the CPU.
+//        // Contiguous tensors use a queue-ordered blit; views (transposed, sliced)
+//        // go through the strided copy kernel which resolves their strides.
+//        boolean contiguous = Arrays.equals(strides, Tensors.computeStrides(shape));
+//
+//        GpuTensor result = new GpuTensor(device, shape);
+//
+//        if (contiguous) {
+//            dataBuffer.copyInto(result.dataBuffer, device.queue());
+//            return result;
+//        }
+//
+//        TensorKey stridesKey = new TensorKey(Usage.OTHER, strides);
+//        TensorKey shapeKey = new TensorKey(Usage.OTHER, shape);
+//
+//        ComputeBuffer stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
+//        ComputeBuffer shapeBuffer = device.acquire(shapeKey, () -> device.createBuffer(shape));
+//
+//        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
+//            KernelFactory.create(device, "copy_strided")
+//                .buffer(dataBuffer)
+//                .buffer(result.dataBuffer)
+//                .buffer(stridesBuffer)
+//                .buffer(shapeBuffer)
+//                .intVal(shape.length)
+//                .intVal(size)
+//                .launch(qh.queue(), Math.max(1, size));
+//        } catch (Throwable e) {
+//            throw new RuntimeException("Failed to copy tensor on the device", e);
+//        }
+//
+//        return result;
     }
 
     private float[] contiguousData() {
