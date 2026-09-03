@@ -181,7 +181,7 @@ public class GpuTensor extends BaseTensor {
                     "add_op", "sub_op", "mul_op", "div_op", "pow_op",
                     "add", "sub", "mul", "div",
                     "sum_along_dim", "softmax_last_dim",
-                    "concat_last_dim", "concat_copy_a", "concat_copy_b"
+                    "concat_last_dim", "concat_copy_a", "concat_copy_b", "copy_strided"
                 };
                 for (String k : tensorOpsKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/tensor_ops/" + k + ".slang");
@@ -282,7 +282,7 @@ public class GpuTensor extends BaseTensor {
                 "add_op", "sub_op", "mul_op", "div_op", "pow_op",
                 "add", "sub", "mul", "div",
                 "sum_along_dim", "softmax_last_dim",
-                "concat_last_dim", "concat_copy_a", "concat_copy_b"
+                "concat_last_dim", "concat_copy_a", "concat_copy_b", "copy_strided"
             };
             GpuContext.registerAll(device, tensorOpsModule, tensorOpsKernels);
 
@@ -524,8 +524,20 @@ public class GpuTensor extends BaseTensor {
             return matmul(other.to(device));
         }
 
-        int[] shapeA = shape();
-        int[] shapeB = other.shape();
+        GpuTensor A = this;
+
+        // The matmul kernel indexes raw row-major memory and cannot honor view
+        // strides: transposed views share the ORIGINAL buffer layout, so they
+        // must be materialized into contiguous copies before dispatch.
+        if (A.transposed) {
+            A = (GpuTensor) A.copy();
+        }
+        if (B.transposed) {
+            B = (GpuTensor) B.copy();
+        }
+
+        int[] shapeA = A.shape;
+        int[] shapeB = B.shape;
 
         if (shapeA.length < 2 || shapeB.length < 2) {
             throw new IllegalArgumentException("Both tensors must have rank >= 2.");
@@ -631,14 +643,14 @@ public class GpuTensor extends BaseTensor {
 
             if (batchCount == 1 && maxBatchRank == 0) {
                 KernelFactory.create(device, "matmul")
-                    .buffer(dataBuffer)
+                    .buffer(A.dataBuffer)
                     .buffer(B.dataBuffer)
                     .buffer(result.dataBuffer)
                     .intVal(M)
                     .intVal(K)
                     .intVal(P)
-                    .intVal(transposed ? 1 : 0)
-                    .intVal(other.transposed() ? 1 : 0)
+                    .intVal(0)
+                    .intVal(0)
                     .launch(qh.queue(), globalSize, localSize);
             } else {
                 TensorKey memoryAKey = new TensorKey(Usage.OTHER, offsetsA);
@@ -650,7 +662,7 @@ public class GpuTensor extends BaseTensor {
                 ComputeBuffer memoryC = device.acquire(memoryCKey, () -> device.createBuffer(offsetsC));
 
                 KernelFactory.create(device, "matmul_batched")
-                    .buffer(dataBuffer)
+                    .buffer(A.dataBuffer)
                     .buffer(B.dataBuffer)
                     .buffer(result.dataBuffer)
                     .buffer(memoryA)
@@ -660,8 +672,8 @@ public class GpuTensor extends BaseTensor {
                     .intVal(K)
                     .intVal(P)
                     .intVal(batchCount)
-                    .intVal(transposed ? 1 : 0)
-                    .intVal(other.transposed() ? 1 : 0)
+                    .intVal(0)
+                    .intVal(0)
                     .launch(qh.queue(), globalSize, localSize);
             }
         } catch (Throwable e) {
@@ -921,6 +933,7 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public float[] data() {
+        device.queue().await();
         float[] buffer = new float[size];
         dataBuffer.get(buffer);
         return buffer;
@@ -928,8 +941,12 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public Tensor set(float value, int... indices) {
+        // TODO: maybe make a proper kernel for this?
+        device.queue().await();
+
         int offset = linearIndex(indices);
         float[] buffer = new float[size];
+
         dataBuffer.get(buffer);
         buffer[offset] = value;
         dataBuffer.write(buffer);
@@ -1166,11 +1183,38 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public Tensor copy() {
-        if (Arrays.equals(strides, Tensors.computeStrides(shape))) {
-            return new GpuTensor(device, shape, dataBuffer);
+        // Device-side copy only: no host reads, no synchronization with the CPU.
+        // Contiguous tensors use a queue-ordered blit; views (transposed, sliced)
+        // go through the strided copy kernel which resolves their strides.
+        boolean contiguous = Arrays.equals(strides, Tensors.computeStrides(shape));
+
+        GpuTensor result = new GpuTensor(device, shape);
+
+        if (contiguous) {
+            dataBuffer.copyInto(result.dataBuffer, device.queue());
+            return result;
         }
 
-        return new GpuTensor(device, shape, contiguousData());
+        TensorKey stridesKey = new TensorKey(Usage.OTHER, strides);
+        TensorKey shapeKey = new TensorKey(Usage.OTHER, shape);
+
+        ComputeBuffer stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
+        ComputeBuffer shapeBuffer = device.acquire(shapeKey, () -> device.createBuffer(shape));
+
+        try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, "copy_strided")
+                .buffer(dataBuffer)
+                .buffer(result.dataBuffer)
+                .buffer(stridesBuffer)
+                .buffer(shapeBuffer)
+                .intVal(shape.length)
+                .intVal(size)
+                .launch(qh.queue(), Math.max(1, size));
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to copy tensor on the device", e);
+        }
+
+        return result;
     }
 
     private float[] contiguousData() {
