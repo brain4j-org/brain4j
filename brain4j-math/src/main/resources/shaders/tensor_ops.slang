@@ -650,3 +650,61 @@ void copy_strided(
 
     dst[gid] = src[offset];
 }
+// Embedding gather forward: out[b, s, e] = table[ids[b, s], e].
+// Token ids arrive as floats holding integer values. Out-of-range ids are
+// clamped: a device fault here would wedge the GPU, an exception cannot
+// propagate from a kernel.
+[shader("compute")]
+void gather_forward(
+    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uniform StructuredBuffer<float> ids,
+    uniform StructuredBuffer<float> table,
+    uniform RWStructuredBuffer<float> out,
+    uniform int totalRows,
+    uniform int vocabSize,
+    uniform int embedDim
+)
+{
+    uint gid = dispatchThreadID.x;
+    if (gid >= totalRows * embedDim) return;
+
+    int row = gid / embedDim;
+    int e = gid % embedDim;
+
+    int tid = int(ids[row]);
+    tid = tid < 0 ? 0 : (tid >= vocabSize ? vocabSize - 1 : tid);
+
+    out[gid] = table[tid * embedDim + e];
+}
+
+// Embedding gather backward: scatter-adds grad rows back into the table.
+// One thread owns exactly one unique token id, so rows are disjoint: no
+// atomics needed, no races, and the per-row sum order is deterministic.
+// gradTable must be zeroed before launch (see fill_const).
+[shader("compute")]
+void gather_backward_grouped(
+    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uniform StructuredBuffer<float> gradOut,
+    uniform StructuredBuffer<int> uniqueIds,
+    uniform StructuredBuffer<int> rowPtr,
+    uniform StructuredBuffer<int> positions,
+    uniform RWStructuredBuffer<float> gradTable,
+    uniform int numUnique,
+    uniform int embedDim
+)
+{
+    uint gid = dispatchThreadID.x;
+    if (gid >= numUnique) return;
+
+    int uid = uniqueIds[gid];
+    int base = uid * embedDim;
+
+    for (int k = rowPtr[gid]; k < rowPtr[gid + 1]; k++) {
+        int rowBase = positions[k] * embedDim;
+
+        for (int e = 0; e < embedDim; e++) {
+            gradTable[base + e] += gradOut[rowBase + e];
+        }
+    }
+}
+
