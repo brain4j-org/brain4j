@@ -4,7 +4,6 @@ import org.brain4j.core.graph.impl.MermaidExporter;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.layer.impl.ConcatLayer;
 import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.utility.SelectLayer;
 import org.brain4j.core.model.impl.Graph;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
@@ -30,6 +29,6 @@ public class GraphExample {
         
         Graph model = Graph.of(out);
         MermaidExporter exporter = new MermaidExporter();
-        System.out.println(exporter.export(model));
+        System.out.println(exporter.serialize(model));
     }
 }
