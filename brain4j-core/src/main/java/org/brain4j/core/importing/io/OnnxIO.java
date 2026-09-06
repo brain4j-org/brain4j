@@ -14,12 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Central registry for ONNX operation codecs.
- * JSON-related codecs stay in {@link LayerIO}, while all operation-specific
- * ONNX codecs live here. This keeps the {@code Codec} hierarchy clean:
- * base {@code Codec} -> {@code JsonCodec} (layers/activations) and {@code OnnxCodec} (operations).
- */
 public final class OnnxIO {
 
     private static final Map<String, OnnxCodec<? extends Operation>> BY_TYPE = new HashMap<>();
@@ -53,6 +47,7 @@ public final class OnnxIO {
         register(new LayerNormOnnxCodec());
         register(new ReshapeOnnxCodec());
         register(new TransposeOnnxCodec());
+        register(new SliceOnnxCodec());
         // activations (one codec per ONNX type, same targetClass)
         register(new ReluOnnxCodec());
         register(new SigmoidOnnxCodec());

@@ -40,7 +40,7 @@ public class LayerIO {
             new DropoutCodec(), new MaxPoolCodec(), new RMSNormCodec(), new SqueezeCodec(), new SliceCodec(), new SelectCodec(),
             new ConcatCodec(), new EmbeddingCodec(), new PosEncodeCodec(), new MultiHeadAttentionCodec(),
             new MaskedMultiHeadAttentionCodec(), new TransformerEncoderCodec(), new TransformerDecoderCodec(),
-            new ScaleCodec(), new ActivationCodec()
+            new ScaleCodec(), new ActivationCodec(), new org.brain4j.core.codec.layer.OnnxOperationCodec()
         );
         
         ACTIVATION_CODECS.put(

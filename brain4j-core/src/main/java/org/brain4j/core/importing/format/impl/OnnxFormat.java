@@ -74,43 +74,67 @@ public class OnnxFormat implements BinaryFormat<Graph> {
                 tensorToNode.put(name, inputNode);
             }
 
-            for (NodeProto nodeProto : graphProto.getNodeList()) {
-                String opType = nodeProto.getOpType();
-                Operation op = OnnxIO.decode(nodeProto);
+            // ONNX does not guarantee a topological node order, so nodes whose inputs
+            // are not yet resolved are retried after the remaining nodes have been processed
+            List<NodeProto> pending = new ArrayList<>(graphProto.getNodeList());
 
-                if (op == null) {
-                    throw Commons.illegalArgument("Unknown ONNX operation: %s", opType);
-                }
+            while (!pending.isEmpty()) {
+                List<NodeProto> deferred = new ArrayList<>();
+                boolean progressed = false;
 
-                List<String> inputNames = nodeProto.getInputList();
-                List<String> outputNames = nodeProto.getOutputList();
+                for (NodeProto nodeProto : pending) {
+                    String opType = nodeProto.getOpType();
+                    Operation op = OnnxIO.decode(nodeProto);
 
-                Map<String, Tensor> nodeConstants = new HashMap<>();
-                List<Node> nodeInputs = new ArrayList<>();
+                    if (op == null) {
+                        throw Commons.illegalArgument("Unknown ONNX operation: %s", opType);
+                    }
 
-                for (String inName : inputNames) {
-                    Tensor constTensor = initializerMap.get(inName);
+                    List<String> inputNames = nodeProto.getInputList();
+                    List<String> outputNames = nodeProto.getOutputList();
 
-                    if (constTensor != null) {
-                        nodeConstants.put(inName, constTensor);
-                    } else {
-                        Node producer = tensorToNode.get(inName);
+                    Map<String, Tensor> nodeConstants = new HashMap<>();
+                    List<Node> nodeInputs = new ArrayList<>();
+                    boolean resolvable = true;
 
-                        if (producer == null) {
-                            throw Commons.illegalState("No producer found for tensor '%s' required by node '%s' (%s)",
-                                inName, nodeProto.getName(), opType);
+                    for (String inName : inputNames) {
+                        Tensor constTensor = initializerMap.get(inName);
+
+                        if (constTensor != null) {
+                            nodeConstants.put(inName, constTensor);
+                        } else {
+                            Node producer = tensorToNode.get(inName);
+
+                            if (producer == null) {
+                                resolvable = false;
+                                break;
+                            }
+
+                            nodeInputs.add(producer);
                         }
+                    }
 
-                        nodeInputs.add(producer);
+                    if (!resolvable) {
+                        deferred.add(nodeProto);
+                        continue;
+                    }
+
+                    progressed = true;
+
+                    Layer layer = new OnnxOperationLayer(op, inputNames, nodeConstants);
+                    Node node = layer.apply(nodeInputs.toArray(Node[]::new));
+
+                    for (String outName : outputNames) {
+                        tensorToNode.put(outName, node);
                     }
                 }
 
-                Layer layer = new OnnxOperationLayer(op, inputNames, nodeConstants);
-                Node node = layer.apply(nodeInputs.toArray(Node[]::new));
-
-                for (String outName : outputNames) {
-                    tensorToNode.put(outName, node);
+                if (!progressed && !deferred.isEmpty()) {
+                    throw Commons.illegalState("Unresolvable node cycle for %d nodes (e.g. '%s')",
+                        deferred.size(), deferred.getFirst().getName());
                 }
+
+                pending = deferred;
             }
 
             List<Node> outputNodes = new ArrayList<>();
@@ -177,7 +201,10 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             extractOutput(out, graphBuilder, counter, tensorNames, weightsMap);
         }
 
-        List<NodeProto> nodes = buildNodesFromTensors(outputs, counter, tensorNames, weightsMap);
+        Set<Tensor> graphInputs = Collections.newSetFromMap(new IdentityHashMap<>());
+        graphInputs.addAll(dummyInputsWithGrad);
+
+        List<NodeProto> nodes = buildNodesFromTensors(outputs, counter, tensorNames, weightsMap, graphBuilder, graphInputs);
         Collections.reverse(nodes);
         graphBuilder.addAllNode(nodes);
 
@@ -222,7 +249,8 @@ public class OnnxFormat implements BinaryFormat<Graph> {
     }
 
     private List<NodeProto> buildNodesFromTensors(Tensor[] outputs, AtomicInteger counter,
-                                                  Map<Tensor, String> tensorNames, Map<Tensor, String> weightsMap) {
+                                                  Map<Tensor, String> tensorNames, Map<Tensor, String> weightsMap,
+                                                  GraphProto.Builder graphBuilder, Set<Tensor> graphInputs) {
         Queue<Tensor> queue = new LinkedList<>(Arrays.asList(outputs));
         Set<Tensor> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         List<NodeProto> nodes = new ArrayList<>();
@@ -250,10 +278,21 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             OnnxIO.encode(op, nodeBuilder);
 
             for (Tensor in : ctx.inputs()) {
-                nodeBuilder.addInput(generateName(counter, in, tensorNames, weightsMap));
+                String inputName = generateName(counter, in, tensorNames, weightsMap);
+                nodeBuilder.addInput(inputName);
 
-                if (visited.add(in)) {
+                if (!visited.add(in)) continue;
+
+                AutogradContext inputCtx = in.getAutogradContext();
+
+                if (inputCtx != null && inputCtx.operation() != null) {
                     queue.add(in);
+                } else if (!graphInputs.contains(in) && !weightsMap.containsKey(in)) {
+                    // Leaf constant without autograd (e.g. positional tables):
+                    // emit it as a graph initializer so the deserializer can
+                    // resolve the tensor without a producer node.
+                    weightsMap.put(in, inputName);
+                    graphBuilder.addInitializer(serializeTensor(inputName, in));
                 }
             }
 
@@ -340,16 +379,28 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         return result;
     }
 
-    private static class OnnxOperationLayer extends Layer {
+    public static class OnnxOperationLayer extends Layer {
 
         private final Operation op;
         private final List<String> inputNames;
         private final Map<String, Tensor> constants;
 
-        OnnxOperationLayer(Operation op, List<String> inputNames, Map<String, Tensor> constants) {
+        public OnnxOperationLayer(Operation op, List<String> inputNames, Map<String, Tensor> constants) {
             this.op = op;
             this.inputNames = List.copyOf(inputNames);
             this.constants = new HashMap<>(constants);
+        }
+
+        public Operation operation() {
+            return op;
+        }
+
+        public List<String> inputNames() {
+            return inputNames;
+        }
+
+        public Map<String, Tensor> constants() {
+            return constants;
         }
 
         @Override
