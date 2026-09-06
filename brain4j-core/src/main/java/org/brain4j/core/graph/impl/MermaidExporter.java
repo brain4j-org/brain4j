@@ -27,7 +27,7 @@ public class MermaidExporter implements GraphExporter {
     }
     
     @Override
-    public String export(Graph model) {
+    public String serialize(Graph model) {
         CodeWriter writer = new CodeWriter();
         
         writer.writeLine("flowchart " + direction.id());
