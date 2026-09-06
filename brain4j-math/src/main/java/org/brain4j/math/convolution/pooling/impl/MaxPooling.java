@@ -83,7 +83,6 @@ public class MaxPooling extends PoolingProvider {
         Device device = A.getDevice();
 
         GpuTensor result = new GpuTensor(device, composeOutShape(shape, outHeight, outWidth));
-        result.setAutogradContext(A.getAutogradContext());
 
         int totalOut = outerSize * outHeight * outWidth;
 
