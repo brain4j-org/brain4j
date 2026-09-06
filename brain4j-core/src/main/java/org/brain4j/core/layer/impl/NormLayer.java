@@ -55,16 +55,11 @@ public class NormLayer extends Layer {
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor first = inputs[0];
-        Tensor cloned = first.copy();
-
-        cloned.setAutogradContext(first.getAutogradContext());
 
         Tensor W = getParam("weights");
         Tensor B = getParam("bias");
 
-        Tensor result = cloned.layerNorm(config.epsilon)
-            .mulGrad(W)
-            .addGrad(B);
+        Tensor result = first.layerNormGrad(W, B, config.epsilon);
 
         return new Tensor[] { result };
     }

@@ -1045,6 +1045,32 @@ public abstract class BaseTensor implements Tensor {
     }
 
     @Override
+    public Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon) {
+        if (!usesGrad() && !weight.usesGrad() && !bias.usesGrad()) {
+            return copy().layerNorm(epsilon).mul(weight).add(bias);
+        }
+
+        return forward(new LayerNormOperation(epsilon), weight, bias);
+    }
+
+    @Override
+    public Tensor rmsNormGrad(Tensor weight, double epsilon) {
+        if (!usesGrad() && !weight.usesGrad()) {
+            Tensor owned = copy();
+            int features = owned.shape()[owned.rank() - 1];
+            Tensor rms = owned.times(owned).sum(-1, true).divide(features).add(epsilon).sqrt();
+            return owned.divide(rms).mul(weight);
+        }
+
+        return forward(new RMSNormOperation(epsilon), weight);
+    }
+
+    @Override
+    public Tensor gatherGrad(Tensor table) {
+        return forward(new GatherOperation(), table);
+    }
+
+    @Override
     public Tensor maxPoolGrad(int stride, int windowHeight, int windowWidth) {
         if (!usesGrad()) {
             MaxPooling pooling = new MaxPooling(stride, windowHeight, windowWidth);

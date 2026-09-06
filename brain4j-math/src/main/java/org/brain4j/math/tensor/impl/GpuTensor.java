@@ -89,7 +89,7 @@ public class GpuTensor extends BaseTensor {
         this.shape = shape;
         this.strides = strides;
 
-        TensorKey stridesKey = new TensorKey(Usage.STRIDES, shape);
+        TensorKey stridesKey = new TensorKey(Usage.OTHER, strides);
         TensorKey dataKey = new TensorKey(Usage.DATA, shape);
 
         long dataSize = (long) Float.BYTES * this.size;
@@ -118,7 +118,7 @@ public class GpuTensor extends BaseTensor {
         this.shape = newShape;
         this.strides = newStrides;
 
-        TensorKey stridesKey = new TensorKey(Usage.STRIDES, newShape);
+        TensorKey stridesKey = new TensorKey(Usage.OTHER, newStrides);
 
         this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(newStrides));
         this.dataBuffer = reference.dataBuffer;
@@ -181,7 +181,8 @@ public class GpuTensor extends BaseTensor {
                     "add_op", "sub_op", "mul_op", "div_op", "pow_op",
                     "add", "sub", "mul", "div",
                     "sum_along_dim", "softmax_last_dim",
-                    "concat_last_dim", "concat_copy_a", "concat_copy_b", "copy_strided"
+                    "concat_last_dim", "concat_copy_a", "concat_copy_b", "copy_strided",
+                    "gather_forward", "gather_backward_grouped"
                 };
                 for (String k : tensorOpsKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/tensor_ops/" + k + ".slang");
@@ -191,7 +192,7 @@ public class GpuTensor extends BaseTensor {
 
                 String[] scalarKernels = {
                     "mask", "add_scalar", "sub_scalar", "mul_scalar",
-                    "div_scalar", "pow_scalar", "sqrt_op"
+                    "div_scalar", "pow_scalar", "sqrt_op", "fill_const"
                 };
                 for (String k : scalarKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/elementary_ops/" + k + ".slang");
@@ -282,13 +283,14 @@ public class GpuTensor extends BaseTensor {
                 "add_op", "sub_op", "mul_op", "div_op", "pow_op",
                 "add", "sub", "mul", "div",
                 "sum_along_dim", "softmax_last_dim",
-                "concat_last_dim", "concat_copy_a", "concat_copy_b", "copy_strided"
+                "concat_last_dim", "concat_copy_a", "concat_copy_b", "copy_strided",
+                "gather_forward", "gather_backward_grouped"
             };
             GpuContext.registerAll(device, tensorOpsModule, tensorOpsKernels);
 
             String[] scalarKernels = {
                 "mask", "add_scalar", "sub_scalar", "mul_scalar",
-                "div_scalar", "pow_scalar", "sqrt_op"
+                "div_scalar", "pow_scalar", "sqrt_op", "fill_const"
             };
             GpuContext.registerAll(device, elementaryOpsModule, scalarKernels);
 
@@ -730,6 +732,10 @@ public class GpuTensor extends BaseTensor {
             );
         }
 
+        if (!Arrays.equals(strides, Tensors.computeStrides(shape))) {
+            return this.copy().reshape(newShape);
+        }
+
         return new GpuTensor(this, newShape);
     }
 
@@ -796,6 +802,7 @@ public class GpuTensor extends BaseTensor {
         }
 
         int rank = rank();
+        dimension = Math.floorMod(dimension, rank);
         if (dimension < 0 || dimension >= rank) {
             throw new IllegalArgumentException("Invalid dimension: " + dimension);
         }

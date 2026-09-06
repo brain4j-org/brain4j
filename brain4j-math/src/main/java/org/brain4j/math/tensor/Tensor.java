@@ -751,6 +751,12 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      */
     Tensor matmulGrad(Tensor other);
 
+    Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon);
+
+    Tensor rmsNormGrad(Tensor weight, double epsilon);
+
+    Tensor gatherGrad(Tensor table);
+
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link ConvolveOperation}.
      * @param other the convolution kernel

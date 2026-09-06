@@ -51,9 +51,9 @@ public class RMSNormLayer extends Layer {
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
-        Tensor rms = input.pow(2).mean(-1, true).add(config.epsilon).sqrt();
         Tensor weights = getParam("weights");
-        Tensor norm = input.div(rms).mulGrad(weights);
+
+        Tensor norm = input.rmsNormGrad(weights, config.epsilon);
         return tensors(norm);
     }
 
