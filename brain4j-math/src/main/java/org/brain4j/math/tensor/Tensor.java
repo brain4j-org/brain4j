@@ -1,15 +1,15 @@
 package org.brain4j.math.tensor;
 
+import org.brain4j.math.Copyable;
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.activation.impl.ReLUActivation;
-import org.brain4j.math.activation.impl.SigmoidActivation;
-import org.brain4j.math.activation.impl.TanhActivation;
+import org.brain4j.math.activation.impl.ReLU;
+import org.brain4j.math.activation.impl.Sigmoid;
+import org.brain4j.math.activation.impl.Tanh;
 import org.brain4j.math.commons.D2DFunction;
-import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.*;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 
 import java.util.function.Supplier;
 
@@ -38,10 +38,10 @@ import java.util.function.Supplier;
  * <p>The framework automatically handles moving tensors between CPU and GPU
  * as needed based on the operations being performed.
  *
- * @apiNote unless specified otherwise, all operations which return
- *          a new tensor do not retain the autograd context from the input
+ * Note: unless specified otherwise, all operations which return
+ * a new tensor do not retain the autograd context from the input
  */
-public interface Tensor extends Iterable<Float> {
+public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
 
     /**
      * Returns the size of the specified dimension.
@@ -163,22 +163,11 @@ public interface Tensor extends Iterable<Float> {
      * If the tensor is already on the target device, returns this tensor.
      * Otherwise creates a new tensor on the target device with a copy of the data.
      *
-     * @param device target device, or null for CPU
+     * @param device target device (Device, Device, or null for CPU)
      * @return tensor on the target device
      */
-    Tensor to(Device device);
-
-    /**
-     * Creates a deep copy of this tensor.
-     * <p>
-     * The clone has its own copy of the data buffer and shape information.
-     * Modifying the clone will not affect the original tensor.
-     *
-     * @implNote the cloned tensor will not have an active autograd context
-     * @return new independent copy of this tensor
-     */
-    Tensor clone();
-
+    Tensor to(Object device);
+    
     /**
      * Adds this tensor with another tensor element-wise.
      * @param other the tensor to add
@@ -192,7 +181,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor plus(Tensor other) {
-        return clone().add(other);
+        return copy().add(other);
     }
     
     /**
@@ -208,7 +197,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor plus(double value) {
-        return clone().add(value);
+        return copy().add(value);
     }
 
     /**
@@ -224,7 +213,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor minus(Tensor other) {
-        return clone().sub(other);
+        return copy().sub(other);
     }
     
     /**
@@ -240,7 +229,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor minus(double value) {
-        return clone().sub(value);
+        return copy().sub(value);
     }
 
     /**
@@ -256,7 +245,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor times(Tensor other) {
-        return clone().mul(other);
+        return copy().mul(other);
     }
     
     /**
@@ -272,7 +261,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor times(double value) {
-        return clone().mul(value);
+        return copy().mul(value);
     }
 
     /**
@@ -288,7 +277,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor divide(Tensor other) {
-        return clone().div(other);
+        return copy().div(other);
     }
 
     /**
@@ -304,7 +293,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a new tensor with the result
      */
     default Tensor divide(double value) {
-        return clone().div(value);
+        return copy().div(value);
     }
 
     /**
@@ -388,6 +377,15 @@ public interface Tensor extends Iterable<Float> {
      * @throws IllegalArgumentException if tensor dimensions are not compatible.
      */
     Tensor convolve(Tensor kernel);
+
+    /**
+     * Computes a convolution between this tensor and the specified kernel with a configurable stride.
+     *
+     * @param kernel the kernel tensor to use for convolution
+     * @param stride the stride to apply on both spatial dimensions
+     * @return a new tensor resulting from the convolution
+     */
+    Tensor convolve(Tensor kernel, int stride);
 
     /**
      * Performs a layer normalization along this tensor.
@@ -527,7 +525,7 @@ public interface Tensor extends Iterable<Float> {
      * @param keepDim if true, retains the reduced dimension with size 1; otherwise, the dimension is removed
      * @return a new tensor containing the sum along the specified dimension
      *
-     * @apiNote the returned tensor preserves the autograd context of the input
+     * Note: the returned tensor preserves the autograd context of the input
      */
     Tensor sum(int dim, boolean keepDim);
 
@@ -538,7 +536,7 @@ public interface Tensor extends Iterable<Float> {
      * @param keepDim if true, retains the reduced dimension with size 1; otherwise, the dimension is removed
      * @return a new tensor containing the mean along the specified dimension
      *
-     * @apiNote the returned tensor preserves the autograd context of the input
+     * Note: the returned tensor preserves the autograd context of the input
      */
     Tensor mean(int dim, boolean keepDim);
     
@@ -753,12 +751,26 @@ public interface Tensor extends Iterable<Float> {
      */
     Tensor matmulGrad(Tensor other);
 
+    Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon);
+
+    Tensor rmsNormGrad(Tensor weight, double epsilon);
+
+    Tensor gatherGrad(Tensor table);
+
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link ConvolveOperation}.
      * @param other the convolution kernel
      * @return the resulting tensor from the operation
      */
     Tensor convolveGrad(Tensor other);
+
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link ConvolveOperation} with a configurable stride.
+     * @param other the convolution kernel
+     * @param stride the stride to apply on both spatial dimensions
+     * @return the resulting tensor from the operation
+     */
+    Tensor convolveGrad(Tensor other, int stride);
 
     /**
      * Delegates to {@link #forward(Operation, Tensor)} using {@link MaxPoolOperation}.
@@ -852,7 +864,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor relu() {
-        return activateAuto(new ReLUActivation());
+        return activateAuto(new ReLU());
     }
 
     /**
@@ -860,7 +872,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor sigmoid() {
-        return activateAuto(new SigmoidActivation());
+        return activateAuto(new Sigmoid());
     }
 
     /**
@@ -868,7 +880,7 @@ public interface Tensor extends Iterable<Float> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor tanh() {
-        return activateAuto(new TanhActivation());
+        return activateAuto(new Tanh());
     }
     
     default Tensor cpu() {

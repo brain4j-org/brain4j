@@ -1,134 +1,165 @@
 package org.brain4j.math.gpu.device;
 
-import org.brain4j.math.gpu.memory.GpuQueue;
-import org.brain4j.math.gpu.memory.TempBuffer;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
+import org.brain4j.math.tensor.TensorKey;
+import org.silicon.api.Silicon;
+import org.silicon.api.cache.MemoryPool;
+import org.silicon.api.cache.Pooled;
+import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.device.ComputeContext;
+import org.silicon.api.device.ComputeDevice;
+import org.silicon.api.kernel.ComputeQueue;
 
-import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
-import static org.lwjgl.opencl.CL10.*;
-
+/**
+ * GPU device backed by the Silicon compute API.
+ *
+ * <p>The historical Brain4J type name is preserved while the implementation no
+ * longer exposes raw native handles.
+ */
 public class Device {
 
-    private final long platform;
-    private final long device;
-    private final long context;
-    private GpuQueue queue;
+    private final ComputeDevice device;
+    private final ComputeContext context;
+    private final MemoryPool<TensorKey> memoryPool;
+    private final List<Pooled> pooledQueue;
+    private final ComputeQueue queue;
+    private final String name;
+    private final int deviceIndex;
+    private Thread threadContext;
 
-    public Device(long platformAddr, long deviceAddr) {
-        this.platform = platformAddr;
-        this.device = deviceAddr;
-        this.context = newContext();
+    public Device() {
+        this(0);
+    }
+
+    public Device(int deviceIndex) {
+        try {
+            this.deviceIndex = deviceIndex;
+            this.device = Silicon.createDevice(deviceIndex);
+            this.context = device.createContext();
+            this.threadContext = Thread.currentThread();
+            this.queue = context.createQueue();
+            this.name = device.name();
+            this.memoryPool = context.createPool();
+            this.pooledQueue = new ArrayList<>();
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create GPU device at index " + deviceIndex, e);
+        }
+    }
+
+    private void ensureSameThread() {
+        Thread current = Thread.currentThread();
+        if (current != threadContext) {
+            context.syncThread();
+            threadContext = current;
+        }
+    }
+
+    public synchronized void createResources() {
+        ensureSameThread();
+
+        if (queue != null) {
+            queue.await();
+        }
+
+        if (!pooledQueue.isEmpty()) {
+            pooledQueue.forEach(Pooled::close);
+            pooledQueue.clear();
+        }
+    }
+
+    public synchronized ComputeBuffer acquire(TensorKey key, Supplier<ComputeBuffer> allocator) {
+        ensureSameThread();
+
+        Pooled pooled = memoryPool.acquire(key, allocator);
+        pooledQueue.add(pooled);
+
+        return pooled.value();
+    }
+
+    public ComputeBuffer createBuffer(float[] data) {
+        ensureSameThread();
+
+        try {
+            return context.allocateArray(data);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create buffer from float array", e);
+        }
+    }
+
+    public ComputeBuffer createBuffer(int[] data) {
+        ensureSameThread();
+
+        try {
+            return context.allocateArray(data);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create buffer from int array", e);
+        }
+    }
+
+    public ComputeBuffer createBuffer(long byteSize) {
+        ensureSameThread();
+
+        try {
+            return context.allocateBytes(byteSize);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create buffer of size " + byteSize, e);
+        }
+    }
+
+    public MemoryPool<TensorKey> memoryPool() {
+        return memoryPool;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public int deviceIndex() {
+        return deviceIndex;
+    }
+
+    public ComputeDevice device() {
+        return device;
+    }
+
+    public ComputeContext context() {
+        return context;
+    }
+
+    public ComputeQueue queue() {
+        return queue;
+    }
+
+    public synchronized void free() {
+        ensureSameThread();
+
+        if (queue != null) {
+            queue.await();
+            queue.free();
+        }
+
+        memoryPool.free();
+    }
+
+    public synchronized void closeResources() {
+        ensureSameThread();
+
+        if (queue != null) {
+            queue.await();
+        }
+
+        pooledQueue.forEach(Pooled::close);
+        pooledQueue.clear();
     }
 
     @Override
     public String toString() {
         return "Device{" +
-            "platform=" + platform +
-            ", device=" + device +
-            ", context=" + context +
-            ", pointer=" + queue +
+            "backend=Silicon" +
+            ", name='" + name + '\'' +
             '}';
-    }
-    
-    public void printLimits() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer lb = stack.mallocPointer(1);
-            
-            // max work group size
-            clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, lb, null);
-            System.out.println("CL_DEVICE_MAX_WORK_GROUP_SIZE = " + lb.get(0));
-            
-            // max work item sizes (vector of size)
-            PointerBuffer p = stack.mallocPointer(3);
-            clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, p, null);
-            System.out.println("CL_DEVICE_MAX_WORK_ITEM_SIZES = " + p.get(0) + " " + p.get(1) + " " + p.get(2));
-            
-            // local mem size
-            clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE, lb, null);
-            System.out.println("CL_DEVICE_LOCAL_MEM_SIZE = " + lb.get(0));
-            
-            clGetDeviceInfo(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, lb, null);
-            System.out.println("CL_DEVICE_MAX_MEM_ALLOC_SIZE = " + lb.get(0));
-            
-            clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, lb, null);
-            System.out.println("CL_DEVICE_GLOBAL_MEM_SIZE = " + lb.get(0));
-        }
-    }
-
-    public long newContext() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer properties = stack.mallocPointer(3);
-
-            properties.put(CL_CONTEXT_PLATFORM).put(platform).put(0);
-            properties.flip();
-            
-            return clCreateContext(properties, device, null, 0, null);
-        }
-    }
-
-    public long newCommandQueue() {
-        int[] err = new int[1];
-        long result = clCreateCommandQueue(context, device, 0, err);
-        
-        DeviceUtils.checkError("create_command_queue", err[0]);
-        return result;
-    }
-
-    public String name() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            return DeviceUtils.deviceName(stack, device);
-        }
-    }
-
-    public TempBuffer createBuffer(long flags, float[] data) {
-        int[] err = new int[1];
-        long buffer = clCreateBuffer(context, flags, data, err);
-        
-        DeviceUtils.checkError("create_buffer", err[0]);
-        return new TempBuffer(buffer);
-    }
-
-    public TempBuffer createBuffer(long flags, long dataSize) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            IntBuffer err = stack.mallocInt(1);
-            long buffer = clCreateBuffer(context, flags, dataSize, err);
-            
-            DeviceUtils.checkError("create_buffer", err.get(0));
-            return new TempBuffer(buffer);
-        }
-    }
-
-    public TempBuffer createBuffer(long flags, int[] data) {
-        int[] err = new int[1];
-        long buffer = clCreateBuffer(context, flags, data, err);
-        
-        DeviceUtils.checkError("create_buffer", err[0]);
-        return new TempBuffer(buffer);
-    }
-
-    public void createQueue() {
-        this.queue = new GpuQueue(newCommandQueue(), false);
-    }
-    
-    public long getPlatform() {
-        return platform;
-    }
-    
-    public long getDevice() {
-        return device;
-    }
-    
-    public long getContext() {
-        return context;
-    }
-    
-    public GpuQueue getQueue() {
-        return queue;
-    }
-    
-    public void setQueue(GpuQueue queue) {
-        this.queue = queue;
     }
 }

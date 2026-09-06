@@ -1,14 +1,14 @@
 package org.brain4j.core.training;
 
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 
 public record TrainingConfig(LossFunction loss, Optimizer optimizer, Updater updater) {
 
-    public TrainingConfig(LossFunction loss, Optimizer optimizer) {
-        this(loss, optimizer, new StochasticUpdater()); // shortcut
+    public static TrainingConfig of(LossFunction loss, Optimizer optimizer) {
+        return new TrainingConfig(loss, optimizer, new StochasticUpdater());
     }
 
     public TrainingConfig {

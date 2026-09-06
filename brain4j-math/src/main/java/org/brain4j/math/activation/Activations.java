@@ -12,7 +12,7 @@ public enum Activations {
      * Linear activation is a simple activation function that does not introduce non-linearity,
      * and it's commonly used to project inputs into a linear space.
      */
-    LINEAR(new LinearActivation()),
+    LINEAR(new Linear()),
 
     /**
      * ELU (Exponential Linear Unit) is a non-linear activation function that is similar to ReLU, but allows negative values.
@@ -21,7 +21,7 @@ public enum Activations {
      * f(x) = alpha * (exp(x) - 1)
      * </pre></blockquote>
      */
-    ELU(new ELUActivation()),
+    ELU(new ELU()),
 
     /**
      * ReLU (Rectified Linear Unit) is a non-linear activation function that sets all negative values to zero.
@@ -30,7 +30,7 @@ public enum Activations {
      * f(x) = max(0, x)
      * </pre></blockquote>
      */
-    RELU(new ReLUActivation()),
+    RELU(new ReLU()),
 
     /**
      * GELU (Gaussian Error Linear Unit) is a non-linear activation function that is similar to ReLU, but allows negative values.
@@ -39,7 +39,7 @@ public enum Activations {
      * f(x) = 0.5 * x * (1 + tanh(sqrt(2 / pi) * (x + 0.044715 * x^3)))
      * </pre></blockquote>
      */
-    GELU(new GELUActivation()),
+    GELU(new GELU()),
 
     /**
      * Leaky ReLU is a non-linear activation function that allows negative values, but with a small slope.
@@ -48,7 +48,7 @@ public enum Activations {
      * f(x) = max(0.01 * x, x)
      * </pre></blockquote>
      */
-    LEAKY_RELU(new LeakyReLUActivation()),
+    LEAKY_RELU(new LeakyReLU()),
 
     /**
      * Sigmoid is a non-linear activation function that maps values between 0 and 1.
@@ -57,7 +57,7 @@ public enum Activations {
      * f(x) = 1 / (1 + exp(-x))
      * </pre></blockquote>
      */
-    SIGMOID(new SigmoidActivation()),
+    SIGMOID(new Sigmoid()),
 
     /**
      * Softmax is a non-linear activation function that maps values between 0 and 1.
@@ -66,7 +66,7 @@ public enum Activations {
      * f(x) = exp(x) / sum(exp(x))
      * </pre></blockquote>
      */
-    SOFTMAX(new SoftmaxActivation()),
+    SOFTMAX(new Softmax()),
 
     /**
      * Tanh is a non-linear activation function that maps values between -1 and 1.
@@ -75,7 +75,7 @@ public enum Activations {
      * f(x) = tanh(x)
      * </pre></blockquote>
      */
-    TANH(new TanhActivation()),
+    TANH(new Tanh()),
 
     /**
      * Mish is a non-linear activation function that is similar to GELU.
@@ -84,7 +84,7 @@ public enum Activations {
      * f(x) = x * tanh(log(1 + exp(x)))
      * </pre></blockquote>
      */
-    MISH(new MishActivation()),
+    MISH(new Mish()),
 
     /**
      * Swish is a non-linear activation function that is similar to GELU.
@@ -93,7 +93,7 @@ public enum Activations {
      * f(x) = x * sigmoid(x)
      * </pre></blockquote>
      */
-    SWISH(new SwishActivation()),
+    SWISH(new Swish()),
 
     /**
      * Softplus is a non-linear activation function that is similar to ReLU.
@@ -102,7 +102,7 @@ public enum Activations {
      * f(x) = ln(1 + e^x)
      * </pre></blockquote>
      */
-    SOFTPLUS(new SoftPlusActivation());
+    SOFTPLUS(new SoftPlus());
 
     private final Activation function;
 

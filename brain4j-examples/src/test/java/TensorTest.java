@@ -3,20 +3,18 @@ import org.brain4j.math.Tensors;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.index.Range;
+import org.brain4j.math.commons.Range;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TensorTest {
+    
     private final Device device;
 
     public TensorTest() {
         this.device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
     }
 
     @Test
@@ -33,6 +31,31 @@ public class TensorTest {
     }
 
     @Test
+    public void activationTest() {
+        Tensor a = Tensors.random(10, 10);
+        Tensor gpuA = a.to(device);
+
+        Tensor b = a.relu();
+        Tensor gpuB = gpuA.relu();
+
+        assertArrayEquals(b.data(), gpuB.data(), 0.0001f);
+    }
+
+    @Test
+    public void convTest() {
+        Tensor a = Tensors.random(512, 512);
+        Tensor b = Tensors.random(3, 3);
+        
+        Tensor gpuA = a.to(device);
+        Tensor gpuB = b.to(device);
+        
+        Tensor c = a.convolve(b);
+        Tensor gpuC = gpuA.convolve(gpuB);
+        
+        assertArrayEquals(c.data(), gpuC.data(), 0.0001f);
+    }
+    
+    @Test
     public void normTest() {
         double epsilon = 1e-5;
 
@@ -43,15 +66,6 @@ public class TensorTest {
         Tensor gpuB = gpuA.layerNorm(epsilon);
 
         assertArrayEquals(B.data(), gpuB.data(), 0.001f);
-    }
-
-    @Test
-    public void convTest() {
-        Tensor A = Tensors.random(16, 3, 64, 64);
-        Tensor B = Tensors.random(3, 7, 7);
-
-        Tensor C = A.convolve(B);
-        System.out.println("conv shape = " + Arrays.toString(C.shape()));
     }
 
     @Test
@@ -84,9 +98,6 @@ public class TensorTest {
 
     @Test
     public void sliceTest() {
-        Device device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Range[] ranges = { Range.all(), Range.interval(10, 20) };
 
         Tensor A = Tensors.random(64, 32);
@@ -101,9 +112,6 @@ public class TensorTest {
 
     @Test
     public void addTest() {
-        Device device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Tensor A = Tensors.random(32, 32);
         Tensor B = Tensors.random(32, 32);
         Tensor C = A.plus(B);
@@ -117,9 +125,6 @@ public class TensorTest {
 
     @Test
     public void subTest() {
-        Device device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Tensor A = Tensors.random(32, 32);
         Tensor B = Tensors.random(32, 32);
         Tensor C = A.minus(B);
@@ -133,9 +138,6 @@ public class TensorTest {
 
     @Test
     public void mulTest() {
-        Device device = Brain4J.firstDevice();
-        Brain4J.initKernels(device);
-
         Tensor A = Tensors.random(32, 32);
         Tensor B = Tensors.random(32, 32);
         Tensor C = A.times(B);
@@ -211,7 +213,7 @@ public class TensorTest {
         );
 
         Tensor A_T = A.transpose();
-        Tensor A_T_clone = A_T.clone();
+        Tensor A_T_clone = A_T.copy();
 
         int[] expectedStrides = Tensors.computeStrides(A_T_clone.shape());
         assertArrayEquals(expectedStrides, A_T_clone.strides(),

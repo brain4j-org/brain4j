@@ -1,12 +1,12 @@
 package org.brain4j.math.weightsinit.impl;
 
-import org.brain4j.math.weightsinit.WeightInitialization;
+import org.brain4j.math.weightsinit.WeightInit;
 
 import java.util.random.RandomGenerator;
 
 import static org.brain4j.math.Constants.SQRT3;
 
-public class LeCunInit implements WeightInitialization {
+public class LeCunInit implements WeightInit {
 
     @Override
     public double getBound(int input, int output) {

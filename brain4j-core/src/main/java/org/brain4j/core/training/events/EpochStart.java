@@ -1,5 +1,3 @@
 package org.brain4j.core.training.events;
 
-import org.brain4j.core.training.impl.DefaultTrainer;
-
-public record EpochStart(DefaultTrainer trainer, int epoch, int totalEpochs) implements TrainingEvent {}
+public record EpochStart(int epoch, int totalEpochs) implements TrainingEvent {}

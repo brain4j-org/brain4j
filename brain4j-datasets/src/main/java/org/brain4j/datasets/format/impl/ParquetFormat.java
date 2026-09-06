@@ -1,36 +1,60 @@
 package org.brain4j.datasets.format.impl;
 
-import org.apache.hadoop.fs.Path;
-import org.apache.parquet.example.data.Group;
-import org.apache.parquet.hadoop.ParquetReader;
-import org.apache.parquet.hadoop.example.GroupReadSupport;
+import dev.hardwood.InputFile;
+import dev.hardwood.reader.ParquetFileReader;
+import dev.hardwood.reader.RowReader;
 import org.brain4j.datasets.format.FileFormat;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-public class ParquetFormat implements FileFormat<Group> {
+public class ParquetFormat implements FileFormat<RowReader> {
 
     @Override
     public String format() {
         return "parquet";
     }
-    
+
     @Override
-    public Iterable<Group> read(File file) throws IOException {
-        Path hadoopPath = new Path(file.getPath());
-        List<Group> result = new ArrayList<>();
-        
-        try (ParquetReader<Group> reader = ParquetReader.builder(new GroupReadSupport(), hadoopPath).build()) {
-            Group group;
-            
-            while ((group = reader.read()) != null) {
-                result.add(group);
+    public Iterable<RowReader> read(File file) throws IOException {
+        Path path = file.toPath();
+
+        ParquetFileReader fileReader = ParquetFileReader.open(InputFile.of(path));
+        RowReader rowReader = fileReader.rowReader();
+
+        return () -> new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+                boolean hasNext = rowReader.hasNext();
+
+                if (!hasNext) {
+                    closeQuietly();
+                }
+
+                return hasNext;
             }
-        }
-        
-        return result;
+
+            @Override
+            public RowReader next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+
+                rowReader.next();
+                return rowReader;
+            }
+
+            private void closeQuietly() {
+                try {
+                    rowReader.close();
+                    fileReader.close();
+                } catch (Exception ignored) {
+                    // best effort cleanup at exhaustion
+                }
+            }
+        };
     }
 }

@@ -8,12 +8,10 @@ public class NoClipper implements GradientClipper {
     
     @Override
     public void clipCpu(CpuTensor grad) {
-
     }
 
     @Override
     public void clipGpu(GpuTensor grad) {
-
     }
 
     @Override

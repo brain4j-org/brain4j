@@ -4,12 +4,8 @@ import org.brain4j.math.tensor.Tensor;
 
 import java.lang.reflect.Constructor;
 import java.time.Duration;
-import java.util.Map;
 
-import static org.brain4j.math.Constants.*;
-import static org.brain4j.math.Constants.GRAY;
-import static org.brain4j.math.Constants.LIGHT_GREEN;
-import static org.brain4j.math.Constants.RESET;
+import static java.util.Locale.ENGLISH;
 
 /**
  * General utility methods used across the math module.
@@ -95,7 +91,7 @@ public class Commons {
         String emptyCharacter
     ) {
         if (percent < 0 || percent > 1) {
-            throw illegalArgument("Percentage must be between 0 and 1! Got %.2f", percent);
+            throw new IllegalArgumentException("Percent must be between 0 and 1!");
         }
 
         int fill = (int) Math.round(percent * characterCount);
@@ -171,6 +167,10 @@ public class Commons {
      * @return a formatted string representing the duration
      */
     public static String formatDuration(double seconds) {
+        if (seconds < 0) {
+            return "N/A";
+        }
+
         double millis = seconds * 1000;
         Duration duration = Duration.ofMillis((long) millis);
 
@@ -325,30 +325,6 @@ public class Commons {
     }
     
     /**
-     * Clamps a floating-point value to the specified range.
-     *
-     * @param value the value to clamp
-     * @param minimum the lower bound
-     * @param maximum the upper bound
-     * @return {@code value} constrained to the interval {@code [minimum, maximum]}
-     */
-    public static double clamp(float value, double minimum, double maximum) {
-        return Math.min(Math.max(value, minimum), maximum);
-    }
-    
-    /**
-     * Clamps a double-precision value to the specified range.
-     *
-     * @param value the value to clamp
-     * @param minimum the lower bound
-     * @param maximum the upper bound
-     * @return {@code value} constrained to the interval {@code [minimum, maximum]}
-     */
-    public static double clamp(double value, double minimum, double maximum) {
-        return Math.min(Math.max(value, minimum), maximum);
-    }
-    
-    /**
      * Converts an integer array to a float array by widening each element.
      *
      * @param array the input integer array
@@ -409,5 +385,12 @@ public class Commons {
      */
     public static IndexOutOfBoundsException indexOOB(String message, Object... args) {
         return new IndexOutOfBoundsException(String.format(message, args));
+    }
+    
+    public static String capitalize(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return text.substring(0, 1).toUpperCase(ENGLISH) + text.substring(1);
     }
 }

@@ -34,17 +34,17 @@ public class GemmOperation implements Operation {
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor a = inputs[0];
         Tensor b = inputs[1];
 
         // For matrix multiplication: C = A @ B
         // dL/dA = dL/dC @ B.T
-        Tensor gradA = gradOutput.matmul(b.transpose());
+        Tensor gradA = AddOperation.reduceTo(gradOutput.matmul(b.transpose()), a);
 
         // dL/dB = A.T @ dL/dC
-        Tensor gradB = a.transpose().matmul(gradOutput);
+        Tensor gradB = AddOperation.reduceTo(a.transpose().matmul(gradOutput), b);
 
-        return new Tensor[] { gradA, gradB, gradOutput.clone() };
+        return new Tensor[] { gradA, gradB, gradOutput.copy() };
     }
 }

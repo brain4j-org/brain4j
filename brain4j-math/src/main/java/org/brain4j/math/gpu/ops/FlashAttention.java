@@ -1,426 +1,344 @@
 package org.brain4j.math.gpu.ops;
 
 import org.brain4j.math.gpu.GpuContext;
+import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.kernel.KernelFactory;
-import org.brain4j.math.gpu.memory.GpuQueue;
-import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
+import org.silicon.api.kernel.ComputeSize;
 
-public class FlashAttention {
+import java.util.Arrays;
 
-    private static final int FA_TILE_SIZE = 16;
-    private static final int FA_HEAD_DIM = 64;
+public final class FlashAttention {
 
-    private FlashAttention() { }
+    private static final int TILE_SIZE = 16;
 
-    /**
-     * Computes the FlashAttention forward pass on GPU tensors.
-     * <br>
-     * <b>Parameters:</b>
-     * <ul>
-     *   <li><b>q</b> - Query tensor of shape [batch, heads, sequence_length, head_dim]. Must be a {@link GpuTensor}.</li>
-     *   <li><b>k</b> - Key tensor of shape [batch, heads, sequence_length, head_dim]. Must be a {@link GpuTensor}.</li>
-     *   <li><b>v</b> - Value tensor of shape [batch, heads, sequence_length, head_dim]. Must be a {@link GpuTensor}.</li>
-     *   <li><b>scale</b> - Scaling factor applied to the attention scores (typically 1/sqrt(head_dim)).</li>
-     *   <li><b>causal</b> - If {@code true}, applies causal masking so each position can only attend to previous positions (for autoregressive models).</li>
-     * </ul>
-     *
-     * <b>Returns:</b>
-     * <ul>
-     *   <li>Output tensor of the same shape as {@code q} ([batch, heads, sequence_length, head_dim]) if all inputs are {@link GpuTensor}.</li>
-     *   <li>{@code null} if any input is not a {@link GpuTensor}.</li>
-     * </ul>
-     *
-     * <b>Behavior:</b>
-     * <ul>
-     *   <li>If any input tensor is not a {@link GpuTensor}, the method returns {@code null} and does not perform computation.</li>
-     *   <li>All computation is performed on the GPU associated with the input tensors.</li>
-     * </ul>
-     */
-    public static Tensor forward(Tensor q, Tensor k, Tensor v, double scale, boolean causal) {
-        if (!(q instanceof GpuTensor Q) || !(k instanceof GpuTensor K) || !(v instanceof GpuTensor V)) {
-            return null;
-        }
-        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice())) {
-            return null;
-        }
+    private FlashAttention() {}
 
-        int[] shape = Q.shape();
-        int B = shape[0];
-        int H = shape[1];
-        int L = shape[2];
-        int D = shape[3];
+    public record ForwardResult(GpuTensor output, GpuTensor lse) {}
 
-        GpuTensor O = new GpuTensor(Q.getDevice(), shape);
-        O.setAutogradContext(Q.getAutogradContext());
+    public record BackwardResult(GpuTensor dQ, GpuTensor dK, GpuTensor dV) {}
 
-        long[] global = new long[] { L, (long) B * H };
-
-        try (GpuQueue queue = GpuContext.getOrCreate(Q.getDevice())) {
-            KernelFactory.create(Q.getDevice(), "flash_attention_forward")
-                .addMemParam(Q.getDataBuffer())
-                .addMemParam(K.getDataBuffer())
-                .addMemParam(V.getDataBuffer())
-                .addMemParam(O.getDataBuffer())
-                .addMemParam(Q.getStridesBuffer())
-                .addMemParam(K.getStridesBuffer())
-                .addMemParam(V.getStridesBuffer())
-                .addMemParam(O.getStridesBuffer())
-                .addIntParam(B)
-                .addIntParam(H)
-                .addIntParam(L)
-                .addIntParam(D)
-                .addFloatParam((float) scale)
-                .addIntParam(causal ? 1 : 0)
-                .launch(queue, 2, global);
-        }
-
-        return O;
-    }
-
-    /**
-     * Computes the FlashAttention forward pass with Log-Sum-Exp (LSE) output.
-     * This variant is required for backward pass computation.
-     * <br>
-     * <b>Parameters:</b>
-     * <ul>
-     *   <li><b>q</b> - Query tensor of shape [batch, heads, sequence_length, head_dim]. Must be a {@link GpuTensor}.</li>
-     *   <li><b>k</b> - Key tensor of shape [batch, heads, sequence_length, head_dim]. Must be a {@link GpuTensor}.</li>
-     *   <li><b>v</b> - Value tensor of shape [batch, heads, sequence_length, head_dim]. Must be a {@link GpuTensor}.</li>
-     *   <li><b>scale</b> - Scaling factor applied to the attention scores (typically 1/sqrt(head_dim)).</li>
-     *   <li><b>causal</b> - If {@code true}, applies causal masking.</li>
-     * </ul>
-     *
-     * <b>Returns:</b>
-     * <ul>
-     *   <li>An array containing [O, LSE] where O is the attention output and LSE is the log-sum-exp values for backward.</li>
-     *   <li>{@code null} if any input is not a {@link GpuTensor}.</li>
-     * </ul>
-     */
-    public static Tensor[] forwardWithLse(Tensor q, Tensor k, Tensor v, double scale, boolean causal) {
-        if (!(q instanceof GpuTensor Q) || !(k instanceof GpuTensor K) || !(v instanceof GpuTensor V)) {
-            return null;
-        }
-        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice())) {
-            return null;
-        }
-
-        int[] shape = Q.shape();
-        int B = shape[0];
-        int H = shape[1];
-        int L = shape[2];
-        int D = shape[3];
-
-        GpuTensor O = new GpuTensor(Q.getDevice(), shape);
-        O.setAutogradContext(Q.getAutogradContext());
-
-        // LSE has shape [B, H, L]
-        GpuTensor LSE = new GpuTensor(Q.getDevice(), new int[]{B, H, L});
-
-        long[] global = new long[] { L, (long) B * H };
-
-        try (GpuQueue queue = GpuContext.getOrCreate(Q.getDevice())) {
-            KernelFactory.create(Q.getDevice(), "flash_attention_forward_with_lse")
-                .addMemParam(Q.getDataBuffer())
-                .addMemParam(K.getDataBuffer())
-                .addMemParam(V.getDataBuffer())
-                .addMemParam(O.getDataBuffer())
-                .addMemParam(LSE.getDataBuffer())
-                .addMemParam(Q.getStridesBuffer())
-                .addMemParam(K.getStridesBuffer())
-                .addMemParam(V.getStridesBuffer())
-                .addMemParam(O.getStridesBuffer())
-                .addIntParam(B)
-                .addIntParam(H)
-                .addIntParam(L)
-                .addIntParam(D)
-                .addFloatParam((float) scale)
-                .addIntParam(causal ? 1 : 0)
-                .launch(queue, 2, global);
-        }
-
-        return new Tensor[] { O, LSE };
-    }
-
-    /**
-     * Computes the FlashAttention backward pass on GPU tensors.
-     * <br>
-     * <b>Parameters:</b>
-     * <ul>
-     *   <li><b>q</b> - Query tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>k</b> - Key tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>v</b> - Value tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>o</b> - Output tensor from forward pass.</li>
-     *   <li><b>dO</b> - Gradient of the loss with respect to the output.</li>
-     *   <li><b>lse</b> - Log-Sum-Exp values from forward pass with shape [batch, heads, sequence_length].</li>
-     *   <li><b>scale</b> - Scaling factor (should match forward pass).</li>
-     *   <li><b>causal</b> - If {@code true}, applies causal masking (should match forward pass).</li>
-     * </ul>
-     *
-     * <b>Returns:</b>
-     * <ul>
-     *   <li>An array containing [dQ, dK, dV] gradients with same shapes as Q, K, V.</li>
-     *   <li>{@code null} if any input is not a {@link GpuTensor} or inputs are on different devices.</li>
-     * </ul>
-     */
-    public static Tensor[] backward(
-            Tensor q,
-            Tensor k,
-            Tensor v,
-            Tensor o,
-            Tensor dO,
-            Tensor lse,
-            double scale,
-            boolean causal
+    public static GpuTensor forward(
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        float scale,
+        boolean causal
     ) {
-        if (!(q instanceof GpuTensor Q) || !(k instanceof GpuTensor K) || !(v instanceof GpuTensor V) ||
-            !(o instanceof GpuTensor O) || !(dO instanceof GpuTensor DO) || !(lse instanceof GpuTensor LSE)) {
-            return null;
-        }
-        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice()) ||
-            !Q.getDevice().equals(O.getDevice()) || !Q.getDevice().equals(DO.getDevice()) || !Q.getDevice().equals(LSE.getDevice())) {
-            return null;
-        }
+        ShapeInfo shape = validateForwardInputs(query, key, value);
+        GpuTensor output = new GpuTensor(query.getDevice(), query.shape());
 
-        int[] shape = Q.shape();
-        int B = shape[0];
-        int H = shape[1];
-        int L = shape[2];
-        int D = shape[3];
-
-        // output gradient tensors setup
-        GpuTensor dQ = new GpuTensor(Q.getDevice(), shape);
-        GpuTensor dK = new GpuTensor(Q.getDevice(), shape);
-        GpuTensor dV = new GpuTensor(Q.getDevice(), shape);
-
-        long[] global = new long[] { L, (long) B * H };
-
-        try (GpuQueue queue = GpuContext.getOrCreate(Q.getDevice())) {
-            // first kernel: compute dK and dV
-            KernelFactory.create(Q.getDevice(), "flash_attention_backward")
-                .addMemParam(Q.getDataBuffer())
-                .addMemParam(K.getDataBuffer())
-                .addMemParam(V.getDataBuffer())
-                .addMemParam(O.getDataBuffer())
-                .addMemParam(DO.getDataBuffer())
-                .addMemParam(LSE.getDataBuffer())
-                .addMemParam(dQ.getDataBuffer())
-                .addMemParam(dK.getDataBuffer())
-                .addMemParam(dV.getDataBuffer())
-                .addMemParam(Q.getStridesBuffer())
-                .addMemParam(K.getStridesBuffer())
-                .addMemParam(V.getStridesBuffer())
-                .addMemParam(O.getStridesBuffer())
-                .addMemParam(DO.getStridesBuffer())
-                .addMemParam(dK.getStridesBuffer())
-                .addMemParam(dV.getStridesBuffer())
-                .addIntParam(B)
-                .addIntParam(H)
-                .addIntParam(L)
-                .addIntParam(D)
-                .addFloatParam((float) scale)
-                .addIntParam(causal ? 1 : 0)
-                .launch(queue, 2, global);
-
-            // second kernel: compute dQ
-            KernelFactory.create(Q.getDevice(), "flash_attention_backward_dq")
-                .addMemParam(Q.getDataBuffer())
-                .addMemParam(K.getDataBuffer())
-                .addMemParam(V.getDataBuffer())
-                .addMemParam(O.getDataBuffer())
-                .addMemParam(DO.getDataBuffer())
-                .addMemParam(LSE.getDataBuffer())
-                .addMemParam(dQ.getDataBuffer())
-                .addMemParam(Q.getStridesBuffer())
-                .addMemParam(K.getStridesBuffer())
-                .addMemParam(V.getStridesBuffer())
-                .addMemParam(O.getStridesBuffer())
-                .addMemParam(DO.getStridesBuffer())
-                .addMemParam(dQ.getStridesBuffer())
-                .addIntParam(B)
-                .addIntParam(H)
-                .addIntParam(L)
-                .addIntParam(D)
-                .addFloatParam((float) scale)
-                .addIntParam(causal ? 1 : 0)
-                .launch(queue, 2, global);
-        }
-
-        return new Tensor[] { dQ, dK, dV };
+        dispatchForward("flash_attention_forward", query, key, value, output, null, shape, scale, causal);
+        return output;
     }
 
-    /**
-     * Computes the FlashAttention forward pass using tiled local memory optimization.
-     * This version is more efficient for longer sequences.
-     * <br>
-     * <b>Parameters:</b>
-     * <ul>
-     *   <li><b>q</b> - Query tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>k</b> - Key tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>v</b> - Value tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>scale</b> - Scaling factor applied to the attention scores.</li>
-     *   <li><b>causal</b> - If {@code true}, applies causal masking.</li>
-     * </ul>
-     *
-     * <b>Returns:</b>
-     * <ul>
-     *   <li>An array containing [O, LSE] where O is the attention output and LSE is the log-sum-exp values.</li>
-     *   <li>{@code null} if any input is not a {@link GpuTensor}.</li>
-     * </ul>
-     */
-    public static Tensor[] forwardTiled(Tensor q, Tensor k, Tensor v, double scale, boolean causal) {
-        if (!(q instanceof GpuTensor Q) || !(k instanceof GpuTensor K) || !(v instanceof GpuTensor V)) {
-            return null;
-        }
-        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice())) {
-            return null;
-        }
+    public static ForwardResult forwardWithLse(
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        float scale,
+        boolean causal
+    ) {
+        ShapeInfo shape = validateForwardInputs(query, key, value);
+        GpuTensor output = new GpuTensor(query.getDevice(), query.shape());
+        GpuTensor lse = new GpuTensor(query.getDevice(), new int[] { shape.batchSize, shape.numHeads, shape.seqLen });
 
-        int[] shape = Q.shape();
-        int B = shape[0];
-        int H = shape[1];
-        int L = shape[2];
-        int D = shape[3];
-
-        if (D > FA_HEAD_DIM) {
-            // fall back to non-tiled version for large head dimensions
-            return forwardWithLse(q, k, v, scale, causal);
-        }
-
-        GpuTensor O = new GpuTensor(Q.getDevice(), shape);
-        O.setAutogradContext(Q.getAutogradContext());
-
-        GpuTensor LSE = new GpuTensor(Q.getDevice(), new int[]{B, H, L});
-
-
-        long[] global = new long[] { L, (long) B * H };
-        long[] local = new long[] { Math.min(FA_TILE_SIZE, L), 1 };
-
-        try (GpuQueue queue = GpuContext.getOrCreate(Q.getDevice())) {
-            KernelFactory.create(Q.getDevice(), "flash_attention_forward_tiled")
-                .addMemParam(Q.getDataBuffer())
-                .addMemParam(K.getDataBuffer())
-                .addMemParam(V.getDataBuffer())
-                .addMemParam(O.getDataBuffer())
-                .addMemParam(LSE.getDataBuffer())
-                .addMemParam(Q.getStridesBuffer())
-                .addMemParam(K.getStridesBuffer())
-                .addMemParam(V.getStridesBuffer())
-                .addMemParam(O.getStridesBuffer())
-                .addIntParam(B)
-                .addIntParam(H)
-                .addIntParam(L)
-                .addIntParam(D)
-                .addFloatParam((float) scale)
-                .addIntParam(causal ? 1 : 0)
-                .launch(queue, 2, global, local);
-        }
-
-        return new Tensor[] { O, LSE };
+        dispatchForward("flash_attention_forward_with_lse", query, key, value, output, lse, shape, scale, causal);
+        return new ForwardResult(output, lse);
     }
 
-    /**
-     * Computes the FlashAttention backward pass using tiled local memory optimization.
-     * <br>
-     * <b>Parameters:</b>
-     * <ul>
-     *   <li><b>q</b> - Query tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>k</b> - Key tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>v</b> - Value tensor of shape [batch, heads, sequence_length, head_dim].</li>
-     *   <li><b>o</b> - Output tensor from forward pass.</li>
-     *   <li><b>dO</b> - Gradient of the loss with respect to the output.</li>
-     *   <li><b>lse</b> - Log-Sum-Exp values from forward pass.</li>
-     *   <li><b>scale</b> - Scaling factor (should match forward pass).</li>
-     *   <li><b>causal</b> - If {@code true}, applies causal masking.</li>
-     * </ul>
-     *
-     * <b>Returns:</b>
-     * <ul>
-     *   <li>An array containing [dQ, dK, dV] gradients.</li>
-     *   <li>{@code null} if any input is not a {@link GpuTensor}.</li>
-     * </ul>
-     */
-    public static Tensor[] backwardTiled(Tensor q, Tensor k, Tensor v, Tensor o, Tensor dO, Tensor lse,
-                                         double scale, boolean causal) {
-        if (!(q instanceof GpuTensor Q) || !(k instanceof GpuTensor K) || !(v instanceof GpuTensor V) ||
-            !(o instanceof GpuTensor O) || !(dO instanceof GpuTensor DO) || !(lse instanceof GpuTensor LSE)) {
-            return null;
-        }
-        if (!Q.getDevice().equals(K.getDevice()) || !Q.getDevice().equals(V.getDevice()) ||
-            !Q.getDevice().equals(O.getDevice()) || !Q.getDevice().equals(DO.getDevice()) || !Q.getDevice().equals(LSE.getDevice())) {
-            return null;
+    public static ForwardResult forwardTiled(
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        float scale,
+        boolean causal
+    ) {
+        ShapeInfo shape = validateForwardInputs(query, key, value);
+        if (shape.headDim > 64) {
+            throw new IllegalArgumentException("Tiled FlashAttention supports headDim <= 64, got " + shape.headDim);
         }
 
-        int[] shape = Q.shape();
-        int B = shape[0];
-        int H = shape[1];
-        int L = shape[2];
-        int D = shape[3];
+        GpuTensor output = new GpuTensor(query.getDevice(), query.shape());
+        GpuTensor lse = new GpuTensor(query.getDevice(), new int[] { shape.batchSize, shape.numHeads, shape.seqLen });
 
-        if (D > FA_HEAD_DIM) {
-            // fall back to non-tiled version for large head dimensions
-            return backward(q, k, v, o, dO, lse, scale, causal);
-        }
-
-        GpuTensor dQ = new GpuTensor(Q.getDevice(), shape);
-        GpuTensor dK = new GpuTensor(Q.getDevice(), shape);
-        GpuTensor dV = new GpuTensor(Q.getDevice(), shape);
-
-        long[] global = new long[] { L, (long) B * H };
-        long[] local = new long[] { Math.min(FA_TILE_SIZE, L), 1 };
-
-        try (GpuQueue queue = GpuContext.getOrCreate(Q.getDevice())) {
-            // tiled backward for dK and dV
-            KernelFactory.create(Q.getDevice(), "flash_attention_backward_tiled")
-                .addMemParam(Q.getDataBuffer())
-                .addMemParam(K.getDataBuffer())
-                .addMemParam(V.getDataBuffer())
-                .addMemParam(O.getDataBuffer())
-                .addMemParam(DO.getDataBuffer())
-                .addMemParam(LSE.getDataBuffer())
-                .addMemParam(dQ.getDataBuffer())
-                .addMemParam(dK.getDataBuffer())
-                .addMemParam(dV.getDataBuffer())
-                .addMemParam(Q.getStridesBuffer())
-                .addMemParam(K.getStridesBuffer())
-                .addMemParam(V.getStridesBuffer())
-                .addMemParam(O.getStridesBuffer())
-                .addMemParam(DO.getStridesBuffer())
-                .addMemParam(dK.getStridesBuffer())
-                .addMemParam(dV.getStridesBuffer())
-                .addIntParam(B)
-                .addIntParam(H)
-                .addIntParam(L)
-                .addIntParam(D)
-                .addFloatParam((float) scale)
-                .addIntParam(causal ? 1 : 0)
-                .launch(queue, 2, global, local);
-
-            // dQ kernel
-            // TODO: optimize this with tiled version as well
-            KernelFactory.create(Q.getDevice(), "flash_attention_backward_dq")
-                .addMemParam(Q.getDataBuffer())
-                .addMemParam(K.getDataBuffer())
-                .addMemParam(V.getDataBuffer())
-                .addMemParam(O.getDataBuffer())
-                .addMemParam(DO.getDataBuffer())
-                .addMemParam(LSE.getDataBuffer())
-                .addMemParam(dQ.getDataBuffer())
-                .addMemParam(Q.getStridesBuffer())
-                .addMemParam(K.getStridesBuffer())
-                .addMemParam(V.getStridesBuffer())
-                .addMemParam(O.getStridesBuffer())
-                .addMemParam(DO.getStridesBuffer())
-                .addMemParam(dQ.getStridesBuffer())
-                .addIntParam(B)
-                .addIntParam(H)
-                .addIntParam(L)
-                .addIntParam(D)
-                .addFloatParam((float) scale)
-                .addIntParam(causal ? 1 : 0)
-                .launch(queue, 2, global);
-        }
-
-        return new Tensor[] { dQ, dK, dV };
+        dispatchForward("flash_attention_forward_tiled", query, key, value, output, lse, shape, scale, causal);
+        return new ForwardResult(output, lse);
     }
+
+    public static BackwardResult backward(
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        GpuTensor output,
+        GpuTensor gradOutput,
+        GpuTensor lse,
+        float scale,
+        boolean causal
+    ) {
+        ShapeInfo shape = validateBackwardInputs(query, key, value, output, gradOutput, lse);
+        Device device = query.getDevice();
+        GpuTensor dQ = new GpuTensor(device, query.shape());
+        GpuTensor dK = new GpuTensor(device, key.shape());
+        GpuTensor dV = new GpuTensor(device, value.shape());
+
+        dispatchBackwardKV("flash_attention_backward", query, key, value, output, gradOutput, lse, dK, dV, shape, scale, causal);
+        dispatchBackwardQ("flash_attention_backward_dq", query, key, value, output, gradOutput, lse, dQ, shape, scale, causal);
+
+        return new BackwardResult(dQ, dK, dV);
+    }
+
+    public static BackwardResult backwardTiled(
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        GpuTensor output,
+        GpuTensor gradOutput,
+        GpuTensor lse,
+        float scale,
+        boolean causal
+    ) {
+        ShapeInfo shape = validateBackwardInputs(query, key, value, output, gradOutput, lse);
+        Device device = query.getDevice();
+        GpuTensor dQ = new GpuTensor(device, query.shape());
+        GpuTensor dK = new GpuTensor(device, key.shape());
+        GpuTensor dV = new GpuTensor(device, value.shape());
+
+        dK.getDataBuffer().write(new float[dK.size()]);
+        dV.getDataBuffer().write(new float[dV.size()]);
+
+        try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, "flash_attention_backward_tiled")
+                .buffer(query.getDataBuffer())
+                .buffer(key.getDataBuffer())
+                .buffer(value.getDataBuffer())
+                .buffer(output.getDataBuffer())
+                .buffer(gradOutput.getDataBuffer())
+                .buffer(lse.getDataBuffer())
+                .buffer(dQ.getDataBuffer())
+                .buffer(dK.getDataBuffer())
+                .buffer(dV.getDataBuffer())
+                .buffer(query.getStridesBuffer())
+                .buffer(key.getStridesBuffer())
+                .buffer(value.getStridesBuffer())
+                .buffer(output.getStridesBuffer())
+                .buffer(gradOutput.getStridesBuffer())
+                .buffer(dQ.getStridesBuffer())
+                .buffer(dK.getStridesBuffer())
+                .buffer(dV.getStridesBuffer())
+                .intVal(shape.batchSize)
+                .intVal(shape.numHeads)
+                .intVal(shape.seqLen)
+                .intVal(shape.headDim)
+                .floatVal(scale)
+                .intVal(causal ? 1 : 0)
+                .launch(queue.queue(), global(shape));
+        }
+
+        return new BackwardResult(dQ, dK, dV);
+    }
+
+    private static void dispatchForward(
+        String kernelName,
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        GpuTensor output,
+        GpuTensor lse,
+        ShapeInfo shape,
+        float scale,
+        boolean causal
+    ) {
+        Device device = query.getDevice();
+        try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory kernel = KernelFactory.create(device, kernelName)
+                .buffer(query.getDataBuffer())
+                .buffer(key.getDataBuffer())
+                .buffer(value.getDataBuffer())
+                .buffer(output.getDataBuffer());
+
+            if (lse != null) {
+                kernel.buffer(lse.getDataBuffer());
+            }
+
+            kernel.buffer(query.getStridesBuffer())
+                .buffer(key.getStridesBuffer())
+                .buffer(value.getStridesBuffer())
+                .buffer(output.getStridesBuffer())
+                .intVal(shape.batchSize)
+                .intVal(shape.numHeads)
+                .intVal(shape.seqLen)
+                .intVal(shape.headDim)
+                .floatVal(scale)
+                .intVal(causal ? 1 : 0);
+
+            if ("flash_attention_forward_tiled".equals(kernelName)) {
+                kernel.launch(queue.queue(), roundUpGlobal(shape), new ComputeSize(TILE_SIZE, 1, 1));
+            } else {
+                kernel.launch(queue.queue(), global(shape));
+            }
+        }
+    }
+
+    private static void dispatchBackwardKV(
+        String kernelName,
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        GpuTensor output,
+        GpuTensor gradOutput,
+        GpuTensor lse,
+        GpuTensor dK,
+        GpuTensor dV,
+        ShapeInfo shape,
+        float scale,
+        boolean causal
+    ) {
+        Device device = query.getDevice();
+        try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, kernelName)
+                .buffer(query.getDataBuffer())
+                .buffer(key.getDataBuffer())
+                .buffer(value.getDataBuffer())
+                .buffer(output.getDataBuffer())
+                .buffer(gradOutput.getDataBuffer())
+                .buffer(lse.getDataBuffer())
+                .buffer(dK.getDataBuffer())
+                .buffer(dV.getDataBuffer())
+                .buffer(query.getStridesBuffer())
+                .buffer(key.getStridesBuffer())
+                .buffer(value.getStridesBuffer())
+                .buffer(output.getStridesBuffer())
+                .buffer(gradOutput.getStridesBuffer())
+                .buffer(dK.getStridesBuffer())
+                .buffer(dV.getStridesBuffer())
+                .intVal(shape.batchSize)
+                .intVal(shape.numHeads)
+                .intVal(shape.seqLen)
+                .intVal(shape.headDim)
+                .floatVal(scale)
+                .intVal(causal ? 1 : 0)
+                .launch(queue.queue(), global(shape));
+        }
+    }
+
+    private static void dispatchBackwardQ(
+        String kernelName,
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        GpuTensor output,
+        GpuTensor gradOutput,
+        GpuTensor lse,
+        GpuTensor dQ,
+        ShapeInfo shape,
+        float scale,
+        boolean causal
+    ) {
+        Device device = query.getDevice();
+        try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
+            KernelFactory.create(device, kernelName)
+                .buffer(query.getDataBuffer())
+                .buffer(key.getDataBuffer())
+                .buffer(value.getDataBuffer())
+                .buffer(output.getDataBuffer())
+                .buffer(gradOutput.getDataBuffer())
+                .buffer(lse.getDataBuffer())
+                .buffer(dQ.getDataBuffer())
+                .buffer(query.getStridesBuffer())
+                .buffer(key.getStridesBuffer())
+                .buffer(value.getStridesBuffer())
+                .buffer(output.getStridesBuffer())
+                .buffer(gradOutput.getStridesBuffer())
+                .buffer(dQ.getStridesBuffer())
+                .intVal(shape.batchSize)
+                .intVal(shape.numHeads)
+                .intVal(shape.seqLen)
+                .intVal(shape.headDim)
+                .floatVal(scale)
+                .intVal(causal ? 1 : 0)
+                .launch(queue.queue(), global(shape));
+        }
+    }
+
+    private static ShapeInfo validateForwardInputs(
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value
+    ) {
+        requireSameDevice(query, key, value);
+        requireRank4("query", query);
+        requireRank4("key", key);
+        requireRank4("value", value);
+
+        int[] qShape = query.shape();
+        int[] kShape = key.shape();
+        int[] vShape = value.shape();
+
+        if (qShape[0] != kShape[0] || qShape[0] != vShape[0]
+            || qShape[1] != kShape[1] || qShape[1] != vShape[1]
+            || kShape[2] != vShape[2]
+            || qShape[3] != kShape[3] || qShape[3] != vShape[3]) {
+            throw new IllegalArgumentException(
+                "FlashAttention expects Q, K, V shapes [batch, heads, seq, headDim] with matching batch/head/headDim. " +
+                "Got Q=" + Arrays.toString(qShape) + ", K=" + Arrays.toString(kShape) + ", V=" + Arrays.toString(vShape)
+            );
+        }
+
+        if (qShape[2] != kShape[2]) {
+            throw new IllegalArgumentException("Only equal query/key sequence length is currently supported");
+        }
+
+        return new ShapeInfo(qShape[0], qShape[1], qShape[2], qShape[3]);
+    }
+
+    private static ShapeInfo validateBackwardInputs(
+        GpuTensor query,
+        GpuTensor key,
+        GpuTensor value,
+        GpuTensor output,
+        GpuTensor gradOutput,
+        GpuTensor lse
+    ) {
+        ShapeInfo shape = validateForwardInputs(query, key, value);
+        requireSameDevice(query, output, gradOutput, lse);
+        requireShape("output", output, query.shape());
+        requireShape("gradOutput", gradOutput, query.shape());
+        requireShape("lse", lse, new int[] { shape.batchSize, shape.numHeads, shape.seqLen });
+        return shape;
+    }
+
+    private static void requireRank4(String name, GpuTensor tensor) {
+        if (tensor.rank() != 4) {
+            throw new IllegalArgumentException(name + " must have shape [batch, heads, seq, headDim]");
+        }
+    }
+
+    private static void requireShape(String name, GpuTensor tensor, int[] expectedShape) {
+        if (!Arrays.equals(tensor.shape(), expectedShape)) {
+            throw new IllegalArgumentException(
+                name + " shape mismatch. Expected " + Arrays.toString(expectedShape) +
+                ", got " + Arrays.toString(tensor.shape())
+            );
+        }
+    }
+
+    private static void requireSameDevice(GpuTensor first, GpuTensor... others) {
+        for (GpuTensor other : others) {
+            if (!first.getDevice().equals(other.getDevice())) {
+                throw new IllegalArgumentException("All FlashAttention tensors must be on the same GPU device");
+            }
+        }
+    }
+
+    private static ComputeSize global(ShapeInfo shape) {
+        return new ComputeSize(shape.seqLen, shape.numHeads, shape.batchSize);
+    }
+
+    private static ComputeSize roundUpGlobal(ShapeInfo shape) {
+        int roundedSeq = ((shape.seqLen + TILE_SIZE - 1) / TILE_SIZE) * TILE_SIZE;
+        return new ComputeSize(roundedSeq, shape.numHeads, shape.batchSize);
+    }
+
+    private record ShapeInfo(int batchSize, int numHeads, int seqLen, int headDim) {}
 }

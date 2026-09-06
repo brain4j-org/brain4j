@@ -3,18 +3,11 @@ package org.brain4j.core.importing;
 import org.brain4j.core.importing.format.GeneralRegistry;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.layer.impl.*;
-import org.brain4j.core.layer.impl.convolutional.ConvLayer;
-import org.brain4j.core.layer.impl.transformer.EmbeddingLayer;
-import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
-import org.brain4j.core.layer.impl.transformer.TransformerDecoder;
-import org.brain4j.core.layer.impl.transformer.TransformerEncoder;
-import org.brain4j.core.layer.impl.utility.*;
-import org.brain4j.core.loss.LossFunction;
-import org.brain4j.core.loss.impl.BinaryCrossEntropy;
-import org.brain4j.core.loss.impl.CrossEntropy;
-import org.brain4j.core.loss.impl.MeanAbsoluteError;
-import org.brain4j.core.loss.impl.MeanSquaredError;
+import org.brain4j.math.loss.LossFunction;
+import org.brain4j.math.loss.impl.BinaryCrossEntropy;
+import org.brain4j.math.loss.impl.CrossEntropy;
+import org.brain4j.math.loss.impl.MeanAbsoluteError;
+import org.brain4j.math.loss.impl.MeanSquaredError;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.optimizer.impl.Adam;
 import org.brain4j.core.training.optimizer.impl.AdamW;
@@ -26,14 +19,12 @@ import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.*;
 import org.brain4j.math.clipper.GradientClipper;
-import org.brain4j.math.clipper.impl.HardClipper;
-import org.brain4j.math.clipper.impl.L2Clipper;
-import org.brain4j.math.clipper.impl.NoClipper;
 import org.brain4j.math.scaler.FeatureScaler;
 import org.brain4j.math.scaler.impl.MinMaxScaler;
 import org.brain4j.math.scaler.impl.ZScoreScaler;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.*;
+import org.brain4j.math.weightsinit.WeightInit;
 
 public class Registries {
     
@@ -45,6 +36,7 @@ public class Registries {
     public static final GeneralRegistry<Activation, Object> ACTIVATION_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<Layer, Object> LAYER_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<FeatureScaler, Object> SCALER_REGISTRY = new GeneralRegistry<>();
+    public static final GeneralRegistry<WeightInit, Object> WEIGHT_INIT_REGISTRY = new GeneralRegistry<>();
 
     static {
         ONNX_OPERATIONS_REGISTRY.register("Add", AddOperation.class);
@@ -64,17 +56,17 @@ public class Registries {
             return new SqueezeOperation(dimension);
         });
         ONNX_OPERATIONS_REGISTRY.register("Concat", ConcatOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Relu", (x) -> new ActivationOperation(new ReLUActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Relu", (x) -> new ActivationOperation(new ReLU()));
         ONNX_OPERATIONS_REGISTRY.register("Relu", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Sigmoid", (x) -> new ActivationOperation(new SigmoidActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Sigmoid", (x) -> new ActivationOperation(new Sigmoid()));
         ONNX_OPERATIONS_REGISTRY.register("Sigmoid", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Tanh", (x) -> new ActivationOperation(new TanhActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Tanh", (x) -> new ActivationOperation(new Tanh()));
         ONNX_OPERATIONS_REGISTRY.register("Tanh", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("LeakyRelu", (x) -> new ActivationOperation(new LeakyReLUActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("LeakyRelu", (x) -> new ActivationOperation(new LeakyReLU()));
         ONNX_OPERATIONS_REGISTRY.register("LeakyRelu", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Gelu", (x) -> new ActivationOperation(new GELUActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Gelu", (x) -> new ActivationOperation(new GELU()));
         ONNX_OPERATIONS_REGISTRY.register("Gelu", ActivationOperation.class);
-        ONNX_OPERATIONS_REGISTRY.register("Softmax", (x) -> new ActivationOperation(new SoftmaxActivation()));
+        ONNX_OPERATIONS_REGISTRY.register("Softmax", (x) -> new ActivationOperation(new Softmax()));
         ONNX_OPERATIONS_REGISTRY.register("Softmax", ActivationOperation.class);
         ONNX_OPERATIONS_REGISTRY.register("LayerNormalization", (node) -> {
             float epsilon = node.getAttribute(0).getF();
@@ -93,41 +85,19 @@ public class Registries {
         LOSS_FUNCTION_REGISTRY.register("cross_entropy", CrossEntropy.class);
         LOSS_FUNCTION_REGISTRY.register("mean_absolute_error", MeanAbsoluteError.class);
         LOSS_FUNCTION_REGISTRY.register("mean_squared_error", MeanSquaredError.class);
-        
-        CLIPPERS_REGISTRY.register("none", NoClipper.class);
-        CLIPPERS_REGISTRY.register("clamp", HardClipper.class);
-        CLIPPERS_REGISTRY.register("l2", L2Clipper.class);
-        
-        ACTIVATION_REGISTRY.register("elu", ELUActivation.class);
-        ACTIVATION_REGISTRY.register("gelu", GELUActivation.class);
-        ACTIVATION_REGISTRY.register("leaky_relu", LeakyReLUActivation.class);
-        ACTIVATION_REGISTRY.register("linear", LinearActivation.class);
-        ACTIVATION_REGISTRY.register("mish", MishActivation.class);
-        ACTIVATION_REGISTRY.register("relu", ReLUActivation.class);
-        ACTIVATION_REGISTRY.register("sigmoid", SigmoidActivation.class);
-        ACTIVATION_REGISTRY.register("silu", SILUActivation.class);
-        ACTIVATION_REGISTRY.register("softmax", SoftmaxActivation.class);
-        ACTIVATION_REGISTRY.register("softplus", SoftPlusActivation.class);
-        ACTIVATION_REGISTRY.register("swish", SwishActivation.class);
-        ACTIVATION_REGISTRY.register("tanh", TanhActivation.class);
 
-        LAYER_REGISTRY.register("input", InputLayer.class);
-        LAYER_REGISTRY.register("dense", DenseLayer.class);
-        LAYER_REGISTRY.register("dropout", DropoutLayer.class);
-        LAYER_REGISTRY.register("lstm", LSTMLayer.class);
-        LAYER_REGISTRY.register("layer_norm", NormLayer.class);
-        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
-        LAYER_REGISTRY.register("conv_2d", ConvLayer.class);
-        
-        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
-        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
-        LAYER_REGISTRY.register("transformer_decoder", TransformerDecoder.class);
-        LAYER_REGISTRY.register("transformer_encoder", TransformerEncoder.class);
-        
-        LAYER_REGISTRY.register("activation", ActivationLayer.class);
-        LAYER_REGISTRY.register("reshape", ReshapeLayer.class);
-        LAYER_REGISTRY.register("slice", SliceLayer.class);
-        LAYER_REGISTRY.register("squeeze", SqueezeLayer.class);
+//        LAYER_REGISTRY.register("dropout", DropoutLayer.class);
+//        LAYER_REGISTRY.register("lstm", LSTMLayer.class);
+//        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
+//
+//        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
+//        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
+//        LAYER_REGISTRY.register("transformer_decoder", TransformerDecoder.class);
+//        LAYER_REGISTRY.register("transformer_encoder", TransformerEncoder.class);
+//
+//        LAYER_REGISTRY.register("activation", ActivationLayer.class);
+//        LAYER_REGISTRY.register("slice", SliceLayer.class);
+//        LAYER_REGISTRY.register("squeeze", SqueezeLayer.class);
 
         SCALER_REGISTRY.register("z_score", ZScoreScaler.class);
         SCALER_REGISTRY.register("min_max", MinMaxScaler.class);

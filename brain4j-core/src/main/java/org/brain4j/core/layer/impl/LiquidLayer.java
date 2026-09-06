@@ -1,341 +1,206 @@
 package org.brain4j.core.layer.impl;
 
-import com.google.gson.JsonObject;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.training.optimizer.Optimizer;
-import org.brain4j.core.training.updater.Updater;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activations;
 import org.brain4j.math.commons.Commons;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.solver.NumericalSolver;
-import org.brain4j.math.solver.impl.EulerSolver;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.tensor.index.Range;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.random.RandomGenerator;
 
 /**
  * Liquid Time-Constant (LTC) recurrent layer.
- * <p>
- * This layer models continuous-time recurrent dynamics by evolving the hidden
- * state through a numerical ODE solver. Each hidden unit has a learnable
- * time constant {@code τ} constrained within a fixed range.
- * </p>
  *
- * <h2>Shape conventions:</h2>
- * <p>Input:</p>
- * <ul>
- *     <li>{@code input}: {@code [batch, timesteps, features]}</li>
- *     <li>{@code deltas}: {@code [batch, timesteps, features]}</li>
- * </ul>
- *
- * <p>Output:</p>
- * <ul>
- *     <li>{@code hidden}:
- *         <ul>
- *             <li>{@code [batch, timesteps, hidden_dim]} if {@code returnSequences = true}</li>
- *             <li>{@code [batch, hidden_dim]} otherwise</li>
- *         </ul>
- *     </li>
- *     <li>{@code deltas} is forwarded unchanged as second output</li>
- * </ul>
- *
- * <p>The hidden state dynamics follow the continuous-time equation:</p>
+ * <p>Per timestep the hidden state evolves as:</p>
  * <blockquote><pre>
- * dh/dt = (-h + f(Wx + Uh + b)) / τ
+ *     h += (dt / tau) * (tanh(W_in x + b_in + W_rec h + b_rec) - h)
+ *     tau = tauMin + softplus(W_tau x + b_tau)
  * </pre></blockquote>
  *
- * <p>where the integration over time is handled by a {@link NumericalSolver}
- * (e.g. Euler integration).</p>
- *
- * @implNote this layer expects exactly two input tensors: the signal and its time deltas
- * @author xEcho1337
+ * <p>Inputs: {@code x [batch, timesteps, features]}, optionally
+ * {@code deltas [batch, timesteps]} with per-step time gaps (defaults to 1).
+ * Output: {@code [batch, timesteps, hidden]} if {@code returnSequences},
+ * otherwise {@code [batch, hidden]}.
  */
 public class LiquidLayer extends Layer {
-    
-    private DenseLayer hiddenParams;
-    private DenseLayer tauParams;
-    private NumericalSolver solver;
-    
-    /* Hyper parameters */
-    private int dimension;
-    private double tauMin;
-    private double tauMax;
-    private boolean returnSequences;
-    
-    private LiquidLayer() {
-    }
-    
-    /**
-     * Creates a Liquid layer with default {@code τ} bounds and Euler integration.
-     *
-     * @param dimension       hidden state dimension
-     * @param mSteps          number of solver steps per timestep
-     * @param returnSequences whether to return the full hidden sequence
-     */
-    public LiquidLayer(int dimension, int mSteps, boolean returnSequences) {
-        this(dimension, 0.5, 5.0, returnSequences, new EulerSolver(mSteps));
-    }
-    
-    /**
-     * Creates a Liquid layer with a custom numerical solver.
-     *
-     * @param dimension       hidden state dimension
-     * @param returnSequences whether to return the full hidden sequence
-     * @param solver          ODE solver used for state integration
-     */
-    public LiquidLayer(int dimension, boolean returnSequences, NumericalSolver solver) {
-        this(dimension, 0.5, 5.0, returnSequences, solver);
-    }
-    
-    /**
-     * Creates a Liquid layer with explicit {@code τ} bounds.
-     *
-     * @param dimension       hidden state dimension
-     * @param tauMin          minimum time constant
-     * @param tauMax          maximum time constant
-     * @param returnSequences whether to return the full hidden sequence
-     * @param solver          ODE solver used for state integration
-     */
-    public LiquidLayer(int dimension, double tauMin, double tauMax,
-                       boolean returnSequences, NumericalSolver solver) {
-        this.solver = solver;
-        this.dimension = dimension;
-        this.tauMin = tauMin;
-        this.tauMax = tauMax;
-        this.returnSequences = returnSequences;
-    }
-    
-    @Override
-    public void connect(Layer previous) {
-        this.weights = Tensors.zeros(previous.size(), dimension);
-        this.bias = Tensors.zeros(dimension);
-        this.hiddenParams = new DenseLayer(dimension);
-        this.tauParams = new DenseLayer(dimension, Activations.SOFTPLUS);
 
-        hiddenParams.connect(this);
-        tauParams.connect(previous);
+    public record Config(int hiddenDimension, int solverSteps, double tauMin, boolean returnSequences) {}
 
+    protected final Config config;
+
+    public LiquidLayer(int hiddenDimension) {
+        this(hiddenDimension, 6, 0.5, true);
     }
-    
+
+    public LiquidLayer(int hiddenDimension, int solverSteps, boolean returnSequences) {
+        this(hiddenDimension, solverSteps, 0.5, returnSequences);
+    }
+
+    public LiquidLayer(int hiddenDimension, int solverSteps, double tauMin, boolean returnSequences) {
+        this(new Config(hiddenDimension, solverSteps, tauMin, returnSequences));
+    }
+
+    public LiquidLayer(Config config) {
+        this.config = config;
+    }
+
     @Override
-    public void initWeights(RandomGenerator generator, int input, int output) {
-        this.weights.map(x -> weightInit.generate(generator, input, output));
-        this.hiddenParams.initWeights(generator, dimension, dimension);
-        this.tauParams.initWeights(generator, input, dimension);
+    public void build(List<Shape> inputShapes) {
+        int features = inputShapes.getFirst().last();
+        int hidden = config.hiddenDimension;
+
+        registerParam("weights_in", Tensors.zeros(features, hidden));
+        registerParam("bias_in", Tensors.zeros(hidden));
+        registerParam("weights_rec", Tensors.zeros(hidden, hidden));
+        registerParam("bias_rec", Tensors.zeros(hidden));
+        registerParam("weights_tau", Tensors.zeros(features, hidden));
+        registerParam("bias_tau", Tensors.zeros(hidden));
     }
-    
+
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+        int features = inputShapes.getFirst().last();
+        int hidden = config.hiddenDimension;
+
+        generateWeights("weights_in", rng, features, hidden);
+        generateWeights("weights_rec", rng, hidden, hidden);
+        generateWeights("weights_tau", rng, features, hidden);
+    }
+
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        Shape first = inputShapes.getFirst();
+
+        if (first.rank() != 2) {
+            throw Commons.illegalArgument("Liquid expects rank-2 inputs [timesteps, features]! Got: %s",
+                Arrays.toString(first.dims()));
+        }
+
+        int timesteps = first.dim(0);
+
+        if (config.returnSequences) {
+            return List.of(Shape.of(timesteps, config.hiddenDimension));
+        }
+
+        return List.of(Shape.of(config.hiddenDimension));
+    }
+
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(2, inputs);
-        
+        if (inputs.length < 1 || inputs.length > 2) {
+            throw Commons.illegalArgument("Liquid expects 1 input (signal) plus an optional deltas input! Got: %s",
+                inputs.length);
+        }
+
         Tensor input = inputs[0];
-        Tensor deltas = inputs[1];
-        
+
         if (input.rank() != 3) {
-            throw Commons.illegalArgument(
-                "Input must have shape [batch, timesteps, features]! Got: %s",
+            throw Commons.illegalArgument("Signal must have shape [batch, timesteps, features]! Got: %s",
                 Arrays.toString(input.shape()));
         }
-        
-        if (deltas.rank() != 3) {
-            throw Commons.illegalArgument(
-                "Deltas must have shape [batch, timesteps, features]! Got: %s",
+
+        Tensor deltas = inputs.length > 1 ? inputs[1] : null;
+
+        if (deltas != null && deltas.rank() != 2) {
+            throw Commons.illegalArgument("Deltas must have shape [batch, timesteps]! Got: %s",
                 Arrays.toString(deltas.shape()));
         }
-        
+
         int batch = input.shapeAt(0);
         int timesteps = input.shapeAt(1);
-        
-        Tensor hidden = Tensors.zeros(batch, dimension).withGrad();
-        
+        int hidden = config.hiddenDimension;
+
+        Tensor wIn = getParam("weights_in");
+        Tensor bIn = getParam("bias_in");
+        Tensor wRec = getParam("weights_rec");
+        Tensor bRec = getParam("bias_rec");
+        Tensor wTau = getParam("weights_tau");
+        Tensor bTau = getParam("bias_tau");
+
+        var tanh = Activations.TANH.function();
+        var softplus = Activations.SOFTPLUS.function();
+
+        Tensor h = Tensors.zeros(batch, hidden).withGrad();
+
         if (input instanceof GpuTensor gpu) {
-            hidden = hidden.to(gpu.getDevice()).withGrad();
+            h = h.to(gpu.getDevice()).withGrad();
         }
-        
-        List<Tensor> hiddenStates = new ArrayList<>();
-        
-        Tensor projTau = tauParams.forward(cache, input)
-            .map(v -> Commons.clamp(v, tauMin, tauMax));
-        
-        Tensor projInput = input.matmulGrad(weights).addGrad(bias);
-        
+
+        List<Tensor> states = new ArrayList<>();
+
         for (int t = 0; t < timesteps; t++) {
-            Range[] ranges = { Range.all(), Range.point(t), Range.all() };
-            
-            Tensor deltaT = deltas.sliceGrad(ranges).squeezeGrad(1);
-            Tensor tau_t = projTau.sliceGrad(ranges).squeezeGrad(1);
-            Tensor projInput_t = projInput.sliceGrad(ranges).squeezeGrad(1);
-            
-            hidden = solver.update(
-                deltaT, tau_t, projInput_t, hidden,
-                x -> hiddenParams.forward(cache, x)
-            );
-            
-            hiddenStates.add(hidden.reshapeGrad(batch, 1, dimension));
+            Tensor xt = input.sliceGrad(Range.all(), Range.point(t), Range.all()).squeezeGrad(1);
+
+            // tau in (tauMin, +inf), fully differentiable (no hard clamp)
+            Tensor tauAct = xt.matmulGrad(wTau).addGrad(bTau).activateGrad(softplus);
+            Tensor tau = tauAct.addGrad(fullLike(xt, batch, hidden, (float) config.tauMin));
+
+            Tensor proj = xt.matmulGrad(wIn).addGrad(bIn);
+
+            // Per-step time gaps, shared across substeps ([B, 1], no grad needed).
+            Tensor dtCol = deltas == null ? null
+                : deltas.slice(Range.all(), Range.point(t));
+
+            for (int s = 0; s < config.solverSteps; s++) {
+                h = eulerStep(h, proj, tau, dtCol, batch, hidden, wRec, bRec, tanh);
+            }
+
+            if (config.returnSequences) {
+                states.add(h.reshapeGrad(batch, 1, hidden));
+            }
         }
-        
-        if (returnSequences) {
-            hidden = Tensors.concatGrad(hiddenStates, 1);
+
+        if (config.returnSequences) {
+            return new Tensor[] { Tensors.concatGrad(states, 1) };
         }
-        
-        return new Tensor[] { hidden, deltas };
+
+        return new Tensor[] { h };
     }
-    
+
+    private Tensor eulerStep(Tensor h, Tensor proj, Tensor tau, Tensor dtCol,
+                             int batch, int hidden, Tensor wRec, Tensor bRec,
+                             org.brain4j.math.activation.Activation tanh) {
+        Tensor numer = fullLike(h, batch, hidden, (float) (1.0 / config.solverSteps));
+
+        if (dtCol != null) {
+            numer = numer.times(dtCol);
+        }
+
+        Tensor step = numer.withGrad().divGrad(tau);
+
+        Tensor hProj = h.matmulGrad(wRec).addGrad(bRec);
+        Tensor z = proj.addGrad(hProj).activateGrad(tanh);
+        Tensor dh = z.subGrad(h);
+
+        return h.addGrad(step.mulGrad(dh));
+    }
+
+    private static Tensor fullLike(Tensor ref, int batch, int hidden, float value) {
+        Tensor full = Tensors.zeros(batch, hidden);
+
+        if (ref instanceof GpuTensor gpu) {
+            full = full.to(gpu.getDevice());
+        }
+
+        return full.plus(value);
+    }
+
     @Override
-    public void backward(StatesCache cache, Updater updater, Optimizer optimizer) {
-        super.backward(cache, updater, optimizer);
-        hiddenParams.backward(cache, updater, optimizer);
-        tauParams.backward(cache, updater, optimizer);
+    public Layer copy() {
+        LiquidLayer copy = new LiquidLayer(config);
+        copyParameters(copy);
+        return copy;
     }
-    
-    @Override
-    public Layer freeze() {
-        super.freeze();
-        hiddenParams.freeze();
-        tauParams.freeze();
-        return this;
-    }
-    
-    @Override
-    public Layer unfreeze() {
-        super.unfreeze();
-        hiddenParams.unfreeze();
-        tauParams.unfreeze();
-        return this;
-    }
-    
-    @Override
-    public void serialize(JsonObject object) {
-        object.addProperty("dimension", dimension);
-        object.addProperty("tau_min", tauMin);
-        object.addProperty("tau_max", tauMax);
-        object.addProperty("return_sequences", returnSequences);
-    }
-    
-    @Override
-    public void deserialize(JsonObject object) {
-        this.dimension = object.get("dimension").getAsInt();
-        this.tauMin = object.get("tau_min").getAsFloat();
-        this.tauMax = object.get("tau_max").getAsFloat();
-        this.returnSequences = object.get("return_sequences").getAsBoolean();
-    }
-    
-    @Override
-    public void loadWeights(Map<String, Tensor> mappedWeights) {
-        super.loadWeights(mappedWeights);
-        tauParams.loadWeights(mappedWeights);
-        hiddenParams.loadWeights(mappedWeights);
-    }
-    
-    @Override
-    public void toDevice(Device device) {
-        super.toDevice(device);
-        hiddenParams.toDevice(device);
-        tauParams.toDevice(device);
-    }
-    
-    @Override
-    public void resetGrad() {
-        super.resetGrad();
-        hiddenParams.resetGrad();
-        tauParams.resetGrad();
-    }
-    
-    @Override
-    public int size() {
-        return dimension;
-    }
-    
-    @Override
-    public int totalWeights() {
-        return weights.elements()
-            + hiddenParams.totalWeights()
-            + tauParams.totalWeights();
-    }
-    
-    @Override
-    public int totalBiases() {
-        return bias.elements()
-            + hiddenParams.totalBiases()
-            + tauParams.totalBiases();
-    }
-    
-    @Override
-    public Map<String, Tensor> weightsMap() {
-        Map<String, Tensor> result = super.weightsMap();
-        result.putAll(tauParams.weightsMap());
-        result.putAll(hiddenParams.weightsMap());
-        return result;
-    }
-    
-    public DenseLayer getHiddenParams() {
-        return hiddenParams;
-    }
-    
-    public LiquidLayer setHiddenParams(DenseLayer hiddenParams) {
-        this.hiddenParams = hiddenParams;
-        return this;
-    }
-    
-    public DenseLayer getTauParams() {
-        return tauParams;
-    }
-    
-    public LiquidLayer setTauParams(DenseLayer tauParams) {
-        this.tauParams = tauParams;
-        return this;
-    }
-    
-    public NumericalSolver getSolver() {
-        return solver;
-    }
-    
-    public LiquidLayer setSolver(NumericalSolver solver) {
-        this.solver = solver;
-        return this;
-    }
-    
-    public int getDimension() {
-        return dimension;
-    }
-    
-    public LiquidLayer setDimension(int dimension) {
-        this.dimension = dimension;
-        return this;
-    }
-    
-    public double getTauMin() {
-        return tauMin;
-    }
-    
-    public LiquidLayer setTauMin(double tauMin) {
-        this.tauMin = tauMin;
-        return this;
-    }
-    
-    public double getTauMax() {
-        return tauMax;
-    }
-    
-    public LiquidLayer setTauMax(double tauMax) {
-        this.tauMax = tauMax;
-        return this;
-    }
-    
-    public boolean isReturnSequences() {
-        return returnSequences;
-    }
-    
-    public LiquidLayer setReturnSequences(boolean returnSequences) {
-        this.returnSequences = returnSequences;
-        return this;
+
+    public Config config() {
+        return config;
     }
 }

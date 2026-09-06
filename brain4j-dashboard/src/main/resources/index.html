@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Brain4J | AI Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-white mb-5 shadow-sm">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">BRAIN4J <span class="fw-light text-dark text-opacity-50">DASHBOARD</span></span>
+        <span class="badge bg-success status-badge">● RUNNING</span>
+    </div>
+</nav>
+
+<div class="container-fluid main-dashboard-container">
+    <div class="row g-4 align-items-stretch">
+        <div class="col-lg-4 d-flex flex-column">
+            <div class="card shadow-sm mb-4 flex-grow-1">
+                <div class="card-body p-4">
+                    <span class="section-title">Training Overview</span>
+                    <div class="row g-4 mb-4">
+                        <div class="col-6">
+                            <div class="metric-label">Epoch</div>
+                            <div class="metric-value">--<small class="text-muted fs-6">/--</small></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-label">Batch</div>
+                            <div class="metric-value">--<small class="text-muted fs-6">/--</small></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-label">Current Loss</div>
+                            <div class="metric-value text-danger">---</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-label">Accuracy</div>
+                            <div class="metric-value text-primary">---</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-label">Avg. Time/Batch</div>
+                            <div class="metric-value">N/A<small class="text-muted fs-6"></small></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-label">ETA</div>
+                            <div class="metric-value">N/A<small class="text-muted fs-6"></small></div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="metric-label fw-bold text-dark">Batch Progress</span>
+                            <span class="metric-label fw-bold text-primary">0%</span>
+                        </div>
+                        <div class="progress" style="height: 20px">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm flex-grow-1">
+                <div class="card-body p-4">
+                    <span class="section-title">System Usage</span>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="metric-label">CPU Usage</span>
+                            <span class="small fw-bold text-dark">0%</span>
+                        </div>
+                        <div class="progress" style="height: 12px"><div class="progress-bar bg-info" style="width: 0"></div></div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="metric-label">GPU Load / VRAM</span>
+                            <span class="small fw-bold text-dark">0% <span class="text-muted fw-normal"></span></span>
+                        </div>
+                        <div class="progress" style="height: 12px"><div class="progress-bar bg-warning" style="width: 0"></div></div>
+                    </div>
+
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="metric-label">System RAM</span>
+                            <span class="small fw-bold text-dark">0% <span class="text-muted fw-normal"></span></span>
+                        </div>
+                        <div class="progress" style="height: 12px"><div class="progress-bar bg-secondary" style="width: 0"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-4 flex-grow-1">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="section-title mb-0">Training Analysis</span>
+                        <div class="d-flex gap-2">
+                            <button id="lossBtn" class="btn btn-sm btn-outline-primary active">Loss</button>
+                            <button id="accuracyBtn" class="btn btn-sm btn-outline-primary">Accuracy</button>
+                            <button id="f1Btn" class="btn btn-sm btn-outline-primary">F1</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="lossChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm control-panel text-white">
+                <div class="card-body p-4">
+                    <span class="section-title">Controls</span>
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-success px-4 fw-bold shadow-sm">START</button>
+                        <button class="btn btn-outline-dark px-4" disabled>PAUSE</button>
+                        <button class="btn btn-outline-danger px-4" disabled>STOP</button>
+                        <button id="saveBtn" class="btn btn-primary px-4 ms-auto">
+                            <i class="bi bi-download"></i> SAVE MODEL
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

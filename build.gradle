@@ -7,6 +7,8 @@ plugins {
 group = 'org.brain4j'
 version = '3.0.0-SNAPSHOT'
 
+def javaVersion = 22
+
 subprojects {
     version = rootProject.version
     group = rootProject.group
@@ -19,6 +21,10 @@ subprojects {
         maven {
             name "brain4jReleases"
             url "https://repo.brain4j.org/releases"
+        }
+        maven {
+            name "brain4jSnapshots"
+            url "https://repo.brain4j.org/snapshots"
         }
     }
 
@@ -33,17 +39,17 @@ subprojects {
                 url = version.endsWith("SNAPSHOT") ? snapshotsRepo : releasesRepo
 
                 credentials {
-                    username = findProperty("BRAIN4J_USERNAME")
-                    password = findProperty("BRAIN4J_TOKEN")
+                    username = findProperty("brain4jUser") ?: System.getenv("brain4jUser")
+                    password = findProperty("brain4jPass") ?: System.getenv("brain4jPass")
                 }
 
                 authentication {
-                    basic(BasicAuthentication)
+                    create("basic", BasicAuthentication)
                 }
             }
         }
         publications {
-            gpr(MavenPublication) {
+            create("gpr", MavenPublication) {
                 from components.java
                 groupId = project.group
                 artifactId = project.name
@@ -54,23 +60,70 @@ subprojects {
 
     compileJava {
         options.encoding = "UTF-8"
+        options.compilerArgs.addAll(["--enable-preview"])
     }
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(21))
+            languageVersion = JavaLanguageVersion.of(javaVersion)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.release = javaVersion
+        options.compilerArgs.addAll(["--enable-preview"])
+    }
+
+    tasks.withType(Test).configureEach {
+        jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+    }
+
+    tasks.withType(Javadoc).configureEach {
+        options.source = String.valueOf(javaVersion)
+        options.addBooleanOption('-enable-preview', true)
+        options.addStringOption('-add-modules', 'jdk.incubator.vector')
+    }
+
+    tasks.withType(JavaExec).configureEach {
+        jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+    }
+}
+
+gradle.projectsEvaluated {
+    subprojects.each { sub ->
+        def projectDeps = [] as Set
+
+        try {
+            sub.configurations.getByName('compileClasspath').allDependencies.withType(
+                org.gradle.api.artifacts.ProjectDependency
+            ).each {
+                projectDeps << sub.project(it.path)
+            }
+        } catch (Exception ignored) {
+            // configuration not present, nothing to order
         }
 
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        ['compileJava', 'compileTestJava', 'test'].each { taskName ->
+            def task = sub.tasks.findByName(taskName)
+
+            if (task != null) {
+                projectDeps.each { dep ->
+                    def shadow = dep.tasks.findByName('shadowJar')
+
+                    if (shadow != null) {
+                        task.mustRunAfter(shadow)
+                    }
+                }
+            }
+        }
     }
 }
 
 tasks.register('buildAll') {
     dependsOn ':brain4j-datasets:shadowJar',
-              ':brain4j-math:shadowJar',
-              ':brain4j-core:shadowJar',
-              ':brain4j-llm:shadowJar'
+            ':brain4j-math:shadowJar',
+            ':brain4j-core:shadowJar',
+            ':brain4j-dashboard:shadowJar'
 
     doLast {
         println 'Completed build for all modules.'
@@ -79,9 +132,9 @@ tasks.register('buildAll') {
 
 tasks.register('publishAll') {
     dependsOn ':brain4j-datasets:publish',
-              ':brain4j-math:publish',
-              ':brain4j-core:publish',
-              ':brain4j-llm:publish'
+            ':brain4j-math:publish',
+            ':brain4j-core:publish',
+            ':brain4j-dashboard:publish'
 
     doLast {
         println 'Published all modules to the main repository.'

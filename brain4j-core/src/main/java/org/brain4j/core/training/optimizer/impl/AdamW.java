@@ -30,7 +30,7 @@ public class AdamW extends Adam {
         return adamValue.add(weightDecayTerm);
     }
 
-    public double weightDecay() {
+    public double getWeightDecay() {
         return weightDecay;
     }
 

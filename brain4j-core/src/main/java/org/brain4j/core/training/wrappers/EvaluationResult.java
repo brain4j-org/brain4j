@@ -122,14 +122,14 @@ public class EvaluationResult {
             
             int cellWidth = Math.max(String.valueOf(maxValue).length(), 5) + 1;
             
-            matrix.append(" ".repeat(7));
+            matrix.repeat(" ", 7);
             for (int i = 0; i < classes; i++) {
                 matrix.append(("%" + cellWidth + "d").formatted(i));
             }
             
             matrix.append("\n  ");
-            matrix.append("-".repeat(4 + 2 + cellWidth * classes)).append("\n");
-            
+            matrix.repeat("-", 6 + cellWidth * classes).append("\n");
+
             for (int i = 0; i < classes; i++) {
                 matrix.append("%4d | ".formatted(i));
                 Tensor predictions = classifications.get(i);

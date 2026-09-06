@@ -1,0 +1,334 @@
+package org.brain4j.core.training;
+
+import org.brain4j.core.layer.Layer;
+import org.brain4j.core.utils.Colored;
+import org.brain4j.core.utils.ProgressBar;
+import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.impl.Softmax;
+import org.brain4j.math.loss.LossFunction;
+import org.brain4j.core.model.Model;
+import org.brain4j.core.monitor.Monitor;
+import org.brain4j.core.training.events.*;
+import org.brain4j.core.training.optimizer.Optimizer;
+import org.brain4j.core.training.updater.Updater;
+import org.brain4j.math.commons.Batch;
+import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.loss.impl.CrossEntropy;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.autograd.AutogradContext;
+import org.brain4j.math.tensor.autograd.Operation;
+import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public final class DefaultTrainer implements Trainer {
+    
+    private final Model model;
+    private final TrainingConfig config;
+    private final Map<Class<? extends Monitor>, Monitor> monitors;
+    private final Object trainingLock = new Object();
+
+    private volatile boolean training;
+    private volatile boolean paused;
+    private volatile boolean stopRequested;
+    private volatile int currentEpoch = -1;
+    private volatile int currentBatch = -1;
+    private volatile int totalEpochs = -1;
+    private volatile int totalBatches = -1;
+    
+    DefaultTrainer(Model model, TrainingConfig config, List<Monitor> monitors) {
+        if (model == null) throw new IllegalArgumentException("Model cannot be null!");
+        if (config == null) throw new IllegalArgumentException("Config cannot be null!");
+        
+        config.optimizer().initialize();
+        config.updater().initialize();
+        
+        this.model = model;
+        this.config = config;
+        this.monitors = new HashMap<>();
+
+        monitors.forEach(m -> this.monitors.put(m.getClass(), m));
+    }
+
+    @Override
+    public <T extends Monitor> T getMonitor(Class<T> monitorClass) {
+        return (T) monitors.get(monitorClass);
+    }
+
+    @Override
+    public <T extends Monitor> void attach(T monitor) {
+        monitors.put(monitor.getClass(), monitor);
+    }
+
+    @Override
+    public Thread start(ListDataSource dataSource, int epochs) {
+        checkAndSync(dataSource, epochs);
+
+        Thread thread = new Thread(() -> {
+            try {
+                runTraining(dataSource, epochs);
+            } finally {
+                finishTraining();
+            }
+        }, "brain4j-trainer-thread");
+
+        thread.start();
+        return thread;
+    }
+
+    @Override
+    public void fit(ListDataSource dataSource, int epochs) {
+        checkAndSync(dataSource, epochs);
+
+        try {
+            runTraining(dataSource, epochs);
+        } finally {
+            finishTraining();
+        }
+    }
+
+    private void checkAndSync(ListDataSource dataSource, int epochs) {
+        if (dataSource == null) throw new IllegalArgumentException("Data source cannot be null!");
+        if (epochs <= 0) throw new IllegalArgumentException("Epochs must be greater than 0. Got: " + epochs);
+
+        synchronized (trainingLock) {
+            if (training) {
+                throw new IllegalStateException("The model is already being trained!");
+            }
+
+            training = true;
+            paused = false;
+            stopRequested = false;
+        }
+    }
+
+    @Override
+    public void pause() {
+        synchronized (trainingLock) {
+            if (!training) {
+                throw new IllegalStateException("The model is not being trained!");
+            }
+
+            paused = true;
+        }
+    }
+
+    @Override
+    public void resume() {
+        synchronized (trainingLock) {
+            if (!training) {
+                throw new IllegalStateException("The model is not being trained!");
+            }
+
+            if (!paused) return;
+
+            paused = false;
+            trainingLock.notifyAll();
+        }
+    }
+
+    @Override
+    public void stop() {
+        synchronized (trainingLock) {
+            if (!training) return;
+
+            stopRequested = true;
+            paused = false;
+            trainingLock.notifyAll();
+        }
+    }
+
+    @Override
+    public boolean isTraining() {
+        return training;
+    }
+
+    @Override
+    public boolean isPaused() {
+        return paused;
+    }
+
+    @Override
+    public int currentEpoch() {
+        return currentEpoch;
+    }
+
+    @Override
+    public int currentBatch() {
+        return currentBatch;
+    }
+
+    @Override
+    public int totalEpochs() {
+        return totalEpochs;
+    }
+
+    @Override
+    public int totalBatches() {
+        return totalBatches;
+    }
+
+    private void runTraining(ListDataSource dataSource, int epochs) {
+        totalEpochs = epochs;
+        totalBatches = dataSource.getBatches();
+
+        for (int i = 0; i < epochs; i++) {
+            if (shouldStop()) break;
+            fitEpoch(dataSource, i, epochs);
+        }
+    }
+
+    private void finishTraining() {
+        synchronized (trainingLock) {
+            training = false;
+            paused = false;
+            stopRequested = false;
+            currentEpoch = -1;
+            currentBatch = -1;
+            totalEpochs = -1;
+            totalBatches = -1;
+            trainingLock.notifyAll();
+        }
+
+        monitors.forEach((k, x) -> x.onEvent(new TrainingEnd(), this));
+    }
+    
+    private void fitEpoch(ListDataSource dataSource, int index, int total) {
+        currentEpoch = index;
+        currentBatch = 0;
+
+        EpochStart epochStart = new EpochStart(index, total);
+        monitors.forEach((k, x) -> x.onEvent(epochStart, this));
+
+        Iterable<Batch> batchIterator = dataSource.batchIterator();
+        String taskName = Colored.renderText("Epoch <yellow>%s<white>/<yellow>%s ", index, total);
+
+        for (Batch batch : new ProgressBar<>(batchIterator, taskName)) {
+            if (shouldStop()) break;
+
+            currentBatch++;
+
+            BatchStart batchStart = new BatchStart(this, currentBatch, totalBatches);
+            monitors.forEach((k, x) -> x.onEvent(batchStart, this));
+
+            fitBatch(batch.to(model.device()));
+
+            BatchEnd end = new BatchEnd(currentBatch, totalBatches);
+            monitors.forEach((k, x) -> x.onEvent(end, this));
+        }
+
+        Optimizer optimizer = config.optimizer();
+        Updater updater = config.updater();
+        
+        updater.postFit(optimizer.getLearningRate(), dataSource.getSize());
+        
+        EpochEnd end = new EpochEnd(index, total);
+        monitors.forEach((k, x) -> x.onEvent(end, this));
+    }
+
+    private boolean shouldStop() {
+        synchronized (trainingLock) {
+            while (paused && !stopRequested) {
+                try {
+                    trainingLock.wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    stopRequested = true;
+                    paused = false;
+                    break;
+                }
+            }
+
+            return stopRequested;
+        }
+    }
+    
+    private void fitBatch(Batch batch) {
+        Tensor[] inputs = batch.first();
+        
+        Device device = model.device();
+        StatesCache cache = new StatesCache(true);
+        
+        if (device != null) {
+            device.createResources();
+        }
+        
+        Tensor[] outputs = forward(cache, inputs);
+        backward(cache, batch, outputs);
+        resetGrad();
+        
+        if (device != null) {
+            device.closeResources();
+        }
+    }
+    
+    @Override
+    public Tensor[] forward(StatesCache cache, Tensor[] inputs) {
+        return model.predict(cache, inputs);
+    }
+
+    @Override
+    public void backward(StatesCache cache, Batch batch, Tensor[] outputs) {
+        List<Layer> layers = model.getLayers();
+        
+        Tensor[] inputs = batch.first();
+        Tensor[] targets = batch.second();
+        
+        Updater updater = config.updater();
+        Optimizer optimizer = config.optimizer();
+        LossFunction loss = config.loss();
+        
+        for (int i = 0; i < outputs.length; i++) {
+            Tensor y = outputs[i];
+            Tensor t = targets[i];
+
+            AutogradContext context = y.getAutogradContext();
+            Operation operation = context.operation();
+
+            Tensor grad = loss.delta(y, t, null);
+            Tensor target = y;
+
+            if (loss instanceof CrossEntropy
+                && operation instanceof ActivationOperation(Activation activation)
+                && activation instanceof Softmax) {
+                // numerically stable trick for Softmax + CrossEntropy
+                target = context.inputs()[0];
+            }
+
+            target.backward(grad);
+        }
+        
+        layers.forEach(x -> x.backward(updater, optimizer));
+
+        int elements = 0;
+        
+        for (Tensor input : inputs) elements += input.shapeAt(0);
+        
+        optimizer.postBatch();
+        updater.postBatch(optimizer.getLearningRate(), elements);
+    }
+    
+    @Override
+    public void resetGrad() {
+        model.getLayers().forEach(Layer::resetGrad);
+    }
+    
+    @Override
+    public Model model() {
+        return model;
+    }
+    
+    @Override
+    public TrainingConfig config() {
+        return config;
+    }
+    
+    @Override
+    public List<Monitor> monitors() {
+        return monitors.values().stream().toList();
+    }
+}

@@ -1,8 +1,8 @@
 package org.brain4j.math.commons;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public interface JsonAdapter {
-    void serialize(JsonObject object);
-    void deserialize(JsonObject object);
+    void serialize(ObjectNode object);
+    void deserialize(ObjectNode object);
 }

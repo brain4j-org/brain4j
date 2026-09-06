@@ -1,73 +1,95 @@
 package org.brain4j.math.gpu;
 
 import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.gpu.memory.GpuQueue;
-import org.brain4j.math.tensor.impl.GpuTensor;
-import org.lwjgl.opencl.CL10;
+import org.silicon.api.function.ComputeFunction;
+import org.silicon.api.function.ComputeModule;
+import org.silicon.api.kernel.ComputeQueue;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Kernel and module registry for Brain4J GPU execution.
+ */
 public class GpuContext {
-    
-    public static final Map<Device, Map<String, Long>> KERNEL_CACHE = new HashMap<>();
-    public static final List<Runnable> RELEASE_QUEUE = new ArrayList<>();
 
-    public static void register(Device device, String kernelName, long program) {
-        KERNEL_CACHE.computeIfAbsent(device, d -> new HashMap<>())
-            .compute(kernelName, (name, existingKernel) -> {
-                if (existingKernel != null) return existingKernel;
+    private static final Map<Device, Map<String, ComputeFunction>> KERNEL_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Device, Map<String, ComputeModule>> MODULE_CACHE = new ConcurrentHashMap<>();
 
-                int[] err = new int[1];
-                long result = CL10.clCreateKernel(program, name, err);
-                
-                DeviceUtils.checkError("create_kernel", err[0]);
-                return result;
-            });
+    private GpuContext() {}
+
+    public static void register(Device device, String kernelName, ComputeFunction function) {
+        KERNEL_CACHE.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
+            .put(kernelName, function);
     }
 
-    public static long findKernel(Device device, String kernelName) {
-        Map<String, Long> deviceKernels = KERNEL_CACHE.get(device);
+    public static void register(Device device, String kernelName, ComputeModule module) {
+        try {
+            ComputeFunction function = module.getFunction(kernelName);
+            register(device, kernelName, function);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to register kernel " + kernelName, e);
+        }
+    }
+
+    public static void registerAll(Device device, ComputeModule module, String... kernelNames) {
+        for (String kernelName : kernelNames) {
+            register(device, kernelName, module);
+        }
+    }
+
+    public static void storeModule(Device device, String moduleName, ComputeModule module) {
+        MODULE_CACHE.computeIfAbsent(device, d -> new ConcurrentHashMap<>())
+            .put(moduleName, module);
+    }
+
+    public static ComputeModule getModule(Device device, String moduleName) {
+        Map<String, ComputeModule> deviceModules = MODULE_CACHE.get(device);
+        return deviceModules != null ? deviceModules.get(moduleName) : null;
+    }
+
+    public static ComputeFunction findFunction(Device device, String kernelName) {
+        Map<String, ComputeFunction> deviceKernels = KERNEL_CACHE.get(device);
 
         if (deviceKernels == null) {
             throw new IllegalStateException("No kernels registered for device: " + device);
         }
 
-        long kernel = deviceKernels.getOrDefault(kernelName, -1L);
+        ComputeFunction function = deviceKernels.get(kernelName);
 
-        if (kernel == -1) {
+        if (function == null) {
             throw new IllegalStateException("Kernel " + kernelName + " not registered for device: " + device.name());
         }
 
-        return kernel;
+        return function;
     }
-    
-    public static GpuQueue getOrCreate(Device device) {
-        GpuQueue queue = device.getQueue();
-        
-        if (queue == null) {
-            long clQueue = device.newCommandQueue();
-            queue = new GpuQueue(clQueue, true);
+
+    public static QueueHandle getOrCreateQueue(Device device) {
+        ComputeQueue queue = device.queue();
+        if (queue != null) {
+            return new QueueHandle(queue, false);
         }
 
-        return queue;
+        return new QueueHandle(device.context().createQueue(), true);
     }
 
-    public static void finishAndRelease(long commandQueue) {
-        DeviceUtils.checkError("finish", CL10.clFinish(commandQueue));
-        DeviceUtils.checkError("release_command_queue", CL10.clReleaseCommandQueue(commandQueue));
+    public static void clearCache(Device device) {
+        KERNEL_CACHE.remove(device);
+        MODULE_CACHE.remove(device);
     }
 
-    public static void finishAndRelease(Device device) {
-        GpuQueue queue = device.getQueue();
-        
-        if (queue != null && queue.pointer() != 0) {
-            finishAndRelease(queue.pointer());
+    public static void clearAllCaches() {
+        KERNEL_CACHE.clear();
+        MODULE_CACHE.clear();
+    }
+
+    public record QueueHandle(ComputeQueue queue, boolean temporary) implements AutoCloseable {
+        @Override
+        public void close() {
+            if (temporary) {
+                queue.await();
+                queue.free();
+            }
         }
-        
-        device.setQueue(null);
     }
 }

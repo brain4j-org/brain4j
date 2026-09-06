@@ -1,5 +1,5 @@
 package org.brain4j.core.training.events;
 
-import org.brain4j.core.training.impl.DefaultTrainer;
+import org.brain4j.core.training.Trainer;
 
-public record BatchStart(DefaultTrainer trainer, int batch, int totalBatches) implements TrainingEvent {}
+public record BatchStart(Trainer trainer, int batch, int totalBatches) implements TrainingEvent {}

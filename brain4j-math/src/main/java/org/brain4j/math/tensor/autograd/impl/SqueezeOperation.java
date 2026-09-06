@@ -15,6 +15,10 @@ public class SqueezeOperation implements Operation {
         this.dim = dim;
     }
 
+    public int dim() {
+        return dim;
+    }
+
     @Override
     public int requiredInputs() {
         return 1;
@@ -22,13 +26,13 @@ public class SqueezeOperation implements Operation {
 
     @Override
     public Tensor compute(Tensor... inputs) {
-        Tensor input = inputs[0].clone();
+        Tensor input = inputs[0].copy();
         this.originalShape = input.shape();
         return dim == Integer.MAX_VALUE ? input.squeeze() : input.squeeze(dim);
     }
 
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         return new Tensor[] { gradOutput.reshape(originalShape) };
     }
 }

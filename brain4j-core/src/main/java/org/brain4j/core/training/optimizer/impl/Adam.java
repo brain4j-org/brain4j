@@ -58,15 +58,8 @@ public class Adam extends Optimizer {
 
             if (gradient instanceof GpuTensor gpuTensor) {
                 Device device = gpuTensor.getDevice();
-
-                first = first.to(device);
-                second = second.to(device);
-
-                GpuTensor gpuFirst = (GpuTensor) first;
-                GpuTensor gpuSecond = (GpuTensor) second;
-                
-                gpuFirst.getDataBuffer().retain();
-                gpuSecond.getDataBuffer().retain();
+                first = GpuTensor.persistent(first, device);
+                second = GpuTensor.persistent(second, device);
             }
         }
 

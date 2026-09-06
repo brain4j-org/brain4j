@@ -2,8 +2,10 @@ package org.brain4j.datasets;
 
 import ar.com.hjg.pngj.ImageLineInt;
 import ar.com.hjg.pngj.PngReader;
-import org.apache.parquet.example.data.Group;
-import org.brain4j.datasets.core.dataset.Dataset;
+import dev.hardwood.reader.RowReader;
+import dev.hardwood.row.PqStruct;
+import org.brain4j.datasets.api.Dataset;
+import org.brain4j.datasets.core.dataset.HFDataset;
 import org.brain4j.datasets.core.dataset.DatasetFile;
 import org.brain4j.datasets.core.loader.DatasetLoader;
 import org.brain4j.datasets.core.loader.config.LoadConfig;
@@ -27,8 +29,8 @@ import java.util.concurrent.CompletableFuture;
  * High-level helpers for loading and converting datasets into framework-friendly
  * data sources.
  *
- * <p>This class contains convenience methods to obtain commonly used datasets (for
- * example MNIST) and utility methods to transform dataset files into the
+ * <p>This class contains convenience methods to get commonly used datasets (for
+ * example, MNIST) and utility methods to transform dataset files into the
  * library's {@link ListDataSource} implementations.
  */
 public final class Datasets {
@@ -43,13 +45,17 @@ public final class Datasets {
      * @param batchSize the batch size to use in the returned data source
      * @return a {@link ListDataSource} yielding MNIST (input, label) pairs
      */
-    public static ListDataSource mnist(boolean shuffle, int batchSize) {
+    public static Dataset mnist(boolean shuffle, int batchSize, double trainTestSplit) {
+        if (trainTestSplit < 0 || trainTestSplit > 1) {
+            throw new IllegalArgumentException("trainTestSplit must be between 0 and 1");
+        }
+
         try {
-            Dataset dataset = loadDataset("ylecun/mnist");
-            RecordParser<Group> parser = (record, index) -> {
-                int label = (int) record.getLong("label", 0);
-                Group imageGroup = record.getGroup("image", 0);
-                byte[] pngBytes = imageGroup.getBinary("bytes", 0).getBytes();
+            HFDataset dataset = loadDataset("ylecun/mnist");
+            RecordParser<RowReader> parser = (record, _) -> {
+                int label = (int) record.getLong("label");
+                PqStruct imageGroup = record.getStruct("image");
+                byte[] pngBytes = imageGroup.getBinary("bytes");
                 
                 PngReader reader = new PngReader(new ByteArrayInputStream(pngBytes));
                 
@@ -77,14 +83,14 @@ public final class Datasets {
                 return new Batch(new Tensor[] { input }, new Tensor[] { output });
             };
             
-            return createDataSource(dataset, new ParquetFormat(), parser, shuffle, batchSize);
+            return createDataSet(dataset, new ParquetFormat(), parser, shuffle, batchSize, trainTestSplit);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
     
     /**
-     * Creates a ListDataSource from a {@link Dataset} object with a custom parser.
+     * Creates a ListDataSource from a {@link HFDataset} object with a custom parser.
      *
      * @param dataset the dataset to convert
      * @param parser a function that parses a sample
@@ -94,13 +100,18 @@ public final class Datasets {
      * @return a new ListDataSource containing the loaded data
      * @throws IOException if an error occurs while reading the dataset files
      */
-    public static <T> ListDataSource createDataSource(
-        Dataset dataset,
+    public static <T> Dataset createDataSet(
+        HFDataset dataset,
         FileFormat<T> format,
         RecordParser<T> parser,
         boolean shuffle,
-        int batchSize
+        int batchSize,
+        double trainTestSplit
     ) throws IOException {
+        if (trainTestSplit < 0 || trainTestSplit > 1) {
+            throw new IllegalArgumentException("trainTestSplit must be between 0 and 1");
+        }
+
         List<Sample> samples = new ArrayList<>();
         List<DatasetFile> dataFiles = dataset.filesByFormat(format.format());
         
@@ -111,26 +122,34 @@ public final class Datasets {
                     
                     if (pair == null) continue;
                     
-                    samples.add(new Sample(pair.getFirst(), pair.getSecond()));
+                    samples.add(new Sample(pair.first(), pair.second()));
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                     break;
                 }
             }
         }
-        
-        return new ListDataSource(samples, shuffle, batchSize);
+
+        int division = (int) (samples.size() * trainTestSplit);
+
+        var firstList = samples.subList(0, division);
+        var secondList = samples.subList(division, samples.size());
+
+        var firstSource =  new ListDataSource(firstList, shuffle, batchSize);
+        var secondSource =  new ListDataSource(secondList, shuffle, batchSize);
+
+        return new Dataset(trainTestSplit, firstSource, secondSource);
     }
 
     /**
      * Load a dataset by id using the default loader configuration.
      *
-     * @param datasetId the dataset identifier (for example "mnist")
-     * @return a {@link Dataset} handle
+     * @param datasetId the dataset identifier (for example, "mnist")
+     * @return a {@link HFDataset} handle
      * @throws Exception if loading fails
      */
 
-    public static Dataset loadDataset(String datasetId) throws Exception {
+    public static HFDataset loadDataset(String datasetId) throws Exception {
         try (DatasetLoader loader = new DatasetLoader()) {
             return loader.loadDataset(datasetId);
         } catch (Exception e) {
@@ -138,7 +157,7 @@ public final class Datasets {
         }
     }
 
-    public static Dataset loadDataset(String datasetId, LoadConfig config) throws Exception {
+    public static HFDataset loadDataset(String datasetId, LoadConfig config) throws Exception {
         try (DatasetLoader loader = new DatasetLoader()) {
             return loader.loadDataset(datasetId, config);
         } catch (Exception e) {
@@ -146,7 +165,7 @@ public final class Datasets {
         }
     }
 
-    public static Dataset loadDataset(String datasetId, ProgressCallback progressCallback) throws Exception {
+    public static HFDataset loadDataset(String datasetId, ProgressCallback progressCallback) throws Exception {
         try (DatasetLoader loader = new DatasetLoader(progressCallback)) {
             return loader.loadDataset(datasetId);
         } catch (Exception e) {
@@ -154,7 +173,7 @@ public final class Datasets {
         }
     }
 
-    public static CompletableFuture<Dataset> loadDatasetAsync(String datasetId) {
+    public static CompletableFuture<HFDataset> loadDatasetAsync(String datasetId) {
         try (DatasetLoader loader = new DatasetLoader()) {
             return loader.loadDatasetAsync(datasetId);
         } catch (Exception e) {
@@ -162,7 +181,7 @@ public final class Datasets {
         }
     }
 
-    public static CompletableFuture<Dataset> loadDatasetAsync(String datasetId, LoadConfig config) {
+    public static CompletableFuture<HFDataset> loadDatasetAsync(String datasetId, LoadConfig config) {
         try (DatasetLoader loader = new DatasetLoader()) {
             return loader.loadDatasetAsync(datasetId, config);
         } catch (Exception e) {

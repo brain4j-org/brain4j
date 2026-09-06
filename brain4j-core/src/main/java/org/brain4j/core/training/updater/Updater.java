@@ -2,6 +2,7 @@ package org.brain4j.core.training.updater;
 
 import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
+import org.brain4j.math.Tensors;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
@@ -13,7 +14,7 @@ import java.util.Map;
  * <p>
  * This class provides a common interface and core logic for accumulating gradients 
  * and applying weight updates to a model.
- *
+ * <p>
  * Subclasses should override {@link #postBatch} or {@link #postFit} as needed to update the weights.
  *
  * @see StochasticUpdater
@@ -21,7 +22,15 @@ import java.util.Map;
  */
 public abstract class Updater {
 
-    protected Map<Tensor, Tensor> weightsGradients = new HashMap<>();
+    protected final Map<Tensor, Tensor> weightsGradients = new HashMap<>();
+
+    /**
+     * Reusable persistent (non-pooled) accumulation buffers, one per weight tensor.
+     * Created lazily on the first gradient and reused for the entire training run:
+     * re-allocating them on every {@code initialize()} would leak native GPU memory,
+     * because the old buffers can only be reclaimed by the garbage collector.
+     */
+    protected final Map<Tensor, Tensor> persistentStorage = new HashMap<>();
     
     /**
      * Applies the accumulated gradients to the model's weights.
@@ -54,12 +63,37 @@ public abstract class Updater {
      * If a gradient is already scheduled for the specified weight tensor,
      * the new gradient is added to the existing one.
      * This allows accumulation of gradients across mini-batches or iterations.
+     * <p>
+     * Accumulated gradients may outlive the batch they were produced in, so on GPU
+     * they are always stored in persistent (non-pooled) buffers: pooled buffers are
+     * recycled by the device memory pool at the end of each batch, which would
+     * otherwise corrupt the accumulated value.
      *
      * @param weights the weight tensor to be updated
      * @param gradient the gradient corresponding to the weight tensor
      */
     public void change(Tensor weights, Tensor gradient) {
-        weightsGradients.merge(weights, gradient, Tensor::add);
+        if (!(gradient instanceof GpuTensor gpuGradient)) {
+            weightsGradients.merge(weights, gradient, Tensor::add);
+            return;
+        }
+
+        Tensor stored = weightsGradients.get(weights);
+
+        if (stored == null) {
+            stored = persistentStorage.get(weights);
+
+            if (stored == null) {
+                stored = GpuTensor.persistent(Tensors.zeros(gradient.shape()), gpuGradient.getDevice());
+                persistentStorage.put(weights, stored);
+            } else {
+                // reuse the existing buffer: reset the accumulator in-place
+                stored.mul(0);
+            }
+        }
+
+        stored.add(gradient);
+        weightsGradients.put(weights, stored);
     }
 
     /**

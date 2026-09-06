@@ -1,80 +1,70 @@
 package org.brain4j.core.layer.impl;
 
-import com.google.gson.JsonObject;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-/**
- * Root Mean Square Normalization (RMSNorm)
- * Normalizes only by the root-mean-square, without centering (no mean subtraction).
- * <p>
- * Formula:
- *   y = x / sqrt(mean(x^2) + eps) * gamma
- *
- * <h2>Shape conventions:</h2>
- * <ul>
- *     <li>Input:  [batch, ..., hidden_dim]</li>
- *     <li>Output: [batch, ..., hidden_dim]</li>
- *     <li>Weights: [hidden_dim]</li>
- * </ul>
- *
- * This is used in modern LLMs (e.g., LLaMA, Qwen, Mistral)
- * instead of LayerNorm for improved numerical stability.
- *
- * @author xEcho1337
- */
+import java.util.List;
+import java.util.random.RandomGenerator;
+
 public class RMSNormLayer extends Layer {
 
-    private double epsilon;
+    public record Config(double epsilon) {}
+
+    protected final Config config;
 
     public RMSNormLayer() {
-        this(1e-6);
+        this(new Config(1e-6));
     }
 
     public RMSNormLayer(double epsilon) {
-        this.epsilon = epsilon;
+        this(new Config(epsilon));
+    }
+
+    public RMSNormLayer(Config config) {
+        this.config = config;
     }
 
     @Override
-    public void connect(Layer previous) {
-        this.weights = Tensors.ones(previous.size()).withGrad();
+    public void build(List<Shape> inputShapes) {
+        Shape inputShape = inputShapes.getFirst();
+        Tensor weights = Tensors.ones(inputShape.last());
+        registerParam("weights", weights);
+    }
+
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+    }
+
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        if (inputShapes.size() != 1) {
+            throw Commons.illegalArgument("Layer requires 1 input but %s were given!", inputShapes.size());
+        }
+
+        return List.of(inputShapes.getFirst());
     }
 
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(1, inputs);
-
         Tensor input = inputs[0];
-        // x / sqrt(mean(x^2) + eps)
-        Tensor rms = input.pow(2).mean(-1, true).add(epsilon).sqrt();
-        Tensor norm = input.div(rms).mulGrad(weights);
+        Tensor weights = getParam("weights");
 
-        return new Tensor[] { norm };
-    }
-    
-    @Override
-    public void serialize(JsonObject object) {
-        object.addProperty("epsilon", epsilon);
+        Tensor norm = input.rmsNormGrad(weights, config.epsilon);
+        return tensors(norm);
     }
 
     @Override
-    public void deserialize(JsonObject object) {
-        this.epsilon = object.get("epsilon").getAsDouble();
+    public Layer copy() {
+        RMSNormLayer copy = new RMSNormLayer(config);
+        copyParameters(copy);
+        return copy;
     }
-    
-    @Override
-    public int size() {
-        return weights.elements();
-    }
-    
-    public double getEpsilon() {
-        return epsilon;
-    }
-    
-    public RMSNormLayer setEpsilon(double epsilon) {
-        this.epsilon = epsilon;
-        return this;
+
+    public Config config() {
+        return config;
     }
 }

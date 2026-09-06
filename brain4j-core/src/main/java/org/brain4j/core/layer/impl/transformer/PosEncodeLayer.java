@@ -1,41 +1,77 @@
 package org.brain4j.core.layer.impl.transformer;
 
-import com.google.gson.JsonObject;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.tensor.index.Range;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.random.RandomGenerator;
 
 public class PosEncodeLayer extends Layer {
 
-    private final Map<Integer, Tensor> preGenerated = new HashMap<>();
-    private int dimension;
-    private int length = 5000;
+    public record Config(int length, int dimension) {}
 
-    private PosEncodeLayer() {
+    private final Map<Integer, Tensor> embeddings = new HashMap<>();
+    protected final Config config;
+
+    public PosEncodeLayer(Config config) {
+        this.config = config;
     }
 
     public PosEncodeLayer(int length, int dimension) {
-        this.dimension = dimension;
-        this.length = length;
+        this(new Config(length, dimension));
+    }
 
-        for (int i = 0; i < length; i++) {
-            preGenerated.put(i, generate(i, dimension));
+    public PosEncodeLayer(int length, int dimension, Tensor weights) {
+        this.config = new Config(length, dimension);
+
+        for (int i = 0; i < config.length; i++) {
+            Tensor slice = weights.slice(Range.point(i), Range.all());
+            embeddings.put(i, slice.squeeze());
         }
     }
 
     @Override
-    public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        checkInputLength(1, inputs);
+    public void build(List<Shape> inputShapes) {
+    }
 
-        // [batch, seq_len, dimension]
+    @Override
+    public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+        for (int i = 0; i < config.length; i++) {
+            embeddings.put(i, generate(i, config.dimension));
+        }
+    }
+
+    @Override
+    public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+        if (inputShapes.size() != 1) {
+            throw Commons.illegalArgument("Layer requires 1 input but %s were given!", inputShapes.size());
+        }
+
+        Shape inputShape = inputShapes.getFirst();
+
+        if (inputShape.rank() != 2) {
+            throw Commons.illegalArgument("Positional encoding requires tensors with rank 2 but %s were given!",
+                inputShape.rank());
+        }
+
+        if (inputShape.last() != config.dimension) {
+            throw Commons.illegalArgument("Expected embedding dim %s but got %s", config.dimension, inputShape.last());
+        }
+
+        return List.of(inputShape);
+    }
+
+    @Override
+    public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
         int[] shape = input.shape();
 
@@ -46,56 +82,31 @@ public class PosEncodeLayer extends Layer {
 
         int seqLength = shape[1];
         int dimension = shape[2];
-        
+
         Tensor positional = Tensors.zeros(seqLength, dimension);
         float[] posData = positional.data();
 
         for (int i = 0; i < seqLength; i++) {
-            Tensor add = preGenerated.computeIfAbsent(i, index -> generate(index, dimension));
+            Tensor add = embeddings.computeIfAbsent(i, index -> generate(index, dimension));
             float[] addData = add.data();
-
             int index = i * dimension;
-
             System.arraycopy(addData, 0, posData, index, addData.length);
         }
 
-        Tensor output = input.add(positional);
+        Tensor output = input.addGrad(positional);
 
         if (input instanceof GpuTensor gpuTensor) output = output.to(gpuTensor.getDevice());
-        if (input.usesGrad()) output = output.withGrad();
 
         return new Tensor[] { output };
     }
-    
-    @Override
-    public void serialize(JsonObject object) {
-        object.addProperty("dimension", dimension);
-        object.addProperty("length", length);
-    }
-    
-    @Override
-    public void deserialize(JsonObject object) {
-        this.dimension = object.get("dimension").getAsInt();
-        this.length = object.get("length").getAsInt();
-    }
-    
-    @Override
-    public int size() {
-        return dimension;
-    }
-    
-    @Override
-    public Layer setWeights(Tensor weights) {
-        this.length = weights.shapeAt(0);
-        
-        for (int i = 0; i < length; i++) {
-            Tensor slice = weights.slice(Range.point(i), Range.all());
-            preGenerated.put(i, slice.squeeze());
-        }
 
-        return this;
+    @Override
+    public Layer copy() {
+        PosEncodeLayer copy = new PosEncodeLayer(config);
+        copy.embeddings.putAll(embeddings);
+        return copy;
     }
-    
+
     public Tensor generate(int position, int embeddingDim) {
         Tensor token = Tensors.zeros(embeddingDim);
 
@@ -109,5 +120,13 @@ public class PosEncodeLayer extends Layer {
         }
 
         return token.reshape(1, embeddingDim);
+    }
+
+    public Config config() {
+        return config;
+    }
+
+    public Map<Integer, Tensor> embeddings() {
+        return embeddings;
     }
 }

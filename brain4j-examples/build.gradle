@@ -8,13 +8,22 @@ repositories {
 
 dependencies {
     testRuntimeOnly(libs.junitPlatform)
-    testImplementation(platform(libs.junitBom))
-    testImplementation(libs.junitJupiter)
+    testImplementation platform(libs.junitBom)
+    testImplementation libs.junitJupiter
+    testImplementation "org.bytedeco:javacv-platform:1.5.12"
 
-    implementation(project(":brain4j-core"))
-    implementation(project(":brain4j-math"))
-    implementation(project(":brain4j-llm"))
-    implementation(project(":brain4j-datasets"))
+    implementation project(":brain4j-core")
+    implementation project(":brain4j-math")
+    implementation project(":brain4j-transformers")
+    implementation project(":brain4j-datasets")
+    implementation project(":brain4j-dashboard")
+
+    runtimeOnly(libs.siliconCuda) {
+        changing = true
+    }
+    runtimeOnly(libs.siliconMetal) {
+        changing = true
+    }
 }
 
 test {

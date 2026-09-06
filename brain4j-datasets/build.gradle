@@ -11,18 +11,21 @@ dependencies {
 
     implementation libs.httpclient5
     implementation libs.jacksonDatabind
-    implementation libs.typesafeConfig
-    implementation libs.commonsCompress
     implementation libs.pngj
 
-    implementation libs.parquetAvro
+    implementation libs.hardwood.core
 
-    implementation libs.hadoopCommon
-    implementation libs.hadoopMapreduce
+    implementation libs.snappy.java
+    implementation libs.zstd.jni
 }
 
 shadowJar {
-    minimize()
+    mergeServiceFiles()
+
+    dependencies {
+        exclude(dependency('org.brain4j:.*'))
+    }
+
     archiveFileName = "brain4j-datasets-${parent.version}.jar"
 }
 

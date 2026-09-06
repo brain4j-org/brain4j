@@ -5,11 +5,11 @@ import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.broadcast.TensorBroadcast;
-import org.brain4j.math.tensor.matmul.MatmulProvider;
-import org.brain4j.math.tensor.matmul.impl.NormalMatMulProvider;
-import org.brain4j.math.tensor.matmul.impl.SIMDMatMulProvider;
-import org.brain4j.math.tensor.parallel.ParallelTranspose;
+import org.brain4j.math.broadcast.TensorBroadcast;
+import org.brain4j.math.operations.matmul.MatmulProvider;
+import org.brain4j.math.operations.matmul.impl.NormalMatMulProvider;
+import org.brain4j.math.operations.matmul.impl.SIMDMatMulProvider;
+import org.brain4j.math.operations.ParallelTranspose;
 
 import java.util.Arrays;
 
@@ -80,7 +80,6 @@ public class CpuTensor extends BaseTensor {
 
         int bound = 1 << 10;
 
-        // TODO: fix parallel transpose?
         if (elements() >= bound) {
             ParallelTranspose.transpose(this, result, dim1, dim2);
             return result;
@@ -132,14 +131,18 @@ public class CpuTensor extends BaseTensor {
     }
 
     @Override
-    public Tensor to(Device device) {
-        if (device == null) {
-            return this;
+    public Tensor to(Object device) {
+        switch (device) {
+            case null -> {
+                return this;
+            }
+            case Device legacyDevice -> {
+                GpuTensor result = new GpuTensor(legacyDevice, shape, contiguousData());
+                result.setAutogradContext(autogradContext);
+                return result;
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + device);
         }
-
-        GpuTensor result = new GpuTensor(device, shape, data);
-        result.setAutogradContext(autogradContext);
-        return result;
     }
 
     @Override
@@ -292,5 +295,28 @@ public class CpuTensor extends BaseTensor {
         matmulProvider.multiply(this, other, result);
 
         return result;
+    }
+    
+    @Override
+    public Tensor copy() {
+        return new CpuTensor(Shape.of(shape), strides.clone(), data.clone());
+//        return new CpuTensor(Shape.of(shape), contiguousData());
+    }
+
+    private float[] contiguousData() {
+        int size = elements();
+
+        if (!transposed) {
+            return Arrays.copyOf(data, size);
+        }
+
+        float[] contiguous = new float[size];
+
+        for (int linear = 0; linear < size; linear++) {
+            int[] indices = Tensors.unravelIndex(linear, shape);
+            contiguous[linear] = get(indices);
+        }
+
+        return contiguous;
     }
 }

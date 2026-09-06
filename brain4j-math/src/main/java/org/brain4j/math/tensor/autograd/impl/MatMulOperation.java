@@ -11,16 +11,16 @@ public class MatMulOperation implements Operation {
     }
     
     @Override
-    public Tensor[] backward(Tensor gradOutput, Tensor... inputs) {
+    public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor a = inputs[0];
         Tensor b = inputs[1];
-        
+
         Tensor aT = a.transpose();
         Tensor bT = b.transpose();
-        
-        Tensor gradA = gradOutput.matmul(bT);
-        Tensor gradB = aT.matmul(gradOutput);
-        
+
+        Tensor gradA = AddOperation.reduceTo(gradOutput.matmul(bT), a);
+        Tensor gradB = AddOperation.reduceTo(aT.matmul(gradOutput), b);
+
         return new Tensor[] { gradA, gradB };
     }
 } 

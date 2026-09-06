@@ -37,8 +37,8 @@ public abstract class Optimizer {
      * <p>
      * This method updates the provided weights based on the gradient tensor
      * and the specific optimization algorithm implemented by the subclass.
+     * Note: this method delegates to {@link #step(Tensor, Tensor)} with the pre-calculated gradient.
      *
-     * @apiNote this method delegates to {@link #step(Tensor, Tensor)} with the pre-calculated gradient
      * @param weights the weights tensor
      * @return the optimized weight tensor
      */

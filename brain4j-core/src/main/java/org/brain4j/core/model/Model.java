@@ -1,14 +1,23 @@
 package org.brain4j.core.model;
 
+import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.loss.LossFunction;
+import org.brain4j.math.Copyable;
+import org.brain4j.math.Tensors;
+import org.brain4j.math.commons.Batch;
+import org.brain4j.math.commons.Range;
+import org.brain4j.math.loss.LossFunction;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.loss.impl.BinaryCrossEntropy;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents a generic neural network model.
@@ -20,7 +29,7 @@ import java.util.List;
  *
  * @author xEcho1337
  */
-public interface Model extends ModelBlock {
+public interface Model extends Copyable<Model> {
     
     /**
      * Performs a full forward pass using a temporary {@link StatesCache}
@@ -29,13 +38,13 @@ public interface Model extends ModelBlock {
      * This is a convenience method for single-input, single-output models.
      * </p>
      *
-     * @param input the input tensor
+     * @param inputs the input tensors
      * @return the first output tensor produced by the model
      */
-    default Tensor predict(Tensor input) {
-        return predict(new StatesCache(false), input)[0];
+    default Tensor predict(Tensor... inputs) {
+        return predict(new StatesCache(), inputs)[0];
     }
-    
+
     /**
      * Performs a full forward pass on the model using the provided cache.
      * <p>
@@ -50,6 +59,12 @@ public interface Model extends ModelBlock {
     Tensor[] predict(StatesCache cache, Tensor... inputs);
     
     /**
+     * Returns the device on which the model parameters are currently stored.
+     * @return the device associated with this model
+     */
+    Device device();
+
+    /**
      * Evaluates the model on the given dataset.
      * <p>
      * This method runs inference over the entire dataset and computes
@@ -60,15 +75,51 @@ public interface Model extends ModelBlock {
      * @param lossFunction the loss function to use
      * @return an {@link EvaluationResult} containing evaluation metrics
      */
-    EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction);
+    default EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction) {
+        int classes = Math.max(2, dataSource.getSamples().getFirst().getLabel(0).elements());
+        Map<Integer, Tensor> classifications = new HashMap<>();
+
+        if (!lossFunction.isRegression()) {
+            for (int i = 0; i < classes; i++) {
+                classifications.put(i, Tensors.zeros(classes));
+            }
+        }
+
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Batch batch = dataSource.nextBatch();
+            makeEvaluation(batch, classifications, totalLoss, lossFunction);
+        }
+
+        return new EvaluationResult(totalLoss.get() / dataSource.getSize(), classes, classifications);
+    }
     
     /**
-     * Copies all model parameters to the specified device.
-     *
-     * @param device the target device
-     * @return a copy of this model instance
+     * Calculates the average loss on the given dataset.
+     * <p>
+     * This method works similarly to {@link Model#evaluate},
+     * but it's much less RAM consuming.
+     * </p>
+     * @param dataSource the dataset to evaluate the model on
+     * @param lossFunction the loss function to use
+     * @return a value representing the average loss on the entire dataset
      */
-    Model fork(Device device);
+    default double loss(ListDataSource dataSource, LossFunction lossFunction) {
+        Map<Integer, Tensor> classifications = new HashMap<>();
+        AtomicReference<Double> totalLoss = new AtomicReference<>(0.0);
+
+        dataSource.reset();
+
+        while (dataSource.hasNext()) {
+            Batch batch = dataSource.nextBatch();
+            makeEvaluation(batch, classifications, totalLoss, lossFunction);
+        }
+
+        return totalLoss.get() / dataSource.getSize();
+    }
     
     /**
      * Prints a formatted summary of the model architecture to the console.
@@ -80,37 +131,69 @@ public interface Model extends ModelBlock {
      *   <li>Number of parameters per layer</li>
      *   <li>Total number of trainable parameters</li>
      * </ul>
-     * </p>
      *
      * @throws IllegalStateException if the model has not been properly initialized
      */
     void summary();
     
+    Model fork(Device device);
+    
     /**
-     * Returns the specifications used to construct this model.
-     * <p>
-     * {@link ModelSpecs} describes the logical structure of the model
-     * independently of its runtime state.
-     * </p>
-     *
-     * @return the model specifications
-     */
-    ModelSpecs getSpecs();
-
-    /**
-     * Returns the device on which the model parameters are currently stored.
-     * @return the device associated with this model
-     */
-    Device getDevice();
-
-    /**
-     * Returns an immutable view of the layers composing this model, in execution order.
+     * Returns an immutable view of the layers composing this object, in order.
      * @return an unmodifiable list of layers
      */
     List<Layer> getLayers();
 
-    @Override
-    default void appendTo(List<Layer> layers) {
-        layers.addAll(getLayers());
+    private void makeEvaluation(
+        Batch batch,
+        Map<Integer, Tensor> classifications,
+        AtomicReference<Double> totalLoss,
+        LossFunction lossFunction
+    ) {
+        Tensor[] inputs = batch.first();
+        Tensor[] labels = batch.second();
+
+        Device device = device();
+
+        if (device != null) device.createResources();
+
+        StatesCache cache = new StatesCache(false);
+        Tensor[] outputs = predict(cache, inputs);
+
+        for (Tensor input : inputs) {
+            int batchSize = input.shapeAt(0);
+
+            for (int i = 0; i < outputs.length; i++) {
+                Tensor output = outputs[i].to(null); // GPU -> CPU
+                Tensor label = labels[i].to(null);   // GPU -> CPU
+
+                for (int b = 0; b < batchSize; b++) {
+                    Range range = Range.point(b);
+
+                    Tensor sampleOutput = output.slice(range).flatten();
+                    Tensor sampleLabel = label.slice(range).flatten();
+
+                    int predIndex = sampleOutput.argmax();
+                    int targetIndex = sampleLabel.argmax();
+
+                    if (sampleOutput.elements() == 1 && lossFunction instanceof BinaryCrossEntropy) {
+                        predIndex = sampleOutput.get(0) > 0.5 ? 1 : 0;
+                        targetIndex = (int) sampleLabel.get(0);
+                    }
+
+                    double loss = lossFunction.calculate(sampleLabel, sampleOutput);
+                    totalLoss.updateAndGet(v -> v + loss);
+
+                    Tensor predictions = classifications.get(targetIndex);
+
+                    if (predictions != null) {
+                        int pred = (int) predictions.get(predIndex);
+                        predictions.set(pred + 1, predIndex);
+                    }
+                }
+            }
+        }
+
+        if (device != null) device.closeResources();
     }
 }

@@ -7,8 +7,6 @@ import org.brain4j.math.tensor.Tensor;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import static org.brain4j.math.activation.Activations.TANH;
-
 /**
  * Implements the Bogacki–Shampine method for integrating ordinary differential
  * equations (ODEs) of the form:
@@ -174,7 +172,7 @@ public class BogackiShampineSolver implements NumericalSolver {
             scale = SAFETY_FACTOR * (float) Math.pow(tolerance / errorNorm, STEP_SCALE_EXPONENT);
         }
 
-        scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+        scale = Math.clamp(scale, MIN_SCALE, MAX_SCALE);
 
         Tensor nextDeltaT = deltaTimestep.times(scale);
 

@@ -1,43 +1,33 @@
-import org.gradle.internal.os.OperatingSystem
-
 plugins {
     id "java"
     alias libs.plugins.shadowJar
 }
 
-project.ext.lwjglVersion = "3.3.6"
-
-switch (OperatingSystem.current()) {
-    case OperatingSystem.LINUX:
-        project.ext.lwjglNatives = "natives-linux"
-        def osArch = System.getProperty("os.arch")
-        if (osArch.startsWith("arm") || osArch.startsWith("aarch64")) {
-            project.ext.lwjglNatives += osArch.contains("64") || osArch.startsWith("armv8") ? "-arm64" : "-arm32"
-        } else if  (osArch.startsWith("ppc")) {
-            project.ext.lwjglNatives += "-ppc64le"
-        } else if  (osArch.startsWith("riscv")) {
-            project.ext.lwjglNatives += "-riscv64"
-        }
-        break
-    case OperatingSystem.MAC_OS:
-        project.ext.lwjglNatives = "natives-macos-arm64"
-        break
-    case OperatingSystem.WINDOWS:
-        project.ext.lwjglNatives = "natives-windows"
-        break
-}
-
 dependencies {
-    implementation platform(libs.lwjglBom)
-    implementation libs.lwjgl
-    implementation libs.lwjglOpenCL
+    implementation libs.jacksonDatabind
 
-    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
-    implementation libs.gson
+    implementation(libs.siliconApi) {
+        changing = true
+    }
+    runtimeOnly(libs.siliconCuda) {
+        changing = true
+    }
+    runtimeOnly(libs.siliconMetal) {
+        changing = true
+    }
+
+    testRuntimeOnly libs.junitPlatform
+    testImplementation platform(libs.junitBom)
+    testImplementation libs.junitJupiter
 }
 
 compileJava {
     options.compilerArgs.addAll(["--add-modules", "jdk.incubator.vector"])
+}
+
+test {
+    useJUnitPlatform()
+    jvmArgs '--add-modules', 'jdk.incubator.vector'
 }
 
 shadowJar {

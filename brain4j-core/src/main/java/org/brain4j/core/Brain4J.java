@@ -4,6 +4,8 @@ import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,8 +32,9 @@ public class Brain4J {
 
     private static boolean logging = true;
     private static boolean disableColors = false;
+    private static boolean fixedOutStream = false;
     private static int decimalDigits = 4;
-
+    
     /**
      * Returns the current version of the Brain4J framework.
      *
@@ -41,6 +44,13 @@ public class Brain4J {
         return "3.0";
     }
 
+    public static void fixConsole() {
+        if (fixedOutStream) return;
+        
+        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+        fixedOutStream = true;
+    }
+    
     /**
      * Indicates whether training progress and system information
      * are currently being logged to the console.
@@ -48,6 +58,7 @@ public class Brain4J {
      * @return {@code true} if logging is enabled; {@code false} by default
      */
     public static boolean isLogging() {
+        fixConsole();
         return logging;
     }
 
@@ -101,7 +112,7 @@ public class Brain4J {
 
     /**
      * Returns a comma-separated list of all available GPU devices
-     * detected by the OpenCL backend.
+     * detected by the Silicon backend.
      * <p>
      * If no devices are available, an empty string is returned.
      *
@@ -123,7 +134,7 @@ public class Brain4J {
     public static void initKernels(Device device) {
         GpuTensor.initKernels(device);
     }
-
+    
     /**
      * Returns the first available GPU device detected on the system.
      * <p>
@@ -134,24 +145,28 @@ public class Brain4J {
      * @throws IllegalStateException if no GPU devices are found
      */
     public static Device firstDevice() {
-        List<String> devices = DeviceUtils.allDeviceNames();
+        try {
+            List<String> devices = DeviceUtils.allDeviceNames();
 
-        if (devices.isEmpty()) {
-            throw new IllegalStateException("No GPU-acceleration device has been found!");
+            if (devices.isEmpty()) {
+                return null;
+            }
+
+            Device device = DeviceUtils.findDevice(devices.getFirst());
+
+            if (device != null) Brain4J.initKernels(device);
+
+            return device;
+        } catch (IllegalStateException e) {
+            throw new RuntimeException(e);
         }
-
-        Device device = DeviceUtils.findDevice(devices.getFirst());
-        
-        if (device != null) Brain4J.initKernels(device);
-        
-        return device;
     }
 
     /**
      * Returns a list of all GPU devices available to the framework.
      * <p>
      * Each {@link Device} object represents a physical or logical
-     * compute device accessible via OpenCL.
+     * compute device accessible through Silicon.
      *
      * @return a list of all available {@link Device} instances
      */

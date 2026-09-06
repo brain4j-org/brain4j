@@ -4,18 +4,25 @@ plugins {
     alias libs.plugins.protobuf
 }
 
+configurations.configureEach {
+    resolutionStrategy {
+        cacheChangingModulesFor 0, 'seconds'
+        cacheDynamicVersionsFor 0, 'seconds'
+    }
+}
+
 dependencies {
     implementation project(":brain4j-math")
 
-    implementation libs.gson
+    implementation libs.jacksonDatabind
     implementation libs.protobufJava
 
     testImplementation libs.guava
     testImplementation libs.commonsCsv
 
-    testRuntimeOnly(libs.junitPlatform)
-    testImplementation(platform(libs.junitBom))
-    testImplementation(libs.junitJupiter)
+    testRuntimeOnly libs.junitPlatform
+    testImplementation libs.junitJupiter
+    testImplementation platform(libs.junitBom)
     testImplementation project(":brain4j-datasets")
 }
 
@@ -24,8 +31,13 @@ test {
 }
 
 shadowJar {
+    minimize()
+
+    dependencies {
+        exclude(dependency('org.brain4j:.*'))
+    }
+
     archiveFileName = "brain4j-core-${parent.version}.jar"
-    exclude "org/brain4j/math/**"
 }
 
 tasks.withType(JavaExec).configureEach {

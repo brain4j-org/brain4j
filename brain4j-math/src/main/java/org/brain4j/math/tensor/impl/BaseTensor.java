@@ -1,21 +1,22 @@
 package org.brain4j.math.tensor.impl;
 
+import org.brain4j.math.Copyable;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.commons.D2DFunction;
 import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.pooling.impl.MaxPooling;
+import org.brain4j.math.convolution.pooling.impl.MaxPooling;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.*;
-import org.brain4j.math.tensor.index.Range;
-import org.brain4j.math.tensor.parallel.ParallelMap;
-import org.brain4j.math.tensor.sum.TensorReducer;
-import org.brain4j.math.tensor.sum.impl.ScalarTensorReducer;
-import org.brain4j.math.tensor.sum.impl.SIMDTensorReducer;
+import org.brain4j.math.commons.Range;
+import org.brain4j.math.operations.ParallelMap;
+import org.brain4j.math.operations.sum.TensorReducer;
+import org.brain4j.math.operations.sum.impl.ScalarTensorReducer;
+import org.brain4j.math.operations.sum.impl.SIMDTensorReducer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -28,7 +29,7 @@ import java.util.stream.IntStream;
 
 import static org.brain4j.math.Tensors.ones;
 
-public abstract class BaseTensor implements Tensor, Cloneable {
+public abstract class BaseTensor implements Tensor {
 
     protected AutogradContext autogradContext;
     protected int[] shape;
@@ -58,7 +59,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
                 if (i < shape[dim] - 1) {
                     result.append(",\n");
-                    result.append(" ".repeat(dim + 1));
+                    result.repeat(" ", dim + 1);
                 }
             }
 
@@ -134,13 +135,13 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     }
     
     protected Tensor softmax1D(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         softmax1D(result.data(), 0, result.elements(), temperature);
         return result;
     }
     
     protected Tensor softmax2D(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         
         int rows = shape[0];
         int cols = shape[1];
@@ -153,7 +154,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     }
     
     protected Tensor softmax3D(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         
         int batches = shape[0];
         int rows = shape[1];
@@ -172,7 +173,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     }
     
     protected Tensor softmaxND(double temperature) {
-        Tensor result = clone();
+        Tensor result = copy();
         
         int rank = shape.length;
         int lastDim = shape[rank - 1];
@@ -296,50 +297,6 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
         return maxIndex;
     }
-
-    @Override
-    public Tensor clone() {
-        try {
-            BaseTensor copy = (BaseTensor) super.clone();
-
-            copy.shape = shape.clone();
-            copy.autogradContext = null;
-
-            int[] standardStrides = Tensors.computeStrides(shape);
-            boolean isContiguous = Arrays.equals(strides, standardStrides);
-
-            if (isContiguous) {
-                copy.strides = strides.clone();
-                copy.data = data.clone();
-            } else {
-                copy.strides = standardStrides;
-                int total = Tensors.computeSize(shape);
-                copy.data = new float[total];
-
-                int rank = shape.length;
-                int[] index = new int[rank];
-
-                for (int i = 0; i < total; i++) {
-                    int remaining = i;
-                    for (int d = rank - 1; d >= 0; d--) {
-                        index[d] = remaining % shape[d];
-                        remaining /= shape[d];
-                    }
-
-                    int srcIdx = 0;
-                    for (int d = 0; d < rank; d++) {
-                        srcIdx += index[d] * strides[d];
-                    }
-
-                    copy.data[i] = data[srcIdx];
-                }
-            }
-
-            return copy;
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-    }
     
     @Override
     public Tensor flatten() {
@@ -348,7 +305,12 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
     @Override
     public Tensor convolve(Tensor kernel) {
-        return Tensors.convolve(this, kernel);
+        return convolve(kernel, 1);
+    }
+
+    @Override
+    public Tensor convolve(Tensor kernel, int stride) {
+        return Tensors.convolve(this, kernel, stride);
     }
 
     @Override
@@ -506,7 +468,6 @@ public abstract class BaseTensor implements Tensor, Cloneable {
             return this;
         }
         
-        // TODO: GPU kernel
         int targetRank = targetShape.length;
         int srcRank = shape.length;
 
@@ -702,8 +663,8 @@ public abstract class BaseTensor implements Tensor, Cloneable {
     public Tensor variance(Tensor mean, int dim, boolean keepDim) {
         dim = Commons.mod(dim, shape.length);
 
-        Tensor meanFirstSquare = clone().pow(2).mean(dim, keepDim);
-        Tensor meanSecondSquare = mean.clone().pow(2);
+        Tensor meanFirstSquare = copy().pow(2).mean(dim, keepDim);
+        Tensor meanSecondSquare = mean.copy().pow(2);
         
         return meanFirstSquare.sub(meanSecondSquare);
     }
@@ -785,7 +746,8 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
         for (int i = 0; i < rank; i++) {
             if (i != dimension && shape[i] != other.shape()[i]) {
-                throw new IllegalArgumentException("Shapes must match in all dimensions except the concatenation one.");
+                throw Commons.illegalArgument("Shapes must match in all dims except the concatenation one. " +
+                    "Current: %s, Other: %s", Arrays.toString(shape), Arrays.toString(other.shape()));
             }
         }
 
@@ -832,7 +794,23 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
     @Override
     public Tensor select(int dim, int index) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        dim = Commons.mod(dim, shape.length);
+
+        if (dim >= rank()) {
+            throw Commons.illegalArgument("Dimension must be less than the rank!");
+        }
+
+        int size = shape[dim];
+        int normalizedIndex = index < 0 ? index + size : index;
+
+        if (normalizedIndex < 0 || normalizedIndex >= size) {
+            throw Commons.indexOOB("Index %s for dimension %s is out of bounds [0, %s)", normalizedIndex, dim, size);
+        }
+
+        Range[] ranges = new Range[shape.length];
+        ranges[dim] = Range.point(normalizedIndex);
+
+        return slice(ranges).squeeze(dim);
     }
 
     @Override
@@ -892,7 +870,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
     @Override
     public Tensor withGrad() {
-        this.autogradContext = new AutogradContext(true);
+        this.autogradContext = new AutogradContext(this, true);
         return this;
     }
     
@@ -948,7 +926,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
         Tensor result = operation.compute(this);
 
         if (result.getAutogradContext() == null) {
-            result.setAutogradContext(new AutogradContext(true));
+            result.setAutogradContext(new AutogradContext(result, true));
         }
 
         result.getAutogradContext().setOperation(operation, this);
@@ -966,7 +944,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
         Tensor result = operation.compute(this, other);
 
         if (result.getAutogradContext() == null) {
-            result.setAutogradContext(new AutogradContext(true));
+            result.setAutogradContext(new AutogradContext(result, true));
         }
 
         result.getAutogradContext().setOperation(operation, this, other);
@@ -991,7 +969,7 @@ public abstract class BaseTensor implements Tensor, Cloneable {
         Tensor result = operation.compute(allInputsArray);
 
         if (result.getAutogradContext() == null) {
-            result.setAutogradContext(new AutogradContext(true));
+            result.setAutogradContext(new AutogradContext(result, true));
         }
 
         result.getAutogradContext().setOperation(operation, allInputsArray);
@@ -1054,11 +1032,42 @@ public abstract class BaseTensor implements Tensor, Cloneable {
 
     @Override
     public Tensor convolveGrad(Tensor other) {
+        return convolveGrad(other, 1);
+    }
+
+    @Override
+    public Tensor convolveGrad(Tensor other, int stride) {
         if (!usesGrad()) {
-            return convolve(other);
+            return convolve(other, stride);
         }
 
-        return forward(new ConvolveOperation(), other);
+        return forward(new ConvolveOperation(stride), other);
+    }
+
+    @Override
+    public Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon) {
+        if (!usesGrad() && !weight.usesGrad() && !bias.usesGrad()) {
+            return copy().layerNorm(epsilon).mul(weight).add(bias);
+        }
+
+        return forward(new LayerNormOperation(epsilon), weight, bias);
+    }
+
+    @Override
+    public Tensor rmsNormGrad(Tensor weight, double epsilon) {
+        if (!usesGrad() && !weight.usesGrad()) {
+            Tensor owned = copy();
+            int features = owned.shape()[owned.rank() - 1];
+            Tensor rms = owned.times(owned).sum(-1, true).divide(features).add(epsilon).sqrt();
+            return owned.divide(rms).mul(weight);
+        }
+
+        return forward(new RMSNormOperation(epsilon), weight);
+    }
+
+    @Override
+    public Tensor gatherGrad(Tensor table) {
+        return forward(new GatherOperation(), table);
     }
 
     @Override
