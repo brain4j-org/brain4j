@@ -62,7 +62,7 @@ public class AutogradContext {
 
         if (operation == null) return;
 
-        Tensor[] inputGrads = operation.backward(gradOutput, owner, inputs);
+        Tensor[] inputGrads = operation.backward(grad, owner, inputs);
 
         for (int i = 0; i < inputs.length; i++) {
             Tensor input = inputs[i];

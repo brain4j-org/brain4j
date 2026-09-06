@@ -84,11 +84,12 @@ public record SliceOperation(Range... ranges) implements Operation {
         ComputeBuffer startsBuffer = device.acquire(startsKey, () -> device.createBuffer(starts));
         ComputeBuffer stepsBuffer = device.acquire(stepsKey, () -> device.createBuffer(steps));
 
+        int[] scatterStrides = org.brain4j.math.Tensors.computeStrides(inputShape);
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "slice_backward_scatter")
                 .buffer(reshapedGradOutput.getDataBuffer())
                 .buffer(gradInput.getDataBuffer())
-                .buffer(input.getStridesBuffer())
+                .buffer(device.createBuffer(scatterStrides))
                 .buffer(reshapedGradOutput.getStridesBuffer())
                 .buffer(outputShapeBuffer)
                 .buffer(startsBuffer)

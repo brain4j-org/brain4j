@@ -40,10 +40,10 @@ public class GemmOperation implements Operation {
 
         // For matrix multiplication: C = A @ B
         // dL/dA = dL/dC @ B.T
-        Tensor gradA = gradOutput.matmul(b.transpose());
+        Tensor gradA = AddOperation.reduceTo(gradOutput.matmul(b.transpose()), a);
 
         // dL/dB = A.T @ dL/dC
-        Tensor gradB = a.transpose().matmul(gradOutput);
+        Tensor gradB = AddOperation.reduceTo(a.transpose().matmul(gradOutput), b);
 
         return new Tensor[] { gradA, gradB, gradOutput.copy() };
     }

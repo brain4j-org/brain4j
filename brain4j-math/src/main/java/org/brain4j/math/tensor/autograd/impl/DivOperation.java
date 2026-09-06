@@ -14,13 +14,13 @@ public class DivOperation implements Operation {
     public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor a = inputs[0];
         Tensor b = inputs[1];
-        
+
         // d(a/b)/da = 1/b
-        Tensor gradA = gradOutput.times(b.divide(1.0f));
-        
+        Tensor gradA = gradOutput.divide(b);
+
         // d(a/b)/db = -a/b^2
         Tensor gradB = gradOutput.times(a.divide(b.times(b)).times(-1.0f));
-        
+
         return new Tensor[] { gradA, gradB };
     }
 } 

@@ -3,6 +3,8 @@ package org.brain4j.math.tensor.autograd.impl;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
 
+import java.util.Arrays;
+
 public class AddOperation implements Operation {
 
     @Override
@@ -15,8 +17,8 @@ public class AddOperation implements Operation {
         return new Tensor[] { reduceTo(gradOutput, inputs[0]), reduceTo(gradOutput, inputs[1]) };
     }
 
-    private static Tensor reduceTo(Tensor grad, Tensor like) {
-        if (grad.rank() == like.rank() && java.util.Arrays.equals(grad.shape(), like.shape())) {
+    static Tensor reduceTo(Tensor grad, Tensor like) {
+        if (grad.rank() == like.rank() && Arrays.equals(grad.shape(), like.shape())) {
             return grad.copy();
         }
 
