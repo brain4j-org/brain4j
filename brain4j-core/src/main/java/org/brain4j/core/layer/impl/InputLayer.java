@@ -5,6 +5,7 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.random.RandomGenerator;
 import org.brain4j.math.commons.Commons;
@@ -14,6 +15,10 @@ public class InputLayer extends Layer {
     public record Config(Shape shape) {}
 
     protected final Config config;
+
+    public InputLayer(int... shape) {
+        this(Shape.of(shape));
+    }
 
     public InputLayer(Shape shape) {
         this(new Config(shape));
@@ -42,7 +47,7 @@ public class InputLayer extends Layer {
             if (validInput(input)) continue;
 
             throw Commons.illegalArgument("Input must have shape %s! Got: %s",
-                java.util.Arrays.toString(config.shape.dims()), java.util.Arrays.toString(input.shape()));
+                Arrays.toString(config.shape.dims()), Arrays.toString(input.shape()));
         }
 
         return inputs;
