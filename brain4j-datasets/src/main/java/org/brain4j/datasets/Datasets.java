@@ -2,7 +2,8 @@ package org.brain4j.datasets;
 
 import ar.com.hjg.pngj.ImageLineInt;
 import ar.com.hjg.pngj.PngReader;
-import org.apache.parquet.example.data.Group;
+import dev.hardwood.reader.RowReader;
+import dev.hardwood.row.PqStruct;
 import org.brain4j.datasets.api.Dataset;
 import org.brain4j.datasets.core.dataset.HFDataset;
 import org.brain4j.datasets.core.dataset.DatasetFile;
@@ -51,10 +52,10 @@ public final class Datasets {
 
         try {
             HFDataset dataset = loadDataset("ylecun/mnist");
-            RecordParser<Group> parser = (record, _) -> {
-                int label = (int) record.getLong("label", 0);
-                Group imageGroup = record.getGroup("image", 0);
-                byte[] pngBytes = imageGroup.getBinary("bytes", 0).getBytes();
+            RecordParser<RowReader> parser = (record, _) -> {
+                int label = (int) record.getLong("label");
+                PqStruct imageGroup = record.getStruct("image");
+                byte[] pngBytes = imageGroup.getBinary("bytes");
                 
                 PngReader reader = new PngReader(new ByteArrayInputStream(pngBytes));
                 

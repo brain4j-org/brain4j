@@ -13,10 +13,7 @@ dependencies {
     implementation libs.jacksonDatabind
     implementation libs.pngj
 
-    implementation libs.parquetAvro
-
-    implementation libs.hadoopCommon
-    implementation libs.hadoopMapreduce
+    implementation libs.hardwood.core
 }
 
 shadowJar {
