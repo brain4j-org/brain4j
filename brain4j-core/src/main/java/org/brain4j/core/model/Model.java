@@ -131,7 +131,6 @@ public interface Model extends Copyable<Model> {
      *   <li>Number of parameters per layer</li>
      *   <li>Total number of trainable parameters</li>
      * </ul>
-     * </p>
      *
      * @throws IllegalStateException if the model has not been properly initialized
      */

@@ -38,8 +38,8 @@ import java.util.function.Supplier;
  * <p>The framework automatically handles moving tensors between CPU and GPU
  * as needed based on the operations being performed.
  *
- * @apiNote unless specified otherwise, all operations which return
- *          a new tensor do not retain the autograd context from the input
+ * Note: unless specified otherwise, all operations which return
+ * a new tensor do not retain the autograd context from the input
  */
 public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
 
@@ -525,7 +525,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @param keepDim if true, retains the reduced dimension with size 1; otherwise, the dimension is removed
      * @return a new tensor containing the sum along the specified dimension
      *
-     * @apiNote the returned tensor preserves the autograd context of the input
+     * Note: the returned tensor preserves the autograd context of the input
      */
     Tensor sum(int dim, boolean keepDim);
 
@@ -536,7 +536,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @param keepDim if true, retains the reduced dimension with size 1; otherwise, the dimension is removed
      * @return a new tensor containing the mean along the specified dimension
      *
-     * @apiNote the returned tensor preserves the autograd context of the input
+     * Note: the returned tensor preserves the autograd context of the input
      */
     Tensor mean(int dim, boolean keepDim);
     

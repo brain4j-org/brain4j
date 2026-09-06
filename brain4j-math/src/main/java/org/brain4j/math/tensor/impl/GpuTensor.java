@@ -156,7 +156,7 @@ public class GpuTensor extends BaseTensor {
         try {
             SlangCompiler compiler = new SlangCompiler(device.context());
 
-            // TODO: hope that Slang devs wake the fuck up and fix this
+            // TODO: hope that Slang devs wake up and fix this
             if (device.context().backendType() == BackendType.METAL) {
                 // Metal: per-kernel compilation avoids global buffer(>30) overflow
                 // Each file contains exactly one entry point -> bindings start at 0
