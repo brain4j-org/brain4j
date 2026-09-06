@@ -78,8 +78,44 @@ subprojects {
         jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
     }
 
+    tasks.withType(Javadoc).configureEach {
+        options.source = String.valueOf(javaVersion)
+        options.addBooleanOption('-enable-preview', true)
+        options.addStringOption('-add-modules', 'jdk.incubator.vector')
+    }
+
     tasks.withType(JavaExec).configureEach {
         jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+    }
+}
+
+gradle.projectsEvaluated {
+    subprojects.each { sub ->
+        def projectDeps = [] as Set
+
+        try {
+            sub.configurations.getByName('compileClasspath').allDependencies.withType(
+                org.gradle.api.artifacts.ProjectDependency
+            ).each {
+                projectDeps << sub.project(it.path)
+            }
+        } catch (Exception ignored) {
+            // configuration not present, nothing to order
+        }
+
+        ['compileJava', 'compileTestJava', 'test'].each { taskName ->
+            def task = sub.tasks.findByName(taskName)
+
+            if (task != null) {
+                projectDeps.each { dep ->
+                    def shadow = dep.tasks.findByName('shadowJar')
+
+                    if (shadow != null) {
+                        task.mustRunAfter(shadow)
+                    }
+                }
+            }
+        }
     }
 }
 
