@@ -153,7 +153,7 @@ public record ConvolveOperation(int stride) implements Operation {
 
             Tensor dYCol = dOutBatch.reshape(numFilters, outHeight * outWidth);
             Tensor dWCol = dYCol.matmul(xCol.transpose());
-            gradFilter.add(dWCol.reshape(filter.shape()));
+            gradFilter = gradFilter.add(dWCol.reshape(filter.shape()));
 
             Tensor dXCol = wCol.transpose().matmul(dYCol);
             Tensor dInputBatch = Tensors.col2im(
