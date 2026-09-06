@@ -32,6 +32,11 @@ test {
 
 shadowJar {
     minimize()
+
+    dependencies {
+        exclude(dependency('org.brain4j:.*'))
+    }
+
     archiveFileName = "brain4j-core-${parent.version}.jar"
 }
 

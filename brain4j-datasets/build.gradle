@@ -21,6 +21,11 @@ dependencies {
 
 shadowJar {
     mergeServiceFiles()
+
+    dependencies {
+        exclude(dependency('org.brain4j:.*'))
+    }
+
     archiveFileName = "brain4j-datasets-${parent.version}.jar"
 }
 
