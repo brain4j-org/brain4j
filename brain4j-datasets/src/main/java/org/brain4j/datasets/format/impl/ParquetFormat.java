@@ -8,8 +8,8 @@ import org.brain4j.datasets.format.FileFormat;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ParquetFormat implements FileFormat<RowReader> {
 
@@ -17,21 +17,44 @@ public class ParquetFormat implements FileFormat<RowReader> {
     public String format() {
         return "parquet";
     }
-    
+
     @Override
     public Iterable<RowReader> read(File file) throws IOException {
         Path path = file.toPath();
-        List<RowReader> result = new ArrayList<>();
 
-        try (ParquetFileReader fileReader = ParquetFileReader.open(InputFile.of(path));
-             RowReader rowReader = fileReader.rowReader()) {
+        ParquetFileReader fileReader = ParquetFileReader.open(InputFile.of(path));
+        RowReader rowReader = fileReader.rowReader();
 
-            while (rowReader.hasNext()) {
-                rowReader.next();
-                result.add(rowReader);
+        return () -> new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+                boolean hasNext = rowReader.hasNext();
+
+                if (!hasNext) {
+                    closeQuietly();
+                }
+
+                return hasNext;
             }
-        }
 
-        return result;
+            @Override
+            public RowReader next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+
+                rowReader.next();
+                return rowReader;
+            }
+
+            private void closeQuietly() {
+                try {
+                    rowReader.close();
+                    fileReader.close();
+                } catch (Exception ignored) {
+                    // best effort cleanup at exhaustion
+                }
+            }
+        };
     }
 }

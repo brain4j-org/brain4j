@@ -18,6 +18,8 @@ parquetAvro = "1.15.2"
 hadoop = "3.4.2"
 silicon = "0.1.3"
 hardwood = "1.1.0.Beta1"
+snappy = "1.1.10.8"
+zstdJni = "1.5.7-9"
 
 [plugins]
 shadowJar = { id = "com.gradleup.shadow", version.ref = "shadowJar" }
@@ -50,6 +52,9 @@ junitPlatform = { group = "org.junit.platform", name = "junit-platform-launcher"
 # Other libraries
 pngj = { group = "ar.com.hjg", name = "pngj", version.ref = "pngj" }
 hardwood-core = { group = "dev.hardwood", name = "hardwood-core", version.ref = "hardwood" }
+# Optional Hardwood codec backends, required at runtime to read compressed parquet files
+snappy-java = { group = "org.xerial.snappy", name = "snappy-java", version.ref = "snappy" }
+zstd-jni = { group = "com.github.luben", name = "zstd-jni", version.ref = "zstdJni" }
 
 siliconApi = { group = "org.silicon", name = "silicon-api", version.ref = "silicon" }
 siliconCuda = { group = "org.silicon", name = "silicon-cuda", version.ref = "silicon" }
