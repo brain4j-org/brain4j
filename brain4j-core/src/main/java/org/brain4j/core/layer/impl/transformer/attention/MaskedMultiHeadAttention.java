@@ -58,7 +58,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         if (input instanceof GpuTensor gpu) mask = mask.to(gpu.getDevice());
         
         Tensor K_T = K.transposeGrad();
-        Tensor scores = Q.matmulGrad(K_T).div(normalizer);
+        Tensor scores = Q.matmulGrad(K_T).divGrad(Tensors.scalar(normalizer));
         Tensor attentionMap = scores.addGrad(mask);
         Tensor probabilities = attentionMap.activateGrad(new Softmax());
         Tensor context = probabilities.matmulGrad(V);

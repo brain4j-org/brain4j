@@ -109,7 +109,7 @@ public class MultiHeadAttention extends Layer {
         double normalizer = Math.sqrt(headDim);
         
         Tensor K_T = K.transposeGrad();
-        Tensor scores = Q.matmulGrad(K_T).div(normalizer);
+        Tensor scores = Q.matmulGrad(K_T).divGrad(Tensors.scalar(normalizer));
         Tensor attentionWeights = scores.activateGrad(new Softmax());
         Tensor context = attentionWeights.matmulGrad(V);
         context = context.transposeGrad(1, 2);
