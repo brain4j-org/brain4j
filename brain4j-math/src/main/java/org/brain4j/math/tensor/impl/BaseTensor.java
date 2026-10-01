@@ -959,10 +959,8 @@ public abstract class BaseTensor implements Tensor {
         allInputs.addAll(Arrays.asList(others));
 
         if (allInputs.size() != operation.requiredInputs()) {
-            throw new IllegalArgumentException(
-                "This operation requires " + operation.requiredInputs() + " inputs! Received " + allInputs.size()
-                    + " instead."
-            );
+            throw Commons.illegalArgument("This operation requires %d inputs, but %d were received.",
+                operation.requiredInputs(), allInputs.size());
         }
 
         Tensor[] allInputsArray = allInputs.toArray(new Tensor[0]);

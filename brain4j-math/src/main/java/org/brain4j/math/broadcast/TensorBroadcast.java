@@ -10,7 +10,7 @@ public class TensorBroadcast {
     private final static BroadcastMul MUL_OP = new BroadcastMul();
     private final static BroadcastDiv DIV_OP = new BroadcastDiv();
     private final static BroadcastPow POW_OP = new BroadcastPow();
-    
+
     public static Tensor add(Tensor A, Tensor B) {
         return ADD_OP.defaultOp(A, B);
     }

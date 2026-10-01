@@ -1,80 +1,68 @@
 package org.brain4j.math.broadcast.impl;
 
+import org.brain4j.math.broadcast.BaseBroadcast;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.broadcast.BroadcastOperation;
 
-import java.util.Arrays;
-
-public class BroadcastPow implements BroadcastOperation {
+public class BroadcastPow extends BaseBroadcast {
 
     @Override
-    public Tensor defaultOp(Tensor A, Tensor B) {
-        int[] shape = A.shape();
-        int[] otherShape = B.shape();
-
-        float[] aData = A.data();
-        float[] bData = B.data();
-
-        if (Arrays.equals(shape, otherShape)) {
-            for (int i = 0; i < aData.length; i++) {
-                aData[i] = (float) Math.pow(aData[i], bData[i]);
-            }
-
-            return A;
+    protected void sameShape(float[] a, float[] b) {
+        for (int i = 0; i < a.length; i++) {
+            a[i] = (float) Math.pow(a[i], b[i]);
         }
-
-        if (shape.length == 2 && otherShape.length == 1 && shape[1] == otherShape[0]) {
-            int batch = shape[0];
-            int dimension = shape[1];
-
-            for (int i = 0; i < batch; i++) {
-                int base = i * dimension;
-
-                for (int j = 0; j < dimension; j++) {
-                    aData[base + j] = (float) Math.pow(aData[base + j], bData[j]);
-                }
-            }
-
-            return A;
-        }
-
-        return fallbackOp(A, B);
     }
 
     @Override
-    public Tensor fallbackOp(Tensor A, Tensor B) {
-        int[] shapeA = A.shape();
-        int[] shapeB = B.shape();
+    protected void sameShapeSimd(float[] a, float[] b) {
+        sameShape(a, b);
+    }
 
-        float[] aData = A.data();
-        float[] bData = B.data();
+    @Override
+    protected void rowWise(float[] a, float[] b, int batch, int dim) {
+        for (int r = 0; r < batch; r++) {
+            int off = r * dim;
 
-        int[] broadcastedShape = broadcastShape(shapeA, shapeB);
-        
-        if (!Arrays.equals(shapeB, broadcastedShape)) {
-            B = B.reshape(broadcastedShape);
+            for (int j = 0; j < dim; j++) {
+                a[off + j] = (float) Math.pow(a[off + j], b[j]);
+            }
         }
-        
-        int total = A.elements();
+    }
 
-        int[] stridesB = B.strides();
-        int[] index = new int[shapeA.length];
+    @Override
+    protected void rowWiseSimd(float[] a, float[] b, int batch, int dim) {
+        rowWise(a, b, batch, dim);
+    }
 
-        for (int i = 0; i < total; i++) {
-            unravelIndex(i, shapeA, index);
+    @Override
+    protected void bias(Tensor output, Tensor biasTensor) {
+        float[] out = output.data();
+        float[] bv = biasTensor.data();
+        int[] shape = output.shape();
 
-            int bIndex = 0;
+        int batch = shape[0];
+        int filters = shape[1];
+        int hw = shape[2] * shape[3];
+        int strideB = filters * hw;
 
-            for (int d = 0; d < shapeA.length; d++) {
-                int dimB = (shapeB.length - shapeA.length + d);
-                if (dimB >= 0 && shapeB[dimB] != 1) {
-                    bIndex += index[d] * stridesB[dimB];
+        for (int b = 0; b < batch; b++) {
+            for (int f = 0; f < filters; f++) {
+                int base = b * strideB + f * hw;
+                float v = bv[f];
+
+                for (int i = 0; i < hw; i++) {
+                    out[base + i] = (float) Math.pow(out[base + i], v);
                 }
             }
-
-            aData[i] = (float) Math.pow(aData[i], bData[bIndex]);
         }
+    }
 
-        return A;
+    @Override
+    protected void biasSimd(Tensor output, Tensor biasTensor) {
+        bias(output, biasTensor);
+    }
+
+    @Override
+    protected float scalar(float a, float b) {
+        return (float) Math.pow(a, b);
     }
 }

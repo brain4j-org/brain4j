@@ -1,144 +1,126 @@
 package org.brain4j.math.broadcast.impl;
 
+import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorSpecies;
+import org.brain4j.math.broadcast.BaseBroadcast;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.broadcast.BroadcastOperation;
 
-import java.util.Arrays;
+public class BroadcastAdd extends BaseBroadcast {
 
-public class BroadcastAdd implements BroadcastOperation {
+    private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
 
     @Override
-    public Tensor defaultOp(Tensor A, Tensor B) {
-        int[] shapeA = A.shape();
-        int[] shapeB = B.shape();
-
-        float[] aData = A.data();
-        float[] bData = B.data();
-
-        if (Arrays.equals(shapeA, shapeB)) {
-            for (int i = 0; i < aData.length; i++) {
-                aData[i] += bData[i];
-            }
-
-            return A;
+    protected void sameShape(float[] a, float[] b) {
+        for (int i = 0; i < a.length; i++) {
+            a[i] += b[i];
         }
-
-        if (shapeA.length == 2 && shapeB.length == 1 && shapeA[1] == shapeB[0]) {
-            int batch = shapeA[0];
-            int dimension = shapeA[1];
-
-            int total = batch * dimension;
-            for (int idx = 0; idx < total; idx++) {
-                int j = idx % dimension;
-                aData[idx] += bData[j];
-            }
-
-            return A;
-        }
-
-        if (shapeA.length == 3) {
-            int d0 = shapeA[0]; // a
-            int d1 = shapeA[1]; // b
-            int d2 = shapeA[2]; // c
-
-            int total = d0 * d1 * d2;
-
-            // [a, b, c] + [c]
-            if (shapeB.length == 1 && shapeA[2] == shapeB[0]) {
-                for (int idx = 0; idx < total; idx++) {
-                    int k = idx % d2;
-                    aData[idx] += bData[k];
-                }
-
-                return A;
-            }
-
-            // [a, b, c] + [b, c]
-            if (shapeB.length == 2 && shapeA[1] == shapeB[0] && shapeA[2] == shapeB[1]) {
-                int stride = d1 * d2; // size of [b, c]
-
-                for (int batch = 0; batch < d0; batch++) {
-                    int offset = batch * stride;
-                    for (int i = 0; i < stride; i++) {
-                        aData[offset + i] += bData[i];
-                    }
-                }
-
-                return A;
-            }
-        }
-
-        // optimized version for convolutions
-        if (isBiasShape(shapeA, shapeB)) {
-            addBiasInPlace(A, B);
-            return A;
-        }
-
-        return fallbackOp(A, B);
     }
 
-    private void addBiasInPlace(Tensor output, Tensor bias) {
+    @Override
+    protected void sameShapeSimd(float[] a, float[] b) {
+        int bound = SPECIES.loopBound(a.length);
+        int i = 0;
+
+        for (; i < bound; i += SPECIES.length()) {
+            var va = FloatVector.fromArray(SPECIES, a, i);
+            var vb = FloatVector.fromArray(SPECIES, b, i);
+
+            va.add(vb).intoArray(a, i);
+        }
+
+        for (; i < a.length; i++) {
+            a[i] += b[i];
+        }
+    }
+
+    @Override
+    protected void rowWise(float[] a, float[] b, int batch, int dim) {
+        for (int r = 0; r < batch; r++) {
+            int off = r * dim;
+
+            for (int j = 0; j < dim; j++) {
+                a[off + j] += b[j];
+            }
+        }
+    }
+
+    @Override
+    protected void rowWiseSimd(float[] a, float[] b, int batch, int dim) {
+        int bound = SPECIES.loopBound(dim);
+
+        for (int r = 0; r < batch; r++) {
+            int off = r * dim;
+            int j = 0;
+
+            for (; j < bound; j += SPECIES.length()) {
+                var va = FloatVector.fromArray(SPECIES, a, off + j);
+                var vb = FloatVector.fromArray(SPECIES, b, j);
+
+                va.add(vb).intoArray(a, off + j);
+            }
+
+            for (; j < dim; j++) {
+                a[off + j] += b[j];
+            }
+        }
+    }
+
+    @Override
+    protected void bias(Tensor output, Tensor biasTensor) {
+        float[] out = output.data();
+        float[] bv = biasTensor.data();
         int[] shape = output.shape();
-        float[] outData = output.data();
-        float[] biasData = bias.data();
 
         int batch = shape[0];
         int filters = shape[1];
-        int height = shape[2];
-        int width  = shape[3];
-
-        int hw = height * width;
+        int hw = shape[2] * shape[3];
         int strideB = filters * hw;
 
         for (int b = 0; b < batch; b++) {
-            int baseB = b * strideB;
-
             for (int f = 0; f < filters; f++) {
-                int baseF = baseB + f * hw;
-                float biasVal = biasData[f];
+                int base = b * strideB + f * hw;
+                float v = bv[f];
 
                 for (int i = 0; i < hw; i++) {
-                    outData[baseF + i] += biasVal;
+                    out[base + i] += v;
                 }
             }
         }
-    }
-
-    private boolean isBiasShape(int[] a, int[] b) {
-        if (a.length != 4) return false; // [B, F, H, W]
-        if (b.length == 1 && b[0] == a[1]) return true;
-        return b.length == 4 && b[0] == 1 && b[2] == 1 && b[3] == 1 && b[1] == a[1];
     }
 
     @Override
-    public Tensor fallbackOp(Tensor A, Tensor B) {
-        int[] effStrideB = makeStrideMap(A, B);
-        int[] shapeA = A.shape();
+    protected void biasSimd(Tensor output, Tensor biasTensor) {
+        float[] out = output.data();
+        float[] bv = biasTensor.data();
+        int[] shape = output.shape();
 
-        float[] aData = A.data();
-        float[] bData = B.data();
+        int batch = shape[0];
+        int filters = shape[1];
+        int hw = shape[2] * shape[3];
+        int strideB = filters * hw;
+        int bound = SPECIES.loopBound(hw);
 
-        int rankA = shapeA.length;
-        int bIndex = 0;
-        int[] indexA = new int[rankA];
+        for (int b = 0; b < batch; b++) {
+            for (int f = 0; f < filters; f++) {
+                int base = b * strideB + f * hw;
+                var vec = FloatVector.broadcast(SPECIES, bv[f]);
+                int i = 0;
 
-        int total = A.elements();
+                for (; i < bound; i += SPECIES.length()) {
+                    var v = FloatVector.fromArray(SPECIES, out, base + i);
 
-        for (int i = 0; i < total; i++) {
-            aData[i] += bData[bIndex];
-
-            for (int d = rankA - 1; ; d--) {
-                if (++indexA[d] < shapeA[d]) {
-                    bIndex += effStrideB[d];
-                    break;
+                    v.add(vec).intoArray(out, base + i);
                 }
-                indexA[d] = 0;
-                bIndex -= effStrideB[d] * (shapeA[d] - 1);
 
-                if (d == 0) break;
+                for (; i < hw; i++) {
+                    out[base + i] += bv[f];
+                }
             }
         }
+    }
 
-        return A;
+    @Override
+    protected float scalar(float a, float b) {
+        return a + b;
     }
 }

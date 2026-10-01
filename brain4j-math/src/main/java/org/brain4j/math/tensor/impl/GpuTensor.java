@@ -1189,11 +1189,9 @@ public class GpuTensor extends BaseTensor {
 
     @Override
     public Tensor copy() {
-        boolean contiguous = Arrays.equals(strides, Tensors.computeStrides(shape));
-
         GpuTensor result = new GpuTensor(device, shape);
 
-        if (contiguous) {
+        if (!transposed) {
             dataBuffer.copyInto(result.dataBuffer, device.queue());
             return result;
         }
