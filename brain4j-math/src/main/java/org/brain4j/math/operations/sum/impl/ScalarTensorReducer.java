@@ -1,8 +1,8 @@
 package org.brain4j.math.operations.sum.impl;
 
 import org.brain4j.math.Tensors;
-import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.operations.sum.TensorReducer;
+import org.brain4j.math.tensor.Tensor;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;

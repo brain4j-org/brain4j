@@ -1,15 +1,15 @@
 package org.brain4j.math.tensor.impl;
 
 import org.brain4j.math.Tensors;
+import org.brain4j.math.broadcast.TensorBroadcast;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.tensor.Shape;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.broadcast.TensorBroadcast;
+import org.brain4j.math.operations.ParallelTranspose;
 import org.brain4j.math.operations.matmul.MatmulProvider;
 import org.brain4j.math.operations.matmul.impl.NormalMatMulProvider;
 import org.brain4j.math.operations.matmul.impl.SIMDMatMulProvider;
-import org.brain4j.math.operations.ParallelTranspose;
+import org.brain4j.math.tensor.Shape;
+import org.brain4j.math.tensor.Tensor;
 
 import java.util.Arrays;
 

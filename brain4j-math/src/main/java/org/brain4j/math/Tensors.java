@@ -1,12 +1,12 @@
 package org.brain4j.math;
 
-import org.brain4j.math.tensor.Shape;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.convolution.im2col.Im2ColParams;
 import org.brain4j.math.convolution.im2col.Im2ColTask;
-import org.brain4j.math.tensor.impl.CpuTensor;
-import org.brain4j.math.commons.Range;
 import org.brain4j.math.operations.ParallelConvolve;
+import org.brain4j.math.tensor.Shape;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.CpuTensor;
 
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;

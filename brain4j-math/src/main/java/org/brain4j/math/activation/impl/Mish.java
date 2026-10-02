@@ -1,8 +1,8 @@
 package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.weightsinit.impl.NormalXavierInit;
 import org.brain4j.math.weightsinit.WeightInit;
+import org.brain4j.math.weightsinit.impl.NormalXavierInit;
 
 public class Mish implements Activation {
 

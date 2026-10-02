@@ -1,6 +1,5 @@
 package org.brain4j.math.scaler;
 
-import org.brain4j.math.commons.JsonAdapter;
 import org.brain4j.math.tensor.Tensor;
 
 import java.util.List;

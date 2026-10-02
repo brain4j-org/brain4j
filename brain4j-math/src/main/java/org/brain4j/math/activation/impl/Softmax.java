@@ -2,8 +2,8 @@ package org.brain4j.math.activation.impl;
 
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 import org.brain4j.math.weightsinit.WeightInit;
+import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 
 public record Softmax(double temperature) implements Activation {
 

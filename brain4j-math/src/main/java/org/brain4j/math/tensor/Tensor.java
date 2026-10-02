@@ -6,10 +6,10 @@ import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
 import org.brain4j.math.activation.impl.Tanh;
 import org.brain4j.math.commons.D2DFunction;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.autograd.impl.*;
-import org.brain4j.math.commons.Range;
 
 import java.util.function.Supplier;
 

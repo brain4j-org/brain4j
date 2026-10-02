@@ -3,8 +3,8 @@ package org.brain4j.math.activation.impl;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.weightsinit.impl.NormalHeInit;
 import org.brain4j.math.weightsinit.WeightInit;
+import org.brain4j.math.weightsinit.impl.NormalHeInit;
 import org.silicon.api.function.ComputeFunction;
 
 public record LeakyReLU(double alpha) implements Activation {

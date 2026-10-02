@@ -3,8 +3,6 @@ package org.brain4j.math.tensor.autograd.impl;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
 
-import java.util.Arrays;
-
 public record ReshapeOperation(int[] newShape) implements Operation {
 
     @Override

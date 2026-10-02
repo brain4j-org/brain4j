@@ -2,9 +2,9 @@ package org.brain4j.math.operations.matmul.impl;
 
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
-import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.operations.matmul.MatmulParameters;
 import org.brain4j.math.operations.matmul.MatmulProvider;
+import org.brain4j.math.tensor.Tensor;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -3,8 +3,6 @@ package org.brain4j.math.data;
 import org.brain4j.math.Copyable;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.Arrays;
-
 public record Sample(Tensor[] inputs, Tensor[] labels) implements Copyable<Sample> {
     
     public Sample(Tensor input, Tensor label) {

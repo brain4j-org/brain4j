@@ -1,15 +1,15 @@
 package org.brain4j.math.tensor.autograd.impl;
 
 import org.brain4j.math.Tensors;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.TensorKey;
-import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.Usage;
+import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.brain4j.math.commons.Range;
 import org.silicon.api.device.ComputeBuffer;
 
 public record SliceOperation(Range... ranges) implements Operation {

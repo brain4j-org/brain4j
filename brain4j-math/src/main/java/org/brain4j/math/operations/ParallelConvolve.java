@@ -1,12 +1,12 @@
 package org.brain4j.math.operations;
 
 import org.brain4j.math.Tensors;
-import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.convolution.ConvolveProvider;
 import org.brain4j.math.convolution.impl.NormalConvolveProvider;
 import org.brain4j.math.convolution.impl.SIMDConvolveProvider;
-import org.brain4j.math.commons.Range;
+import org.brain4j.math.gpu.device.DeviceUtils;
+import org.brain4j.math.tensor.Tensor;
 
 import java.util.ArrayList;
 import java.util.List;
