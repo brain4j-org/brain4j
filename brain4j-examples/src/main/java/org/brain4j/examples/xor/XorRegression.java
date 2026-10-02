@@ -1,7 +1,6 @@
 package org.brain4j.examples.xor;
 
 import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
@@ -26,8 +25,7 @@ public class XorRegression {
         List<Sample> samples = getSamples();
         
         ListDataSource dataSource = new ListDataSource(samples, false, 1);
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(2)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(2),
             new DenseLayer(16, new ReLU()),
             new DenseLayer(16, new ReLU()),
             new DenseLayer(1, new Sigmoid())

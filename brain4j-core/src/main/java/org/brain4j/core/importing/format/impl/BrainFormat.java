@@ -8,10 +8,10 @@ import org.brain4j.core.importing.io.LayerIO;
 import org.brain4j.core.importing.SafeTensors;
 import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.commons.Commons;
+import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
 import java.io.*;
@@ -91,8 +91,20 @@ public class BrainFormat implements BinaryFormat<Sequential> {
                 layerWeights.put(index, ids);
             }
 
+            JsonNode inputShapeNode = root.get("input_shape");
+
+            if (inputShapeNode == null || !inputShapeNode.isArray() || inputShapeNode.isEmpty()) {
+                throw Commons.illegalArgument("Missing or invalid input_shape");
+            }
+
+            int[] dims = new int[inputShapeNode.size()];
+
+            for (int i = 0; i < dims.length; i++) {
+                dims[i] = inputShapeNode.get(i).asInt();
+            }
+
             Layer[] layers = architectureMap.values().toArray(new Layer[0]);
-            Sequential model = ModelSpecs.of(layers).compile();
+            Sequential model = ModelSpecs.of(Shape.of(dims), layers).compile();
             List<Layer> compiledLayers = model.getLayers();
             
             for (int i = 0; i < compiledLayers.size(); i++) {
@@ -123,11 +135,19 @@ public class BrainFormat implements BinaryFormat<Sequential> {
         }
     }
 
-    private byte[] buildConfig(Model model, Map<String, Tensor> globalWeights) {
+    private byte[] buildConfig(Sequential model, Map<String, Tensor> globalWeights) {
         try {
             ObjectNode root = MAPPER.createObjectNode();
             root.put("format_version", FORMAT_VERSION);
             root.put("created_at", Instant.now().toString());
+
+            ArrayNode inputShape = MAPPER.createArrayNode();
+
+            for (int dim : model.specs().inputShape().dims()) {
+                inputShape.add(dim);
+            }
+
+            root.set("input_shape", inputShape);
 
             ArrayNode architecture = MAPPER.createArrayNode();
             List<Layer> layers = model.getLayers();

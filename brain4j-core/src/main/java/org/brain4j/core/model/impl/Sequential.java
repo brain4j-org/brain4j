@@ -3,7 +3,6 @@ package org.brain4j.core.model.impl;
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
-import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelBlock;
 import org.brain4j.core.model.ModelSpecs;
@@ -22,26 +21,14 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         if (layers.isEmpty()) {
             throw Commons.illegalArgument("Layer list is empty!");
         }
-
-        Layer first = layers.getFirst();
-
-        if (!(first instanceof InputLayer)) {
-            throw Commons.illegalArgument("First layer is not an input layer!");
-        }
     }
 
     public Sequential(ModelSpecs specs, Device device, int seed) {
         List<Layer> layers = specs.buildLayerList();
-        Layer first = layers.getFirst();
 
-        if (!(first instanceof InputLayer inputLayer)) {
-            throw Commons.illegalArgument("First layer is not an input layer!");
-        }
+        Node lastNode = Node.input(specs.inputShape());
 
-        Node lastNode = Node.input(inputLayer.config().shape());
-
-        for (int i = 1; i < layers.size(); i++) {
-            Layer current = layers.get(i);
+        for (Layer current : layers) {
             lastNode = current.apply(lastNode);
         }
 
@@ -66,9 +53,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
     @Override
     public Sequential fork(Device device) {
         Graph newGraph = graph.fork(device);
-        List<Layer> newLayers = new ArrayList<>();
-        newLayers.addAll(newGraph.input().stream().map(Node::layer).toList());
-        newLayers.addAll(newGraph.getLayers());
+        List<Layer> newLayers = new ArrayList<>(newGraph.getLayers());
         return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
     }
 
@@ -89,6 +74,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
 
         stats.append(divider);
         stats.append(pattern.formatted("Index", "Layer Type", "Weights Shape", "Parameters", "Activation")).append("\n");
+        stats.append(pattern.formatted("-", "Input", Arrays.toString(specs.inputShape().dims()), "0", "-")).append("\n");
 
         AtomicLong totalParams = new AtomicLong(0);
         AtomicLong trainableParams = new AtomicLong(0);
@@ -117,9 +103,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
     @Override
     public Sequential copy() {
         Graph newGraph = graph.copy();
-        List<Layer> newLayers = new ArrayList<>();
-        newLayers.addAll(newGraph.input().stream().map(Node::layer).toList());
-        newLayers.addAll(newGraph.getLayers());
+        List<Layer> newLayers = new ArrayList<>(newGraph.getLayers());
         return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
     }
 

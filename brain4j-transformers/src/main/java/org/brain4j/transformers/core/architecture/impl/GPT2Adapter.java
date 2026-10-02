@@ -9,7 +9,6 @@ import org.brain4j.core.layer.impl.transformer.Transformer;
 import org.brain4j.core.layer.impl.transformer.attention.MaskedMultiHeadAttention;
 import org.brain4j.core.layer.impl.transformer.attention.MultiHeadAttention;
 import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
-import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.transformers.core.architecture.ArchitectureAdapter;
@@ -52,7 +51,7 @@ public class GPT2Adapter implements ArchitectureAdapter {
         int context = config.get("n_ctx").asInt();
         int vocabSize = config.get("vocab_size").asInt();
         
-        ModelSpecs specs = ModelSpecs.of();
+        ModelSpecs specs = ModelSpecs.of(Shape.of(-1));
 
         Tensor embedding = findContaining("wte.weight", weights); // embedding  -> [vocab, dim]
         Tensor posEncode = findContaining("wpe.weight", weights); // pos encode -> [length, dim]
@@ -70,7 +69,6 @@ public class GPT2Adapter implements ArchitectureAdapter {
         vocabLayer.registerParam("weights", embedding.transpose());
         vocabLayer.registerParam("bias", Tensors.zeros(embedding.elements()));
 
-        specs.add(new InputLayer(Shape.of(-1)).freeze());
         specs.add(embeddingLayer.freeze());
         specs.add(posEncodeLayer.freeze());
         

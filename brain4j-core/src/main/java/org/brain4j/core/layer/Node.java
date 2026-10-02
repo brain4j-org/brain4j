@@ -1,8 +1,8 @@
 package org.brain4j.core.layer;
 
 import org.brain4j.core.importing.io.LayerIO;
-import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.math.Copyable;
+import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
@@ -22,7 +22,7 @@ public class Node implements Copyable<Node> {
     }
     
     public static Node input(Shape shape) {
-        return new Node(new InputLayer(shape), List.of());
+        return new Node(new Source(shape), List.of());
     }
     
     @Override
@@ -97,5 +97,61 @@ public class Node implements Copyable<Node> {
     
     public String name() {
         return LayerIO.LAYER_CODECS.get(layer.getClass()).type();
+    }
+
+    // Internal implementation of the "Input Layer"
+    private static final class Source extends Layer {
+        private final Shape shape;
+
+        private Source(Shape shape) {
+            this.shape = shape;
+        }
+
+        @Override
+        public void build(List<Shape> inputShapes) {
+        }
+
+        @Override
+        public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+        }
+
+        @Override
+        public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
+            return List.of(shape);
+        }
+
+        @Override
+        public Tensor[] forward(StatesCache cache, Tensor... inputs) {
+            for (Tensor input : inputs) {
+                if (validInput(input)) continue;
+
+                throw Commons.illegalArgument("Input must have shape %s! Got: %s",
+                    Arrays.toString(shape.dims()), Arrays.toString(input.shape()));
+            }
+
+            return inputs;
+        }
+
+        @Override
+        public Layer copy() {
+            return new Source(shape.copy());
+        }
+
+        private boolean validInput(Tensor input) {
+            if (input == null) return false;
+
+            int[] inputShape = input.shape();
+            int[] targetShape = shape.dims();
+
+            if (inputShape.length - 1 > targetShape.length) return false;
+
+            int offset = inputShape.length - targetShape.length;
+
+            for (int i = 0; i < targetShape.length; i++) {
+                if (inputShape[i + offset] != targetShape[i]) return false;
+            }
+
+            return true;
+        }
     }
 }

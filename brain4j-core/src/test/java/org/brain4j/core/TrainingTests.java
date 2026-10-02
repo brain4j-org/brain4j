@@ -2,7 +2,6 @@ package org.brain4j.core;
 
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.DropoutLayer;
-import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.layer.impl.LSTMLayer;
 import org.brain4j.core.layer.impl.MaxPoolLayer;
 import org.brain4j.core.layer.impl.NormLayer;
@@ -45,8 +44,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnSimpleRegression() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(2)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(2),
             new DenseLayer(1)
         );
         
@@ -77,8 +75,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnConvStack() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(1, 6, 6)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(1, 6, 6),
             new ConvLayer(2, 3, 3, 1, Activations.RELU.function()),
             new MaxPoolLayer(2, 2, 2),
             new ReshapeLayer(Shape.of(8)),
@@ -109,8 +106,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnUtilityStack() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(2, 3)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(2, 3),
             new SliceLayer(Range.all(), Range.interval(0, 2)),
             new SqueezeLayer(-1),
             new ReshapeLayer(Shape.of(4)),
@@ -142,8 +138,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnDualBranchSelect() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(4),
             new DenseLayer(4),
             new DenseLayer(4),
             new SelectLayer(0),
@@ -174,8 +169,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnNormStack() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(4),
             new DenseLayer(4),
             new NormLayer(),
             new RMSNormLayer(),
@@ -206,8 +200,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnTransformerEncoder() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(3, 4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
             new Transformer.Encoder(4, 2, 0.0),
             new DenseLayer(2)
         );
@@ -236,8 +229,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnTransformerDecoder() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(3, 4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
             new Transformer.Decoder(4, 2, 0.0),
             new DenseLayer(2)
         );
@@ -266,8 +258,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnEmbeddingAndPositional() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(5)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(5),
             new EmbeddingLayer(10, 4),
             new PosEncodeLayer(32, 4),
             new DenseLayer(3)
@@ -297,8 +288,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnLstm() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(3, 4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
             new LSTMLayer(5, true),
             new DenseLayer(2)
         );
@@ -327,8 +317,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnAttentionBlock() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(3, 4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
             new MultiHeadAttention(2, 4),
             new DenseLayer(2)
         );
@@ -357,8 +346,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnMaskedAttentionBlock() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(3, 4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
             new MaskedMultiHeadAttention(2, 4),
             new DenseLayer(2)
         );
@@ -387,8 +375,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnDropoutAndActivation() {
-        ModelSpecs specs = ModelSpecs.of(
-            new InputLayer(Shape.of(4)),
+        ModelSpecs specs = ModelSpecs.of(Shape.of(4),
             new DenseLayer(4),
             new DropoutLayer(0.2),
             new ActivationLayer(Activations.RELU),

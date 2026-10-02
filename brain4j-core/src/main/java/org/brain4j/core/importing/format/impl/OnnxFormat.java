@@ -7,7 +7,6 @@ import org.brain4j.core.importing.io.OnnxIO;
 import org.brain4j.core.importing.onnx.ProtoOnnx.*;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
-import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.impl.Graph;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
@@ -181,11 +180,13 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         List<Tensor> dummyInputsWithGrad = new ArrayList<>();
 
         for (Node inputNode : inputNodes) {
-            if (!(inputNode.layer() instanceof InputLayer inputLayer)) {
-                throw Commons.illegalArgument("Input node layer is not InputLayer: %s", inputNode.layer().getClass().getName());
+            List<Shape> inputShapes = inputNode.outputShapes();
+
+            if (inputShapes == null || inputShapes.isEmpty()) {
+                throw Commons.illegalState("Input node has no output shapes, cannot export to ONNX");
             }
 
-            Shape shape = inputLayer.config().shape();
+            Shape shape = inputShapes.getFirst();
             Tensor dummy = Tensors.zeros(shape).unsqueeze();
             dummyInputsWithGrad.add(dummy.withGrad());
         }

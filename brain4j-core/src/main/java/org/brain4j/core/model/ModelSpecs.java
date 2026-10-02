@@ -4,6 +4,7 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.Copyable;
 import org.brain4j.math.commons.Commons;
+import org.brain4j.math.tensor.Shape;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,24 +12,41 @@ import java.util.List;
 
 public class ModelSpecs implements ModelBlock, Copyable<ModelSpecs> {
     
+    private final Shape inputShape;
     private final List<ModelBlock> components = new ArrayList<>();
     private boolean frozen = false;
-    
-    public static ModelSpecs of(List<ModelBlock> components) {
+
+    private ModelSpecs(Shape inputShape) {
+        if (inputShape == null) {
+            throw Commons.illegalArgument("Input shape must not be null!");
+        }
+
+        this.inputShape = inputShape;
+    }
+
+    public static ModelSpecs of(Shape inputShape, List<ModelBlock> components) {
         if (components == null) {
             throw Commons.illegalArgument("Component list must not be null!");
         }
-        
-        ModelSpecs specs = new ModelSpecs();
+
+        ModelSpecs specs = new ModelSpecs(inputShape);
         specs.components.addAll(components);
-        
+
         return specs;
     }
-    
-    public static ModelSpecs of(ModelBlock... components) {
-        return of(List.of(components));
+
+    public static ModelSpecs of(Shape inputShape, ModelBlock... components) {
+        if (components == null) {
+            throw Commons.illegalArgument("Component list must not be null!");
+        }
+
+        return of(inputShape, List.of(components));
     }
-    
+
+    public Shape inputShape() {
+        return inputShape;
+    }
+
     @Override
     public void appendTo(List<Layer> layers) {
         for (ModelBlock component : components) {
@@ -40,7 +58,11 @@ public class ModelSpecs implements ModelBlock, Copyable<ModelSpecs> {
         if (frozen) {
             throw new IllegalArgumentException("ModelSpecs has been compiled and cannot be modified! Consider checking out clone().");
         }
-        
+
+        if (component == null) {
+            throw Commons.illegalArgument("Component must not be null!");
+        }
+
         components.add(component);
         return this;
     }
@@ -70,6 +92,8 @@ public class ModelSpecs implements ModelBlock, Copyable<ModelSpecs> {
     
     @Override
     public ModelSpecs copy() {
-        return ModelSpecs.of(components);
+        ModelSpecs copy = new ModelSpecs(inputShape.copy());
+        copy.components.addAll(components);
+        return copy;
     }
 }

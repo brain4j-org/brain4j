@@ -2,7 +2,6 @@ package org.brain4j.examples.mnist;
 
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.impl.DenseLayer;
-import org.brain4j.core.layer.impl.InputLayer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.wrappers.EvaluationResult;
 import org.brain4j.datasets.Datasets;
@@ -68,8 +67,7 @@ public class TestMNIST {
     }
 
     private ModelSpecs getMLPSpecs() {
-        return ModelSpecs.of(
-            new InputLayer(Shape.of(28 * 28)),
+        return ModelSpecs.of(Shape.of(28 * 28),
             new DenseLayer(128, new ReLU()),
             new DenseLayer(64, new ReLU()),
             new DenseLayer(10, new Softmax())
