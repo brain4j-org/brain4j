@@ -58,6 +58,17 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
     }
 
     @Override
+    public Sequential to(Device device) {
+        if (Objects.equals(this.device, device)) return this;
+
+        for (Layer layer : layers) {
+            layer.to(device);
+        }
+
+        return new Sequential(graph, specs, device, layers, seed);
+    }
+
+    @Override
     public Device device() {
         return device;
     }

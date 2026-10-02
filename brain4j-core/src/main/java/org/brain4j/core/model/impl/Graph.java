@@ -132,6 +132,21 @@ public class Graph implements Model {
     }
 
     @Override
+    public Graph to(Device device) {
+        if (Objects.equals(this.device, device)) return this;
+
+        for (Node node : topology) {
+            node.layer().to(device);
+        }
+
+        for (Node node : input) {
+            node.layer().to(device);
+        }
+
+        return new Graph(output, device, seed, true);
+    }
+
+    @Override
     public Graph copy() {
         Map<Node, Node> cache = new HashMap<>();
         List<Node> copy = output.stream().map(n -> n.copy(cache)).toList();

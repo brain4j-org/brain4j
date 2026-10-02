@@ -137,6 +137,19 @@ public interface Model extends Copyable<Model> {
     void summary();
     
     Model fork(Device device);
+
+    /**
+     * Moves this model to the given device and returns it for chaining.
+     * <p>
+     * Unlike {@link #fork(Device)}, which creates an independent copy,
+     * this method moves the parameters in place. Always use the returned
+     * instance going forward.
+     * </p>
+     *
+     * @param device the device to move the model to ({@code null} for CPU)
+     * @return this model, now stored on the given device
+     */
+    Model to(Device device);
     
     /**
      * Returns an immutable view of the layers composing this object, in order.

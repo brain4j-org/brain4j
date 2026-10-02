@@ -47,7 +47,7 @@ public class TestMNIST {
         ListDataSource testSource = dataset.test().to(device);
 
         ModelSpecs specs = getMLPSpecs();
-        Sequential model = specs.compile(42).fork(device);
+        Sequential model = specs.compile(42).to(device);
         model.summary(); // prints a summary of the architecture on the console
 
         TrainingConfig config = TrainingConfig.of(

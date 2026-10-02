@@ -100,7 +100,7 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
 
     }
 
-    public void to(Device device) {
+    public Layer to(Device device) {
         Map<String, Tensor> newParameters = new HashMap<>();
         parameters.forEach((k, v) -> {
             Tensor moved = device == null ? v.to(null) : copyStable(v, device);
@@ -114,6 +114,7 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
 
         parameters.clear();
         parameters.putAll(newParameters);
+        return this;
     }
 
     private static Tensor copyStable(Tensor tensor) {
