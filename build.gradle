@@ -5,7 +5,25 @@ plugins {
 }
 
 group = 'org.brain4j'
-version = '3.0.0-SNAPSHOT'
+
+def baseVersion = '3.0.0'
+def getCommitHash() {
+    try {
+        def proc = ['git', 'rev-parse', '--short', 'HEAD'].execute(null, rootDir)
+        proc.waitFor()
+        if (proc.exitValue() == 0) {
+            return proc.text.trim()
+        }
+        logger.warn("git rev-parse failed: ${proc.err.text.trim()}")
+        return "nogit"
+    } catch (Exception e) {
+        logger.warn("getCommitHash failed: ${e.message}")
+        return "nogit"
+    }
+}
+
+def isSnapshot = "true" == System.getenv("SNAPSHOT")
+version = isSnapshot ? "${baseVersion}-${getCommitHash()}-SNAPSHOT" : baseVersion
 
 def javaVersion = 22
 
