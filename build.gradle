@@ -39,8 +39,8 @@ subprojects {
                 url = version.endsWith("SNAPSHOT") ? snapshotsRepo : releasesRepo
 
                 credentials {
-                    username = findProperty("brain4jUser") ?: System.getenv("brain4jUser")
-                    password = findProperty("brain4jPass") ?: System.getenv("brain4jPass")
+                    username = findProperty("BRAIN4J_USER") ?: System.getenv("BRAIN4J_USER")
+                    password = findProperty("BRAIN4J_PASS") ?: System.getenv("BRAIN4J_PASS")
                 }
 
                 authentication {
