@@ -26,7 +26,6 @@ import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
  * Encodes and decodes tensors in safetensors format.
  * Use it for interoperable weight import and export.
  */
-@SuppressWarnings("deprecation")
 public class SafeTensors {
 
     /**
@@ -202,7 +201,7 @@ public class SafeTensors {
     ) {
         Map<String, Tensor> weights = new HashMap<>();
 
-        header.fields().forEachRemaining(entry -> {
+        header.properties().forEach(entry -> {
             String name = entry.getKey();
 
             if (name.equals("__metadata__")) {

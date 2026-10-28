@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
 
-@SuppressWarnings("deprecation")
 public class HuggingFaceClient implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(HuggingFaceClient.class);
@@ -42,7 +41,7 @@ public class HuggingFaceClient implements AutoCloseable {
         HttpGet request = new HttpGet(URI.create(url));
         request.setHeader("User-Agent", userAgent);
 
-        try (CloseableHttpResponse res = httpClient.execute(request)) {
+        try (CloseableHttpResponse res = (CloseableHttpResponse) httpClient.executeOpen(null, request, null)) {
             int code = res.getCode();
             String body = EntityUtils.toString(res.getEntity());
 
@@ -69,7 +68,7 @@ public class HuggingFaceClient implements AutoCloseable {
             HttpGet req = new HttpGet(url);
             req.setHeader("User-Agent", userAgent);
             
-            CloseableHttpResponse response = httpClient.execute(req);
+            CloseableHttpResponse response = (CloseableHttpResponse) httpClient.executeOpen(null, req, null);
 
             if (response.getCode() != 200) {
                 String body = EntityUtils.toString(response.getEntity());

@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
-@SuppressWarnings("deprecation")
 public class HuggingFaceClient implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(HuggingFaceClient.class);
@@ -46,7 +45,7 @@ public class HuggingFaceClient implements AutoCloseable {
             HttpGet request = new HttpGet(URI.create(url));
             request.setHeader("User-Agent", userAgent);
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
+            try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.executeOpen(null, request, null)) {
                 return processDatasetInfoResponse(response, datasetId);
             }
         } catch (IOException e) {
@@ -66,7 +65,7 @@ public class HuggingFaceClient implements AutoCloseable {
             HttpGet request = new HttpGet(URI.create(url));
             request.setHeader("User-Agent", userAgent);
 
-            CloseableHttpResponse response = httpClient.execute(request);
+            CloseableHttpResponse response = (CloseableHttpResponse) httpClient.executeOpen(null, request, null);
 
             if (response.getCode() != 200) {
                 String errorMessage = "Failed to download file. Status: " + response.getCode();

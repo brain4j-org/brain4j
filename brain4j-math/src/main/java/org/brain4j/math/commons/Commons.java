@@ -10,7 +10,6 @@ import static java.util.Locale.ENGLISH;
 /**
  * Shared math utilities. Use it for formatting, numerics, and tensor helpers.
  */
-@SuppressWarnings("unchecked")
 public class Commons {
 
     public static final String HEADER_CHAR = "━";
@@ -228,7 +227,7 @@ public class Commons {
      *
      * @return a new instance
      */
-    @SuppressWarnings("all")
+    @SuppressWarnings("unchecked")
     public static <T> T newInstance(String classPath) {
         // Keep backward compatibility with pre-2.9 package names.
         classPath = classPath.replace("net.echo.brain4j", "org.brain4j.core");
@@ -248,13 +247,12 @@ public class Commons {
      *
      * @return a new instance
      */
-    @SuppressWarnings("all")
     public static <T> T newInstance(Class<T> clazz) {
         try {
             Constructor<?> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);
 
-            return (T) constructor.newInstance();
+            return clazz.cast(constructor.newInstance());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
