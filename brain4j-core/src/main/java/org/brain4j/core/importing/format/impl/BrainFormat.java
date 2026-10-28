@@ -36,8 +36,6 @@ import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-import static org.brain4j.core.importing.Registries.LAYER_REGISTRY;
-
 /**
  * Stores sequential models as a zip with JSON config and safetensors weights.
  * Use it as the default native Brain4J file format.
@@ -179,7 +177,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
 
             for (int i = 0; i < layers.size(); i++) {
                 Layer layer = layers.get(i);
-                String type = LAYER_REGISTRY.fromClass(layer.getClass());
+                String type = LayerIO.type(layer);
 
                 ObjectNode container = MAPPER.createObjectNode();
                 ArrayNode weights = MAPPER.createArrayNode();
@@ -195,7 +193,6 @@ public class BrainFormat implements BinaryFormat<Sequential> {
                 }
 
                 container.put("index", i);
-                container.put("type", type);
                 container.set("weights", weights);
 
                 architecture.add(container);

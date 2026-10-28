@@ -48,7 +48,6 @@ import org.brain4j.core.codec.weightinit.NormalInitCodec;
 import org.brain4j.core.codec.weightinit.NormalXavierInitCodec;
 import org.brain4j.core.codec.weightinit.UniformHeInitCodec;
 import org.brain4j.core.codec.weightinit.UniformXavierInitCodec;
-import org.brain4j.core.importing.Registries;
 import org.brain4j.core.importing.Registry;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.activation.Activation;
@@ -57,8 +56,6 @@ import org.brain4j.math.commons.Commons;
 import org.brain4j.math.scaler.FeatureScaler;
 import org.brain4j.math.weightsinit.WeightInit;
 
-import static org.brain4j.core.importing.Registries.CLIPPERS_REGISTRY;
-import static org.brain4j.core.importing.Registries.WEIGHT_INIT_REGISTRY;
 import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
 
 /**
@@ -143,7 +140,7 @@ public class LayerIO {
      * @param container the target JSON object
      */
     public static void write(Layer layer, ObjectNode container) {
-        JsonCodec<Layer> codec = (JsonCodec<Layer>) layerCodec(layer);
+        JsonCodec<Layer> codec = layerCodec(layer);
 
         if (codec == null) {
             throw Commons.illegalArgument("Unexpected layer type: %s", layer.getClass().getName());
@@ -152,11 +149,29 @@ public class LayerIO {
         ObjectNode config = MAPPER.createObjectNode();
         codec.write(layer, config);
 
+        container.put("type", codec.type());
+
         writeActivation(layer.activation(), container);
         writeWeightInit(layer.weightInit(), container);
         writeClipper(layer.clipper(), container);
 
         container.set("config", config);
+    }
+
+    /**
+     * Return the stable serialized discriminator for a layer.
+     *
+     * @param layer layer to inspect
+     * @return codec type
+     */
+    public static String type(Layer layer) {
+        JsonCodec<Layer> codec = layerCodec(layer);
+
+        if (codec == null) {
+            throw Commons.illegalArgument("Unexpected layer type: %s", layer.getClass().getName());
+        }
+
+        return codec.type();
     }
 
     private static void writeActivation(Activation activation, ObjectNode container) {
@@ -191,53 +206,45 @@ public class LayerIO {
 
     private static Activation parseActivation(JsonNode node) {
         if (node.isTextual()) {
-            return Registries.ACTIVATION_REGISTRY.toInstance(node.asText());
+            return parseCodec(ACTIVATION_CODECS, node.asText(), MAPPER.createObjectNode(), "activation");
         }
 
         String type = text(node.get("type"));
         JsonNode config = objectOrEmpty(node.get("config"));
 
-        JsonCodec<? extends Activation> codec = (JsonCodec<? extends Activation>) ACTIVATION_CODECS.get(type);
-
-        if (codec != null) {
-            return codec.parse(config);
-        }
-
-        return Registries.ACTIVATION_REGISTRY.toInstance(type);
+        return parseCodec(ACTIVATION_CODECS, type, config, "activation");
     }
 
     private static WeightInit parseWeightInit(JsonNode node) {
         if (node.isTextual()) {
-            return WEIGHT_INIT_REGISTRY.toInstance(node.asText());
+            return parseCodec(WEIGHT_INIT_CODECS, node.asText(), MAPPER.createObjectNode(), "weight init");
         }
 
         String type = text(node.get("type"));
         JsonNode config = objectOrEmpty(node.get("config"));
 
-        JsonCodec<? extends WeightInit> codec = (JsonCodec<? extends WeightInit>) WEIGHT_INIT_CODECS.get(type);
-
-        if (codec != null) {
-            return codec.parse(config);
-        }
-
-        return WEIGHT_INIT_REGISTRY.toInstance(type);
+        return parseCodec(WEIGHT_INIT_CODECS, type, config, "weight init");
     }
 
     private static GradientClipper parseClipper(JsonNode node) {
         if (node.isTextual()) {
-            return CLIPPERS_REGISTRY.toInstance(node.asText());
+            return parseCodec(CLIPPER_CODECS, node.asText(), MAPPER.createObjectNode(), "clipper");
         }
 
         String type = text(node.get("type"));
         JsonNode config = objectOrEmpty(node.get("config"));
 
-        JsonCodec<? extends GradientClipper> codec = (JsonCodec<? extends GradientClipper>) CLIPPER_CODECS.get(type);
+        return parseCodec(CLIPPER_CODECS, type, config, "clipper");
+    }
 
-        if (codec != null) {
-            return codec.parse(config);
+    private static <T> T parseCodec(Registry<T> registry, String type, JsonNode config, String category) {
+        JsonCodec<? extends T> codec = (JsonCodec<? extends T>) registry.get(type);
+
+        if (codec == null) {
+            throw Commons.illegalArgument("Unknown %s type: %s", category, type);
         }
 
-        return CLIPPERS_REGISTRY.toInstance(type);
+        return codec.parse(config);
     }
 
     private static JsonNode objectOrEmpty(JsonNode node) {
