@@ -5,6 +5,7 @@ import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.commons.Range;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,7 +15,16 @@ public class TensorTest {
     private final Device device;
 
     public TensorTest() {
-        this.device = Brain4J.firstDevice().orElseThrow();
+        Device detected;
+
+        try {
+            detected = Brain4J.firstDevice().orElse(null);
+        } catch (RuntimeException exception) {
+            detected = null;
+        }
+
+        Assumptions.assumeTrue(detected != null, "GPU tests require a GPU and Slang compiler");
+        this.device = detected;
     }
 
     @Test

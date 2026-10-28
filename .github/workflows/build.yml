@@ -28,6 +28,9 @@ jobs:
       - name: Build shadow jars
         run: ./gradlew buildAll
 
+      - name: Run tests
+        run: ./gradlew test
+
       - name: Collect artifacts
         run: |
           mkdir -p release
