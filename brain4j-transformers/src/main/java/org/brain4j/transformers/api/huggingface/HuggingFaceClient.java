@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
 
+@SuppressWarnings("deprecation")
 public class HuggingFaceClient implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(HuggingFaceClient.class);

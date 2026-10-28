@@ -10,6 +10,7 @@ import static java.util.Locale.ENGLISH;
 /**
  * Shared math utilities. Use it for formatting, numerics, and tensor helpers.
  */
+@SuppressWarnings("unchecked")
 public class Commons {
 
     public static final String HEADER_CHAR = "━";

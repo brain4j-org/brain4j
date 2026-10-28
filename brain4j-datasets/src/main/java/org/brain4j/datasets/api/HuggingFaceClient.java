@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
+@SuppressWarnings("deprecation")
 public class HuggingFaceClient implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(HuggingFaceClient.class);

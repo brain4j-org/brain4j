@@ -34,6 +34,7 @@ import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
  * Runs epoch and batch loops with monitors and progress reporting.
  * Use it as the default synchronous and background trainer.
  */
+@SuppressWarnings("unchecked")
 public final class DefaultTrainer implements Trainer {
 
     private final Model model;

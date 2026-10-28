@@ -9,6 +9,8 @@
 
 Brain4J is a lightweight, performant & open-source deep learning framework for Java.
 
+Brain4J 3.0 requires Java 22 or newer.
+
 Designed with portability and speed in mind, it's optimized for high performance, and it's ideal for those looking forward
 to implement efficient and portable machine learning solutions in pure Java.
 
