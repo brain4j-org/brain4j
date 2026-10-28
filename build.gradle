@@ -37,12 +37,12 @@ subprojects {
     repositories {
         mavenCentral()
         maven {
-            name "brain4jReleases"
-            url "https://repo.brain4j.org/releases"
+            name = "brain4jReleases"
+            url = "https://repo.brain4j.org/releases"
         }
         maven {
-            name "brain4jSnapshots"
-            url "https://repo.brain4j.org/snapshots"
+            name = "brain4jSnapshots"
+            url = "https://repo.brain4j.org/snapshots"
         }
     }
 
@@ -78,7 +78,6 @@ subprojects {
 
     compileJava {
         options.encoding = "UTF-8"
-        options.compilerArgs.addAll(["--enable-preview"])
     }
 
     java {
@@ -92,21 +91,19 @@ subprojects {
 
     tasks.withType(JavaCompile).configureEach {
         options.release = javaVersion
-        options.compilerArgs.addAll(["--enable-preview"])
     }
 
     tasks.withType(Test).configureEach {
-        jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+        jvmArgs("--add-modules", "jdk.incubator.vector")
     }
 
     tasks.withType(Javadoc).configureEach {
         options.source = String.valueOf(javaVersion)
-        options.addBooleanOption('-enable-preview', true)
         options.addStringOption('-add-modules', 'jdk.incubator.vector')
     }
 
     tasks.withType(JavaExec).configureEach {
-        jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+        jvmArgs("--add-modules", "jdk.incubator.vector")
     }
 }
 

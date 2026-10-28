@@ -39,15 +39,17 @@ public record Sequential(Graph graph, ModelLayout layout, Device device, List<La
      * @param seed the weight initialization seed
      */
     public Sequential(ModelLayout layout, Device device, int seed) {
-        List<Layer> layers = layout.buildLayerList();
+        this(buildGraph(layout, seed), layout, device, layout.buildLayerList(), seed);
+    }
 
+    private static Graph buildGraph(ModelLayout layout, int seed) {
         Node lastNode = Node.input(layout.inputShape());
 
-        for (Layer current : layers) {
+        for (Layer current : layout.buildLayerList()) {
             lastNode = current.apply(lastNode);
         }
 
-        this(Graph.of(seed, lastNode), layout, device, layout.buildLayerList(), seed);
+        return Graph.of(seed, lastNode);
     }
 
     /**
