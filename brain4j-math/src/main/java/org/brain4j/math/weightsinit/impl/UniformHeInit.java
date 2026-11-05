@@ -23,7 +23,6 @@ public class UniformHeInit implements WeightInit {
     @Override
     public double generate(RandomGenerator generator, int input, int output) {
         double bound = bound(input, output);
-
         return randomBetween(generator, -bound, bound);
     }
 }

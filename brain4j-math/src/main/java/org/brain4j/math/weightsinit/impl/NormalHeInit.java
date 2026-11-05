@@ -14,7 +14,7 @@ public class NormalHeInit implements WeightInit {
      */
     @Override
     public double bound(int input, int output) {
-        return 2.0 / input;
+        return Math.sqrt(2.0 / input);
     }
 
     /**
@@ -22,6 +22,6 @@ public class NormalHeInit implements WeightInit {
      */
     @Override
     public double generate(RandomGenerator generator, int input, int output) {
-        return randomBetween(generator, 0, bound(input, output));
+        return generator.nextGaussian() * bound(input, output);
     }
 }
