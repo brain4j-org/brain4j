@@ -5,16 +5,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.SplittableRandom;
-import java.util.concurrent.ForkJoinPool;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
 
 import org.brain4j.math.commons.Range;
-import org.brain4j.math.convolution.im2col.Im2ColParams;
-import org.brain4j.math.convolution.im2col.Im2ColTask;
-import org.brain4j.math.operations.ParallelConvolve;
+import org.brain4j.math.tensor.DType;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.engine.impl.JavaTensorEngine;
+import org.brain4j.math.tensor.engine.TensorEngine;
 import org.brain4j.math.tensor.impl.CpuTensor;
 
 /**
@@ -24,20 +23,29 @@ import org.brain4j.math.tensor.impl.CpuTensor;
  * (scalars, vectors, matrices, identity tensors, random initialization),
  * as well as low-level shape, indexing and broadcasting utilities.
  *
- * <p>Unless otherwise specified, all tensors produced by this class are
- * CPU-backed and implemented as {@link CpuTensor}.
+ * <p>Unless otherwise specified, all tensors produced by this class use the
+ * currently configured tensor engine.
  *
  * <p>The methods provided here are intentionally low-level and performance-oriented;
  * most of them do not perform extensive validation beyond shape compatibility.
  * Incorrect usage may therefore result in undefined behavior or runtime exceptions.
  */
-public class Tensors {
+public final class Tensors {
+    private static volatile TensorEngine engine = new JavaTensorEngine();
 
-    /** Number of threads suggested for parallel operations. */
-    public static final int PARALLELISM = Runtime.getRuntime().availableProcessors();
+    private Tensors() {
+    }
 
-    /** Complexity threshold used to decide when to split tasks for parallel algorithms. */
-    public static final int SPLIT_COMPLEXITY_THRESHOLD = 1 << 10; // 1024
+    public static TensorEngine engine() {
+        return engine;
+    }
+
+    public static void setEngine(TensorEngine tensorEngine) {
+        if (tensorEngine == null) {
+            throw new NullPointerException("tensorEngine");
+        }
+        engine = tensorEngine;
+    }
 
     /**
      * Creates a scalar {@link Tensor} containing a single value.
@@ -48,7 +56,7 @@ public class Tensors {
      * @return a rank-1 tensor of length 1
      */
     public static Tensor scalar(double value) {
-        return new CpuTensor(Shape.of(1), (float) value);
+        return create(Shape.of(1), (float) value);
     }
 
     /**
@@ -76,7 +84,18 @@ public class Tensors {
      * @return a new {@link Tensor} instance
      */
     public static Tensor create(Shape shape, float... data) {
-        return new CpuTensor(shape, data);
+        return create(shape, DType.FLOAT32, data);
+    }
+
+    public static Tensor create(Shape shape, DType dtype, float... data) {
+        return engine.create(shape, dtype, data);
+    }
+
+    public static Tensor create(TensorEngine tensorEngine, Shape shape, DType dtype, float... data) {
+        if (tensorEngine == null) {
+            throw new NullPointerException("tensorEngine");
+        }
+        return tensorEngine.create(shape, dtype, data);
     }
 
     /**
@@ -131,7 +150,7 @@ public class Tensors {
      * @return a tensor initialized with zeros
      */
     public static Tensor zeros(int... shape) {
-        return new CpuTensor(Shape.of(shape));
+        return zeros(Shape.of(shape));
     }
 
     /**
@@ -141,7 +160,12 @@ public class Tensors {
      * @return a tensor initialized with zeros
      */
     public static Tensor zeros(Shape shape) {
-        return new CpuTensor(shape);
+        return engine.zeros(shape, DType.FLOAT32);
+    }
+
+    // TODO: javadoc
+    public static Tensor zeros(Shape shape, DType dtype) {
+        return engine.zeros(shape, dtype);
     }
 
     /**
@@ -182,7 +206,7 @@ public class Tensors {
      * @return a tensor initialized with ones
      */
     public static Tensor ones(Shape shape) {
-        Tensor result = new CpuTensor(shape);
+        Tensor result = zeros(shape);
         Arrays.fill(result.data(), 1);
         return result;
     }
@@ -235,32 +259,6 @@ public class Tensors {
      */
     public static Tensor random(Shape shape) {
         return random(new SplittableRandom(), shape);
-    }
-
-    /**
-     * Performs a convolution between an input tensor and a kernel tensor.
-     *
-     * <p>This method delegates to {@link ParallelConvolve} and may execute
-     * in parallel depending on tensor size.
-     *
-     * @param input input tensor
-     * @param kernel convolution kernel
-     * @return the result of the convolution
-     */
-    public static Tensor convolve(Tensor input, Tensor kernel) {
-        return convolve(input, kernel, 1);
-    }
-
-    /**
-     * Performs a convolution between an input tensor and a kernel tensor with a configurable stride.
-     *
-     * @param input input tensor
-     * @param kernel convolution kernel
-     * @param stride stride to apply on both spatial dimensions
-     * @return the result of the convolution
-     */
-    public static Tensor convolve(Tensor input, Tensor kernel, int stride) {
-        return ParallelConvolve.convolve(input, kernel, stride);
     }
 
     /**
@@ -374,7 +372,7 @@ public class Tensors {
         Tensor base = tensors.getFirst();
 
         for (int i = 1; i < tensors.size(); i++) {
-            base = base.concatGrad(tensors.get(i), dim);
+            base = base.concat(tensors.get(i), dim);
         }
 
         return base;
@@ -393,7 +391,7 @@ public class Tensors {
      */
     public static Tensor orthogonal(int rows, int cols) {
         Random rng = new Random();
-        Tensor A = Tensors.zeros(rows, cols).map(x -> rng.nextGaussian());
+        Tensor A = Tensors.zeros(rows, cols).map(x -> (float) rng.nextGaussian());
 
         List<Tensor> Q = new ArrayList<>();
 
@@ -441,20 +439,6 @@ public class Tensors {
         return Tensors.zeros(other.shape());
     }
 
-    /**
-     * Transforms an input image tensor into column format (im2col),
-     * typically used to express convolution as a matrix multiplication.
-     *
-     * <p>The input tensor is expected to have shape {@code [channels, height, width]}.
-     *
-     * @param input        input image tensor
-     * @param filterHeight convolution kernel height
-     * @param filterWidth  convolution kernel width
-     * @return a 2D tensor of shape {@code [patchSize, totalPatches]}
-     */
-    public static Tensor im2col(Tensor input, int filterHeight, int filterWidth) {
-        return im2col(input, filterHeight, filterWidth, 1);
-    }
 
     /**
      * Transforms an input image tensor into column format (im2col) with a configurable stride.
@@ -480,90 +464,8 @@ public class Tensors {
         float[] inputData = input.data();
         float[] resultData = new float[patchSize * totalPatches];
 
-        Im2ColParams params = new Im2ColParams(
-            inputData,
-            resultData,
-            0,
-            0,
-            channels,
-            inHeight,
-            inWidth,
-            filterHeight,
-            filterWidth,
-            outHeight,
-            outWidth
-        );
-
-        try (ForkJoinPool pool = ForkJoinPool.commonPool()) {
-            pool.invoke(new Im2ColTask(params, 0, totalPatches));
-        }
-
+        // TODO: delete this
         return Tensors.create(Shape.of(patchSize, totalPatches), resultData);
-    }
-
-    /**
-     * Reconstructs an image tensor from its column representation (col2im).
-     *
-     * <p>This operation accumulates overlapping patches.
-     *
-     * @param cols         column tensor
-     * @param channels     number of channels
-     * @param inHeight     input height
-     * @param inWidth      input width
-     * @param filterHeight kernel height
-     * @param filterWidth  kernel width
-     * @return reconstructed image tensor
-     */
-    public static Tensor col2im(Tensor cols, int channels, int inHeight, int inWidth,
-                                int filterHeight, int filterWidth) {
-        return col2im(cols, channels, inHeight, inWidth, filterHeight, filterWidth, 1);
-    }
-
-    /**
-     * Reconstructs an image tensor from its column representation (col2im) with a configurable stride.
-     *
-     * @param cols column tensor
-     * @param channels number of channels
-     * @param inHeight input height
-     * @param inWidth input width
-     * @param filterHeight kernel height
-     * @param filterWidth kernel width
-     * @param stride stride used during im2col
-     * @return reconstructed image tensor
-     */
-    public static Tensor col2im(Tensor cols, int channels, int inHeight, int inWidth,
-                                int filterHeight, int filterWidth, int stride) {
-        int[] colShape = cols.shape(); // [patchSize, totalPatches]
-        int patchSize = colShape[0];
-        int totalPatches = colShape[1];
-
-        int outWidth = (inWidth - filterWidth) / stride + 1;
-
-        float[] colData = cols.data();
-        float[] imgData = new float[channels * inHeight * inWidth];
-
-        for (int patchIdx = 0; patchIdx < totalPatches; patchIdx++) {
-            int outRow = patchIdx / outWidth;
-            int outCol = patchIdx % outWidth;
-            int inRow = outRow * stride;
-            int inCol = outCol * stride;
-            int baseOffset = patchIdx * patchSize;
-
-            for (int c = 0; c < channels; c++) {
-                int channelOffset = c * filterHeight * filterWidth;
-                int imgChannelOffset = c * inHeight * inWidth;
-
-                for (int fh = 0; fh < filterHeight; fh++) {
-                    int srcPos = baseOffset + channelOffset + fh * filterWidth;
-                    int destPos = imgChannelOffset + (inRow + fh) * inWidth + inCol;
-                    for (int fw = 0; fw < filterWidth; fw++) {
-                        imgData[destPos + fw] += colData[srcPos + fw];
-                    }
-                }
-            }
-        }
-
-        return Tensors.create(Shape.of(channels, inHeight, inWidth), imgData);
     }
 
     /**

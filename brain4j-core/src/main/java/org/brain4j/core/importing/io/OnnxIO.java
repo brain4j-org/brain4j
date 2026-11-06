@@ -43,8 +43,8 @@ import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.activation.impl.Swish;
 import org.brain4j.math.activation.impl.Tanh;
 import org.brain4j.math.commons.Commons;
-import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
+import org.brain4j.math.operations.Operation;
+import org.brain4j.math.operations.impl.ActivationOperation;
 
 /**
  * Maps ONNX op types to codecs for import and export.

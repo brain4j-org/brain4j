@@ -1,392 +1,611 @@
 package org.brain4j.math.tensor.impl;
 
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntConsumer;
 
 import org.brain4j.math.Tensors;
-import org.brain4j.math.broadcast.TensorBroadcast;
+import org.brain4j.math.activation.Activation;
+import org.brain4j.math.commons.FloatToFloatFunction;
+import org.brain4j.math.commons.Range;
 import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.operations.ParallelTranspose;
-import org.brain4j.math.operations.matmul.MatmulProvider;
-import org.brain4j.math.operations.matmul.impl.NormalMatMulProvider;
-import org.brain4j.math.operations.matmul.impl.SIMDMatMulProvider;
+import org.brain4j.math.operations.AutogradContext;
+import org.brain4j.math.operations.Operation;
+import org.brain4j.math.tensor.DType;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.TensorLayout;
+import org.brain4j.math.tensor.storage.impl.CpuStorage;
 
-/**
- * Stores tensor data in heap memory. Use it for CPU execution with SIMD or
- * scalar matmul kernels.
- */
-public class CpuTensor extends BaseTensor {
+// TODO
+public record CpuTensor(CpuStorage storage, TensorLayout layout) implements Tensor {
 
-    private static final MatmulProvider matmulProvider;
-
-    static {
-
-        if (DeviceUtils.isSimdAvailable()) {
-            matmulProvider = new SIMDMatMulProvider();
-        } else {
-
-            System.err.println("The Vector incubator API is not available. It's recommended to use for better performance.");
-            System.err.println("For more information consult this guide: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD");
-
-            matmulProvider = new NormalMatMulProvider();
-        }
+    public CpuTensor(Shape shape) {
+        this(shape, new float[shape.size()]);
     }
 
-    /**
-     * Create a CPU tensor with the given shape.
-     *
-     * @param shape tensor shape
-     * @param data initial data, or empty for zeros
-     */
     public CpuTensor(Shape shape, float... data) {
-        if (data.length == 0) {
-            data = new float[Tensors.computeSize(shape.dims())];
-        }
-
-        this.data = data;
-        this.shape = shape.dims();
-        this.strides = Tensors.computeStrides(shape.dims());
+        this(shape, Tensors.computeStrides(shape.dims()), data);
     }
 
-    /**
-     * Create a CPU tensor with explicit strides.
-     *
-     * @param shape tensor shape
-     * @param strides stride per dimension
-     * @param data initial data, or empty for zeros
-     */
     public CpuTensor(Shape shape, int[] strides, float... data) {
-        if (data.length == 0) {
-            data = new float[Tensors.computeSize(shape.dims())];
-        }
-
-        this.data = data;
-        this.shape = shape.dims();
-        this.strides = strides;
+        this(new CpuStorage(DType.FLOAT32, data),
+                new TensorLayout(shape.dims(), strides, 0));
+        validateStorageBounds();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor transpose() {
-        int rank = shape.length;
-        return transpose(rank - 2, rank - 1);
+    private void validateStorageBounds() {
+        if (layout.elements() == 0) {
+            return;
+        }
+        int maximum = layout.offset();
+        for (int i = 0; i < layout.rank(); i++) {
+            maximum += (layout.shape()[i] - 1) * layout.strides()[i];
+        }
+        if (layout.offset() < 0 || maximum >= storage.elements()) {
+            throw new IllegalArgumentException("Layout exceeds storage bounds");
+        }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor transpose(int dim1, int dim2) {
-        // Transpose into contiguous memory because SIMD requires contiguous data.
-
-        if (matmulProvider instanceof NormalMatMulProvider) {
-            return super.transpose(dim1, dim2);
-        }
-
-        int rank = shape.length;
-
-        if (rank == 1) {
-            return reshape(1, elements());
-        }
-
-        int[] newShape = shape.clone();
-
-        int rows = shape[dim1];
-        int cols = shape[dim2];
-
-        newShape[dim1] = cols;
-        newShape[dim2] = rows;
-
-        BaseTensor result = (BaseTensor) Tensors.create(newShape);
-
-        int bound = 1 << 10;
-
-        if (elements() >= bound) {
-            ParallelTranspose.transpose(this, result, dim1, dim2);
-            return result;
-        }
-
-        int[] srcStride = this.strides;
-        int[] dstStride = result.strides;
-        int[] loopShape = result.shape;
-
-        int[] destToSrc = new int[rank];
-
-        for (int d = 0; d < rank; d++) {
-            destToSrc[d] = d;
-        }
-
-        destToSrc[dim1] = dim2;
-        destToSrc[dim2] = dim1;
-
-        transposeRecursive(
-            this.data, result.data,
-            loopShape, srcStride, dstStride, destToSrc,
-            0, 0, 0
-        );
-
-        return result;
+    private CpuTensor view(TensorLayout viewLayout) {
+        return new CpuTensor(storage, viewLayout);
     }
 
-    private void transposeRecursive(
-        float[] src, float[] dst,
-        int[] loopShape,
-        int[] srcStride, int[] dstStride,
-        int[] destToSrc,
-        int dim, int srcOffset, int dstOffset
-    ) {
-        if (dim == loopShape.length) {
-            dst[dstOffset] = src[srcOffset];
+    public CpuStorage storage() {
+        return storage;
+    }
+
+    public TensorLayout layout() {
+        return layout;
+    }
+
+    private void forEachIndex(IntConsumer consumer) {
+        int count = elements();
+        int physicalIndex = layout.offset();
+
+        if (layout.isContiguous()) {
+            for (int linear = 0; linear < count; linear++) {
+                consumer.accept(physicalIndex + linear);
+            }
             return;
         }
 
-        int sStride = srcStride[destToSrc[dim]];
-        int dStride = dstStride[dim];
-        int extent = loopShape[dim];
+        int[] shape = layout.shape();
+        int[] strides = layout.strides();
+        int[] indices = new int[rank()];
 
-        int s = srcOffset;
-        int d = dstOffset;
-
-        for (int i = 0; i < extent; i++) {
-            transposeRecursive(src, dst, loopShape, srcStride, dstStride, destToSrc,
-                dim + 1, s, d);
-            s += sStride;
-            d += dStride;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor to(Object device) {
-        switch (device) {
-            case null -> {
-                return this;
+        for (int linear = 0; linear < count; linear++) {
+            consumer.accept(physicalIndex);
+            if (linear + 1 < count) {
+                physicalIndex = CpuStorage.advanceIndex(indices, shape, strides, physicalIndex);
             }
-            case Device legacyDevice -> {
-                GpuTensor result = new GpuTensor(legacyDevice, shape, contiguousData());
-                result.setAutogradContext(autogradContext);
-                return result;
-            }
-            default -> throw new IllegalStateException("Unexpected value: " + device);
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Tensor add(Tensor other) {
-        if (!(other instanceof CpuTensor)) {
-            return add(other.to(null));
-        }
-
-        return TensorBroadcast.add(this, other);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor add(double value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] += (float) value;
-        }
-        
-        return this;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor sub(Tensor other) {
-        if (!(other instanceof CpuTensor)) {
-            return sub(other.to(null));
-        }
-
-        return TensorBroadcast.sub(this, other);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor sub(double value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] -= (float) value;
-        }
-        
-        return this;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor mul(Tensor other) {
-        if (!(other instanceof CpuTensor)) {
-            return mul(other.to(null));
-        }
-
-        return TensorBroadcast.mul(this, other);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Tensor mul(double value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] *= (float) value;
-        }
-        
-        return this;
+    public int shapeAt(int index) {
+        return layout.shape()[index];
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Tensor div(Tensor other) {
-        if (!(other instanceof CpuTensor)) {
-            return div(other.to(null));
-        }
-
-        return TensorBroadcast.div(this, other);
+    public int[] shape() {
+        return layout.shape();
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
-    public Tensor div(double value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] /= (float) value;
+    public float[] data() {
+        if (!layout.isContiguous() || layout.offset() != 0) {
+            return storage.copy(layout).data();
         }
-        
-        return this;
+        return storage.data();
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
-    public Tensor pow(Tensor other) {
-        if (!(other instanceof CpuTensor)) {
-            return pow(other.to(null));
-        }
-        
-        return TensorBroadcast.pow(this, other);
+    public int[] strides() {
+        return layout.strides();
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
-    public Tensor pow(double value) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (float) Math.pow(data[i], value);
-        }
-        
-        return this;
+    public DType dtype() {
+        return storage.dtype();
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
-    public Tensor sqrt() {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (float) Math.sqrt(data[i]);
-        }
-        
-        return this;
+    public boolean isContiguous() {
+        return layout.isContiguous() && layout.offset() == 0;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
-    public Tensor matmul(Tensor other) {
-        int[] shapeA = this.shape;
-        int[] shapeB = other.shape();
-
-        if (shapeA.length < 2 || shapeB.length < 2) {
-            throw new IllegalArgumentException("Matrix multiplication requires at least 2D tensors!");
-        }
-
-        int rankA = shapeA.length;
-        int rankB = shapeB.length;
-
-        int m = shapeA[rankA - 2];
-        int n = shapeA[rankA - 1];
-
-        int k = shapeB[rankB - 2];
-        int p = shapeB[rankB - 1];
-
-        if (n != k) {
-            throw new IllegalArgumentException("Inner dimensions must match: " + n + " != " + k +
-                ". A: " + Arrays.toString(shapeA) + ", B: " + Arrays.toString(shapeB));
-        }
-
-        int maxBatchDims = Math.max(rankA, rankB) - 2;
-        int[] batchShape = new int[maxBatchDims];
-
-        for (int i = 0; i < maxBatchDims; i++) {
-            int dimA = (i < rankA - 2) ? shapeA[i + rankA - 2 - maxBatchDims] : 1;
-            int dimB = (i < rankB - 2) ? shapeB[i + rankB - 2 - maxBatchDims] : 1;
-
-            if (dimA != dimB && dimA != 1 && dimB != 1) {
-                throw new IllegalArgumentException(
-                    "Cannot broadcast batch dimensions: " + dimA + " vs " + dimB + " at batch dim index " + i
-                );
-            }
-
-            batchShape[i] = Math.max(dimA, dimB);
-        }
-
-        int[] resultShape = new int[batchShape.length + 2];
-
-        System.arraycopy(batchShape, 0, resultShape, 0, batchShape.length);
-
-        resultShape[resultShape.length - 2] = m;
-        resultShape[resultShape.length - 1] = p;
-
-        Tensor result = new CpuTensor(Shape.of(resultShape));
-
-        matmulProvider.multiply(this, other, result);
-
+    public byte[] toByteArray() {
+        byte[] result = new byte[elements() * Float.BYTES];
+        ByteBuffer buffer = ByteBuffer.wrap(result);
+        forEachIndex(index -> buffer.putFloat(storage.getFloat(index)));
         return result;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
-    public Tensor copy() {
-        return new CpuTensor(Shape.of(shape), strides.clone(), data.clone());
+    public int linearIndex(int... indices) {
+        return layout.linearIndex(indices);
     }
 
-    private float[] contiguousData() {
-        int size = elements();
+    @Override
+    public float get(int... indices) {
+        return storage.getFloat(linearIndex(indices));
+    }
 
-        if (!transposed) {
-            return Arrays.copyOf(data, size);
+    @Override
+    public Tensor set(float value, int... indices) {
+        storage.setFloat(linearIndex(indices), value);
+        return this;
+    }
+
+    @Override
+    public int rank() {
+        return layout.rank();
+    }
+
+    @Override
+    public int elements() {
+        return layout.elements();
+    }
+
+    @Override
+    public int argmax() {
+        if (elements() == 0) {
+            throw new IllegalStateException("Cannot compute argmax of an empty tensor");
         }
 
-        float[] contiguous = new float[size];
-
-        for (int linear = 0; linear < size; linear++) {
-            int[] indices = Tensors.unravelIndex(linear, shape);
-            contiguous[linear] = get(indices);
+        if (layout.isContiguous()) {
+            return argmaxContiguous();
         }
 
-        return contiguous;
+        return argmaxStrided();
+    }
+
+    private int argmaxContiguous() {
+        float[] values = storage.data();
+        int offset = layout.offset();
+        int best = 0;
+        float maximum = values[offset];
+        for (int linear = 1; linear < elements(); linear++) {
+            float value = values[offset + linear];
+            if (value > maximum) {
+                maximum = value;
+                best = linear;
+            }
+        }
+        return best;
+    }
+
+    private int argmaxStrided() {
+        int[] shape = layout.shape();
+        int[] strides = layout.strides();
+        int[] indices = new int[rank()];
+        int physicalIndex = layout.offset();
+        int best = 0;
+        float maximum = storage.getFloat(physicalIndex);
+
+        for (int linear = 1; linear < elements(); linear++) {
+            physicalIndex = CpuStorage.advanceIndex(indices, shape, strides, physicalIndex);
+            float value = storage.getFloat(physicalIndex);
+            if (value > maximum) {
+                maximum = value;
+                best = linear;
+            }
+        }
+        return best;
+    }
+
+    @Override
+    public Tensor to(Device device) {
+        return null;
+    }
+
+    @Override
+    public Tensor add(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor add(double value) {
+        return null;
+    }
+
+    @Override
+    public Tensor sub(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor sub(double value) {
+        return null;
+    }
+
+    @Override
+    public Tensor mul(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor mul(double value) {
+        return null;
+    }
+
+    @Override
+    public Tensor div(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor div(double value) {
+        return null;
+    }
+
+    @Override
+    public Tensor pow(double value) {
+        return null;
+    }
+
+    @Override
+    public Tensor pow(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor sqrt() {
+        return null;
+    }
+
+    @Override
+    public Tensor flatten() {
+        return reshape(elements());
+    }
+
+    @Override
+    public Tensor matmul(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor convolve(Tensor kernel) {
+        return null;
+    }
+
+    @Override
+    public Tensor convolve(Tensor kernel, int stride) {
+        return null;
+    }
+
+    @Override
+    public double distance(Tensor other) {
+        return 0;
+    }
+
+    @Override
+    public double distanceSquared(Tensor other) {
+        return 0;
+    }
+
+    @Override
+    public Tensor broadcast(int[] targetShape) {
+        return null;
+    }
+
+    @Override
+    public Tensor broadcastLike(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public double sum() {
+        return 0;
+    }
+
+    @Override
+    public double mean() {
+        return 0;
+    }
+
+    @Override
+    public double variance() {
+        return 0;
+    }
+
+    @Override
+    public double max() {
+        return 0;
+    }
+
+    @Override
+    public double min() {
+        return 0;
+    }
+
+    @Override
+    public Tensor sum(int dim, boolean keepDim) {
+        return null;
+    }
+
+    @Override
+    public Tensor mean(int dim, boolean keepDim) {
+        return null;
+    }
+
+    @Override
+    public Tensor variance(int dim, boolean keepDim) {
+        return null;
+    }
+
+    @Override
+    public Tensor variance(Tensor mean, int dim, boolean keepDim) {
+        return null;
+    }
+
+    @Override
+    public Tensor sign() {
+        return null;
+    }
+
+    @Override
+    public Tensor reshape(int... newShape) {
+        try {
+            return view(Shape.of(newShape));
+        } catch (IllegalArgumentException exception) {
+            return contiguous().view(Shape.of(newShape));
+        }
+    }
+
+    @Override
+    public Tensor view(Shape shape) {
+        int[] newShape = shape.dims();
+        int[] newStrides = calculateViewStrides(newShape);
+        return view(new TensorLayout(newShape, newStrides, layout.offset()));
+    }
+
+    private int[] calculateViewStrides(int[] newShape) {
+        if (Tensors.computeSize(newShape) != elements()) {
+            throw new IllegalArgumentException("View changes element count");
+        }
+
+        int rank = rank();
+        int[] oldShape = layout.shape();
+        int[] oldStrides = layout.strides();
+        int[] chunkSizes = new int[rank];
+        int[] chunkStrides = new int[rank];
+        int chunkCount = 0;
+
+        for (int dimension = rank - 1; dimension >= 0; dimension--) {
+            int size = oldShape[dimension];
+            int stride = oldStrides[dimension];
+            if (chunkCount == 0
+                    || stride != chunkStrides[chunkCount - 1] * chunkSizes[chunkCount - 1]) {
+                chunkSizes[chunkCount] = size;
+                chunkStrides[chunkCount] = stride;
+                chunkCount++;
+            } else {
+                chunkSizes[chunkCount - 1] *= size;
+            }
+        }
+
+        int[] newStrides = new int[newShape.length];
+        int chunk = 0;
+        int remaining = chunkCount == 0 ? 1 : chunkSizes[chunkCount - 1];
+        int stride = chunkCount == 0 ? 1 : chunkStrides[chunkCount - 1];
+        int consumed = 1;
+
+        for (int dimension = newShape.length - 1; dimension >= 0; dimension--) {
+            int size = newShape[dimension];
+            if (size < 0 || (size > 1 && remaining % size != 0)) {
+                throw new IllegalArgumentException("Shape is incompatible with this tensor layout");
+            }
+            newStrides[dimension] = stride * consumed;
+            if (size > 1) {
+                remaining /= size;
+                consumed *= size;
+                if (remaining == 1 && chunk + 1 < chunkCount) {
+                    chunk++;
+                    remaining = chunkSizes[chunkCount - 1 - chunk];
+                    stride = chunkStrides[chunkCount - 1 - chunk];
+                    consumed = 1;
+                }
+            }
+        }
+
+        if (chunk + 1 < chunkCount || remaining != 1) {
+            throw new IllegalArgumentException("Shape is incompatible with this tensor layout");
+        }
+        return newStrides;
+    }
+
+    @Override
+    public Tensor contiguous() {
+        if (layout.isContiguous() && layout.offset() == 0) {
+            return this;
+        }
+
+        int[] strides = Tensors.computeStrides(shape());
+
+        CpuStorage contiguousStorage = storage.copy(layout);
+        TensorLayout contiguousLayout = new TensorLayout(shape(), strides, 0);
+
+        return new CpuTensor(contiguousStorage, contiguousLayout);
+    }
+
+    @Override
+    public Tensor squeeze() {
+        return null;
+    }
+
+    @Override
+    public Tensor squeeze(int dimension) {
+        return null;
+    }
+
+    @Override
+    public Tensor unsqueeze() {
+        return null;
+    }
+
+    @Override
+    public Tensor unsqueeze(int dimension) {
+        return null;
+    }
+
+    @Override
+    public Tensor transpose() {
+        if (rank() < 2) {
+            return this;
+        }
+        return transpose(rank() - 2, rank() - 1);
+    }
+
+    @Override
+    public Tensor transpose(int dim1, int dim2) {
+        // Handle negative dimensions
+        int first = Math.floorMod(dim1, rank());
+        int second = Math.floorMod(dim2, rank());
+        int[] shape = layout.shape();
+        int[] strides = layout.strides();
+
+        int dimension = shape[first];
+
+        shape[first] = shape[second];
+        shape[second] = dimension;
+
+        dimension = strides[first];
+        strides[first] = strides[second];
+        strides[second] = dimension;
+
+        return view(new TensorLayout(shape, strides, layout.offset()));
+    }
+
+    @Override
+    public boolean transposed() {
+        return !layout.isContiguous();
+    }
+
+    @Override
+    public Tensor concat(Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor concat(Tensor other, int dimension) {
+        return null;
+    }
+
+    @Override
+    public Tensor activate(Activation activation) {
+        return null;
+    }
+
+    @Override
+    public Tensor select(int dim, int index) {
+        return null;
+    }
+
+    @Override
+    public Tensor slice(Range... ranges) {
+        return null;
+    }
+
+    @Override
+    public Tensor map(FloatToFloatFunction function) {
+        forEachIndex(index -> storage.setFloat(index, function.apply(storage.getFloat(index))));
+        return this;
+    }
+
+    @Override
+    public Tensor fill(float value) {
+        forEachIndex(index -> storage.setFloat(index, value));
+        return this;
+    }
+
+    @Override
+    public Tensor fill(DoubleSupplier supplier) {
+        return null;
+    }
+
+    @Override
+    public AutogradContext autogradContext() {
+        return null;
+    }
+
+    @Override
+    public void setAutogradContext(AutogradContext autogradContext) {
+
+    }
+
+    @Override
+    public Tensor withGrad() {
+        return null;
+    }
+
+    @Override
+    public Tensor noGrad() {
+        return null;
+    }
+
+    @Override
+    public boolean usesGrad() {
+        return false;
+    }
+
+    @Override
+    public void zeroGrad() {
+
+    }
+
+    @Override
+    public Tensor grad() {
+        return null;
+    }
+
+    @Override
+    public void backward() {
+
+    }
+
+    @Override
+    public void backward(Tensor gradOutput) {
+
+    }
+
+    @Override
+    public Tensor forward(Operation operation) {
+        return null;
+    }
+
+    @Override
+    public Tensor forward(Operation operation, Tensor other) {
+        return null;
+    }
+
+    @Override
+    public Tensor forward(Operation operation, Tensor... others) {
+        return null;
+    }
+
+    @Override
+    public Tensor softmax() {
+        return null;
+    }
+
+    @Override
+    public Tensor softmax(double temperature) {
+        return null;
+    }
+
+    @Override
+    public String toString(String format) {
+        return "";
+    }
+
+    @Override
+    public Tensor copy() {
+        CpuStorage copiedStorage = storage.copy(layout);
+        TensorLayout copiedLayout = new TensorLayout(shape(), Tensors.computeStrides(shape()), 0);
+
+        return new CpuTensor(copiedStorage, copiedLayout);
     }
 }

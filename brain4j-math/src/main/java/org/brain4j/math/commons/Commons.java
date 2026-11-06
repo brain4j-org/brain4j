@@ -223,26 +223,6 @@ public class Commons {
     }
 
     /**
-     * Create an instance from a class name.
-     *
-     * @return a new instance
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> T newInstance(String classPath) {
-        // Keep backward compatibility with pre-2.9 package names.
-        classPath = classPath.replace("net.echo.brain4j", "org.brain4j.core");
-        classPath = classPath.replace("net.echo.math", "org.brain4j.math");
-
-        try {
-            Class<?> clazz = Class.forName(classPath);
-
-            return (T) newInstance(clazz);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * Create an instance with the no-arg constructor.
      *
      * @return a new instance

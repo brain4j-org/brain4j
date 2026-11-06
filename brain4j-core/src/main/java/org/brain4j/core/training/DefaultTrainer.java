@@ -26,9 +26,9 @@ import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.loss.impl.CrossEntropy;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.autograd.AutogradContext;
-import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
+import org.brain4j.math.operations.AutogradContext;
+import org.brain4j.math.operations.Operation;
+import org.brain4j.math.operations.impl.ActivationOperation;
 
 /**
  * Runs epoch and batch loops with monitors and progress reporting.

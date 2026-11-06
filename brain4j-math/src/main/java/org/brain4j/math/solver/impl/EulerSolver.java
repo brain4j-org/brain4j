@@ -17,14 +17,14 @@ public record EulerSolver(int mSteps) implements NumericalSolver {
     @Override
     public Tensor update(Tensor deltaTimestep, Tensor tauT, Tensor projInput, Tensor hidden, Function<Tensor, Tensor> hiddenFunction) {
         Tensor deltaNorm = deltaTimestep.divide(mSteps).withGrad();
-        Tensor deltaTime = deltaNorm.broadcastLike(tauT).divGrad(tauT);
+        Tensor deltaTime = deltaNorm.broadcastLike(tauT).div(tauT);
 
         for (int i = 0; i < mSteps; i++) {
             Tensor projHidden = hiddenFunction.apply(hidden);
-            Tensor z = projInput.addGrad(projHidden).activateGrad(Activations.TANH.function());
-            Tensor deltaH = z.addGrad(hidden.mul(-1));
+            Tensor z = projInput.add(projHidden).activate(Activations.TANH.function());
+            Tensor deltaH = z.add(hidden.mul(-1));
 
-            hidden = hidden.addGrad(deltaTime.mulGrad(deltaH));
+            hidden = hidden.add(deltaTime.mul(deltaH));
         }
 
         return hidden;

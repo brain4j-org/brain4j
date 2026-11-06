@@ -64,19 +64,6 @@ public class TensorTest {
         
         assertArrayEquals(c.data(), gpuC.data(), 0.0001f);
     }
-    
-    @Test
-    public void normTest() {
-        double epsilon = 1e-5;
-
-        Tensor A = Tensors.random(32, 16, 64);
-        Tensor B = A.layerNorm(epsilon);
-
-        Tensor gpuA = A.to(device);
-        Tensor gpuB = gpuA.layerNorm(epsilon);
-
-        assertArrayEquals(B.data(), gpuB.data(), 0.001f);
-    }
 
     @Test
     public void concatTest() {

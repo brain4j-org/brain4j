@@ -164,9 +164,9 @@ public class ConvLayer extends Layer {
         Tensor w = param("kernel");
         Tensor b = param("bias");
 
-        Tensor result = input.convolveGrad(w, config.stride)
-            .addGrad(b.reshapeGrad(1, config.filters, 1, 1))
-            .activateGrad(activation);
+        Tensor result = input.convolve(w, config.stride)
+            .add(b.reshape(1, config.filters, 1, 1))
+            .activate(activation);
 
         return tensors(result);
     }

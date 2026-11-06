@@ -10,7 +10,7 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.scaler.FeatureScaler;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.autograd.AutogradContext;
+import org.brain4j.math.operations.AutogradContext;
 
 /**
  * Applies feature scaling without changing shapes.

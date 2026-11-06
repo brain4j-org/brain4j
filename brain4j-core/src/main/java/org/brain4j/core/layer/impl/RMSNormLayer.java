@@ -81,7 +81,8 @@ public class RMSNormLayer extends Layer {
         Tensor input = inputs[0];
         Tensor weights = param("weights");
 
-        Tensor norm = input.rmsNormGrad(weights, config.epsilon);
+        // TODO: rework this
+        Tensor norm = null; // input.rmsNormGrad(weights, config.epsilon);
 
         return tensors(norm);
     }

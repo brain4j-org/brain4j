@@ -87,7 +87,7 @@ public class EmbeddingLayer extends Layer {
                 Arrays.toString(shape));
         }
 
-        Tensor output = input.gatherGrad(param("weights"));
+        Tensor output = input.gather(param("weights"));
 
         return new Tensor[] { output };
     }

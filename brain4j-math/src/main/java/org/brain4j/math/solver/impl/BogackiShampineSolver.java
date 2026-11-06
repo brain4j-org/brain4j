@@ -46,7 +46,7 @@ public class BogackiShampineSolver implements NumericalSolver {
         Tensor deltaTimestep, Tensor tauT, Tensor projInput,
         Tensor hidden, Function<Tensor, Tensor> hiddenFunction
     ) {
-        Tensor alpha = deltaTimestep.broadcastLike(tauT).divGrad(tauT);
+        Tensor alpha = deltaTimestep.broadcastLike(tauT).div(tauT);
 
         Tensor k1;
         Tensor cached = cachedK1.get();
@@ -57,13 +57,13 @@ public class BogackiShampineSolver implements NumericalSolver {
             k1 = computeF(hidden, projInput, hiddenFunction);
         }
 
-        Tensor k2 = computeF(hidden.addGrad(alpha.times(k1).times(A21)), projInput, hiddenFunction);
+        Tensor k2 = computeF(hidden.add(alpha.times(k1).times(A21)), projInput, hiddenFunction);
 
-        Tensor k3 = computeF(hidden.addGrad(alpha.times(k2).times(A32)), projInput, hiddenFunction);
+        Tensor k3 = computeF(hidden.add(alpha.times(k2).times(A32)), projInput, hiddenFunction);
 
-        Tensor increment = k1.times(B1).addGrad(k2.times(B2)).addGrad(k3.times(B3));
+        Tensor increment = k1.times(B1).add(k2.times(B2)).add(k3.times(B3));
 
-        Tensor nextHidden = hidden.addGrad(alpha.times(increment));
+        Tensor nextHidden = hidden.add(alpha.times(increment));
 
         // FSAL reuses k4 as the next step k1.
         cachedK1.set(computeF(nextHidden, projInput, hiddenFunction));
@@ -80,7 +80,7 @@ public class BogackiShampineSolver implements NumericalSolver {
         Tensor hidden, Function<Tensor, Tensor> hiddenFunction,
         float tolerance
     ) {
-        Tensor alpha = deltaTimestep.broadcastLike(tauT).divGrad(tauT);
+        Tensor alpha = deltaTimestep.broadcastLike(tauT).div(tauT);
 
         Tensor k1;
         Tensor cached = cachedK1.get();
@@ -91,17 +91,17 @@ public class BogackiShampineSolver implements NumericalSolver {
             k1 = computeF(hidden, projInput, hiddenFunction);
         }
 
-        Tensor k2 = computeF(hidden.addGrad(alpha.times(k1).times(A21)), projInput, hiddenFunction);
+        Tensor k2 = computeF(hidden.add(alpha.times(k1).times(A21)), projInput, hiddenFunction);
 
-        Tensor k3 = computeF(hidden.addGrad(alpha.times(k2).times(A32)), projInput, hiddenFunction);
+        Tensor k3 = computeF(hidden.add(alpha.times(k2).times(A32)), projInput, hiddenFunction);
 
-        Tensor increment = k1.times(B1).addGrad(k2.times(B2)).addGrad(k3.times(B3));
+        Tensor increment = k1.times(B1).add(k2.times(B2)).add(k3.times(B3));
 
-        Tensor nextHidden = hidden.addGrad(alpha.times(increment));
+        Tensor nextHidden = hidden.add(alpha.times(increment));
 
         Tensor k4 = computeF(nextHidden, projInput, hiddenFunction);
 
-        Tensor errorEstimate = k1.times(E1).addGrad(k2.times(E2)).addGrad(k3.times(E3)).addGrad(k4.times(E4));
+        Tensor errorEstimate = k1.times(E1).add(k2.times(E2)).add(k3.times(E3)).add(k4.times(E4));
 
         Tensor scaledError = alpha.times(errorEstimate);
 
@@ -146,9 +146,9 @@ public class BogackiShampineSolver implements NumericalSolver {
 
     private Tensor computeF(Tensor h, Tensor projInput, Function<Tensor, Tensor> hiddenFunction) {
         Tensor projHidden = hiddenFunction.apply(h);
-        Tensor z = projInput.addGrad(projHidden).tanh();
+        Tensor z = projInput.add(projHidden).tanh();
 
-        return z.subGrad(h);
+        return z.sub(h);
     }
 
     /**

@@ -50,7 +50,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         Tensor qkv = cachedProjection(cache, weights, slicingRanges, cachedQkv, input);
 
         if (config.qkvBias()) {
-            qkv = qkv.addGrad(bias);
+            qkv = qkv.add(bias);
         }
 
         int d = headDim;
@@ -58,13 +58,13 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         int dim = config.embedDim();
 
         Range all = Range.all();
-        Tensor q = qkv.sliceGrad(all, all, Range.interval(0, dim));
-        Tensor k = qkv.sliceGrad(all, all, Range.interval(dim, 2 * dim));
-        Tensor v = qkv.sliceGrad(all, all, Range.interval(2 * dim, 3 * dim));
+        Tensor q = qkv.slice(all, all, Range.interval(0, dim));
+        Tensor k = qkv.slice(all, all, Range.interval(dim, 2 * dim));
+        Tensor v = qkv.slice(all, all, Range.interval(2 * dim, 3 * dim));
 
-        q = q.reshapeGrad(batch, seqLength, heads, d).transposeGrad(1, 2);
-        k = k.reshapeGrad(batch, seqLength, heads, d).transposeGrad(1, 2);
-        v = v.reshapeGrad(batch, seqLength, heads, d).transposeGrad(1, 2);
+        q = q.reshape(batch, seqLength, heads, d).transpose(1, 2);
+        k = k.reshape(batch, seqLength, heads, d).transpose(1, 2);
+        v = v.reshape(batch, seqLength, heads, d).transpose(1, 2);
 
         double normalizer = Math.sqrt(headDim);
 
@@ -74,18 +74,18 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
             mask = mask.to(gpu.device());
         }
 
-        Tensor kT = k.transposeGrad();
-        Tensor scores = q.matmulGrad(kT).divGrad(Tensors.scalar(normalizer));
-        Tensor attentionMap = scores.addGrad(mask);
-        Tensor probabilities = attentionMap.activateGrad(new Softmax());
-        Tensor context = probabilities.matmulGrad(v);
-        context = context.transposeGrad(1, 2);
+        Tensor kT = k.transpose();
+        Tensor scores = q.matmul(kT).div(Tensors.scalar(normalizer));
+        Tensor attentionMap = scores.add(mask);
+        Tensor probabilities = attentionMap.activate(new Softmax());
+        Tensor context = probabilities.matmul(v);
+        context = context.transpose(1, 2);
 
-        Tensor output = context.reshapeGrad(batch, seqLength, config.embedDim());
+        Tensor output = context.reshape(batch, seqLength, config.embedDim());
         Tensor result = cachedProjection(cache, outProj, slicingRanges, cachedOutput, output);
 
         if (config.outBias()) {
-            result = result.addGrad(outBias);
+            result = result.add(outBias);
         }
 
         return new Tensor[]{result};
@@ -100,7 +100,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
 
             result = cachedOutput.concat(proj, 1);
         } else {
-            result = output.matmulGrad(weights);
+            result = output.matmul(weights);
         }
 
         cache.set(weights, result);

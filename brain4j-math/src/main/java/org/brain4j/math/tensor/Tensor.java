@@ -1,32 +1,18 @@
 package org.brain4j.math.tensor;
 
-import java.util.function.Supplier;
+import java.util.function.DoubleSupplier;
 
 import org.brain4j.math.Copyable;
+import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
 import org.brain4j.math.activation.impl.Tanh;
-import org.brain4j.math.commons.D2DFunction;
+import org.brain4j.math.commons.FloatToFloatFunction;
 import org.brain4j.math.commons.Range;
-import org.brain4j.math.tensor.autograd.AutogradContext;
-import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
-import org.brain4j.math.tensor.autograd.impl.AddOperation;
-import org.brain4j.math.tensor.autograd.impl.ConcatOperation;
-import org.brain4j.math.tensor.autograd.impl.ConvolveOperation;
-import org.brain4j.math.tensor.autograd.impl.DivOperation;
-import org.brain4j.math.tensor.autograd.impl.GatherOperation;
-import org.brain4j.math.tensor.autograd.impl.LayerNormOperation;
-import org.brain4j.math.tensor.autograd.impl.MatMulOperation;
-import org.brain4j.math.tensor.autograd.impl.MaxPoolOperation;
-import org.brain4j.math.tensor.autograd.impl.MulOperation;
-import org.brain4j.math.tensor.autograd.impl.ReshapeOperation;
-import org.brain4j.math.tensor.autograd.impl.RMSNormOperation;
-import org.brain4j.math.tensor.autograd.impl.SliceOperation;
-import org.brain4j.math.tensor.autograd.impl.SqueezeOperation;
-import org.brain4j.math.tensor.autograd.impl.SubOperation;
-import org.brain4j.math.tensor.autograd.impl.TransposeOperation;
+import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.operations.AutogradContext;
+import org.brain4j.math.operations.Operation;
 
 /**
  * A multidimensional array that supports vectorized operations.
@@ -40,7 +26,7 @@ import org.brain4j.math.tensor.autograd.impl.TransposeOperation;
  *   <li>CPU and GPU backend compatibility
  * </ul>
  *
- * <p>Tensors can be created via factory methods in {@link org.brain4j.math.Tensors}:
+ * <p>Tensors can be created via factory methods in {@link Tensors}:
  * <pre>{@code
  * // Create tensors
  * Tensor vector = Tensors.vector(1, 2, 3, 4);
@@ -52,11 +38,21 @@ import org.brain4j.math.tensor.autograd.impl.TransposeOperation;
  *
  * <p>The framework automatically handles moving tensors between CPU and GPU
  * as needed based on the operations being performed.
- *
+ * <p>
  * Note: unless specified otherwise, all operations which return
  * a new tensor do not retain the autograd context from the input
  */
-public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
+public interface Tensor extends Copyable<Tensor> {
+
+    default DType dtype() {
+        return DType.FLOAT32;
+    }
+
+    // TODO: javadoc
+    boolean isContiguous();
+
+    // TODO: javadoc
+    TensorLayout layout();
 
     /**
      * Returns the size of the specified dimension.
@@ -86,6 +82,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      *
      * @return float array containing tensor data
      */
+    @Deprecated
     float[] data();
 
     /**
@@ -97,6 +94,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      *
      * @return array containing stride for each dimension
      */
+    @Deprecated
     int[] strides();
     
     /**
@@ -181,8 +179,8 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @param device target device (Device or null for CPU)
      * @return tensor on the target device
      */
-    Tensor to(Object device);
-    
+    Tensor to(Device device);
+
     /**
      * Adds this tensor with another tensor element-wise.
      * @param other the tensor to add
@@ -403,13 +401,6 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
     Tensor convolve(Tensor kernel, int stride);
 
     /**
-     * Performs a layer normalization along this tensor.
-     * @param epsilon the epsilon to avoid division by zero
-     * @return the current tensor
-     */
-    Tensor layerNorm(double epsilon);
-
-    /**
      * Computes the Euclidean distance between this tensor and the given one.
      * Both tensors must have the same shape.
      *
@@ -428,25 +419,6 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @throws IllegalArgumentException if shapes do not match
      */
     double distanceSquared(Tensor other);
-    
-    /**
-     * Squeezes the tensor by removing all dimensions which are equal to one.
-     * @return the squeezed tensor
-     */
-    Tensor squeeze();
-
-    /**
-     * Squeezes the tensor by removing the select dimension if it's equal to one
-     * @param dimension the dimension to remove
-     * @return the squeezed tensor
-     */
-    Tensor squeeze(int dimension);
-
-    /**
-     * Unsqueezes the tensor by adding a dimension with one at the start.
-     * @return the unsqueezed tensor
-     */
-    Tensor unsqueeze();
 
     /**
      * Broadcasts this tensor to match another shape.
@@ -462,38 +434,6 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      */
     Tensor broadcastLike(Tensor other);
 
-    /**
-     * Unsqueezes the tensor by adding a dimension with one at the specified dimension
-     * @param dimension the dimension index
-     * @return the unsqueezed tensor
-     */
-    Tensor unsqueeze(int dimension);
-    
-    /**
-     * Computes a lazy-transposition of this tensor.
-     * This operation has complexity O(1) if the normal matrix multiplication
-     * provider is used. When SIMD is enabled, this operation delegates to
-     * a high-performance in place transposition.
-     * @return a new transposed tensor.
-     */
-    Tensor transpose();
-    
-    /**
-     * Computes a lazy-transposition of this tensor.
-     * This operation has complexity O(1) if the normal matrix multiplication
-     * provider is used. When SIMD is enabled, this operation delegates to
-     * a high-performance in place transposition.
-     * @param dim1 the first dimension to transpose
-     * @param dim2 the second dimension to transpose
-     * @return a new transposed tensor.
-     */
-    Tensor transpose(int dim1, int dim2);
-
-    /**
-     * Gets whether the current tensor is transposed.
-     * @return true if the tensor is transposed, false otherwise
-     */
-    boolean transposed();
     /**
      * Computes and returns the sum of all elements in the tensor.
      * @return the sum of all values in the tensor as a double
@@ -588,6 +528,64 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      */
     Tensor reshape(int... newShape);
 
+    // TODO: javadoc
+    Tensor view(Shape shape);
+
+    // TODO: javadoc
+    Tensor contiguous();
+
+    /**
+     * Squeezes the tensor by removing all dimensions which are equal to one.
+     * @return the squeezed tensor
+     */
+    Tensor squeeze();
+
+    /**
+     * Squeezes the tensor by removing the select dimension if it's equal to one
+     * @param dimension the dimension to remove
+     * @return the squeezed tensor
+     */
+    Tensor squeeze(int dimension);
+
+    /**
+     * Unsqueezes the tensor by adding a dimension with one at the start.
+     * @return the unsqueezed tensor
+     */
+    Tensor unsqueeze();
+
+    /**
+     * Unsqueezes the tensor by adding a dimension with one at the specified dimension
+     * @param dimension the dimension index
+     * @return the unsqueezed tensor
+     */
+    Tensor unsqueeze(int dimension);
+
+    /**
+     * Computes a lazy-transposition of this tensor.
+     * This operation has complexity O(1) if the normal matrix multiplication
+     * provider is used. When SIMD is enabled, this operation delegates to
+     * a high-performance in place transposition.
+     * @return a new transposed tensor.
+     */
+    Tensor transpose();
+
+    /**
+     * Computes a lazy-transposition of this tensor.
+     * This operation has complexity O(1) if the normal matrix multiplication
+     * provider is used. When SIMD is enabled, this operation delegates to
+     * a high-performance in place transposition.
+     * @param dim1 the first dimension to transpose
+     * @param dim2 the second dimension to transpose
+     * @return a new transposed tensor.
+     */
+    Tensor transpose(int dim1, int dim2);
+
+    /**
+     * Gets whether the current tensor is transposed.
+     * @return true if the tensor is transposed, false otherwise
+     */
+    boolean transposed();
+
     /**
      * Concatenates this tensor with another tensor along the last dimension.
      * For this method to work, tensors must have shape <code>[..., a, b]</code> with the same <code>a</code>.
@@ -635,7 +633,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @param function the function to apply
      * @return the current tensor
      */
-    Tensor map(D2DFunction function);
+    Tensor map(FloatToFloatFunction function);
 
     /**
      * Sets all elements of this tensor to the given value.
@@ -649,7 +647,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @param supplier the supplier of values
      * @return the current tensor
      */
-    Tensor fill(Supplier<Double> supplier);
+    Tensor fill(DoubleSupplier supplier);
 
     /**
      * Gets the autograd context for this tensor.
@@ -727,148 +725,6 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
     Tensor forward(Operation operation, Tensor... others);
 
     /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link AddOperation}
-     * @return the resulting tensor from the operation
-     */
-    Tensor addGrad(Tensor other);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link MulOperation}
-     * @return the resulting tensor from the operation
-     */
-    Tensor mulGrad(Tensor other);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link DivOperation}
-     * @param other the other tensor
-     * @return the resulting tensor from the operation
-     */
-    Tensor divGrad(Tensor other);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link SubOperation}
-     * @param other the other tensor
-     * @return the resulting tensor from the operation
-     */
-    Tensor subGrad(Tensor other);
-    
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link SliceOperation}
-     * @param ranges the ranges to slice this tensor on
-     * @return the resulting tensor from the operation
-     */
-    Tensor sliceGrad(Range... ranges);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link MatMulOperation}.
-     * @param other the other tensor
-     * @return the resulting tensor from the operation
-     */
-    Tensor matmulGrad(Tensor other);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link LayerNormOperation}.
-     * @param weight the scale tensor
-     * @param bias the shift tensor
-     * @param epsilon small constant avoiding division by zero
-     * @return the resulting tensor from the operation
-     */
-    Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link RMSNormOperation}.
-     * @param weight the scale tensor
-     * @param epsilon small constant avoiding division by zero
-     * @return the resulting tensor from the operation
-     */
-    Tensor rmsNormGrad(Tensor weight, double epsilon);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link GatherOperation}.
-     * @param table the embedding table to gather from
-     * @return the resulting tensor from the operation
-     */
-    Tensor gatherGrad(Tensor table);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link ConvolveOperation}.
-     * @param other the convolution kernel
-     * @return the resulting tensor from the operation
-     */
-    Tensor convolveGrad(Tensor other);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link ConvolveOperation} with a configurable stride.
-     * @param other the convolution kernel
-     * @param stride the stride to apply on both spatial dimensions
-     * @return the resulting tensor from the operation
-     */
-    Tensor convolveGrad(Tensor other, int stride);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link MaxPoolOperation}.
-     * @param stride the stride to use on the pooling
-     * @param windowHeight the window height of the pooling
-     * @param windowWidth the window width of the pooling
-     * @return the pooling result in a new tensor
-     */
-    Tensor maxPoolGrad(int stride, int windowHeight, int windowWidth);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link TransposeOperation}.
-     * @return the resulting tensor from the operation
-     */
-    Tensor transposeGrad();
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link TransposeOperation}
-     * @param dim1 the first dimension to transpose
-     * @param dim2 the second dimension to transpose
-     * @return the resulting tensor from the operation
-     */
-    Tensor transposeGrad(int dim1, int dim2);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link ActivationOperation}
-     * @param activation the activation to apply
-     * @return the resulting tensor from the operation
-     */
-    Tensor activateGrad(Activation activation);
-    
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link ConcatOperation}
-     * @param other the other tensor
-     * @return the resulting tensor from the operation
-     */
-    Tensor concatGrad(Tensor other, int dim);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link ReshapeOperation}.
-     * @param newShape the new shape of this tensor
-     * @return the resulting tensor with a new shape
-     */
-    Tensor reshapeGrad(int... newShape);
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link SqueezeOperation} and no parameters.
-     * @return a clone of this tensor with the squeezed shape
-     */
-    Tensor squeezeGrad();
-
-    /**
-     * Delegates to {@link #forward(Operation, Tensor)} using {@link SqueezeOperation} and no parameters.
-     * @param dimension the dimension to squeeze on
-     * @return a clone of this tensor with the squeezed shape
-     */
-    Tensor squeezeGrad(int dimension);
-    
-    /**
-     * Flips the tensor by 180 degrees.
-     * @return a new flipped tensor
-     */
-    Tensor flip();
-
-    /**
      * Applies softmax to the tensor with a default temperature of 1.
      * @return a new soft-maxed tensor
      */
@@ -888,16 +744,12 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      */
     String toString(String format);
 
-    private Tensor activateAuto(Activation function) {
-        return usesGrad() ? activateGrad(function) : activate(function);
-    }
-
     /**
      * Computes the ReLU activation on this tensor.
      * @return a copy of this tensor with the activated values
      */
     default Tensor relu() {
-        return activateAuto(new ReLU());
+        return activate(new ReLU());
     }
 
     /**
@@ -905,7 +757,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor sigmoid() {
-        return activateAuto(new Sigmoid());
+        return activate(new Sigmoid());
     }
 
     /**
@@ -913,7 +765,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * @return a copy of this tensor with the activated values
      */
     default Tensor tanh() {
-        return activateAuto(new Tanh());
+        return activate(new Tanh());
     }
     
     /**

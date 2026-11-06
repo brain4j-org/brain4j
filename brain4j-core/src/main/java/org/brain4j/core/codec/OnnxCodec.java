@@ -1,7 +1,7 @@
 package org.brain4j.core.codec;
 
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
-import org.brain4j.math.tensor.autograd.Operation;
+import org.brain4j.math.operations.Operation;
 
 /**
  * ONNX specialization of {@link Codec} for {@link Operation}s.

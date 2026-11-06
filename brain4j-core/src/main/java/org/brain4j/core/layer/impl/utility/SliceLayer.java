@@ -78,9 +78,9 @@ public class SliceLayer extends Layer {
                 Range[] expanded = new Range[config.ranges.length + 1];
                 expanded[0] = Range.all();
                 System.arraycopy(config.ranges, 0, expanded, 1, config.ranges.length);
-                result[i] = input.sliceGrad(expanded);
+                result[i] = input.slice(expanded);
             } else if (rank == config.ranges.length) {
-                result[i] = input.sliceGrad(config.ranges);
+                result[i] = input.slice(config.ranges);
             } else {
                 throw Commons.illegalArgument("Slice requires rank %s or %s but %s was given!",
                     config.ranges.length, config.ranges.length + 1, rank);

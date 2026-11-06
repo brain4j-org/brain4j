@@ -84,7 +84,7 @@ public class ReshapeLayer extends Layer {
         newShape[0] = inputShape[0];
         System.arraycopy(config.shape.dims(), 0, newShape, 1, config.shape.rank());
 
-        return tensors(inputs[0].reshapeGrad(newShape));
+        return tensors(inputs[0].reshape(newShape));
     }
 
     /**

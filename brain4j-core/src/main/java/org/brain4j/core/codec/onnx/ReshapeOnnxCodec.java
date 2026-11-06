@@ -6,7 +6,7 @@ import java.util.List;
 import org.brain4j.core.codec.OnnxCodec;
 import org.brain4j.core.importing.onnx.ProtoOnnx.AttributeProto;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
-import org.brain4j.math.tensor.autograd.impl.ReshapeOperation;
+import org.brain4j.math.operations.impl.ReshapeOperation;
 
 /**
  * ONNX codec for {@link ReshapeOperation}.

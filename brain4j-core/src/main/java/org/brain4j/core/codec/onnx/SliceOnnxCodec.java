@@ -7,7 +7,7 @@ import org.brain4j.core.codec.OnnxCodec;
 import org.brain4j.core.importing.onnx.ProtoOnnx.AttributeProto;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.math.commons.Range;
-import org.brain4j.math.tensor.autograd.impl.SliceOperation;
+import org.brain4j.math.operations.impl.SliceOperation;
 
 /**
  * ONNX codec for {@link SliceOperation}.

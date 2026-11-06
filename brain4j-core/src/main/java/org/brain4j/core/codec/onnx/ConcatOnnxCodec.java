@@ -3,7 +3,7 @@ package org.brain4j.core.codec.onnx;
 import org.brain4j.core.codec.OnnxCodec;
 import org.brain4j.core.importing.onnx.ProtoOnnx.AttributeProto;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
-import org.brain4j.math.tensor.autograd.impl.ConcatOperation;
+import org.brain4j.math.operations.impl.ConcatOperation;
 
 /**
  * ONNX codec for {@link ConcatOperation}.

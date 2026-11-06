@@ -198,7 +198,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
             x = dropout.forward(cache, x);
         }
 
-        x = input.addGrad(x);
+        x = input.add(x);
 
         Tensor residual = x;
 
@@ -208,10 +208,10 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
 
         if (gateProj != null) {
             x = gateProj.forward(cache, x);
-            x = x.activateGrad(activation);
+            x = x.activate(activation);
             x = x.mul(y);
         } else {
-            x = y.activateGrad(activation);
+            x = y.activate(activation);
         }
 
         x = downProj.forward(cache, x);
@@ -220,7 +220,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
             x = dropout.forward(cache, x);
         }
 
-        x = residual.addGrad(x);
+        x = residual.add(x);
 
         return new Tensor[] { x };
     }

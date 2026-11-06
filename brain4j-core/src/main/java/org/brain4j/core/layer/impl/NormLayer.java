@@ -87,7 +87,8 @@ public class NormLayer extends Layer {
         Tensor w = param("weights");
         Tensor b = param("bias");
 
-        Tensor result = first.layerNormGrad(w, b, config.epsilon);
+        // TODO: rework this
+        Tensor result = null; // first.layerNormGrad(w, b, config.epsilon);
 
         return new Tensor[] { result };
     }

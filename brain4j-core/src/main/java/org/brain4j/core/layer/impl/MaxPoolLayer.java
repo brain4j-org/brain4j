@@ -84,7 +84,9 @@ public class MaxPoolLayer extends Layer {
      */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        return tensors(inputs[0].maxPoolGrad(config.stride, config.windowHeight, config.windowWidth));
+        // TODO: refactor this
+        // return tensors(inputs[0].maxPoolGrad(config.stride, config.windowHeight, config.windowWidth));
+        return inputs;
     }
 
     /**

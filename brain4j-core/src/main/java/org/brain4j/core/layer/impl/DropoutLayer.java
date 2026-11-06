@@ -88,11 +88,11 @@ public class DropoutLayer extends Layer {
             }
 
             Tensor tensorMask = Tensors.vector(mask);
-            Tensor reshaped = input.reshapeGrad(input.elements());
+            Tensor reshaped = input.reshape(input.elements());
 
-            result[i] = reshaped.mulGrad(tensorMask)
+            result[i] = reshaped.mul(tensorMask)
                 .div(1 - config.dropoutRate)
-                .reshapeGrad(input.shape());
+                .reshape(input.shape());
         }
 
         return result;

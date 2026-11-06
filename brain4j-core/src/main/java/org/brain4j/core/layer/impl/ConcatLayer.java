@@ -70,7 +70,7 @@ public class ConcatLayer extends Layer {
      */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
-        return new Tensor[] { Tensors.concatGrad(List.of(inputs), config.dimension) };
+        return new Tensor[] { Tensors.concat(List.of(inputs), config.dimension) };
     }
 
     /**

@@ -123,7 +123,7 @@ public class PosEncodeLayer extends Layer {
             System.arraycopy(addData, 0, posData, index, addData.length);
         }
 
-        Tensor output = input.addGrad(positional);
+        Tensor output = input.add(positional);
 
         if (input instanceof GpuTensor gpuTensor) {
             output = output.to(gpuTensor.device());

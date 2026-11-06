@@ -89,7 +89,7 @@ public class SqueezeLayer extends Layer {
                 } else {
                     int[] compact = new int[count];
                     System.arraycopy(newShape, 0, compact, 0, count);
-                    results[i] = input.reshapeGrad(compact);
+                    results[i] = input.reshape(compact);
                 }
             } else {
                 int dim = config.dimension;
@@ -98,7 +98,7 @@ public class SqueezeLayer extends Layer {
                     dim = config.dimension + 1;
                 }
 
-                results[i] = input.squeezeGrad(dim);
+                results[i] = input.squeeze(dim);
             }
         }
 

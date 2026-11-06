@@ -103,9 +103,9 @@ public class DenseLayer extends Layer {
         Tensor w = param("weights");
         Tensor b = param("bias");
 
-        Tensor proj = input.matmulGrad(w).addGrad(b);
+        Tensor proj = input.matmul(w).add(b);
 
-        return tensors(proj.activateGrad(activation));
+        return tensors(proj.activate(activation));
     }
 
     /**

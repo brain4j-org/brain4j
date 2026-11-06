@@ -123,7 +123,7 @@ public class LSTMLayer extends Layer {
         Tensor hiddenWeights = param("hidden_weights");
         Tensor bias = param("bias");
 
-        Tensor projection = input.matmulGrad(weights);
+        Tensor projection = input.matmul(weights);
 
         Tensor hiddenState = Tensors.zeros(batch, config.hiddenDimension).withGrad();
         Tensor cellState = Tensors.zeros(batch, config.hiddenDimension).withGrad();
@@ -134,33 +134,33 @@ public class LSTMLayer extends Layer {
         Activation sigmoid = Activations.SIGMOID.function();
 
         for (int t = 0; t < timesteps; t++) {
-            Tensor timestep = projection.sliceGrad(Range.all(), Range.point(t), Range.all()).squeezeGrad(1);
-            Tensor hiddenProj = hiddenState.matmulGrad(hiddenWeights);
+            Tensor timestep = projection.slice(Range.all(), Range.point(t), Range.all()).squeeze(1);
+            Tensor hiddenProj = hiddenState.matmul(hiddenWeights);
 
-            Tensor preActivation = timestep.addGrad(hiddenProj).addGrad(bias);
+            Tensor preActivation = timestep.add(hiddenProj).add(bias);
 
-            Tensor forgetChunk = preActivation.sliceGrad(Range.all(), Range.interval(0, config.hiddenDimension));
-            Tensor inputChunk = preActivation.sliceGrad(Range.all(), Range.interval(config.hiddenDimension, 2 * config.hiddenDimension));
-            Tensor candidateChunk = preActivation.sliceGrad(Range.all(), Range.interval(2 * config.hiddenDimension, 3 * config.hiddenDimension));
-            Tensor outputChunk = preActivation.sliceGrad(Range.all(), Range.interval(3 * config.hiddenDimension, 4 * config.hiddenDimension));
+            Tensor forgetChunk = preActivation.slice(Range.all(), Range.interval(0, config.hiddenDimension));
+            Tensor inputChunk = preActivation.slice(Range.all(), Range.interval(config.hiddenDimension, 2 * config.hiddenDimension));
+            Tensor candidateChunk = preActivation.slice(Range.all(), Range.interval(2 * config.hiddenDimension, 3 * config.hiddenDimension));
+            Tensor outputChunk = preActivation.slice(Range.all(), Range.interval(3 * config.hiddenDimension, 4 * config.hiddenDimension));
 
-            Tensor f = forgetChunk.activateGrad(sigmoid);
-            Tensor i = inputChunk.activateGrad(sigmoid);
-            Tensor g = candidateChunk.activateGrad(tanh);
-            Tensor out = outputChunk.activateGrad(sigmoid);
+            Tensor f = forgetChunk.activate(sigmoid);
+            Tensor i = inputChunk.activate(sigmoid);
+            Tensor g = candidateChunk.activate(tanh);
+            Tensor out = outputChunk.activate(sigmoid);
 
-            cellState = f.mulGrad(cellState).addGrad(i.mulGrad(g));
-            hiddenState = out.mulGrad(cellState.activateGrad(tanh));
+            cellState = f.mul(cellState).add(i.mul(g));
+            hiddenState = out.mul(cellState.activate(tanh));
 
             if (config.returnSequences) {
-                hiddenStates.add(hiddenState.reshapeGrad(batch, 1, config.hiddenDimension));
+                hiddenStates.add(hiddenState.reshape(batch, 1, config.hiddenDimension));
             }
         }
 
         Tensor result = hiddenState;
 
         if (config.returnSequences) {
-            result = Tensors.concatGrad(hiddenStates, 1);
+            result = Tensors.concat(hiddenStates, 1);
         }
 
         return new Tensor[] { result };

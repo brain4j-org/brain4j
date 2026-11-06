@@ -124,21 +124,21 @@ public class MultiHeadAttention extends Layer {
         Tensor outProj = param("out_proj");
         Tensor bias = param("bias");
         Tensor outBias = param("out_bias");
-        Tensor qkv = input.matmulGrad(weights);
+        Tensor qkv = input.matmul(weights);
 
         if (config.qkvBias) {
-            qkv = qkv.addGrad(bias);
+            qkv = qkv.add(bias);
         }
 
-        Tensor reshaped = qkv.reshapeGrad(batch, seqLength, config.heads, 3, headDim);
-        reshaped = reshaped.transposeGrad(1, 2);
+        Tensor reshaped = qkv.reshape(batch, seqLength, config.heads, 3, headDim);
+        reshaped = reshaped.transpose(1, 2);
 
         Tensor[] qkvs = new Tensor[3];
         Range all = Range.all();
 
         for (int i = 0; i < qkvs.length; i++) {
-            qkvs[i] = reshaped.sliceGrad(all, all, all, Range.point(i), all);
-            qkvs[i] = qkvs[i].squeezeGrad(3);
+            qkvs[i] = reshaped.slice(all, all, all, Range.point(i), all);
+            qkvs[i] = qkvs[i].squeeze(3);
         }
 
         Tensor q = qkvs[0];
@@ -147,17 +147,17 @@ public class MultiHeadAttention extends Layer {
 
         double normalizer = Math.sqrt(headDim);
 
-        Tensor kT = k.transposeGrad();
-        Tensor scores = q.matmulGrad(kT).divGrad(Tensors.scalar(normalizer));
-        Tensor attentionWeights = scores.activateGrad(new Softmax());
-        Tensor context = attentionWeights.matmulGrad(v);
-        context = context.transposeGrad(1, 2);
-        Tensor output = context.reshapeGrad(batch, seqLength, config.embedDim);
+        Tensor kT = k.transpose();
+        Tensor scores = q.matmul(kT).div(Tensors.scalar(normalizer));
+        Tensor attentionWeights = scores.activate(new Softmax());
+        Tensor context = attentionWeights.matmul(v);
+        context = context.transpose(1, 2);
+        Tensor output = context.reshape(batch, seqLength, config.embedDim);
 
-        Tensor result = output.matmulGrad(outProj);
+        Tensor result = output.matmul(outProj);
 
         if (config.outBias) {
-            result = result.addGrad(outBias);
+            result = result.add(outBias);
         }
 
         return new Tensor[]{result};

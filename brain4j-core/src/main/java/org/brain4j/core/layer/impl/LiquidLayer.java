@@ -154,12 +154,12 @@ public class LiquidLayer extends Layer {
         List<Tensor> states = new ArrayList<>();
 
         for (int t = 0; t < timesteps; t++) {
-            Tensor xt = input.sliceGrad(Range.all(), Range.point(t), Range.all()).squeezeGrad(1);
+            Tensor xt = input.slice(Range.all(), Range.point(t), Range.all()).squeeze(1);
 
-            Tensor tauAct = xt.matmulGrad(wTau).addGrad(bTau).activateGrad(softplus);
-            Tensor tau = tauAct.addGrad(fullLike(xt, batch, hidden, (float) config.tauMin));
+            Tensor tauAct = xt.matmul(wTau).add(bTau).activate(softplus);
+            Tensor tau = tauAct.add(fullLike(xt, batch, hidden, (float) config.tauMin));
 
-            Tensor proj = xt.matmulGrad(wIn).addGrad(bIn);
+            Tensor proj = xt.matmul(wIn).add(bIn);
 
             Tensor dtCol = deltas == null ? null
                 : deltas.slice(Range.all(), Range.point(t));
@@ -169,12 +169,12 @@ public class LiquidLayer extends Layer {
             }
 
             if (config.returnSequences) {
-                states.add(h.reshapeGrad(batch, 1, hidden));
+                states.add(h.reshape(batch, 1, hidden));
             }
         }
 
         if (config.returnSequences) {
-            return new Tensor[] { Tensors.concatGrad(states, 1) };
+            return new Tensor[] { Tensors.concat(states, 1) };
         }
 
         return new Tensor[] { h };
@@ -189,13 +189,13 @@ public class LiquidLayer extends Layer {
             numer = numer.times(dtCol);
         }
 
-        Tensor step = numer.withGrad().divGrad(tau);
+        Tensor step = numer.withGrad().div(tau);
 
-        Tensor hProj = h.matmulGrad(wRec).addGrad(bRec);
-        Tensor z = proj.addGrad(hProj).activateGrad(tanh);
-        Tensor dh = z.subGrad(h);
+        Tensor hProj = h.matmul(wRec).add(bRec);
+        Tensor z = proj.add(hProj).activate(tanh);
+        Tensor dh = z.sub(h);
 
-        return h.addGrad(step.mulGrad(dh));
+        return h.add(step.mul(dh));
     }
 
     private static Tensor fullLike(Tensor ref, int batch, int hidden, float value) {

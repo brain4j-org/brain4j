@@ -80,7 +80,7 @@ public class ActivationLayer extends Layer {
         Tensor[] result = new Tensor[inputs.length];
 
         for (int i = 0; i < inputs.length; i++) {
-            result[i] = inputs[i].activateGrad(activation);
+            result[i] = inputs[i].activate(activation);
         }
 
         return result;

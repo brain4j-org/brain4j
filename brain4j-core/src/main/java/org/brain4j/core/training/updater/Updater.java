@@ -40,7 +40,7 @@ public abstract class Updater {
             while (update.rank() > weights.rank()) {
                 update = update.sum(0, false);
             }
-
+z
             weights.sub(update);
         }
     }

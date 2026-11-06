@@ -177,7 +177,7 @@ public class GPT2Adapter implements ArchitectureAdapter {
                 Range.all()
             };
 
-            return new Tensor[] { input.slice(ranges).squeezeGrad(1) };
+            return new Tensor[] { input.slice(ranges).squeeze(1) };
         }
 
         @Override
